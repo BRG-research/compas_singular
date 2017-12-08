@@ -1,4 +1,5 @@
 from compas.datastructures.mesh import Mesh
+from compas.topology.duality import mesh_dual
 
 __author__     = ['Robin Oval', ]
 __copyright__  = 'Copyright 2014, Block Research Group - ETH Zurich'
@@ -11,24 +12,30 @@ __all__ = [
 ]
 
 
-def polylines_from_quad_mesh(mesh):
-    """Split and edge by inserting a vertex along its length.
+def polylines_from_quad_mesh(mesh, dual = False):
+    """Collects the vertices of the polyline from a quad mesh or the faces of the dual polyline from a quad mesh dual.
 
     Parameters
     ----------
     mesh : Mesh
         A quad mesh.
+    dual: bool
+        False if collects the vertex polylines from the quad mesh.
+        True if collects the face polylines from the dual of the quad mesh.
 
     Returns
     -------
-    int
+    list or None
+        If on the primal:
         The list of polylines as lists of vertex indices.
         If the first and last vertex indices in the last are identical, then the polyline is closed.
+        None if not a quad mesh.
+        If on the dual:
+        The list of dual polylines as list of face indices.
 
     Raises
     ------
-    NotImplementedError
-        If mesh is not a quad mesh.
+    -
 
     """
     
@@ -36,8 +43,11 @@ def polylines_from_quad_mesh(mesh):
     # not supported if is not a quad mesh
 
     if not mesh.is_quadmesh():
-        raise NotImplementedError
+        return None
     
+    if dual:
+        mesh = mesh_dual(mesh)
+
     # store edges to keep track of which one are visited
     edges = list(mesh.edges())
 
@@ -92,9 +102,8 @@ def polylines_from_quad_mesh(mesh):
                 break
         polylines.append(polyline)
 
-    
-
     return polylines
+
 
 # ==============================================================================
 # Main
@@ -109,7 +118,9 @@ if __name__ == '__main__':
 
     mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
 
-    polyline = polylines_from_quad_mesh(mesh)
+    polylines = polylines_from_quad_mesh(mesh, dual = False)
+    print(polylines)
 
-    print(polyline)
+    dual_polylines = polylines_from_quad_mesh(mesh, dual = True)
+    print(dual_polylines)
 

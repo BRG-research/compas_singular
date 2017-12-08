@@ -8,10 +8,22 @@ from compas_pattern.operations.polylines_from_quad_mesh import polylines_from_qu
 guid = rs.GetObject('get mesh')
 mesh = rhino.mesh_from_guid(Mesh, guid)
 
-polyline = polylines_from_quad_mesh(mesh)
+rs.EnableRedraw(False)
+
+polyline = polylines_from_quad_mesh(mesh, dual = False)
 
 for pl in polyline:
-    points = [mesh.vertex_coordinates(pt) for pt in pl]
+    points = [mesh.vertex_coordinates(vkey) for vkey in pl]
     rs.AddPolyline(points)
 
-print len(polyline), ' polylines added from mesh'
+print len(polyline), 'polylines added from mesh'
+
+dual_polyline = polylines_from_quad_mesh(mesh, dual = True)
+
+for pl in dual_polyline:
+    points = [mesh.face_centroid(fkey) for fkey in pl]
+    rs.AddPolyline(points)
+
+print len(polyline), ' dual polylines added from mesh'
+
+rs.EnableRedraw(True)
