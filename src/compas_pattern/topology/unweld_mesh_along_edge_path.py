@@ -23,7 +23,7 @@ def unweld_mesh_along_edge_path(mesh, edge_path):
 
     Returns
     -------
-    mesh
+    mesh : Mesh
         The mesh once unwelded.
 
     Raises

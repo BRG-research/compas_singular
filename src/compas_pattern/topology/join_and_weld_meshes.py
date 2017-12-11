@@ -27,7 +27,7 @@ def weld_mesh(mesh, precision = '3f'):
 
     Returns
     -------
-    mesh
+    mesh : Mesh
         The welded mesh.
 
     Raises
@@ -76,7 +76,7 @@ def join_and_weld_meshes(meshes, precision = '3f'):
 
     Returns
     -------
-    mesh
+    mesh : Mesh
         The joined and welded mesh.
 
     Raises
