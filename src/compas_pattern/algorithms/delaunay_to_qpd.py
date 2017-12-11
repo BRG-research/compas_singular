@@ -11,7 +11,7 @@ __email__      = 'oval@arch.ethz.ch'
 
 
 __all__ = [
-    'medial_axis_from_delaunay',
+    'delaunay_to_qpd',
 ]
 
 def delaunay_to_qpd(delaunay_mesh):
