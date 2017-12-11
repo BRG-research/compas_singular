@@ -5,7 +5,7 @@ import compas_rhino as rhino
 
 from compas.utilities import geometric_key
 
-from compas_pattern.operations.unweld_mesh_along_edge_path import unweld_mesh_along_edge_path
+from compas_pattern.topology.unweld_mesh_along_edge_path import unweld_mesh_along_edge_path
 
 guid = rs.GetObject('get mesh')
 mesh = rhino.mesh_from_guid(Mesh, guid)

@@ -3,7 +3,7 @@ import rhinoscriptsyntax as rs
 from compas.datastructures.mesh import Mesh
 import compas_rhino as rhino
 
-from compas_pattern.operations.polylines_from_quad_mesh import polylines_from_quad_mesh
+from compas_pattern.topology.polylines_from_quad_mesh import polylines_from_quad_mesh
 
 guid = rs.GetObject('get mesh')
 mesh = rhino.mesh_from_guid(Mesh, guid)
