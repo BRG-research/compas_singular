@@ -9,6 +9,8 @@ from compas_pattern.topology.unweld_mesh_along_edge_path import unweld_mesh_alon
 
 guid = rs.GetObject('get mesh')
 mesh = rhino.mesh_from_guid(Mesh, guid)
+# if there are several edge paths for unwelding that come at the same point (e.g. T-junction),
+# they must be split at this point
 polylines = rs.GetObjects('polylines for unwelding')
 rs.EnableRedraw(False)
 
@@ -23,13 +25,13 @@ for polyline in polylines:
         if vertex_path[i + 1] in mesh.halfedge[vertex_path[i]]:
             edge_path.append([vertex_path[i], vertex_path[i + 1]])
     edge_paths.append(edge_path)
-    print vertex_path
-    print edge_path
-
 
 for edge_path in edge_paths:
     unweld_mesh_along_edge_path(mesh, edge_path)
 
-rhino.draw_mesh(mesh, show_faces = True, show_vertices = False, show_edges = False)
+vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
+face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
+
+rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
 
 rs.EnableRedraw(True)
