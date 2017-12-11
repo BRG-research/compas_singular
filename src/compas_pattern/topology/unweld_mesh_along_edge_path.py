@@ -1,5 +1,3 @@
-import copy
-
 from compas.datastructures.mesh import Mesh
 
 __author__     = ['Robin Oval']
@@ -26,7 +24,7 @@ def unweld_mesh_along_edge_path(mesh, edge_path):
     Returns
     -------
     mesh
-        The unwelded mesh.
+        The mesh once unwelded.
 
     Raises
     ------
