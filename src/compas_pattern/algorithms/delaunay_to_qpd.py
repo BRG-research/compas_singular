@@ -11,11 +11,11 @@ __email__      = 'oval@arch.ethz.ch'
 
 
 __all__ = [
-    'delaunay_to_qpd',
+    'delaunay_to_patch_decompostion',
 ]
 
-def delaunay_to_qpd(delaunay_mesh):
-    """Construct the medial axis from a Delaunay mesh.
+def delaunay_to_patch_decompostion(delaunay_mesh):
+    """Construct a patch decomposition from a Delaunay mesh.
 
     Parameters
     ----------
@@ -24,8 +24,8 @@ def delaunay_to_qpd(delaunay_mesh):
 
     Returns
     -------
-    medial_branches: list, None
-        List of polylines as lists of vertices forming the branches of the medial axis.
+    patch_decomposition: list, None
+        List of polylines as lists of vertices forming the patch decomposition.
         Return None if input mesh is not a trimesh.
 
     Raises
