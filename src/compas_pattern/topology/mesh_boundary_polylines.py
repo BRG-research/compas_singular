@@ -33,18 +33,18 @@ def mesh_boundaries(mesh):
 
     """
 
-    boundary_vertices = set()
-    for vkey, nbrs in iter(mesh.halfedge.items()):
+    vertices = set()
+    for key, nbrs in iter(mesh.halfedge.items()):
         for nbr, face in iter(nbrs.items()):
             if face is None:
-                boundary_vertices.add(vkey)
-                boundary_vertices.add(nbr)
+                vertices.add(key)
+                vertices.add(nbr)
 
-    boundary_vertices = list(boundary_vertices)
+    vertices = list(vertices)
 
     boundaries = []
-    while len(boundary_vertices) > 0:
-        boundary = [boundary_vertices.pop()]
+    while len(vertices) > 0:
+        boundary = [vertices.pop()]
 
         while 1:
             for nbr, fkey in iter(mesh.halfedge[boundary[-1]].items()):
@@ -56,7 +56,7 @@ def mesh_boundaries(mesh):
                 boundaries.append(boundary)
                 break
             else:
-                boundary_vertices.remove(boundary[-1])
+                vertices.remove(boundary[-1])
 
     return boundaries
 
