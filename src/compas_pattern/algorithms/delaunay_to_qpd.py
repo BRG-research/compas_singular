@@ -2,13 +2,11 @@ from compas.datastructures.mesh import Mesh
 
 from compas.topology import delaunay_from_points
 
-from compas.utilities import geometric_key
-
 from compas_pattern.datastructures.mesh import face_circle
 from compas_pattern.topology.mesh_boundary_polylines import mesh_boundaries
 
 __author__     = ['Robin Oval']
-__copyright__  = 'Copyright 2014, Block Research Group - ETH Zurich'
+__copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 

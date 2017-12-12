@@ -1,7 +1,7 @@
 from compas.datastructures.mesh import Mesh
 
 __author__     = ['Robin Oval']
-__copyright__  = 'Copyright 2014, Block Research Group - ETH Zurich'
+__copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 

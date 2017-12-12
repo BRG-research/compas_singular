@@ -5,7 +5,7 @@ from compas.topology import delaunay_from_points
 from compas_pattern.datastructures.mesh import face_circle
 
 __author__     = ['Robin Oval']
-__copyright__  = 'Copyright 2014, Block Research Group - ETH Zurich'
+__copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
