@@ -8,11 +8,11 @@ __email__      = 'oval@arch.ethz.ch'
 
 
 __all__ = [
-    'polylines_from_quad_mesh',
+    'quad_mesh_to_polylines',
 ]
 
 
-def polylines_from_quad_mesh(mesh, dual = False):
+def quad_mesh_to_polylines(mesh, dual = False):
     """Collects the vertices of the polyline from a quad mesh or the faces of the dual polyline from a quad mesh dual.
 
     Parameters
@@ -118,9 +118,9 @@ if __name__ == '__main__':
 
     mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
 
-    polylines = polylines_from_quad_mesh(mesh, dual = False)
+    polylines = quad_mesh_to_polylines(mesh, dual = False)
     print(polylines)
 
-    dual_polylines = polylines_from_quad_mesh(mesh, dual = True)
+    dual_polylines = quad_mesh_to_polylines(mesh, dual = True)
     print(dual_polylines)
 

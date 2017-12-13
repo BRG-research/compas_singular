@@ -11,10 +11,10 @@ __email__      = 'oval@arch.ethz.ch'
 
 
 __all__ = [
-    'mesh_from_polylines',
+    'polylines_to_mesh',
 ]
 
-def mesh_from_polylines(polylines):
+def polylines_to_mesh(polylines):
     """Construct the mesh based on polylines. Uses mesh from lines and then reduces the valency of the faces
     by deleting the 2-valency vertices.
 
