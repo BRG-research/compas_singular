@@ -34,8 +34,8 @@ def unweld_mesh_along_edge_path(mesh, edge_path):
     
     # conversion of edge path in vertex path
     vertex_path = [edge[0] for edge in edge_path]
-    # add last vertex of edge path only if different from first vertex, i.e. if not a loop.
-    if edge_path[-1][-1] != vertex_path[0]:
+    # add last vertex of edge path only if not closed loop
+    if edge_path[0][0] != edge_path[-1][-1]:
         vertex_path.append(edge_path[-1][-1])
 
     # store changes to make in the faces along the vertex path in the following format {face to change = [old vertices, new vertex]}
@@ -48,13 +48,16 @@ def unweld_mesh_along_edge_path(mesh, edge_path):
         next_vkey = vertex_path[i + 1 - len(vertex_path)]
 
         # skip the extremities of the vertex path, except if the path is a loop or if vertex is on boundary
-        if (vertex_path[0] == vertex_path[-1]) or (i != 0 and i != len(vertex_path) - 1) or mesh.is_vertex_on_boundary(vkey):
+        if (edge_path[0][0] == edge_path[-1][-1]) or (i != 0 and i != len(vertex_path) - 1) or mesh.is_vertex_on_boundary(vkey):
             # duplicate vertex and its attributes
             attr = mesh.vertex[vkey]
             new_vkey = mesh.add_vertex(attr_dict = attr)
             # split neighbours in two groups depending on the side of the path
             vertex_nbrs = mesh.vertex_neighbours(vkey, True)
-            # exceptions on last_vkey or next_vkey if the vertex is on the boundary
+            # two exceptions on last_vkey or next_vkey if the vertex is on the boundary or a non-manifold vertex in case of the last vertex of a closed edge path
+            if edge_path[0][0] == edge_path[-1][-1] and i == len(vertex_path) - 1:
+                print 'ok'
+                next_vkey = vertex_path[0]
             if mesh.is_vertex_on_boundary(vkey):
                 for j in range(len(vertex_nbrs)):
                     if mesh.is_vertex_on_boundary(vertex_nbrs[j - 1]) and mesh.is_vertex_on_boundary(vertex_nbrs[j]):

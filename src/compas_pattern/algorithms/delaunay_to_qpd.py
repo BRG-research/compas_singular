@@ -124,6 +124,9 @@ def delaunay_to_patch_decomposition(delaunay_mesh):
     split_boundaries = []
     while len(culled_split_vertices) > 0:
         start = culled_split_vertices.pop()
+        # exception if split vertex corresponds to a non-boundary point feature
+        if not delaunay_mesh.is_vertex_on_boundary(start):
+            continue
         polyline = [start]
 
         while 1:
