@@ -9,6 +9,7 @@ from compas.utilities import geometric_key
 from compas_pattern.algorithms.polylines_to_delaunay import polylines_to_delaunay
 from compas_pattern.topology.unweld_mesh_along_edge_path import unweld_mesh_along_edge_path
 from compas_pattern.algorithms.delaunay_to_qpd import delaunay_to_patch_decomposition
+from compas_pattern.topology.polylines_to_mesh import polylines_to_mesh
 
 # collect spatial shape: surface/mesh + features
 
@@ -63,6 +64,13 @@ for vertices in patch_decomposition:
 rs.EnableRedraw(True)
 
 # conversion patch polylines to control mesh
+
+mesh = polylines_to_mesh(patch_decomposition)
+vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
+face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
+mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
+rs.AddLayer('control_mesh')
+rs.ObjectLayer(mesh_guid, layer = 'control_mesh')
 
 # conforming operations into a quad control mesh
 
