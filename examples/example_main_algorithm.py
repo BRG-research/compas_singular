@@ -12,6 +12,7 @@ from compas_pattern.topology.unweld_mesh_along_edge_path import unweld_mesh_alon
 from compas_pattern.algorithms.delaunay_to_qpd import delaunay_to_patch_decomposition
 from compas_pattern.topology.polylines_to_mesh import polylines_to_mesh
 from compas_pattern.topology.polylines_to_mesh import polylines_to_mesh_old
+from compas_pattern.algorithms.conforming_algorithm import conforming_initial_patch_decomposition
 
 # collect spatial shape: surface/mesh + features
 surface_guid = rs.GetSurfaceObject('select surface')[0]
@@ -88,6 +89,7 @@ rs.EnableRedraw(True)
 # conversion patch polylines to control mesh
 
 mesh = polylines_to_mesh_old(boundary_polylines, medial_branches)
+
 vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
 face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
 mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
@@ -95,6 +97,16 @@ rs.AddLayer('control_mesh')
 rs.ObjectLayer(mesh_guid, layer = 'control_mesh')
 
 # conforming operations into a quad control mesh
+rs.EnableRedraw(False)
+
+conform_mesh = conforming_initial_patch_decomposition(mesh)
+
+vertices = [conform_mesh.vertex_coordinates(vkey) for vkey in conform_mesh.vertices()]
+face_vertices = [conform_mesh.face_vertices(fkey) for fkey in conform_mesh.faces()]
+conform_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
+rs.AddLayer('conform_mesh')
+rs.ObjectLayer(conform_mesh_guid, layer = 'conform_mesh')
+rs.EnableRedraw(True)
 
 # possibility to apply grammar rules
 
