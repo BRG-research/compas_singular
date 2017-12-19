@@ -16,7 +16,8 @@ __all__ = [
 def conforming_initial_patch_decomposition(mesh):
     """Transform the initial patch decomposition in a valid quad patch decomposition. Potentially with pseudo-quads.
     1. Remove tri patches that sould not be pseudo-quad patches.
-
+    2. 
+    
     Parameters
     ----------
     mesh : Mesh

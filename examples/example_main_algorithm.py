@@ -109,6 +109,24 @@ rs.ObjectLayer(conform_mesh_guid, layer = 'conform_mesh')
 rs.EnableRedraw(True)
 
 # possibility to apply grammar rules
+rs.EnableRedraw(False)
+
+mesh = conform_mesh
+
+from compas_pattern.topology.grammar_rules import quad_to_two_quads_diagonal
+
+for vkey in mesh.vertices_on_boundary():
+    vertex_faces = mesh.vertex_faces(vkey)
+    if len(vertex_faces) == 1:
+        fkey = vertex_faces[0]
+        quad_to_two_quads_diagonal(mesh, fkey, vkey)
+
+vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
+face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
+mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
+rs.AddLayer('edited_mesh')
+rs.ObjectLayer(mesh_guid, layer = 'edited_mesh')
+rs.EnableRedraw(True)
 
 # mesh densification
 

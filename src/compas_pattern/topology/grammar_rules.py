@@ -32,8 +32,8 @@ def tri_quad_to_quad_quad(mesh, fkey_tri, fkey_quad, vkey):
 
     Returns
     -------
-    mesh : Mesh, None
-        The modified mesh.
+    f : int, None
+        The key of the new vertex.
         None if the tri face is not a tri, if the quad face is not a quad or if not adjacent to the tri face or if the vertex is not adjacent to both faces.
 
     Raises
@@ -83,10 +83,58 @@ def tri_quad_to_quad_quad(mesh, fkey_tri, fkey_quad, vkey):
     if flip:
         mesh_flip_cycles(mesh)
 
-    return 0
+    return f
 
 
+def quad_to_two_quads_diagonal(mesh, fkey, vkey):
+    """Convert a quad face adjacent into two quads with a two-valency vertex along the diagonal matching the vertex key input.
+    
+    [a, b, c, d] -> [a, b, c, e] + [a, e, c, d]
 
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    vkey: int
+        Key of one of the vertices matching the diagonal split.
+
+    Returns
+    -------
+    e : int, None
+        The key of the new vertex.
+        None if the quad face is not a quad or if the vertex is not adjacent to the face.
+
+    Raises
+    ------
+    -
+
+    """
+
+    # check validity of rule
+    if len(mesh.face_vertices(fkey)) != 4:
+        return None
+    if vkey not in mesh.face_vertices(fkey):
+        return None
+
+    a = vkey
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+    d = mesh.face_vertex_descendant(fkey, c)
+
+    # create new vertex
+    x, y, z = mesh.face_centroid(fkey)
+    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+
+    # delete old faces
+    mesh.delete_face(fkey)
+
+    # create new faces
+    mesh.add_face([a, b, c, e])
+    mesh.add_face([a, e, c, d])
+
+    return e
 
 # ==============================================================================
 # Main
