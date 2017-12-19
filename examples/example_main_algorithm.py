@@ -11,6 +11,7 @@ from compas_pattern.algorithms.polylines_to_delaunay import polylines_to_delauna
 from compas_pattern.topology.unweld_mesh_along_edge_path import unweld_mesh_along_edge_path
 from compas_pattern.algorithms.delaunay_to_qpd import delaunay_to_patch_decomposition
 from compas_pattern.topology.polylines_to_mesh import polylines_to_mesh
+from compas_pattern.topology.polylines_to_mesh import polylines_to_mesh_old
 
 # collect spatial shape: surface/mesh + features
 surface_guid = rs.GetSurfaceObject('select surface')[0]
@@ -54,17 +55,11 @@ rs.EnableRedraw(False)
 
 boundary = rs.PolylineVertices(boundary_polyline_guid)
 
-holes = []
-for guid in hole_polyline_guids:
-    holes.append(rs.PolylineVertices(guid))
+holes = [rs.PolylineVertices(guid) for guid in hole_polyline_guids]
 
-polyline_features = []
-for guid in feature_polyline_guids:
-    polyline_features.append(rs.PolylineVertices(guid))
+polyline_features = [rs.PolylineVertices(guid) for guid in feature_polyline_guids]
 
-point_features = []
-for guid in feature_point_guids:
-    point_features.append(rs.PointCoordinates(guid))
+point_features = [rs.PointCoordinates(guid) for guid in feature_point_guids]
 
 delaunay_mesh = polylines_to_delaunay(boundary, holes = holes, polyline_features = polyline_features, point_features = point_features)
 
@@ -85,20 +80,18 @@ patch_decomposition = delaunay_to_patch_decomposition(delaunay_mesh)
 rs.AddLayer('patch_decomposition')
 rs.ObjectLayer(delaunay_mesh_guid, layer = 'delaunay_mesh')
 for vertices in patch_decomposition:
-    if len(vertices) == 1:
-        rs.AddTextDot('!', vertices[0])
     guid = rs.AddPolyline(vertices)
     rs.ObjectLayer(guid, layer = 'patch_decomposition')
 
 rs.EnableRedraw(True)
 # conversion patch polylines to control mesh
 
-#mesh = polylines_to_mesh(patch_decomposition)
-#vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
-#face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
-#mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
-#rs.AddLayer('control_mesh')
-#rs.ObjectLayer(mesh_guid, layer = 'control_mesh')
+mesh = polylines_to_mesh_old(patch_decomposition)
+vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
+face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
+mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
+rs.AddLayer('control_mesh')
+rs.ObjectLayer(mesh_guid, layer = 'control_mesh')
 
 # conforming operations into a quad control mesh
 
