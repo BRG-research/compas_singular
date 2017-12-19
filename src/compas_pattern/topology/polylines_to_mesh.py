@@ -57,10 +57,6 @@ def polylines_to_mesh(polylines):
     return mesh
 
 
-
-
-
-
 from compas.geometry import distance_point_point
 from compas.geometry import vector_from_points
 from compas.geometry import normalize_vector
@@ -68,14 +64,16 @@ from compas.geometry import scale_vector
 from compas.geometry import subtract_vectors
 
 
-def polylines_to_mesh_old(polylines):
+def polylines_to_mesh_old(boundary_polylines, non_boundary_polylines):
     """Construct the mesh based on polylines. Collects faces and then reduces the valency of the faces
     by deleting the 2-valency vertices.
 
     Parameters
     ----------
-    polylines : list
-        List of polylines as list of vertices.
+    boundary_polylines : list
+        List of boundary polylines as list of vertices.
+    non_boundary_polylines : list
+        List of non-boundary polylines as list of vertices.
 
     Returns
     -------
@@ -87,6 +85,7 @@ def polylines_to_mesh_old(polylines):
 
     """
 
+    polylines = boundary_polylines + non_boundary_polylines
     #collect vertices and face vertices from a set of curves to generate a mesh
     #list of vertex coordinates
     extremities = []
@@ -195,40 +194,20 @@ def polylines_to_mesh_old(polylines):
                     visited[new_he] = True
             #get face vertices from face halfedges
             face_vertices = [halfedges[he][0] for he in face_he]
-            if len(face_vertices) == 4 or len(face_vertices) == 3:
+            boundary = True
+            for i in range(len(face_vertices)):
+                u = face_vertices[i - 1]
+                v = face_vertices[i]
+                guid = edge_guid[(u, v)]
+                if guid in non_boundary_polylines:
+                    boundary = False
+                    break
+            if not boundary:
                 final_fv.append(face_vertices)
     
     
     mesh = Mesh.from_vertices_and_faces(final_v, final_fv)
 
-    # #delete outer face (when add up rotation at vertices, sum up to -1 instead of 1)
-    # to_delete = None
-    # for fkey in mesh.faces():
-    #     orientation = 0
-    #     face_vertices = mesh.face_vertices(fkey, True)
-    #     for i in range(len(face_vertices)):
-    #         u = mesh.vertex_coordinates(face_vertices[i - 2])
-    #         v = mesh.vertex_coordinates(face_vertices[i - 1])
-    #         w = mesh.vertex_coordinates(face_vertices[i])
-    #         uv = normalize_vector(vector_from_points(u, v))
-    #         vw = normalize_vector(vector_from_points(v, w))
-    #         x_uv, y_uv, z_uv = uv
-    #         x_vw, y_vw, z_vw = vw
-    #         dot = x_uv * x_vw + y_uv * y_vw
-    #         cross = x_uv * y_vw - y_uv * x_vw
-    #         if cross != 0:
-    #             theta = cross / abs(cross) * acos(dot)
-    #         else:
-    #             theta = acos(dot)
-    #     orientation += theta
-    #     orientation /= (2 * pi)
-    #     if orientation < 0:
-    #         to_delete = fkey
-    # if to_delete is None:
-    #     print 'no outer face spotted'
-    # else:
-    #     mesh.delete_face(to_delete)
-    #     print 'outer face deleted'
     
     return mesh
 

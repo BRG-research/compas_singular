@@ -75,7 +75,8 @@ rs.EnableRedraw(True)
 # patch polylines from Delaunay mesh
 rs.EnableRedraw(False)
 
-patch_decomposition = delaunay_to_patch_decomposition(delaunay_mesh)
+medial_branches, boundary_polylines = delaunay_to_patch_decomposition(delaunay_mesh)
+patch_decomposition = medial_branches + boundary_polylines
 
 rs.AddLayer('patch_decomposition')
 rs.ObjectLayer(delaunay_mesh_guid, layer = 'delaunay_mesh')
@@ -86,7 +87,7 @@ for vertices in patch_decomposition:
 rs.EnableRedraw(True)
 # conversion patch polylines to control mesh
 
-mesh = polylines_to_mesh_old(patch_decomposition)
+mesh = polylines_to_mesh_old(boundary_polylines, medial_branches)
 vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
 face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
 mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)

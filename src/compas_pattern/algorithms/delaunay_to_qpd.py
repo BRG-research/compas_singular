@@ -148,9 +148,7 @@ def delaunay_to_patch_decomposition(delaunay_mesh):
     # convert list of vertices into list of points
     boundary_polylines = [ [delaunay_mesh.vertex_coordinates(vkey) for vkey in split_boundary]for split_boundary in split_boundaries]
 
-    patch_decomposition = medial_branches + boundary_polylines
-
-    return patch_decomposition
+    return medial_branches, boundary_polylines
 
 
 # ==============================================================================
