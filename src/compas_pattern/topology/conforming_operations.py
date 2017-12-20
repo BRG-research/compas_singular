@@ -7,12 +7,20 @@ __email__      = 'oval@arch.ethz.ch'
 
 
 __all__ = [
-    'triangle_to_quad',
+    'tri_to_quads',
+    'penta_to_quads',
+    'hexa_to_quads',
 ]
 
 
-def triangle_to_quad(mesh, fkey, vkey):
-    """Convert a tri face in a quad face by duplicating a vertex on the boundary.
+def tri_to_quads(mesh, fkey):
+    """Convert a tri face into quad faces by centroid split.
+
+    [a, b, c] -> [a, e, g, d], [f, c, d, g] and [f, c, d, g]
+    plus adjacent
+    [*, b, a, *] -> [*, b, e, a, *]
+    [*, c, b, *] -> [*, c, f, b, *]
+    [*, a, c, *] -> [*, a, d, c, *]
 
     Parameters
     ----------
@@ -22,14 +30,11 @@ def triangle_to_quad(mesh, fkey, vkey):
     fkey: int
         Key of the face to change.
 
-    vkey: int
-        Key of the vertex to duplicate.
-
     Returns
     -------
     mesh : Mesh, None
         The modified mesh.
-        None if the face is not a tri or if the vertex is not on the boundary.
+        None if the face is not a tri.
 
     Raises
     ------
@@ -38,10 +43,56 @@ def triangle_to_quad(mesh, fkey, vkey):
     """
     
     # return None if the face is not a tri or if the vertex is not on the boundary
-    if len(mesh.face_vertices) != 3 or not mesh.is_vertex_on_boundary(vkey):
+    if len(mesh.face_vertices(fkey)) != 3:
         return None
 
-    # modify face and its neighbours
+    a, b, c = mesh.face_vertices(fkey)
+
+    # create new vertices
+    x, y, z = mesh.edge_midpoint(c, a)
+    d = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    x, y, z = mesh.edge_midpoint(a, b)
+    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    x, y, z = mesh.edge_midpoint(b, c)
+    f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    x, y, z = mesh.face_centroid(fkey)
+    g = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+
+    # delete old face
+    mesh.delete_face(fkey)
+
+    # create new face
+    mesh.add_face([a, e, g, d])
+    mesh.add_face([f, c, d, g])
+    mesh.add_face([e, b, f, g])
+
+    # update adjacent face
+    # [*, b, a, *] -> [*, b, e, a, *]
+    if a in mesh.halfedge[b] and mesh.halfedge[b][a] is not None:
+        fkey_1 = mesh.halfedge[b][a]
+        face_vertices_1 = mesh.face_vertices(fkey_1)[:]
+        idx = face_vertices_1.index(a)
+        face_vertices_1.insert(idx, e)
+        mesh.delete_face(fkey_1)
+        mesh.add_face(face_vertices_1, fkey = fkey_1)
+    # [*, c, b, *] -> [*, c, f, b, *]
+    if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
+        fkey_2 = mesh.halfedge[c][b]
+        face_vertices_2 = mesh.face_vertices(fkey_2)[:]
+        idx = face_vertices_2.index(b)
+        face_vertices_2.insert(idx, f)
+        mesh.delete_face(fkey_2)
+        mesh.add_face(face_vertices_2, fkey = fkey_2)
+    # [*, a, c, *] -> [*, a, d, c, *]
+    if c in mesh.halfedge[a] and mesh.halfedge[a][c] is not None:
+        fkey_3 = mesh.halfedge[a][c]
+        face_vertices_3 = mesh.face_vertices(fkey_3)[:]
+        idx = face_vertices_3.index(c)
+        face_vertices_3.insert(idx, d)
+        mesh.delete_face(fkey_3)
+        mesh.add_face(face_vertices_3, fkey = fkey_3)
+
+    return f
 
 def penta_to_quads(mesh, fkey, vkey):
     """Convert a penta face into two quads with a new edge from a vertex to the opposite edge midpoint.
