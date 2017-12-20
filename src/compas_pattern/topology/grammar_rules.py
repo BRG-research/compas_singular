@@ -141,10 +141,10 @@ def quad_to_two_quads_diagonal(mesh, fkey, vkey):
 def quad_to_two_quads(mesh, fkey, ukey, vkey):
     """Convert a quad face into two quads with a new edge orthogonal to one of its edges.
     
-    [a, b, c, d] -> [a, b, e, f] + [c, d, f, e]
+    [a, b, c, d] -> [a, b, f, e] + [c, d, e, f]
     plus update of two neighbour faces:
-    [*, c, b, *] -> [*, c, e, b, *]
-    [*, a, d, *] -> [*, a, f, d, *]
+    [*, c, b, *] -> [*, c, f, b, *]
+    [*, a, d, *] -> [*, a, e, d, *]
 
     Parameters
     ----------
@@ -185,33 +185,33 @@ def quad_to_two_quads(mesh, fkey, ukey, vkey):
     c = mesh.face_vertex_descendant(fkey, b)
 
     # create new vertices
-    x, y, z = mesh.edge_midpoint(b, c)
-    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
     x, y, z = mesh.edge_midpoint(d, a)
+    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    x, y, z = mesh.edge_midpoint(b, c)
     f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
 
     # delete old faces
     mesh.delete_face(fkey)
 
     # create new faces
-    mesh.add_face([a, b, e, f])
-    mesh.add_face([c, d, f, e])
+    mesh.add_face([a, b, f, e])
+    mesh.add_face([c, d, e, f])
 
     # update adjacent faces
-    # [*, c, b, *] -> [*, c, e, b, *]
+    # [*, c, b, *] -> [*, c, f, b, *]
     if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
         fkey_1 = mesh.halfedge[c][b]
         face_vertices_1 = mesh.face_vertices(fkey_1)[:]
         idx = face_vertices_1.index(b)
-        face_vertices_1.insert(idx, e)
+        face_vertices_1.insert(idx, f)
         mesh.delete_face(fkey_1)
         mesh.add_face(face_vertices_1, fkey = fkey_1)
-    # [*, a, d, *] -> [*, a, f, d, *]
+    # [*, a, d, *] -> [*, a, e, d, *]
     if d in mesh.halfedge[a] and mesh.halfedge[a][d] is not None:
         fkey_2 = mesh.halfedge[a][d]
         face_vertices_2 = mesh.face_vertices(fkey_2)[:]
         idx = face_vertices_2.index(d)
-        face_vertices_1.insert(idx, f)
+        face_vertices_2.insert(idx, e)
         mesh.delete_face(fkey_2)
         mesh.add_face(face_vertices_2, fkey = fkey_2)
 

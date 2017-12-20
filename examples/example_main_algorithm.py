@@ -114,17 +114,54 @@ from compas_pattern.topology.grammar_rules import quad_to_two_quads_diagonal
 from compas_pattern.topology.grammar_rules import quad_to_two_quads
 from compas_pattern.topology.conforming_operations import penta_to_quads
 from compas_pattern.topology.conforming_operations import hexa_to_quads
-fkey = mesh.faces_on_boundary()[0]
-ukey = mesh.face_vertices(fkey)[0]
-vkey = mesh.face_vertices(fkey)[1]
+
+rs.EnableRedraw(False)
+
+artist = rhino.MeshArtist(mesh, layer='MeshArtist')
+artist.clear_layer()
+
+#artist.draw_vertexlabels()
+#artist.redraw()
+
+artist.draw_facelabels()
+artist.redraw()
+fkey = rhino.mesh_select_face(mesh, message = 'face to split')
+artist.clear_layer()
+artist.redraw()
+
+artist.draw_edgelabels()
+artist.redraw()
+ukey, vkey = rhino.mesh_select_edge(mesh, message = 'edge of the face along which to split')
+artist.clear_layer()
+artist.redraw()
+
+rs.EnableRedraw(False)
+
 e, f = quad_to_two_quads(mesh, fkey, ukey, vkey)
+fkey = mesh.halfedge[e][f]
+vkey = f
+count = mesh.number_of_faces()
+while count > 0:
+    count -= 1
+    ukey = mesh.face_vertex_descendant(fkey, vkey)
+    if vkey in mesh.halfedge[ukey] and mesh.halfedge[ukey][vkey] is not None:
+        fkey = mesh.halfedge[ukey][vkey]
+        if len(mesh.face_vertices(fkey)) == 5:
+            wkey = penta_to_quads(mesh, fkey, vkey)
+            fkey = mesh.halfedge[vkey][wkey]
+            vkey = wkey
+            continue
+        if len(mesh.face_vertices(fkey)) == 6:
+            hexa_to_quads(mesh, fkey, vkey)
+            break
+    break
 fkey = mesh.halfedge[f][e]
 vkey = e
 count = mesh.number_of_faces()
 while count > 0:
     count -= 1
     ukey = mesh.face_vertex_descendant(fkey, vkey)
-    if vkey in mesh.halfedge[ukey] and mesh.halfedge[ukey][vkey] is not None:
+    if vkey in mesh.halfedge[ukey] and mesh.halfedge[ukey][vkey] is not None and len(mesh.face_vertices(mesh.halfedge[ukey][vkey])) != 4:
         fkey = mesh.halfedge[ukey][vkey]
         if len(mesh.face_vertices(fkey)) == 5:
             wkey = penta_to_quads(mesh, fkey, vkey)
