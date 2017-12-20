@@ -10,6 +10,7 @@ __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
     'tri_quad_to_quad_quad',
+    'quad_to_two_quads_diagonal',
 ]
 
 
@@ -135,6 +136,64 @@ def quad_to_two_quads_diagonal(mesh, fkey, vkey):
     mesh.add_face([a, e, c, d])
 
     return e
+
+def quad_to_two_quads(mesh, fkey, ukey, vkey):
+    """Convert a quad face adjacent into two quads with a new edge orthogonal to one of its edges.
+    
+    [a, b, c, d] -> [a, b, e, f] + [c, d, f, e]
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    ukey: int
+        Key of the first vertex of the edge.
+    vkey: int
+        Key of the second vertex of the edge.
+
+    Returns
+    -------
+    (e, f) : tuple, None
+        The keys of the vertices of the new edge.
+        None if the quad face is not a quad or if the vertices are not an edge of the face.
+
+    Raises
+    ------
+    -
+
+    """
+
+    # check validity of rule
+    if len(mesh.face_vertices(fkey)) != 4:
+        return None
+    if mesh.halfedge[ukey][vkey] != fkey and mesh.halfedge[vkey][ukey] != fkey:
+        return None
+
+    if mesh.halfedge[ukey][vkey] == fkey:
+        d = ukey
+        a = vkey
+    else:
+        d = vkey
+        a = ukey
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+
+    # create new vertices
+    x, y, z = mesh.edge_midpoint(b, c)
+    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    x, y, z = mesh.edge_midpoint(d, a)
+    f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+
+    # delete old faces
+    mesh.delete_face(fkey)
+
+    # create new faces
+    mesh.add_face([a, b, e, f])
+    mesh.add_face([c, d, f, e])
+
+    return (e, f)
 
 # ==============================================================================
 # Main

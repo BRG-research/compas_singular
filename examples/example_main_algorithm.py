@@ -48,11 +48,8 @@ feature_point_guids = [rs.AddPoint([u, v, 0]) for u, v in point_features_UV]
 rs.AddLayer('feature_point_planar')
 rs.ObjectLayer(feature_point_guids, layer = 'feature_point_planar')
 
-rs.EnableRedraw(True)
-
 
 # generate specific Delaunay mesh from planar shape and features
-rs.EnableRedraw(False)
 
 boundary = rs.PolylineVertices(boundary_polyline_guid)
 
@@ -71,10 +68,8 @@ delaunay_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices,
 rs.AddLayer('delaunay_mesh')
 rs.ObjectLayer(delaunay_mesh_guid, layer = 'delaunay_mesh')
 
-rs.EnableRedraw(True)
-
 # patch polylines from Delaunay mesh
-rs.EnableRedraw(False)
+
 
 medial_branches, boundary_polylines = delaunay_to_patch_decomposition(delaunay_mesh)
 patch_decomposition = medial_branches + boundary_polylines
@@ -85,7 +80,6 @@ for vertices in patch_decomposition:
     guid = rs.AddPolyline(vertices)
     rs.ObjectLayer(guid, layer = 'patch_decomposition')
 
-rs.EnableRedraw(True)
 # conversion patch polylines to control mesh
 
 mesh = polylines_to_mesh_old(boundary_polylines, medial_branches)
@@ -97,7 +91,6 @@ rs.AddLayer('control_mesh')
 rs.ObjectLayer(mesh_guid, layer = 'control_mesh')
 
 # conforming operations into a quad control mesh
-rs.EnableRedraw(False)
 
 conform_mesh = conforming_initial_patch_decomposition(mesh)
 
@@ -106,26 +99,31 @@ face_vertices = [conform_mesh.face_vertices(fkey) for fkey in conform_mesh.faces
 conform_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
 rs.AddLayer('conform_mesh')
 rs.ObjectLayer(conform_mesh_guid, layer = 'conform_mesh')
-rs.EnableRedraw(True)
 
 # possibility to apply grammar rules
-rs.EnableRedraw(False)
 
 mesh = conform_mesh
 
 from compas_pattern.topology.grammar_rules import quad_to_two_quads_diagonal
+#for vkey in mesh.vertices_on_boundary():
+#    vertex_faces = mesh.vertex_faces(vkey)
+#    if len(vertex_faces) == 1:
+#        fkey = vertex_faces[0]
+#        quad_to_two_quads_diagonal(mesh, fkey, vkey)
 
-for vkey in mesh.vertices_on_boundary():
-    vertex_faces = mesh.vertex_faces(vkey)
-    if len(vertex_faces) == 1:
-        fkey = vertex_faces[0]
-        quad_to_two_quads_diagonal(mesh, fkey, vkey)
+from compas_pattern.topology.grammar_rules import quad_to_two_quads
+fkey = mesh.faces_on_boundary()[0]
+ukey = mesh.face_vertices(fkey)[0]
+vkey = mesh.face_vertices(fkey)[1]
+quad_to_two_quads(mesh, fkey, ukey, vkey)
 
 vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
 face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
 mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
 rs.AddLayer('edited_mesh')
 rs.ObjectLayer(mesh_guid, layer = 'edited_mesh')
+
+
 rs.EnableRedraw(True)
 
 # mesh densification
