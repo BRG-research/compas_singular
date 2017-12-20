@@ -141,6 +141,7 @@ def quad_to_two_quads(mesh, fkey, ukey, vkey):
     """Convert a quad face adjacent into two quads with a new edge orthogonal to one of its edges.
     
     [a, b, c, d] -> [a, b, e, f] + [c, d, f, e]
+    with update of neighbours: [*, c, e, b, *] and [*, a, f, d, *]
 
     Parameters
     ----------
@@ -192,6 +193,25 @@ def quad_to_two_quads(mesh, fkey, ukey, vkey):
     # create new faces
     mesh.add_face([a, b, e, f])
     mesh.add_face([c, d, f, e])
+
+    # update adjacent faces
+    # [*, c, b, *] -> [*, c, e, b, *]
+    if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
+        fkey_1 = mesh.halfedge[c][b]
+        face_vertices_1 = mesh.face_vertices(fkey_1)[:]
+        idx = face_vertices_1.index(b)
+        face_vertices_1.insert(idx, e)
+        mesh.delete_face(fkey_1)
+        mesh.add_face(face_vertices_1, fkey = fkey_1)
+    # [*, a, d, *] -> [*, a, f, d, *]
+    if d in mesh.halfedge[a] and mesh.halfedge[a][d] is not None:
+        fkey_2 = mesh.halfedge[a][d]
+        face_vertices_2 = mesh.face_vertices(fkey_2)[:]
+        idx = face_vertices_2.index(d)
+        face_vertices_1.insert(idx, f)
+        mesh.delete_face(fkey_2)
+        mesh.add_face(face_vertices_2, fkey = fkey_2)
+
 
     return (e, f)
 
