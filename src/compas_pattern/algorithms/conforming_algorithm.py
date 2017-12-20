@@ -16,7 +16,8 @@ __all__ = [
 def conforming_initial_patch_decomposition(mesh):
     """Transform the initial patch decomposition in a valid quad patch decomposition. Potentially with pseudo-quads.
     1. Remove tri patches that sould not be pseudo-quad patches.
-    2. 
+    2. Transform penta patches with only one three-valency vertex into two quad patches.
+    Transform hex patches with two opposite three-valency vertices into two quad patches.
 
     Parameters
     ----------
@@ -55,6 +56,7 @@ def conforming_initial_patch_decomposition(mesh):
                             tri_quad_to_quad_quad(mesh, fkey_tri, fkey_quad, c)                              
                             continue
         break
+
 
     return mesh
 

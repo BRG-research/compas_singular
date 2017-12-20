@@ -11,6 +11,7 @@ __email__      = 'oval@arch.ethz.ch'
 __all__ = [
     'tri_quad_to_quad_quad',
     'quad_to_two_quads_diagonal',
+    'quad_to_two_quads',
 ]
 
 
@@ -138,10 +139,12 @@ def quad_to_two_quads_diagonal(mesh, fkey, vkey):
     return e
 
 def quad_to_two_quads(mesh, fkey, ukey, vkey):
-    """Convert a quad face adjacent into two quads with a new edge orthogonal to one of its edges.
+    """Convert a quad face into two quads with a new edge orthogonal to one of its edges.
     
     [a, b, c, d] -> [a, b, e, f] + [c, d, f, e]
-    with update of neighbours: [*, c, e, b, *] and [*, a, f, d, *]
+    plus update of two neighbour faces:
+    [*, c, b, *] -> [*, c, e, b, *]
+    [*, a, d, *] -> [*, a, f, d, *]
 
     Parameters
     ----------

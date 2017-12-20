@@ -112,10 +112,29 @@ from compas_pattern.topology.grammar_rules import quad_to_two_quads_diagonal
 #        quad_to_two_quads_diagonal(mesh, fkey, vkey)
 
 from compas_pattern.topology.grammar_rules import quad_to_two_quads
+from compas_pattern.topology.conforming_operations import penta_to_quads
+from compas_pattern.topology.conforming_operations import hexa_to_quads
 fkey = mesh.faces_on_boundary()[0]
 ukey = mesh.face_vertices(fkey)[0]
 vkey = mesh.face_vertices(fkey)[1]
-quad_to_two_quads(mesh, fkey, ukey, vkey)
+e, f = quad_to_two_quads(mesh, fkey, ukey, vkey)
+fkey = mesh.halfedge[f][e]
+vkey = e
+count = mesh.number_of_faces()
+while count > 0:
+    count -= 1
+    ukey = mesh.face_vertex_descendant(fkey, vkey)
+    if vkey in mesh.halfedge[ukey] and mesh.halfedge[ukey][vkey] is not None:
+        fkey = mesh.halfedge[ukey][vkey]
+        if len(mesh.face_vertices(fkey)) == 5:
+            wkey = penta_to_quads(mesh, fkey, vkey)
+            fkey = mesh.halfedge[vkey][wkey]
+            vkey = wkey
+            continue
+        if len(mesh.face_vertices(fkey)) == 6:
+            hexa_to_quads(mesh, fkey, vkey)
+            break
+    break
 
 vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
 face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
