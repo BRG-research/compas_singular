@@ -70,7 +70,7 @@ def tri_quad_to_quad_quad(mesh, fkey_tri, fkey_quad, vkey):
     e = mesh.face_vertex_descendant(fkey_quad, d)
 
     # create new vertex
-    x, y, z = mesh.edge_midpoint(d, a)
+    x, y, z = mesh.edge_midpoint(e, a)
     f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
 
     # delete old faces
