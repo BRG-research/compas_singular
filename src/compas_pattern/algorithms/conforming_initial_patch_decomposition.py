@@ -49,10 +49,10 @@ def conforming_initial_patch_decomposition(mesh):
                         e = mesh.face_vertex_descendant(fkey_quad, d)
                         # only two valid possibilities: a and e are the only ones on the boundary or c and d are the only ones on the boundary
                         if a in boundary_vertices and b not in boundary_vertices and c not in boundary_vertices and d not in boundary_vertices and e in boundary_vertices:
-                            tri_quad_to_quad_quad(mesh, fkey_tri, fkey_quad, a)
+                            mix_quad_1(mesh, fkey_tri, fkey_quad, a)
                             continue
                         elif a not in boundary_vertices and b not in boundary_vertices and c in boundary_vertices and d in boundary_vertices and e not in boundary_vertices:
-                            tri_quad_to_quad_quad(mesh, fkey_tri, fkey_quad, c)                              
+                            mix_quad_1(mesh, fkey_tri, fkey_quad, c)                              
                             continue
         break
 
