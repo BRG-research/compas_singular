@@ -1,5 +1,7 @@
 from compas.datastructures.mesh import Mesh
 
+from compas_pattern.datastructures.mesh import add_vertex_to_face
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -70,27 +72,15 @@ def tri_to_quads(mesh, fkey):
     # [*, b, a, *] -> [*, b, e, a, *]
     if a in mesh.halfedge[b] and mesh.halfedge[b][a] is not None:
         fkey_1 = mesh.halfedge[b][a]
-        face_vertices_1 = mesh.face_vertices(fkey_1)[:]
-        idx = face_vertices_1.index(a)
-        face_vertices_1.insert(idx, e)
-        mesh.delete_face(fkey_1)
-        mesh.add_face(face_vertices_1, fkey = fkey_1)
+        add_vertex_to_face(mesh, fkey_1, b, e)
     # [*, c, b, *] -> [*, c, f, b, *]
     if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
         fkey_2 = mesh.halfedge[c][b]
-        face_vertices_2 = mesh.face_vertices(fkey_2)[:]
-        idx = face_vertices_2.index(b)
-        face_vertices_2.insert(idx, f)
-        mesh.delete_face(fkey_2)
-        mesh.add_face(face_vertices_2, fkey = fkey_2)
+        add_vertex_to_face(mesh, fkey_2, c, f)
     # [*, a, c, *] -> [*, a, d, c, *]
     if c in mesh.halfedge[a] and mesh.halfedge[a][c] is not None:
         fkey_3 = mesh.halfedge[a][c]
-        face_vertices_3 = mesh.face_vertices(fkey_3)[:]
-        idx = face_vertices_3.index(c)
-        face_vertices_3.insert(idx, d)
-        mesh.delete_face(fkey_3)
-        mesh.add_face(face_vertices_3, fkey = fkey_3)
+        add_vertex_to_face(mesh, fkey_3, a, d)
 
     return f
 
@@ -149,11 +139,7 @@ def penta_to_quads(mesh, fkey, vkey):
     # [*, c, b, *] -> [*, c, f, b, *]
     if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
         fkey_1 = mesh.halfedge[c][b]
-        face_vertices_1 = mesh.face_vertices(fkey_1)[:]
-        idx = face_vertices_1.index(b)
-        face_vertices_1.insert(idx, f)
-        mesh.delete_face(fkey_1)
-        mesh.add_face(face_vertices_1, fkey = fkey_1)
+        add_vertex_to_face(mesh, fkey_1, c, f)
 
     return f
 
@@ -209,11 +195,7 @@ def hexa_to_quads(mesh, fkey, vkey):
     # [*, c, b, *] -> [*, c, f, b, *]
     if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
         fkey_1 = mesh.halfedge[c][b]
-        face_vertices_1 = mesh.face_vertices(fkey_1)[:]
-        idx = face_vertices_1.index(b)
-        face_vertices_1.insert(idx, f)
-        mesh.delete_face(fkey_1)
-        mesh.add_face(face_vertices_1, fkey = fkey_1)
+        add_vertex_to_face(mesh, fkey_1, c, f)
 
     return f
 

@@ -2,6 +2,8 @@ from compas.datastructures.mesh import Mesh
 
 from compas.topology import mesh_flip_cycles
 
+from compas_pattern.datastructures.mesh import add_vertex_to_face
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -13,6 +15,7 @@ __all__ = [
     'quad_to_two_quads_diagonal',
     'quad_to_two_quads',
     'quad_to_tris',
+    'quad_to_three_tris',
 ]
 
 
@@ -172,7 +175,7 @@ def quad_to_two_quads(mesh, fkey, ukey, vkey):
     # check validity of rule
     if len(mesh.face_vertices(fkey)) != 4:
         return None
-    if mesh.halfedge[ukey][vkey] != fkey and mesh.halfedge[vkey][ukey] != fkey:
+    if (vkey not in mesh.halfedge[ukey] and ukey not in mesh.halfedge[vkey]) or (mesh.halfedge[ukey][vkey] != fkey and mesh.halfedge[vkey][ukey] != fkey):
         return None
 
     if mesh.halfedge[ukey][vkey] == fkey:
@@ -201,19 +204,11 @@ def quad_to_two_quads(mesh, fkey, ukey, vkey):
     # [*, c, b, *] -> [*, c, f, b, *]
     if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
         fkey_1 = mesh.halfedge[c][b]
-        face_vertices_1 = mesh.face_vertices(fkey_1)[:]
-        idx = face_vertices_1.index(b)
-        face_vertices_1.insert(idx, f)
-        mesh.delete_face(fkey_1)
-        mesh.add_face(face_vertices_1, fkey = fkey_1)
+        add_vertex_to_face(mesh, fkey_1, c, f)
     # [*, a, d, *] -> [*, a, e, d, *]
     if d in mesh.halfedge[a] and mesh.halfedge[a][d] is not None:
         fkey_2 = mesh.halfedge[a][d]
-        face_vertices_2 = mesh.face_vertices(fkey_2)[:]
-        idx = face_vertices_2.index(d)
-        face_vertices_2.insert(idx, e)
-        mesh.delete_face(fkey_2)
-        mesh.add_face(face_vertices_2, fkey = fkey_2)
+        add_vertex_to_face(mesh, fkey_2, a, e)
 
 
     return (e, f)
@@ -326,19 +321,11 @@ def quad_to_three_tris(mesh, fkey, vkey):
     # [*, c, b, *] -> [*, c, e, b, *]
     if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
         fkey_1 = mesh.halfedge[c][b]
-        face_vertices_1 = mesh.face_vertices(fkey_1)[:]
-        idx = face_vertices_1.index(b)
-        face_vertices_1.insert(idx, e)
-        mesh.delete_face(fkey_1)
-        mesh.add_face(face_vertices_1, fkey = fkey_1)
+        add_vertex_to_face(mesh, fkey_1, c, e)
     # [*, d, c, *] -> [*, d, f, c, *]
     if c in mesh.halfedge[d] and mesh.halfedge[d][c] is not None:
         fkey_2 = mesh.halfedge[d][c]
-        face_vertices_2 = mesh.face_vertices(fkey_2)[:]
-        idx = face_vertices_2.index(c)
-        face_vertices_2.insert(idx, f)
-        mesh.delete_face(fkey_2)
-        mesh.add_face(face_vertices_2, fkey = fkey_2)
+        add_vertex_to_face(mesh, fkey_2, d, f)
 
     return g
 

@@ -113,8 +113,51 @@ def join_and_weld_meshes(meshes, precision = '3f'):
     return joined_and_welded_mesh
 
 
-#def join_meshes(meshes, precision = '3f'):
-#return 0
+def join_meshes(meshes):
+    """Join meshes without welding.
+
+    Parameters
+    ----------
+    meshes : list
+        A list of meshes.
+
+    Returns
+    -------
+    mesh : Mesh
+        The joined mesh.
+
+    Raises
+    ------
+    -
+
+    """
+
+    vertices = []
+    face_vertices = []
+    vertex_map = {}
+    count = 0
+
+    # store vertices from different geometric key only
+    for mesh in meshes:
+        for vkey in mesh.vertices():
+            xyz = mesh.vertex_coordinates(vkey)
+            geom_key = geometric_key(xyz, precision)
+            if geom_key not in vertex_map:
+                vertex_map[geom_key] = count
+                vertices.append(xyz)
+                count += 1
+
+        # update face vertices with index matching geometric key
+        for fkey in mesh.faces():
+            old_face_vertices = mesh.face_vertices(fkey)
+            new_face_vertices = []
+            for vkey in old_face_vertices:
+                xyz = geometric_key(mesh.vertex_coordinates(vkey), precision)
+                new_face_vertices.append(vertex_map[xyz])
+            face_vertices.append(new_face_vertices)
+
+    joined_and_welded_mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
+    return joined_mesh
 
 
 # ==============================================================================
