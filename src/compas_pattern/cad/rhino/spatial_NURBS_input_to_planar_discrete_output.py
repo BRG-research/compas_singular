@@ -59,7 +59,9 @@ def spatial_NURBS_input_to_planar_discrete_output(discretization_spacing, surfac
     planar_boundary_polyline = [[u, v, 0] for u, v in uv_boundary_polyline]
     rs.DeleteObjects(boundaries)
 
-    holes = rs.JoinCurves(surface_borders(surface_guid, border_type = 2), delete_input = True)
+    holes = surface_borders(surface_guid, border_type = 2)
+    if len(holes) > 1:
+        holes = rs.JoinCurves(holes, delete_input = True)
     hole_polylines = [rs.ConvertCurveToPolyline(hole, angle_tolerance = 5.0, tolerance = 0.01, delete_input = True, min_edge_length = 0, max_edge_length = discretization_spacing) for hole in holes]
     uv_hole_polylines = [[rs.SurfaceClosestPoint(surface_guid, vertex) for vertex in rs.PolylineVertices(hole_polyline)] for hole_polyline in hole_polylines]
     planar_hole_polylines = [[[u, v, 0] for u, v in hole] for hole in uv_hole_polylines]
