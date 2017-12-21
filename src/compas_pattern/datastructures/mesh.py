@@ -9,6 +9,7 @@ __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
     'face_circle',
+    'add_vertex_to_face',
 ]
 
 def face_circle(mesh, fkey):

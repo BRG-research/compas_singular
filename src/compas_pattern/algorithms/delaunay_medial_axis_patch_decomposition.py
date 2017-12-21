@@ -3,20 +3,18 @@ from compas.datastructures.mesh import Mesh
 from compas.topology import delaunay_from_points
 
 from compas_pattern.datastructures.mesh import face_circle
-from compas_pattern.topology.mesh_boundary_polylines import mesh_boundaries
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
-
 __all__ = [
-    'delaunay_to_patch_decomposition',
+    'delaunay_medial_axis_patch_decomposition',
 ]
 
-def delaunay_to_patch_decomposition(delaunay_mesh):
-    """Construct a patch decomposition from a Delaunay mesh.
+def delaunay_medial_axis_patch_decomposition(delaunay_mesh):
+    """Constructs a patch decomposition from a Delaunay mesh based on pruning and grafting of its medial axis.
 
     Parameters
     ----------
@@ -26,7 +24,7 @@ def delaunay_to_patch_decomposition(delaunay_mesh):
     Returns
     -------
     patch_decomposition: list, None
-        List of polylines as lists of vertices forming the patch decomposition.
+        List of polylines as lists of points forming the inner and outer polylines of the patch decomposition.
         Return None if input mesh is not a trimesh.
 
     Raises
@@ -58,7 +56,6 @@ def delaunay_to_patch_decomposition(delaunay_mesh):
                     break
         else:
             reference_points[fkey] = face_circle(delaunay_mesh,fkey)[0]
-
 
     # collect branch paths that span from one singularity to another as series of faces
     branch_paths = []
@@ -149,7 +146,6 @@ def delaunay_to_patch_decomposition(delaunay_mesh):
     boundary_polylines = [ [delaunay_mesh.vertex_coordinates(vkey) for vkey in split_boundary]for split_boundary in split_boundaries]
 
     return medial_branches, boundary_polylines
-
 
 # ==============================================================================
 # Main

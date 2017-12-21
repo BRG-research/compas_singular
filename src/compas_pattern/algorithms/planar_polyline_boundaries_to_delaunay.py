@@ -4,9 +4,7 @@ from compas.topology import delaunay_from_points
 
 from compas.utilities import geometric_key
 
-from compas_pattern.datastructures.mesh import face_circle
-
-from compas_pattern.topology.unweld_mesh_along_edge_path import unweld_mesh_along_edge_path
+from compas_pattern.topology.unwelding import unweld_mesh_along_edge_path
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
@@ -15,10 +13,10 @@ __email__      = 'oval@arch.ethz.ch'
 
 
 __all__ = [
-    'polylines_to_delaunay',
+    'planar_polyline_boundaries_to_delaunay',
 ]
 
-def polylines_to_delaunay(boundary, holes = [], polyline_features = [], point_features = []):
+def planar_polyline_boundaries_to_delaunay(boundary, holes = [], polyline_features = [], point_features = []):
     """Generates a trimmed Delaunay mesh on a closed outer boundary polyline with potential
     closed inner boundary polylines, polyline constraints and point constraints.
 

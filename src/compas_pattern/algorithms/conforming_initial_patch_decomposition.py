@@ -1,6 +1,6 @@
 from compas.datastructures.mesh import Mesh
 
-from compas_pattern.topology.grammar_rules import tri_quad_to_quad_quad
+from compas_pattern.topology.grammar_rules import mix_quad_1
 
 
 __author__     = ['Robin Oval']
@@ -16,7 +16,8 @@ __all__ = [
 def conforming_initial_patch_decomposition(mesh):
     """Transform the initial patch decomposition in a valid quad patch decomposition. Potentially with pseudo-quads.
     1. Remove tri patches that sould not be pseudo-quad patches.
-
+    2.
+    
     Parameters
     ----------
     mesh : Mesh
