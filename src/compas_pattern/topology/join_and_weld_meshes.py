@@ -134,29 +134,20 @@ def join_meshes(meshes):
 
     vertices = []
     face_vertices = []
-    vertex_map = {}
-    count = 0
 
-    # store vertices from different geometric key only
+    # procede per mesh
     for mesh in meshes:
+        # aggregate vertices
+        remap_vertices = {}
         for vkey in mesh.vertices():
-            xyz = mesh.vertex_coordinates(vkey)
-            geom_key = geometric_key(xyz, precision)
-            if geom_key not in vertex_map:
-                vertex_map[geom_key] = count
-                vertices.append(xyz)
-                count += 1
-
-        # update face vertices with index matching geometric key
+            idx = len(vertices)
+            remap_vertices[vkey] = idx
+            vertices.append(mesh.vertex_coordinates(vkey))
         for fkey in mesh.faces():
-            old_face_vertices = mesh.face_vertices(fkey)
-            new_face_vertices = []
-            for vkey in old_face_vertices:
-                xyz = geometric_key(mesh.vertex_coordinates(vkey), precision)
-                new_face_vertices.append(vertex_map[xyz])
-            face_vertices.append(new_face_vertices)
+            face_vertices.append([remap_vertices[vkey] for vkey in mesh.face_vertices(fkey)])
 
-    joined_and_welded_mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
+    joined_mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
+
     return joined_mesh
 
 
@@ -185,4 +176,5 @@ if __name__ == '__main__':
 
     print mesh_1
     print mesh_2
+    print join_meshes([mesh_1, mesh_2])
     print join_and_weld_meshes([mesh_1, mesh_2])
