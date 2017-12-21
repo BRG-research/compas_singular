@@ -12,12 +12,12 @@ __all__ = [
     'tri_quad_to_quad_quad',
     'quad_to_two_quads_diagonal',
     'quad_to_two_quads',
+    'quad_to_tris',
 ]
 
 
 def tri_quad_to_quad_quad(mesh, fkey_tri, fkey_quad, vkey):
     """Convert a tri face adjacent to a quad face into two quad faces with same keys by adding a new vertex.
-    Does not inherit attributes.
     
     [a, b, c] + [c, d, e, a] -> [a, b, c, f] + [c, d, e, f]
 
@@ -217,6 +217,53 @@ def quad_to_two_quads(mesh, fkey, ukey, vkey):
 
 
     return (e, f)
+
+def quad_to_tris(mesh, fkey, vkey):
+    """Convert a quad face into two tri faces with diagonal split starting from the vertex key.
+    
+    [a, b, c, d] -> [a, b, c] + [a, c, d]
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    vkey: int
+        Key of a vertex of quad face.
+
+    Returns
+    -------
+    c : int, None
+        The key of the second vertex of the new diagonal edge.
+        None if the tri face is not a quad or if the vertex is not part of the face vertices.
+
+    Raises
+    ------
+    -
+
+    """
+
+    # check validity of rule
+    if len(mesh.face_vertices(fkey)) != 4:
+        return None
+    if vkey not in mesh.face_vertices(fkey):
+        return None
+
+    # itemise vertices
+    a = vkey
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+    d = mesh.face_vertex_descendant(fkey, c)
+
+    # delete old face
+    mesh.delete_face(fkey)
+
+    # create new faces
+    mesh.add_face([a, b, c])
+    mesh.add_face([a, c, d])
+
+    return c
 
 # ==============================================================================
 # Main
