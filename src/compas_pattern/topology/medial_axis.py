@@ -9,7 +9,6 @@ __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
-
 __all__ = [
     'medial_axis_from_delaunay',
 ]
@@ -89,7 +88,6 @@ def medial_axis_from_delaunay(delaunay_mesh):
     medial_branches = [[reference_points[fkey] for fkey in branch_path] for branch_path in branch_paths]
   
     return medial_branches
-
 
 # ==============================================================================
 # Main

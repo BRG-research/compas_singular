@@ -1,4 +1,5 @@
 from compas.datastructures.mesh import Mesh
+
 from compas.topology.duality import mesh_dual
 
 __author__     = ['Robin Oval']
@@ -6,45 +7,89 @@ __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
-
 __all__ = [
-    'quad_mesh_to_polylines',
+    'mesh_polylines_boundary',
+    'quad_mesh_polylines_all',
 ]
 
-
-def quad_mesh_to_polylines(mesh, dual = False):
-    """Collects the vertices of the polyline from a quad mesh or the faces of the dual polyline from a quad mesh dual.
+def mesh_polylines_boundary(mesh):
+    """Extracts the mesh outer and inner boundary polylines as lists of vertices.
+    Extension of compas vertices_on_boundary(self, ordered = True) for several boundaries.
 
     Parameters
     ----------
     mesh : Mesh
-        A quad mesh.
-    dual: bool
-        False if collects the vertex polylines from the quad mesh.
-        True if collects the face polylines from the dual of the quad mesh.
+        Mesh.
 
     Returns
     -------
-    list or None
-        If on the primal:
-        The list of polylines as lists of vertex indices.
-        If the first and last vertex indices in the last are identical, then the polyline is closed.
-        None if not a quad mesh.
-        If on the dual:
-        The list of dual polylines as list of face indices.
+    boundaries: list
+        List of polylines as lists of vertices of the boundaries.
 
     Raises
     ------
     -
 
     """
-    
 
-    # not supported if is not a quad mesh
+    vertices = set()
+    for key, nbrs in iter(mesh.halfedge.items()):
+        for nbr, face in iter(nbrs.items()):
+            if face is None:
+                vertices.add(key)
+                vertices.add(nbr)
 
+    vertices = list(vertices)
+
+    boundaries = []
+    while len(vertices) > 0:
+        boundary = [vertices.pop()]
+
+        while 1:
+            for nbr, fkey in iter(mesh.halfedge[boundary[-1]].items()):
+                if fkey is None:
+                    boundary.append(nbr)
+                    break
+
+            if boundary[0] == boundary[-1]:
+                boundaries.append(boundary)
+                break
+            else:
+                vertices.remove(boundary[-1])
+
+    return boundaries
+
+def quad_mesh_polylines_all(mesh, dual = False):
+    """Extracts the polylines as lists of vertices of a quad mesh or faces of a quad mesh dual.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A quad mesh.
+    dual: bool
+        False to collect the vertex polylines of the quad mesh.
+        True to collect the face polylines of the quad mesh dual.
+
+    Returns
+    -------
+    list or None
+        If on the primal:
+        The list of polylines as lists of vertex indices.
+        If on the dual:
+        The list of dual polylines as list of face indices.
+        None if not a quad mesh.
+
+    Raises
+    ------
+    -
+
+    """
+
+    # check if is a quad mesh
     if not mesh.is_quadmesh():
         return None
     
+    # switch to dual
     if dual:
         mesh = mesh_dual(mesh)
 
@@ -104,7 +149,6 @@ def quad_mesh_to_polylines(mesh, dual = False):
 
     return polylines
 
-
 # ==============================================================================
 # Main
 # ==============================================================================
@@ -124,3 +168,8 @@ if __name__ == '__main__':
     dual_polylines = quad_mesh_to_polylines(mesh, dual = True)
     print(dual_polylines)
 
+    vertices = [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 2.0, 0.0], [0.0, 3.0, 0.0], [0.0, 4.0, 0.0], [0.0, 5.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [1.0, 2.0, 0.0], [1.0, 3.0, 0.0], [1.0, 4.0, 0.0], [1.0, 5.0, 0.0], [2.0, 0.0, 0.0], [2.0, 1.0, 0.0], [2.0, 2.0, 0.0], [2.0, 3.0, 0.0], [2.0, 4.0, 0.0], [2.0, 5.0, 0.0], [3.0, 0.0, 0.0], [3.0, 1.0, 0.0], [3.0, 2.0, 0.0], [3.0, 3.0, 0.0], [3.0, 4.0, 0.0], [3.0, 5.0, 0.0], [4.0, 0.0, 0.0], [4.0, 1.0, 0.0], [4.0, 2.0, 0.0], [4.0, 3.0, 0.0], [4.0, 4.0, 0.0], [4.0, 5.0, 0.0], [5.0, 0.0, 0.0], [5.0, 1.0, 0.0], [5.0, 2.0, 0.0], [5.0, 3.0, 0.0], [5.0, 4.0, 0.0], [5.0, 5.0, 0.0]]
+    face_vertices = [[7, 1, 0, 6], [8, 2, 1, 7], [9, 3, 2, 8], [10, 4, 3, 9], [11, 5, 4, 10], [13, 7, 6, 12], [14, 8, 7, 13], [16, 10, 9, 15], [17, 11, 10, 16], [19, 13, 12, 18], [20, 14, 13, 19], [21, 15, 14, 20], [22, 16, 15, 21], [23, 17, 16, 22], [25, 19, 18, 24], [26, 20, 19, 25], [27, 21, 20, 26], [28, 22, 21, 27], [29, 23, 22, 28], [31, 25, 24, 30], [32, 26, 25, 31], [33, 27, 26, 32], [34, 28, 27, 33], [35, 29, 28, 34]]
+    mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
+
+    print mesh_boundaries(mesh)

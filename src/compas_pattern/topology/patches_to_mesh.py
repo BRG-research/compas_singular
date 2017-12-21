@@ -1,4 +1,16 @@
+import operator
+
+from math import acos
+from math import asin
+from math import pi
+
 from compas.datastructures.mesh import Mesh
+
+from compas.geometry import distance_point_point
+from compas.geometry import vector_from_points
+from compas.geometry import normalize_vector
+from compas.geometry import scale_vector
+from compas.geometry import subtract_vectors
 
 from compas.topology import delaunay_from_points
 
@@ -6,25 +18,18 @@ from compas.utilities import geometric_key
 
 from compas_pattern.datastructures.mesh import face_circle
 
-import operator
-from math import acos
-from math import asin
-from math import pi
-
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
-
 __all__ = [
-    'polylines_to_mesh',
-    'polylines_to_mesh_old',
+    'patches_to_mesh',
+    'patches_to_mesh_old',
 ]
 
-def polylines_to_mesh(polylines):
-    """Construct the mesh based on polylines. Uses mesh from lines and then reduces the valency of the faces
-    by deleting the 2-valency vertices.
+def patches_to_mesh(polylines):
+    """Constructs the mesh datastructure based on polylines forming a set of patches using mesh_from_lines.
 
     Parameters
     ----------
@@ -41,32 +46,26 @@ def polylines_to_mesh(polylines):
 
     """
 
-    # convert polylines in lines to use Mesh.from_lines
-    lines = []
-    for polyline in polylines:
-        lines.append([polyline[i], polyline[i + 1]] for i in range(len(polyline) - 1))
-    mesh = Mesh.from_lines(lines)
+    # # convert polylines in lines to use Mesh.from_lines
+    # lines = []
+    # for polyline in polylines:
+    #     lines.append([polyline[i], polyline[i + 1]] for i in range(len(polyline) - 1))
+    # mesh = Mesh.from_lines(lines)
 
-    # convert polygonal faces into minimal valency faces
-    for fkey in mesh.faces():
-        reduced_face_vertices = [vkey for vkey in mesh.face_vertices(fkey) if len(mesh.vertex_neighbours(vkey)) != 2]
-        attr = mesh.facedata[fkey]
-        mesh.delete_face(fkey)
-        mesh.add_face(reduced_face_vertices, fkey, attr_dict = attr)
+    # # convert polygonal faces into minimal valency faces
+    # for fkey in mesh.faces():
+    #     # missing exception for polyline extremities
+    #     reduced_face_vertices = [vkey for vkey in mesh.face_vertices(fkey) if len(mesh.vertex_neighbours(vkey)) != 2]
+    #     attr = mesh.facedata[fkey]
+    #     mesh.delete_face(fkey)
+    #     mesh.add_face(reduced_face_vertices, fkey, attr_dict = attr)
 
-    return mesh
+    # return mesh
 
+    return None
 
-from compas.geometry import distance_point_point
-from compas.geometry import vector_from_points
-from compas.geometry import normalize_vector
-from compas.geometry import scale_vector
-from compas.geometry import subtract_vectors
-
-
-def polylines_to_mesh_old(boundary_polylines, non_boundary_polylines):
-    """Construct the mesh based on polylines. Collects faces and then reduces the valency of the faces
-    by deleting the 2-valency vertices.
+def patches_to_mesh_old(boundary_polylines, non_boundary_polylines):
+    """Constructs the mesh datastructure based on polylines forming a set of patches.
 
     Parameters
     ----------
@@ -86,6 +85,7 @@ def polylines_to_mesh_old(boundary_polylines, non_boundary_polylines):
     """
 
     polylines = boundary_polylines + non_boundary_polylines
+
     #collect vertices and face vertices from a set of curves to generate a mesh
     #list of vertex coordinates
     extremities = []
@@ -205,10 +205,8 @@ def polylines_to_mesh_old(boundary_polylines, non_boundary_polylines):
             if not boundary:
                 final_fv.append(face_vertices)
     
-    
     mesh = Mesh.from_vertices_and_faces(final_v, final_fv)
 
-    
     return mesh
 
 # ==============================================================================

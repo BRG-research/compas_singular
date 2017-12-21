@@ -9,18 +9,450 @@ __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
-
 __all__ = [
-    'tri_quad_to_quad_quad',
-    'quad_to_two_quads_diagonal',
-    'quad_to_two_quads',
-    'quad_to_tris',
-    'quad_to_three_tris',
+    'quad_quad_1',
+    'quad_quad_2',
+    'quad_quad_3',
+    'quad_tri_1',
+    'tri_quad_1',
+    'penta_quad_1',
+    'hexa_quad_1',
+    'mix_quad_1',
 ]
 
+# naming convention: input_output_number
+# ex: mix_quad_1: rule number one with mixed face type input and quad face type output
 
-def tri_quad_to_quad_quad(mesh, fkey_tri, fkey_quad, vkey):
-    """Convert a tri face adjacent to a quad face into two quad faces with same keys by adding a new vertex.
+def quad_quad_1(mesh, fkey, halfedge):
+    """One quad to two quads with new edge from edge midpoint to opposite edge midpoint.
+    
+    [a, b, c, d] -> [a, b, f, e] + [c, d, e, f]
+
+    [*, c, b, *] -> [*, c, f, b, *]
+    [*, a, d, *] -> [*, a, e, d, *]
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    halfedge: tuple
+        One of the two face halfedges to split (ukey, vkey)
+
+    Returns
+    -------
+    (e, f) : tuple, None
+        The new edge.
+        None if the quad face is not a quad or if the halfedge does not point to the face.
+
+    Raises
+    ------
+    -
+
+    """
+
+    ukey, vkey = halfedge
+
+    # check validity of rule
+    if len(mesh.face_vertices(fkey)) != 4:
+        return None
+    if vkey not in mesh.halfedge[ukey] or mesh.halfedge[ukey][vkey] != fkey :
+        return None
+
+    if mesh.halfedge[ukey][vkey] == fkey:
+        d = ukey
+        a = vkey
+    else:
+        d = vkey
+        a = ukey
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+
+    # create new vertices
+    x, y, z = mesh.edge_midpoint(d, a)
+    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    x, y, z = mesh.edge_midpoint(b, c)
+    f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+
+    # delete old face
+    mesh.delete_face(fkey)
+
+    # create new faces
+    # [a, b, c, d] -> [a, b, f, e] + [c, d, e, f]
+    mesh.add_face([a, b, f, e])
+    mesh.add_face([c, d, e, f])
+
+    # update adjacent faces
+    # [*, c, b, *] -> [*, c, f, b, *]
+    if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
+        fkey_1 = mesh.halfedge[c][b]
+        add_vertex_to_face(mesh, fkey_1, c, f)
+    # [*, a, d, *] -> [*, a, e, d, *]
+    if d in mesh.halfedge[a] and mesh.halfedge[a][d] is not None:
+        fkey_2 = mesh.halfedge[a][d]
+        add_vertex_to_face(mesh, fkey_2, a, e)
+
+
+    return (e, f)
+
+def quad_quad_2(mesh, fkey, vkey):
+    """One quad to two quads with two new edges along the diagonal corresponding.
+    
+    [a, b, c, d] -> [a, b, c, e] + [a, e, c, d]
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    vkey: int
+        Key of one of the vertices corresponding to the diagonal split.
+
+    Returns
+    -------
+    e : int, None
+        The key of the new vertex at the face centroid.
+        None if the quad face is not a quad or if the vertex is not adjacent to the face.
+
+    Raises
+    ------
+    -
+
+    """
+
+    # check validity of rule
+    if len(mesh.face_vertices(fkey)) != 4:
+        return None
+    if vkey not in mesh.face_vertices(fkey):
+        return None
+
+    a = vkey
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+    d = mesh.face_vertex_descendant(fkey, c)
+
+    # create new vertex
+    x, y, z = mesh.face_centroid(fkey)
+    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+
+    # delete old faces
+    mesh.delete_face(fkey)
+
+    # create new faces
+    # [a, b, c, d] -> [a, b, c, e] + [a, e, c, d]
+    mesh.add_face([a, b, c, e])
+    mesh.add_face([a, e, c, d])
+
+    return e
+
+def quad_quad_3(mesh, fkey, vkey):
+    """One quad tot three quads with three edges from the face centroid to one one vertex and two edge midpoints.
+
+    [a, b, c, d] -> [a, b, e, g] + [e, c, f, g] + [a, g, f, d]
+
+    [*, c, b, *] -> [*, c, e, b, *]
+    [*, d, c, *] -> [*, d, f, c, *]
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    vkey: int
+        Key of a vertex of quad face at the extremity of one of the three new edges.
+
+    Returns
+    -------
+    g : int, None
+        The key of the new centroid vertex.
+        None if the quad face is not a quad or if the vertex is not adjacent to the face.
+
+    Raises
+    ------
+    -
+
+    """
+
+    # check validity of rule
+    if len(mesh.face_vertices(fkey)) != 4:
+        return None
+    if vkey not in mesh.face_vertices(fkey):
+        return None
+
+    # itemise vertices
+    a = vkey
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+    d = mesh.face_vertex_descendant(fkey, c)
+
+    # create new vertices
+    x, y, z = mesh.edge_midpoint(b, c)
+    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    x, y, z = mesh.edge_midpoint(c, d)
+    f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    x, y, z = mesh.face_centroid(fkey)
+    g = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+
+    # delete old face
+    mesh.delete_face(fkey)
+
+    # create new faces
+    # [a, b, c, d] -> [a, b, e, g] + [e, c, f, g] + [a, g, f, d]
+    mesh.add_face([a, b, e, g])
+    mesh.add_face([e, c, f, g])
+    mesh.add_face([a, g, f, d])
+
+    # update adjacent faces
+    # [*, c, b, *] -> [*, c, e, b, *]
+    if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
+        fkey_1 = mesh.halfedge[c][b]
+        add_vertex_to_face(mesh, fkey_1, c, e)
+    # [*, d, c, *] -> [*, d, f, c, *]
+    if c in mesh.halfedge[d] and mesh.halfedge[d][c] is not None:
+        fkey_2 = mesh.halfedge[d][c]
+        add_vertex_to_face(mesh, fkey_2, d, f)
+
+    return g
+
+def quad_tri_1(mesh, fkey, vkey):
+    """One quad to two tri with new edge along diagonal.
+    
+    [a, b, c, d] -> [a, b, c] + [a, c, d]
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    vkey: int
+        Key of a vertex of quad face at one extremity of the new edge.
+
+    Returns
+    -------
+    c : int, None
+        The key of the second vertex of the new edge.
+        None if the quad face is not a quad or if the vertex is not adjacent to the face.
+
+    Raises
+    ------
+    -
+
+    """
+
+    # check validity of rule
+    if len(mesh.face_vertices(fkey)) != 4:
+        return None
+    if vkey not in mesh.face_vertices(fkey):
+        return None
+
+    # itemise vertices
+    a = vkey
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+    d = mesh.face_vertex_descendant(fkey, c)
+
+    # delete old face
+    mesh.delete_face(fkey)
+
+    # create new faces
+    mesh.add_face([a, b, c])
+    mesh.add_face([a, c, d])
+
+    return c
+
+def tri_quad_1(mesh, fkey):
+    """One tri to three quads split with three new edges from the face centroid to the edge midpoints.
+
+    [a, b, c] -> [a, e, g, d], [f, c, d, g] and [f, c, d, g]
+
+    [*, b, a, *] -> [*, b, e, a, *]
+    [*, c, b, *] -> [*, c, f, b, *]
+    [*, a, c, *] -> [*, a, d, c, *]
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+
+    fkey: int
+        Key of the face to change.
+
+    Returns
+    -------
+    g : int, None
+        The key of the new vertex at the face centroid.
+        None if the tri face is not a tri.
+
+    Raises
+    ------
+    -
+
+    """
+    
+    # return None if the face is not a tri or if the vertex is not on the boundary
+    if len(mesh.face_vertices(fkey)) != 3:
+        return None
+
+    a, b, c = mesh.face_vertices(fkey)
+
+    # create new vertices
+    x, y, z = mesh.edge_midpoint(c, a)
+    d = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    x, y, z = mesh.edge_midpoint(a, b)
+    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    x, y, z = mesh.edge_midpoint(b, c)
+    f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    x, y, z = mesh.face_centroid(fkey)
+    g = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+
+    # delete old face
+    mesh.delete_face(fkey)
+
+    # create new faces
+    # [a, b, c] -> [a, e, g, d], [f, c, d, g] and [f, c, d, g]
+    mesh.add_face([a, e, g, d])
+    mesh.add_face([f, c, d, g])
+    mesh.add_face([e, b, f, g])
+
+    # update adjacent faces
+    # [*, b, a, *] -> [*, b, e, a, *]
+    if a in mesh.halfedge[b] and mesh.halfedge[b][a] is not None:
+        fkey_1 = mesh.halfedge[b][a]
+        add_vertex_to_face(mesh, fkey_1, b, e)
+    # [*, c, b, *] -> [*, c, f, b, *]
+    if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
+        fkey_2 = mesh.halfedge[c][b]
+        add_vertex_to_face(mesh, fkey_2, c, f)
+    # [*, a, c, *] -> [*, a, d, c, *]
+    if c in mesh.halfedge[a] and mesh.halfedge[a][c] is not None:
+        fkey_3 = mesh.halfedge[a][c]
+        add_vertex_to_face(mesh, fkey_3, a, d)
+
+    return f
+
+def penta_quad_1(mesh, fkey, vkey):
+    """One penta to two quads with new edge from a vertex to the opposite edge midpoint.
+    
+    [a, b, c, d, e] -> [a, b, f, e] + [c, d, e, f]
+
+    [*, c, b, *] -> [*, c, f, b, *]
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    vkey: int
+        Key of the pre-existing vertex of the new edge.
+
+    Returns
+    -------
+    f : int, None
+        The key of the new vertex of the new edge.
+        None if the penta face is not a penta or if the vertex is not adjacent to the face.
+
+    Raises
+    ------
+    -
+
+    """
+
+    # check validity of rule
+    if len(mesh.face_vertices(fkey)) != 5:
+        return None
+    if vkey not in mesh.face_vertices(fkey):
+        return None
+
+    e = vkey
+    a = mesh.face_vertex_descendant(fkey, e)
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+    d = mesh.face_vertex_descendant(fkey, c)
+
+    # create new vertex
+    x, y, z = mesh.edge_midpoint(b, c)
+    f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+
+    # delete old face
+    mesh.delete_face(fkey)
+
+    # create new faces
+    # [a, b, c, d, e] -> [a, b, f, e] + [c, d, e, f]
+    mesh.add_face([a, b, f, e])
+    mesh.add_face([c, d, e, f])
+
+    # update adjacent face
+    # [*, c, b, *] -> [*, c, f, b, *]
+    if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
+        fkey_1 = mesh.halfedge[c][b]
+        add_vertex_to_face(mesh, fkey_1, c, f)
+
+    return f
+
+def hexa_quad_1(mesh, fkey, vkey):
+    """One hexa to two quads with new edge from a vertex to opposite vertex.
+    
+    [a, b, f, c, d, e] -> [a, b, f, e] + [c, d, e, f]
+
+    [*, c, b, *] -> [*, c, f, b, *]
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    vkey: int
+        Key of one of the vertices of the new edge.
+
+    Returns
+    -------
+    f : int, None
+        The key of the other vertex of the new edge.
+        None if the hex face is not a penta or if the vertex is not adjacent to the face.
+
+    Raises
+    ------
+    -
+
+    """
+
+    # check validity of rule
+    if len(mesh.face_vertices(fkey)) != 6:
+        return None
+    if vkey not in mesh.face_vertices(fkey):
+        return None
+
+    e = vkey
+    a = mesh.face_vertex_descendant(fkey, e)
+    b = mesh.face_vertex_descendant(fkey, a)
+    f = mesh.face_vertex_descendant(fkey, b)
+    c = mesh.face_vertex_descendant(fkey, f)
+    d = mesh.face_vertex_descendant(fkey, c)
+
+    # delete old face
+    mesh.delete_face(fkey)
+
+    # create new faces
+    # [a, b, f, c, d, e] -> [a, b, f, e] + [c, d, e, f]
+    mesh.add_face([a, b, f, e])
+    mesh.add_face([c, d, e, f])
+
+    # update adjacent face
+    # [*, c, b, *] -> [*, c, f, b, *]
+    if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
+        fkey_1 = mesh.halfedge[c][b]
+        add_vertex_to_face(mesh, fkey_1, c, f)
+
+    return f
+
+def mix_quad_1(mesh, fkey_tri, fkey_quad, vkey):
+    """One quad and one tri to two quads by moving one extremity of the shared edge to a new vertex on an adjacent edge midpoint of the quad.
     
     [a, b, c] + [c, d, e, a] -> [a, b, c, f] + [c, d, e, f]
 
@@ -33,7 +465,7 @@ def tri_quad_to_quad_quad(mesh, fkey_tri, fkey_quad, vkey):
     fkey_quad: int
         Key of quad face adjacent to tri face.
     vkey: int
-        Key of vertex in adjacent to tri face and quad face.
+        Key of vertex adjacent to tri face and quad face.
 
     Returns
     -------
@@ -81,6 +513,7 @@ def tri_quad_to_quad_quad(mesh, fkey_tri, fkey_quad, vkey):
     mesh.delete_face(fkey_quad)
 
     # create new faces
+    # [a, b, c] + [c, d, e, a] -> [a, b, c, f] + [c, d, e, f]
     mesh.add_face([a, b, c, f], fkey_tri)
     mesh.add_face([c, d, e, f], fkey_quad)
 
@@ -89,246 +522,6 @@ def tri_quad_to_quad_quad(mesh, fkey_tri, fkey_quad, vkey):
         mesh_flip_cycles(mesh)
 
     return f
-
-
-def quad_to_two_quads_diagonal(mesh, fkey, vkey):
-    """Convert a quad face adjacent into two quads with a two-valency vertex along the diagonal matching the vertex key input.
-    
-    [a, b, c, d] -> [a, b, c, e] + [a, e, c, d]
-
-    Parameters
-    ----------
-    mesh : Mesh
-        A mesh.
-    fkey: int
-        Key of quad face.
-    vkey: int
-        Key of one of the vertices matching the diagonal split.
-
-    Returns
-    -------
-    e : int, None
-        The key of the new vertex.
-        None if the quad face is not a quad or if the vertex is not adjacent to the face.
-
-    Raises
-    ------
-    -
-
-    """
-
-    # check validity of rule
-    if len(mesh.face_vertices(fkey)) != 4:
-        return None
-    if vkey not in mesh.face_vertices(fkey):
-        return None
-
-    a = vkey
-    b = mesh.face_vertex_descendant(fkey, a)
-    c = mesh.face_vertex_descendant(fkey, b)
-    d = mesh.face_vertex_descendant(fkey, c)
-
-    # create new vertex
-    x, y, z = mesh.face_centroid(fkey)
-    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
-    # delete old faces
-    mesh.delete_face(fkey)
-
-    # create new faces
-    mesh.add_face([a, b, c, e])
-    mesh.add_face([a, e, c, d])
-
-    return e
-
-def quad_to_two_quads(mesh, fkey, ukey, vkey):
-    """Convert a quad face into two quads with a new edge orthogonal to one of its edges.
-    
-    [a, b, c, d] -> [a, b, f, e] + [c, d, e, f]
-    plus update of two neighbour faces:
-    [*, c, b, *] -> [*, c, f, b, *]
-    [*, a, d, *] -> [*, a, e, d, *]
-
-    Parameters
-    ----------
-    mesh : Mesh
-        A mesh.
-    fkey: int
-        Key of quad face.
-    ukey: int
-        Key of the first vertex of the edge.
-    vkey: int
-        Key of the second vertex of the edge.
-
-    Returns
-    -------
-    (e, f) : tuple, None
-        The keys of the vertices of the new edge.
-        None if the quad face is not a quad or if the vertices are not an edge of the face.
-
-    Raises
-    ------
-    -
-
-    """
-
-    # check validity of rule
-    if len(mesh.face_vertices(fkey)) != 4:
-        return None
-    if (vkey not in mesh.halfedge[ukey] and ukey not in mesh.halfedge[vkey]) or (mesh.halfedge[ukey][vkey] != fkey and mesh.halfedge[vkey][ukey] != fkey):
-        return None
-
-    if mesh.halfedge[ukey][vkey] == fkey:
-        d = ukey
-        a = vkey
-    else:
-        d = vkey
-        a = ukey
-    b = mesh.face_vertex_descendant(fkey, a)
-    c = mesh.face_vertex_descendant(fkey, b)
-
-    # create new vertices
-    x, y, z = mesh.edge_midpoint(d, a)
-    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-    x, y, z = mesh.edge_midpoint(b, c)
-    f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
-    # delete old faces
-    mesh.delete_face(fkey)
-
-    # create new faces
-    mesh.add_face([a, b, f, e])
-    mesh.add_face([c, d, e, f])
-
-    # update adjacent faces
-    # [*, c, b, *] -> [*, c, f, b, *]
-    if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
-        fkey_1 = mesh.halfedge[c][b]
-        add_vertex_to_face(mesh, fkey_1, c, f)
-    # [*, a, d, *] -> [*, a, e, d, *]
-    if d in mesh.halfedge[a] and mesh.halfedge[a][d] is not None:
-        fkey_2 = mesh.halfedge[a][d]
-        add_vertex_to_face(mesh, fkey_2, a, e)
-
-
-    return (e, f)
-
-def quad_to_tris(mesh, fkey, vkey):
-    """Convert a quad face into two tri faces with diagonal split starting from the vertex key.
-    
-    [a, b, c, d] -> [a, b, c] + [a, c, d]
-
-    Parameters
-    ----------
-    mesh : Mesh
-        A mesh.
-    fkey: int
-        Key of quad face.
-    vkey: int
-        Key of a vertex of quad face.
-
-    Returns
-    -------
-    c : int, None
-        The key of the second vertex of the new diagonal edge.
-        None if the quad face is not a quad or if the vertex is not part of the face vertices.
-
-    Raises
-    ------
-    -
-
-    """
-
-    # check validity of rule
-    if len(mesh.face_vertices(fkey)) != 4:
-        return None
-    if vkey not in mesh.face_vertices(fkey):
-        return None
-
-    # itemise vertices
-    a = vkey
-    b = mesh.face_vertex_descendant(fkey, a)
-    c = mesh.face_vertex_descendant(fkey, b)
-    d = mesh.face_vertex_descendant(fkey, c)
-
-    # delete old face
-    mesh.delete_face(fkey)
-
-    # create new faces
-    mesh.add_face([a, b, c])
-    mesh.add_face([a, c, d])
-
-    return c
-
-def quad_to_three_tris(mesh, fkey, vkey):
-    """Convert a quad face into three tri faces with partial diagonal split plus fork starting from the vertex key.
-    
-    [a, b, c, d] -> [a, b, e, g] + [e, c, f, g] + [a, g, f, d]
-    plus update of two neighbour faces:
-    [*, c, b, *] -> [*, c, e, b, *]
-    [*, d, c, *] -> [*, d, f, c, *]
-
-    Parameters
-    ----------
-    mesh : Mesh
-        A mesh.
-    fkey: int
-        Key of quad face.
-    vkey: int
-        Key of a vertex of quad face.
-
-    Returns
-    -------
-    g : int, None
-        The key of the new centroid vertex.
-        None if the quad face is not a quad or if the vertex is not part of the face vertices.
-
-    Raises
-    ------
-    -
-
-    """
-
-    # check validity of rule
-    if len(mesh.face_vertices(fkey)) != 4:
-        return None
-    if vkey not in mesh.face_vertices(fkey):
-        return None
-
-    # itemise vertices
-    a = vkey
-    b = mesh.face_vertex_descendant(fkey, a)
-    c = mesh.face_vertex_descendant(fkey, b)
-    d = mesh.face_vertex_descendant(fkey, c)
-
-    # create new vertices
-    x, y, z = mesh.edge_midpoint(b, c)
-    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-    x, y, z = mesh.edge_midpoint(c, d)
-    f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-    x, y, z = mesh.face_centroid(fkey)
-    g = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
-    # delete old face
-    mesh.delete_face(fkey)
-
-    # create new faces
-    mesh.add_face([a, b, e, g])
-    mesh.add_face([e, c, f, g])
-    mesh.add_face([a, g, f, d])
-
-    # update adjacent faces
-    # [*, c, b, *] -> [*, c, e, b, *]
-    if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
-        fkey_1 = mesh.halfedge[c][b]
-        add_vertex_to_face(mesh, fkey_1, c, e)
-    # [*, d, c, *] -> [*, d, f, c, *]
-    if c in mesh.halfedge[d] and mesh.halfedge[d][c] is not None:
-        fkey_2 = mesh.halfedge[d][c]
-        add_vertex_to_face(mesh, fkey_2, d, f)
-
-    return g
-
 
 # ==============================================================================
 # Main

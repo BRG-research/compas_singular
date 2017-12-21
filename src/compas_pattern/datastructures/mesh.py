@@ -7,7 +7,6 @@ __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
-
 __all__ = [
     'face_circle',
 ]
@@ -45,6 +44,7 @@ def face_circle(mesh, fkey):
     c = mesh.vertex_coordinates(c)
 
     center, radius, normal = circle_from_points(a, b, c)
+    
     return center, radius, normal
 
 def add_vertex_to_face(mesh, fkey, vkey, added_vkey):

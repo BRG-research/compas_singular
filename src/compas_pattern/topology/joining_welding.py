@@ -1,4 +1,5 @@
 from compas.datastructures.mesh import Mesh
+
 from compas.utilities import geometric_key
 
 __author__     = ['Robin Oval']
@@ -13,9 +14,8 @@ __all__ = [
     'join_and_weld_meshes',
 ]
 
-
 def weld_mesh(mesh, precision = '3f'):
-    """Weld vertices of a mesh within some precision.
+    """Welds vertices of a mesh within some precision.
 
     Parameters
     ----------
@@ -60,11 +60,11 @@ def weld_mesh(mesh, precision = '3f'):
         face_vertices.append(new_face_vertices)
 
     welded_mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
+
     return welded_mesh
 
-
 def join_and_weld_meshes(meshes, precision = '3f'):
-    """Weld vertices of a mesh within some precision.
+    """Joins and welds vertices of meshes within some precision.
 
     Parameters
     ----------
@@ -110,11 +110,11 @@ def join_and_weld_meshes(meshes, precision = '3f'):
             face_vertices.append(new_face_vertices)
 
     joined_and_welded_mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
+
     return joined_and_welded_mesh
 
-
 def join_meshes(meshes):
-    """Join meshes without welding.
+    """Joins meshes without welding.
 
     Parameters
     ----------
@@ -124,7 +124,7 @@ def join_meshes(meshes):
     Returns
     -------
     mesh : Mesh
-        The joined mesh.
+        The unwelded joined mesh.
 
     Raises
     ------
@@ -149,7 +149,6 @@ def join_meshes(meshes):
     joined_mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
 
     return joined_mesh
-
 
 # ==============================================================================
 # Main
