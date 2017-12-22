@@ -70,15 +70,15 @@ def start():
     
     delaunay_mesh = planar_polyline_boundaries_to_delaunay(planar_boundary_polyline, holes = planar_hole_polylines, polyline_features = planar_polyline_features, point_features = planar_point_features)
     
-    bool = rs.GetInteger(message = 'remap on surface?', number = 1, minimum = 0, maximum = 1)
-    if bool:
-        for vkey in delaunay_mesh.vertices():
-            uv0 = delaunay_mesh.vertex_coordinates(vkey)
-            x, y, z = mapping_point_to_surface(uv0, surface_guid)
-            attr = delaunay_mesh.vertex[vkey]
-            attr['x'] = x
-            attr['y'] = y
-            attr['z'] = z
+    #    bool = rs.GetInteger(message = 'remap on surface?', number = 0, minimum = 0, maximum = 1)
+    #    if bool:
+    #        for vkey in delaunay_mesh.vertices():
+    #            uv0 = delaunay_mesh.vertex_coordinates(vkey)
+    #            x, y, z = mapping_point_to_surface(uv0, surface_guid)
+    #            attr = delaunay_mesh.vertex[vkey]
+    #            attr['x'] = x
+    #            attr['y'] = y
+    #            attr['z'] = z
     
     vertices = [delaunay_mesh.vertex_coordinates(vkey) for vkey in delaunay_mesh.vertices()]
     face_vertices = [delaunay_mesh.face_vertices(fkey) for fkey in delaunay_mesh.faces()]
@@ -104,6 +104,11 @@ def start():
     medial_branches, boundary_polylines = delaunay_medial_axis_patch_decomposition(delaunay_mesh)
     patch_decomposition = medial_branches + boundary_polylines
     
+    #    bool = rs.GetInteger(message = 'remap on surface?', number = 0, minimum = 0, maximum = 1)
+    #    if bool:
+    #        remap = [[mapping_point_to_surface(vertex, surface_guid) for vertex in polyline] for polyline in patch_decomposition]
+    #        patch_decomposition = remap
+    
     rs.AddLayer('patch_decomposition')
     guids = rs.ObjectsByLayer('patch_decomposition')
     rs.DeleteObjects(guids)
@@ -126,6 +131,16 @@ def start():
     rs.EnableRedraw(False)
     
     mesh = patches_to_mesh_old(boundary_polylines, medial_branches)
+    
+    #    bool = rs.GetInteger(message = 'remap on surface?', number = 0, minimum = 0, maximum = 1)
+    #    if bool:
+    #        for vkey in mesh.vertices():
+    #            uv0 = mesh.vertex_coordinates(vkey)
+    #            x, y, z = mapping_point_to_surface(uv0, surface_guid)
+    #            attr = mesh.vertex[vkey]
+    #            attr['x'] = x
+    #            attr['y'] = y
+    #            attr['z'] = z
     
     vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
     face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
@@ -150,6 +165,16 @@ def start():
     
     conform_mesh = conforming_initial_patch_decomposition(mesh)
     
+    #    bool = rs.GetInteger(message = 'remap on surface?', number = 0, minimum = 0, maximum = 1)
+    #    if bool:
+    #        for vkey in conform_mesh.vertices():
+    #            uv0 = conform_mesh.vertex_coordinates(vkey)
+    #            x, y, z = mapping_point_to_surface(uv0, surface_guid)
+    #            attr = conform_mesh.vertex[vkey]
+    #            attr['x'] = x
+    #            attr['y'] = y
+    #            attr['z'] = z
+    
     vertices = [conform_mesh.vertex_coordinates(vkey) for vkey in conform_mesh.vertices()]
     face_vertices = [conform_mesh.face_vertices(fkey) for fkey in conform_mesh.faces()]
     conform_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
@@ -165,6 +190,9 @@ def start():
         return
      
     rs.LayerVisible('conform_mesh', visible = False)
+    
+    
+    
     
     # possibility to apply grammar rules
     

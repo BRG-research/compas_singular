@@ -481,7 +481,7 @@ def poly_poly_1(mesh, fkey, vkey):
     e = vkey
     d = mesh.face_vertex_ancestor(fkey, e)
     c = mesh.face_vertex_ancestor(fkey, d)
-    d = mesh.face_vertex_ancestor(fkey, c)
+    b = mesh.face_vertex_ancestor(fkey, c)
     a = mesh.face_vertex_ancestor(fkey, b)
     
     face_vertices = mesh.face_vertices(fkey)[:]
@@ -496,21 +496,24 @@ def poly_poly_1(mesh, fkey, vkey):
         if face_vertices[idx + 1 - len(face_vertices)] == a:
             break
     length_ed = mesh.edge_length(e, d)
-    t = length_ea / (length_ea + length_ed)
+    if length_ea + length_ed == 0:
+        t = .5
+    else:
+        t = length_ea / (length_ea + length_ed)
     x, y, z = mesh.edge_point(b, c, t = t)
     f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
 
     face_vertices.remove(c)
     face_vertices.remove(d)
     idx = face_vertices.index(e)
-    face.vertices.insert(idx, f)
+    face_vertices.insert(idx, f)
 
     # delete old face
     mesh.delete_face(fkey)
 
     # create new faces
     # [*, a, b, c, d] -> [c, d, e, f] + [*, a, b, f]
-    mesh.add_face([a, e, f, d], fkey)
+    mesh.add_face(face_vertices, fkey)
     mesh.add_face([c, d, e, f])
 
     # update adjacent face
@@ -609,3 +612,11 @@ if __name__ == '__main__':
 
     import compas
 
+    vertices = [[0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0]]
+    face_vertices = [[0, 1, 2, 3, 4, 5, 6], [1, 7, 8, 2]]
+
+    mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
+
+    poly_poly_1(mesh, 0, 4)
+    for fkey in mesh.faces():
+        print mesh.face_vertices(fkey)
