@@ -82,6 +82,8 @@ def conforming_initial_patch_decomposition(mesh, planar_polyline_features = None
                     faces_along_feature.append(fkey)
 
         for fkey in faces_along_feature:
+            if fkey not in list(mesh.faces()):
+                continue
             face_vertices = mesh.face_vertices(fkey)
             if len(face_vertices) > 4:
                 for u, v in mesh.face_halfedges(fkey):
@@ -100,9 +102,14 @@ def conforming_initial_patch_decomposition(mesh, planar_polyline_features = None
                                 if len(mesh.face_vertices(next_fkey)) == 5:
                                     vkey = wkey
                                     wkey = penta_quad_1(mesh, next_fkey, wkey)
+                                    faces_along_feature.append(mesh.halfedge[vkey][wkey])
+                                    faces_along_feature.append(mesh.halfedge[wkey][vkey])
                                     continue
                                 if len(mesh.face_vertices(next_fkey)) == 6:
-                                    hexa_quad_1(mesh, next_fkey, wkey)
+                                    vkey = wkey
+                                    wkey = hexa_quad_1(mesh, next_fkey, wkey)
+                                    faces_along_feature.append(mesh.halfedge[vkey][wkey])
+                                    faces_along_feature.append(mesh.halfedge[wkey][vkey])
                                     break
                             break
 
