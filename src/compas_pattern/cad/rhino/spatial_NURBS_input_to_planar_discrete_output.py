@@ -33,7 +33,7 @@ def spatial_NURBS_input_to_planar_discrete_output(discretization_spacing, surfac
 
     Parameters
     ----------
-    discretization_spacing
+    discretization_spacing: real
         Spacing value for discretisation of NURBS surface borders and curves into polylines.
     surface: Rhino surface guid
         Untrimmed or trimmed Rhino NURBS surface.
@@ -76,6 +76,37 @@ def spatial_NURBS_input_to_planar_discrete_output(discretization_spacing, surfac
 
     return planar_boundary_polyline, planar_hole_polylines, planar_polyline_features, planar_point_features
 
+def mapping_point_to_surface(point, surface_guid):
+    """Maps a point in the plan on a spatial surface based on its parameterisation.
+    [u, v, 0] -> [x, y, z]
+
+    Parameters
+    ----------
+    point: list
+        Coordinates of a point in the plane [x, y, 0].
+    surface: Rhino surface guid
+        Untrimmed or trimmed Rhino NURBS surface on which to map the point.
+
+    Returns
+    -------
+    point_on_surface: list, None
+        Coordinates of the point on the surface [u, v] -> [x, y, z].
+        None if the point is not in the plane.
+
+    Raises
+    ------
+    -
+
+    """
+    
+    x, y, z = point
+
+    if z != 0:
+        return None
+
+    point_on_surface = rs.EvaluateSurface(surface_guid, x, y)
+
+    return point_on_surface
 
 # ==============================================================================
 # Main

@@ -29,18 +29,26 @@ def start():
     
     planar_boundary_polyline_guid = rs.AddPolyline(planar_boundary_polyline)
     rs.AddLayer('boundary_polyline_planar')
+    guids = rs.ObjectsByLayer('boundary_polyline_planar')
+    rs.DeleteObjects(guids)
     rs.ObjectLayer(planar_boundary_polyline_guid, layer = 'boundary_polyline_planar')
     
     planar_hole_polylines_guid = [rs.AddPolyline(hole) for hole in planar_hole_polylines]
     rs.AddLayer('hole_polyline_planar')
+    guids = rs.ObjectsByLayer('hole_polyline_planar')
+    rs.DeleteObjects(guids)
     rs.ObjectLayer(planar_hole_polylines_guid, layer = 'hole_polyline_planar')
     
     planar_polyline_features_guid = [rs.AddPolyline(feature) for feature in planar_polyline_features]
     rs.AddLayer('feature_polyline_planar')
+    guids = rs.ObjectsByLayer('feature_polyline_planar')
+    rs.DeleteObjects(guids)
     rs.ObjectLayer(planar_polyline_features_guid, layer = 'feature_polyline_planar')
     
     planar_point_features_guid = [rs.AddPoint(point) for point in planar_point_features]
     rs.AddLayer('feature_point_planar')
+    guids = rs.ObjectsByLayer('feature_point_planar')
+    rs.DeleteObjects(guids)
     rs.ObjectLayer(planar_point_features_guid, layer = 'feature_point_planar')
     
     rs.EnableRedraw(True)
@@ -48,18 +56,36 @@ def start():
     bool = rs.GetInteger(message = 'generate Delaunay mesh?', number = 1, minimum = 0, maximum = 1)
     if not bool:
         return
+        
+    rs.LayerVisible('boundary_polyline_planar', visible = False)
+    rs.LayerVisible('hole_polyline_planar', visible = False)
+    rs.LayerVisible('feature_polyline_planar', visible = False)
+    rs.LayerVisible('feature_point_planar', visible = False)
     
     # generate specific Delaunay mesh from planar shape and features
     from compas_pattern.algorithms.planar_polyline_boundaries_to_delaunay import planar_polyline_boundaries_to_delaunay
+    from compas_pattern.cad.rhino.spatial_NURBS_input_to_planar_discrete_output import mapping_point_to_surface
     
     rs.EnableRedraw(False)
     
     delaunay_mesh = planar_polyline_boundaries_to_delaunay(planar_boundary_polyline, holes = planar_hole_polylines, polyline_features = planar_polyline_features, point_features = planar_point_features)
     
+    bool = rs.GetInteger(message = 'remap on surface?', number = 1, minimum = 0, maximum = 1)
+    if bool:
+        for vkey in delaunay_mesh.vertices():
+            uv0 = delaunay_mesh.vertex_coordinates(vkey)
+            x, y, z = mapping_point_to_surface(uv0, surface_guid)
+            attr = delaunay_mesh.vertex[vkey]
+            attr['x'] = x
+            attr['y'] = y
+            attr['z'] = z
+    
     vertices = [delaunay_mesh.vertex_coordinates(vkey) for vkey in delaunay_mesh.vertices()]
     face_vertices = [delaunay_mesh.face_vertices(fkey) for fkey in delaunay_mesh.faces()]
     delaunay_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
     rs.AddLayer('delaunay_mesh')
+    guids = rs.ObjectsByLayer('delaunay_mesh')
+    rs.DeleteObjects(guids)
     rs.ObjectLayer(delaunay_mesh_guid, layer = 'delaunay_mesh')
     
     rs.EnableRedraw(True)
@@ -67,6 +93,8 @@ def start():
     bool = rs.GetInteger(message = 'generate patch decomposition?', number = 1, minimum = 0, maximum = 1)
     if not bool:
         return
+    
+    rs.LayerVisible('delaunay_mesh', visible = False)
     
     # patch polylines from Delaunay mesh
     from compas_pattern.algorithms.delaunay_medial_axis_patch_decomposition import delaunay_medial_axis_patch_decomposition
@@ -77,6 +105,8 @@ def start():
     patch_decomposition = medial_branches + boundary_polylines
     
     rs.AddLayer('patch_decomposition')
+    guids = rs.ObjectsByLayer('patch_decomposition')
+    rs.DeleteObjects(guids)
     rs.ObjectLayer(delaunay_mesh_guid, layer = 'delaunay_mesh')
     for vertices in patch_decomposition:
         guid = rs.AddPolyline(vertices)
@@ -87,6 +117,8 @@ def start():
     bool = rs.GetInteger(message = 'generate control mesh?', number = 1, minimum = 0, maximum = 1)
     if not bool:
         return
+    
+    rs.LayerVisible('patch_decomposition', visible = False)
     
     # conversion patch polylines to control mesh
     from compas_pattern.topology.patches_to_mesh import patches_to_mesh_old
@@ -99,6 +131,8 @@ def start():
     face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
     mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
     rs.AddLayer('control_mesh')
+    guids = rs.ObjectsByLayer('control_mesh')
+    rs.DeleteObjects(guids)
     rs.ObjectLayer(mesh_guid, layer = 'control_mesh')
     
     rs.EnableRedraw(True)
@@ -106,6 +140,8 @@ def start():
     bool = rs.GetInteger(message = 'generate quad patch decomposition?', number = 1, minimum = 0, maximum = 1)
     if not bool:
         return
+    
+    rs.LayerVisible('control_mesh', visible = False)
     
     # patch decomposition to valid quad patch decomposition with potential pseudo-quads
     from compas_pattern.algorithms.conforming_initial_patch_decomposition import conforming_initial_patch_decomposition
@@ -118,6 +154,8 @@ def start():
     face_vertices = [conform_mesh.face_vertices(fkey) for fkey in conform_mesh.faces()]
     conform_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
     rs.AddLayer('conform_mesh')
+    guids = rs.ObjectsByLayer('conform_mesh')
+    rs.DeleteObjects(guids)
     rs.ObjectLayer(conform_mesh_guid, layer = 'conform_mesh')
     
     rs.EnableRedraw(True)
@@ -126,6 +164,8 @@ def start():
     if not bool:
         return
      
+    rs.LayerVisible('conform_mesh', visible = False)
+    
     # possibility to apply grammar rules
     
     mesh = conform_mesh
