@@ -4,11 +4,9 @@ import compas_rhino as rhino
 
 from compas.datastructures.mesh import Mesh
 
-from compas_pattern.topology.conforming_operations import penta_to_quads
-from compas_pattern.topology.conforming_operations import hexa_to_quads
-from compas_pattern.topology.conforming_operations import tri_to_quads
-from compas_pattern.topology.grammar_rules import quad_to_tris
-from compas_pattern.topology.grammar_rules import quad_to_three_tris
+from compas_pattern.topology.grammar_rules import quad_mix_1
+from compas_pattern.topology.grammar_rules import penta_quad_1
+from compas_pattern.topology.grammar_rules import hexa_quad_1
 
 # mesh selection
 guid = rs.GetObject('get mesh')
@@ -21,6 +19,7 @@ artist.clear_layer()
 artist.draw_vertexlabels()
 artist.redraw()
 vkey = rhino.mesh_select_vertex(mesh, message = 'vkey')
+ukey = rhino.mesh_select_vertex(mesh, message = 'ukey')
 artist.clear_layer()
 artist.redraw()
 
@@ -38,47 +37,57 @@ artist.redraw()
 
 rs.DeleteLayer('mesh_artist')
 
-g = quad_to_three_tris(mesh, fkey, vkey)
+e = quad_mix_1(mesh, fkey, vkey, ukey)
 
-# conforming: propagate T-junctions
-vertices = mesh.vertex_neighbours(g)
-
-vertices.remove(vkey)
-e, f = vertices
-fkey = mesh.halfedge[g][e]
-vkey = e
+## conforming: propagate T-junctions
+# propagate until boundary or closed loop
+is_loop = False
+wkey = e
 count = mesh.number_of_faces()
 while count > 0:
     count -= 1
-    ukey = mesh.face_vertex_descendant(fkey, vkey)
-    if vkey in mesh.halfedge[ukey] and mesh.halfedge[ukey][vkey] is not None:
-        fkey = mesh.halfedge[ukey][vkey]
-        if len(mesh.face_vertices(fkey)) == 5:
-            wkey = penta_to_quads(mesh, fkey, vkey)
-            fkey = mesh.halfedge[vkey][wkey]
+    next_fkey = mesh.halfedge[vkey][wkey]
+    ukey = mesh.face_vertex_descendant(next_fkey, wkey)
+    if wkey in mesh.halfedge[ukey] and mesh.halfedge[ukey][wkey] is not None:
+        next_fkey = mesh.halfedge[ukey][wkey]
+        if len(mesh.face_vertices(next_fkey)) == 5:
             vkey = wkey
+            wkey = penta_quad_1(mesh, next_fkey, wkey)
+            # add to faces along feature to check
             continue
-        if len(mesh.face_vertices(fkey)) == 6:
-            hexa_to_quads(mesh, fkey, vkey)
+        if len(mesh.face_vertices(next_fkey)) == 6:
+            vkey = wkey
+            wkey = hexa_quad_1(mesh, next_fkey, wkey)
+            #if wkey == e2:
+            #    is_loop = True
+            # add to faces along feature to check
             break
     break
-fkey = mesh.halfedge[g][f]
-vkey = f
-count = mesh.number_of_faces()
-while count > 0:
-    count -= 1
-    ukey = mesh.face_vertex_descendant(fkey, vkey)
-    if vkey in mesh.halfedge[ukey] and mesh.halfedge[ukey][vkey] is not None and len(mesh.face_vertices(mesh.halfedge[ukey][vkey])) != 4:
-        fkey = mesh.halfedge[ukey][vkey]
-        if len(mesh.face_vertices(fkey)) == 5:
-            wkey = penta_to_quads(mesh, fkey, vkey)
-            fkey = mesh.halfedge[vkey][wkey]
-            vkey = wkey
-            continue
-        if len(mesh.face_vertices(fkey)) == 6:
-            hexa_to_quads(mesh, fkey, vkey)
-            break
-    break
+# # if not loop, propaget in other direction
+# if not is_loop:
+#     vkey = v
+#     wkey = e2
+#     count = mesh.number_of_faces()
+#     while count > 0:
+#         count -= 1
+#         next_fkey = mesh.halfedge[vkey][wkey]
+#         ukey = mesh.face_vertex_descendant(next_fkey, wkey)
+#         if wkey in mesh.halfedge[ukey] and mesh.halfedge[ukey][wkey] is not None:
+#             next_fkey = mesh.halfedge[ukey][wkey]
+#             if len(mesh.face_vertices(next_fkey)) == 5:
+#                 vkey = wkey
+#                 wkey = penta_quad_1(mesh, next_fkey, wkey)
+#                 # add to faces along feature to check
+#                 continue
+#             if len(mesh.face_vertices(next_fkey)) == 6:
+#                 vkey = wkey
+#                 wkey = hexa_quad_1(mesh, next_fkey, wkey)
+#                 if wkey == e2:
+#                     is_loop = True
+#                 # add to faces along feature to check
+#                 break
+#         break
+
 
 # draw mesh
 vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]

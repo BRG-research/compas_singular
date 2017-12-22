@@ -17,8 +17,9 @@ __all__ = [
     'tri_quad_1',
     'penta_quad_1',
     'hexa_quad_1',
-    'poly_mix_1',
+    'poly_poly_1',
     'mix_quad_1',
+    'quad_mix_1',
 ]
 
 # naming convention: input_output_number
@@ -604,6 +605,77 @@ def mix_quad_1(mesh, fkey_tri, fkey_quad, vkey):
         mesh_flip_cycles(mesh)
 
     return f
+
+def quad_mix_1(mesh, fkey, vkey, ukey):
+    """One quad to a quad and a tri with a new edge from a vertex to the edge midpoint opposite from the two vertices.
+    
+    [a, b, c, d] -> [a, b, e] + [a, e, c, d]
+
+    [*, c, b, *] -> [*, c, e, b, *]
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    vkey: int
+        Key of the initial vertex of the new edge.
+    ukey: int
+        Key of adjacent vertex of the edge opposite to the new vertex.
+
+    Returns
+    -------
+    e : int, None
+        The key of the new vertex of the new edge.
+        None if the quad face is not a quad and if the two vertices are not an edge of the face.
+
+    Raises
+    ------
+    -
+
+    """
+
+    # check validity of rule
+    if len(mesh.face_vertices(fkey)) != 4:
+        return None
+    if (vkey not in mesh.halfedge[ukey] or mesh.halfedge[ukey][vkey] != fkey) and (ukey not in mesh.halfedge[vkey] or mesh.halfedge[vkey][ukey] != fkey):
+        return None
+
+    # flip cyles in faces dpeending on position of vkey
+    flip = False
+    if ukey in mesh.halfedge[vkey] and mesh.halfedge[vkey][ukey] == fkey:
+        flip = True
+        mesh_flip_cycles(mesh)
+
+    d = ukey
+    a = vkey
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+
+    # create new vertex
+    x, y, z = mesh.edge_midpoint(b, c)
+    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+
+    # delete old face
+    mesh.delete_face(fkey)
+
+    # create new faces
+    # [a, b, c, d] -> [a, b, e] + [a, e, c, d]
+    mesh.add_face([a, e, c, d], fkey)
+    mesh.add_face([a, b, e])
+
+    # update adjacent face
+    # [*, c, b, *] -> [*, c, e, b, *]
+    if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
+        fkey_1 = mesh.halfedge[c][b]
+        add_vertex_to_face(mesh, fkey_1, c, e)
+
+    # reflip cycles in faces
+    if flip:
+        mesh_flip_cycles(mesh)
+
+    return e
 
 # ==============================================================================
 # Main
