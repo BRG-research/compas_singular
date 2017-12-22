@@ -17,6 +17,7 @@ __all__ = [
     'tri_quad_1',
     'penta_quad_1',
     'hexa_quad_1',
+    'poly_mix_1',
     'mix_quad_1',
 ]
 
@@ -443,6 +444,75 @@ def hexa_quad_1(mesh, fkey, vkey):
     mesh.add_face([a, b, f, e])
     mesh.add_face([c, d, e, f])
 
+    return f
+
+def poly_poly_1(mesh, fkey, vkey):
+    """One N-gon to a quad and a N-1-gon with a new edge from a vertex to point on opposite edge.
+    
+    [*, a, b, c, d] -> [c, d, e, f] + [*, a, b, f]
+
+    [*, c, b, *] -> [*, c, f, b, *]
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    vkey: int
+        Key of one of the vertices of the new edge.
+
+    Returns
+    -------
+    f : int, None
+        The key of the new vertex of the new edge.
+        None if the vertex is not adjacent to the face.
+
+    Raises
+    ------
+    -
+
+    """
+
+    # check validity of rule
+    if vkey not in mesh.face_vertices(fkey):
+        return None
+
+    e = vkey
+    d = mesh.face_vertex_ancestor(fkey, e)
+    c = mesh.face_vertex_ancestor(fkey, d)
+    d = mesh.face_vertex_ancestor(fkey, c)
+    a = mesh.face_vertex_ancestor(fkey, b)
+    
+    face_vertices = mesh.face_vertices(fkey)[:]
+
+    # create new vertex
+    idx = face_vertices.index(e)
+    length_ea = 0
+    count = len(face_vertices)
+    while count > 0:
+        count -= 1
+        length_ea += mesh.edge_length(face_vertices[idx], face_vertices[idx + 1 - len(face_vertices)])
+        if face_vertices[idx + 1 - len(face_vertices)] == a:
+            break
+    length_ed = mesh.edge_length(e, d)
+    t = length_ea / (length_ea + length_ed)
+    x, y, z = mesh.edge_point(b, c, t = t)
+    f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+
+    face_vertices.remove(c)
+    face_vertices.remove(d)
+    idx = face_vertices.index(e)
+    face.vertices.insert(idx, f)
+
+    # delete old face
+    mesh.delete_face(fkey)
+
+    # create new faces
+    # [*, a, b, c, d] -> [c, d, e, f] + [*, a, b, f]
+    mesh.add_face([a, e, f, d], fkey)
+    mesh.add_face([c, d, e, f])
+
     # update adjacent face
     # [*, c, b, *] -> [*, c, f, b, *]
     if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
@@ -455,6 +525,8 @@ def mix_quad_1(mesh, fkey_tri, fkey_quad, vkey):
     """One quad and one tri to two quads by moving one extremity of the shared edge to a new vertex on an adjacent edge midpoint of the quad.
     
     [a, b, c] + [c, d, e, a] -> [a, b, c, f] + [c, d, e, f]
+
+    [*, a, e, *] -> [*, a, f, e, *]
 
     Parameters
     ----------
@@ -516,6 +588,12 @@ def mix_quad_1(mesh, fkey_tri, fkey_quad, vkey):
     # [a, b, c] + [c, d, e, a] -> [a, b, c, f] + [c, d, e, f]
     mesh.add_face([a, b, c, f], fkey_tri)
     mesh.add_face([c, d, e, f], fkey_quad)
+
+    # update adjacent face
+    # [*, a, e, *] -> [*, a, f, e, *]
+    if e in mesh.halfedge[a] and mesh.halfedge[a][e] is not None:
+        fkey_1 = mesh.halfedge[a][e]
+        add_vertex_to_face(mesh, fkey_1, a, f)
 
     # reflip cycles in faces
     if flip:
