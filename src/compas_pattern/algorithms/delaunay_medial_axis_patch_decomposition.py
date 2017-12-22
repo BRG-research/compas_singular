@@ -2,7 +2,11 @@ from compas.datastructures.mesh import Mesh
 
 from compas.topology import delaunay_from_points
 
+from compas.utilities import geometric_key
+
 from compas_pattern.datastructures.mesh import face_circle
+
+from compas_pattern.topology.joining_welding import weld_mesh
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
@@ -94,7 +98,7 @@ def delaunay_medial_axis_patch_decomposition(delaunay_mesh):
             for vkey in delaunay_mesh.face_vertices(singularity):
                 medial_branches.append([reference_points[singularity], delaunay_mesh.vertex_coordinates(vkey)])
 
-    # collect bounary polines with splits at corner vertices and singularity vertices based on the Delaunay mesh
+    # collect boundary polylines with splits at corner vertices and singularity vertices based on the Delaunay mesh
     
     #corner_vertices = [vkey for vkey in delaunay_mesh.face_vertices(fkey) for fkey, nb_nbrs in singularities.items() if nb_nbrs == 1 and delaunay_mesh.vertex_degree(vkey) == 2]
     corner_vertices = []
@@ -116,11 +120,16 @@ def delaunay_medial_axis_patch_decomposition(delaunay_mesh):
     for vkey in split_vertices:
         if vkey not in culled_split_vertices:
             culled_split_vertices.append(vkey)
-    
+
+    # create geometric map of split vertices to recollect all vertices with same geometric key
+    # necessary because of curve features and unwelded paths of delaunay_mesh
+    map_split_vertices = [geometric_key(delaunay_mesh.vertex_coordinates(vkey)) for vkey in culled_split_vertices]
+    split_vertices = [vkey for vkey in delaunay_mesh.vertices() if geometric_key(delaunay_mesh.vertex_coordinates(vkey)) in map_split_vertices]
+
     # collect boundary polylines with splits
     split_boundaries = []
-    while len(culled_split_vertices) > 0:
-        start = culled_split_vertices.pop()
+    while len(split_vertices) > 0:
+        start = split_vertices.pop()
         # exception if split vertex corresponds to a non-boundary point feature
         if not delaunay_mesh.is_vertex_on_boundary(start):
             continue
@@ -137,15 +146,30 @@ def delaunay_medial_axis_patch_decomposition(delaunay_mesh):
                 split_boundaries.append(polyline)
                 break
             # end of boundary subelement
-            elif polyline[-1] in culled_split_vertices:
+            elif polyline[-1] in split_vertices:
                 split_boundaries.append(polyline)
-                culled_split_vertices.remove(polyline[-1])
+                split_vertices.remove(polyline[-1])
                 polyline = polyline[-1 :]
 
     # convert list of vertices into list of points
     boundary_polylines = [ [delaunay_mesh.vertex_coordinates(vkey) for vkey in split_boundary]for split_boundary in split_boundaries]
+    
+    # remove duplicate boundaries due to curve features and unwelded delaunay mesh
+    culled_boundary_polylines = []
+    for polyline_1 in boundary_polylines:
+        add = True
+        for polyline_2 in culled_boundary_polylines:
+            if polyline_1 == polyline_2:
+                add = False
+                break
+            polyline_1.reverse()
+            if polyline_1 == polyline_2:
+                add = False
+                break
+        if add:
+            culled_boundary_polylines.append(polyline_1)
 
-    return medial_branches, boundary_polylines
+    return medial_branches, culled_boundary_polylines
 
 # ==============================================================================
 # Main
