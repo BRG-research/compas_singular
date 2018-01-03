@@ -2,6 +2,7 @@ from compas.datastructures.mesh import Mesh
 
 from compas.utilities import geometric_key
 
+from compas_pattern.topology.grammar_rules import quad_tri_1
 from compas_pattern.topology.grammar_rules import mix_quad_1
 from compas_pattern.topology.grammar_rules import penta_quad_1
 from compas_pattern.topology.grammar_rules import hexa_quad_1
@@ -75,6 +76,20 @@ def conforming_initial_patch_decomposition(mesh, planar_polyline_features = None
         feature_map = [geometric_key(vkey) for polyline in planar_polyline_features for vkey in polyline]
         vertices_on_feature = [vkey for vkey in mesh.vertices() if geometric_key(mesh.vertex_coordinates(vkey)) in feature_map]
 
+        # dictionary mapping vertex geometric keys to vertex indices
+        vertex_map = {geometric_key(mesh.vertex_coordinates(vkey)): vkey for vkey in mesh.vertices()}
+
+        # list of edges on curve features
+        polyline_keys = [[geometric_key(vkey) for vkey in polyline] for polyline in planar_polyline_features]
+        feature_edges = []
+        for u, v in mesh.edges():
+            u_key = geometric_key(mesh.vertex_coordinates(u))
+            v_key = geometric_key(mesh.vertex_coordinates(v))
+            for polyline in polyline_keys:
+                if u_key in polyline and v_key in polyline:
+                    feature_edges.append((u, v))
+                    break
+
         # 2.
         # store face keys along the polyline
         faces_along_feature = []
@@ -96,6 +111,16 @@ def conforming_initial_patch_decomposition(mesh, planar_polyline_features = None
                         vkey = mesh.face_vertex_descendant(fkey, v)
                         wkey = poly_poly_1(mesh, fkey, vkey)
                         faces_along_feature.append(mesh.halfedge[wkey][vkey])
+                        # update feature_edges
+                        b = mesh.face_vertex_descendant(mesh.halfedge[vkey][wkey], wkey)
+                        c = mesh.face_vertex_ancestor(mesh.halfedge[wkey][vkey], wkey)
+                        if (b, c) in feature_edges or (c, b) in feature_edges:
+                            if (b, c) in feature_edges:
+                                feature_edges.remove((b, c))
+                            else:
+                                feature_edges.remove((c, b))
+                            feature_edges.append((b, wkey))
+                            feature_edges.append((wkey, c))
                         # propagate until boundary or closed loop
                         count = mesh.number_of_faces()
                         while count > 0:
@@ -107,17 +132,34 @@ def conforming_initial_patch_decomposition(mesh, planar_polyline_features = None
                                 if len(mesh.face_vertices(next_fkey)) == 5:
                                     vkey = wkey
                                     wkey = penta_quad_1(mesh, next_fkey, wkey)
+                                    # update feature_edges
+                                    b = mesh.face_vertex_descendant(mesh.halfedge[vkey][wkey], wkey)
+                                    c = mesh.face_vertex_ancestor(mesh.halfedge[wkey][vkey], wkey)
+                                    if (b, c) in feature_edges or (c, b) in feature_edges:
+                                        if (b, c) in feature_edges:
+                                            feature_edges.remove((b, c))
+                                        else:
+                                            feature_edges.remove((c, b))
+                                        feature_edges.append((b, wkey))
+                                        feature_edges.append((wkey, c))
                                     # add to faces along feature to check
                                     faces_along_feature.append(mesh.halfedge[vkey][wkey])
                                     faces_along_feature.append(mesh.halfedge[wkey][vkey])
                                     continue
-                                if len(mesh.face_vertices(next_fkey)) == 6:
+                                elif len(mesh.face_vertices(next_fkey)) == 6:
                                     vkey = wkey
                                     wkey = hexa_quad_1(mesh, next_fkey, wkey)
                                     # add to faces along feature to check
                                     faces_along_feature.append(mesh.halfedge[vkey][wkey])
                                     faces_along_feature.append(mesh.halfedge[wkey][vkey])
                                     break
+                                elif len(mesh.face_vertices(next_fkey)) == 4:
+                                        vkey = wkey
+                                        wkey = quad_tri_1(mesh, next_fkey, wkey)
+                                        # add to faces along feature to check
+                                        faces_along_feature.append(mesh.halfedge[vkey][wkey])
+                                        faces_along_feature.append(mesh.halfedge[wkey][vkey])
+                                        break
                             break
 
         # 3.
@@ -135,9 +177,9 @@ def conforming_initial_patch_decomposition(mesh, planar_polyline_features = None
                     if not is_pole:
                         nbrs = mesh.vertex_neighbours(v)
                         if len(nbrs) == 2:
-                            if nbrs[0] in vertices_on_feature:
+                            if (v, nbrs[0]) or (nbrs[0], v) in feature_edges:
                                 u = nbrs[0]
-                            elif nbrs[1] in vertices_on_feature:
+                            elif (v, nbrs[1]) or (nbrs[1], v) in feature_edges:
                                 u = nbrs[1]
                             else:
                                 u = None
@@ -159,14 +201,29 @@ def conforming_initial_patch_decomposition(mesh, planar_polyline_features = None
                                     if len(mesh.face_vertices(next_fkey)) == 5:
                                         vkey = wkey
                                         wkey = penta_quad_1(mesh, next_fkey, wkey)
+                                        # update feature_edges
+                                        b = mesh.face_vertex_descendant(mesh.halfedge[vkey][wkey], wkey)
+                                        c = mesh.face_vertex_ancestor(mesh.halfedge[wkey][vkey], wkey)
+                                        if (b, c) in feature_edges or (c, b) in feature_edges:
+                                            if (b, c) in feature_edges:
+                                                feature_edges.remove((b, c))
+                                            else:
+                                                feature_edges.remove((c, b))
+                                            feature_edges.append((b, wkey))
+                                            feature_edges.append((wkey, c))
                                         # add to faces along feature to check
                                         continue
-                                    if len(mesh.face_vertices(next_fkey)) == 6:
+                                    elif len(mesh.face_vertices(next_fkey)) == 6:
                                         vkey = wkey
                                         wkey = hexa_quad_1(mesh, next_fkey, wkey)
-                                        #if wkey == e2:
-                                        #    is_loop = True
-                                        # add to faces along feature to check
+                                        if wkey == e2:
+                                            is_loop = True
+                                        break
+                                    elif len(mesh.face_vertices(next_fkey)) == 4:
+                                        vkey = wkey
+                                        wkey = quad_tri_1(mesh, next_fkey, wkey)
+                                        if wkey == e2:
+                                            is_loop = True
                                         break
                                 break
                             # if not loop, propaget in other direction
@@ -185,12 +242,14 @@ def conforming_initial_patch_decomposition(mesh, planar_polyline_features = None
                                             wkey = penta_quad_1(mesh, next_fkey, wkey)
                                             # add to faces along feature to check
                                             continue
-                                        if len(mesh.face_vertices(next_fkey)) == 6:
+                                        elif len(mesh.face_vertices(next_fkey)) == 6:
                                             vkey = wkey
                                             wkey = hexa_quad_1(mesh, next_fkey, wkey)
                                             if wkey == e2:
                                                 is_loop = True
-                                            # add to faces along feature to check
+                                            break
+                                        elif len(mesh.face_vertices(next_fkey)) == 4:
+                                            quad_tri_1(mesh, next_fkey, wkey)
                                             break
                                     break
 

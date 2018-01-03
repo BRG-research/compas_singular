@@ -497,11 +497,10 @@ def poly_poly_1(mesh, fkey, vkey):
         if face_vertices[idx + 1 - len(face_vertices)] == a:
             break
     length_ed = mesh.edge_length(e, d)
-    #if length_ea + length_ed == 0:
-    #    t = .5
-    #else:
-    #    t = length_ea / (length_ea + length_ed)
-    t= .5
+    if length_ea + length_ed == 0:
+        t = .5
+    else:
+        t = length_ea / (length_ea + length_ed)
     x, y, z = mesh.edge_point(b, c, t = t)
     f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
 

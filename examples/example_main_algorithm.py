@@ -154,13 +154,10 @@ def start():
     face_vertices = [conform_mesh.face_vertices(fkey) for fkey in conform_mesh.faces()]
     conform_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
     edges = []
-    #for u,v in conform_mesh.edges():
-    #    edges.append(rs.AddLine(conform_mesh.vertex_coordinates(u), conform_mesh.vertex_coordinates(v)))
     rs.AddLayer('conform_mesh')
     guids = rs.ObjectsByLayer('conform_mesh')
     rs.DeleteObjects(guids)
     rs.ObjectLayer(conform_mesh_guid, layer = 'conform_mesh')
-    #rs.ObjectLayer(edges, layer = 'conform_mesh')
     
     rs.EnableRedraw(True)
     
