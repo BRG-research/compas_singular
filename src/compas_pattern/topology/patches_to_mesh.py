@@ -126,8 +126,8 @@ def patches_to_mesh_old(boundary_polylines, non_boundary_polylines):
         edge_guid[(s_idx, e_idx)] = guid
         edge_guid[(e_idx, s_idx)] = guid
         nb_halfedges += 2
-        he_vectors[(s_idx, e_idx)] = subtract_vectors(guid[0], guid[1]) # NEW
-        he_vectors[(e_idx, s_idx)] = subtract_vectors(guid[-1], guid[-2]) # NEW
+        he_vectors[(s_idx, e_idx)] = subtract_vectors(guid[0], guid[1])
+        he_vectors[(e_idx, s_idx)] = subtract_vectors(guid[-1], guid[-2])
         
     #angle between each halfedge and (1,0,0)
     he_angles = {}
@@ -138,7 +138,7 @@ def patches_to_mesh_old(boundary_polylines, non_boundary_polylines):
         length = distance_point_point(u_xyz, v_xyz)
         uv = vector_from_points(u_xyz, v_xyz)
         uv = he_vectors[(u, v)] # NEW
-        length = (uv[0] ** 2 + uv[1] ** 2) ** .5 # NEW
+        length = (uv[0] ** 2 + uv[1] ** 2) ** .5
         costheta = uv[0] / length
         sintheta = uv[1] / length
         if asin(sintheta) != 0 :

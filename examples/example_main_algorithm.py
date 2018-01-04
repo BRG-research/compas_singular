@@ -8,6 +8,8 @@ def start():
     
     from compas.datastructures.mesh import Mesh
     
+    on_surface = rs.GetInteger(message = 'mesh on surface?', number = 1, minimum = 0, maximum = 1)
+    
     # collect spatial shape: surface + features
     surface_guid = rs.GetObject('select surface', filter = 8)
     curve_features_guids = rs.GetObjects('select curve features', filter = 4)
@@ -140,8 +142,7 @@ def start():
     
     conform_mesh = conforming_initial_patch_decomposition(mesh, planar_polyline_features = planar_polyline_features)
     
-    bool = rs.GetInteger(message = 'remap on surface?', number = 0, minimum = 0, maximum = 1)
-    if bool:
+    if on_surface:
         for vkey in conform_mesh.vertices():
             uv0 = conform_mesh.vertex_coordinates(vkey)
             x, y, z = mapping_point_to_surface(uv0, surface_guid)
@@ -153,7 +154,6 @@ def start():
     vertices = [conform_mesh.vertex_coordinates(vkey) for vkey in conform_mesh.vertices()]
     face_vertices = [conform_mesh.face_vertices(fkey) for fkey in conform_mesh.faces()]
     conform_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
-    edges = []
     rs.AddLayer('conform_mesh')
     guids = rs.ObjectsByLayer('conform_mesh')
     rs.DeleteObjects(guids)
@@ -161,7 +161,7 @@ def start():
     
     rs.EnableRedraw(True)
     
-    bool = rs.GetInteger(message = 'go to next step?', number = 1, minimum = 0, maximum = 1)
+    bool = rs.GetInteger(message = 'densify mesh?', number = 1, minimum = 0, maximum = 1)
     if not bool:
         return
      
@@ -170,89 +170,69 @@ def start():
     
     
     
-    # possibility to apply grammar rules
+    ## possibility to apply grammar rules
     
-    mesh = conform_mesh
+    #mesh = conform_mesh
     
-    from compas_pattern.topology.grammar_rules import quad_to_two_quads_diagonal
-    #for vkey in mesh.vertices_on_boundary():
-    #    vertex_faces = mesh.vertex_faces(vkey)
-    #    if len(vertex_faces) == 1:
-    #        fkey = vertex_faces[0]
-    #        quad_to_two_quads_diagonal(mesh, fkey, vkey)
+    #rs.EnableRedraw(False)
     
-    from compas_pattern.topology.grammar_rules import quad_to_two_quads
-    from compas_pattern.topology.conforming_operations import penta_to_quads
-    from compas_pattern.topology.conforming_operations import hexa_to_quads
-    
-    rs.EnableRedraw(False)
-    
-    artist = rhino.MeshArtist(mesh, layer='MeshArtist')
-    artist.clear_layer()
+    #artist = rhino.MeshArtist(mesh, layer='MeshArtist')
+    #artist.clear_layer()
     
     #artist.draw_vertexlabels()
     #artist.redraw()
     
-    artist.draw_facelabels()
-    artist.redraw()
-    fkey = rhino.mesh_select_face(mesh, message = 'face to split')
-    artist.clear_layer()
-    artist.redraw()
+    #artist.draw_facelabels()
+    #artist.redraw()
+    #fkey = rhino.mesh_select_face(mesh, message = 'face to split')
+    #artist.clear_layer()
+    #artist.redraw()
     
-    artist.draw_edgelabels()
-    artist.redraw()
-    ukey, vkey = rhino.mesh_select_edge(mesh, message = 'edge of the face along which to split')
-    artist.clear_layer()
-    artist.redraw()
+    #artist.draw_edgelabels()
+    #artist.redraw()
+    #ukey, vkey = rhino.mesh_select_edge(mesh, message = 'edge of the face along which to split')
+    #artist.clear_layer()
+    #artist.redraw()
+    
+    #rs.EnableRedraw(False)
+    
+    #vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
+    #face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
+    #mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
+    #rs.AddLayer('edited_mesh')
+    #rs.ObjectLayer(mesh_guid, layer = 'edited_mesh')
+    
+    #rs.EnableRedraw(True)
+    
+    # mesh densification
+    from compas_pattern.algorithms.coarse_to_dense_mesh import quad_mesh_densification
+    
+    target_length = rs.GetReal('target length for densification', number = 1)
     
     rs.EnableRedraw(False)
     
-    e, f = quad_to_two_quads(mesh, fkey, ukey, vkey)
-    fkey = mesh.halfedge[e][f]
-    vkey = f
-    count = mesh.number_of_faces()
-    while count > 0:
-        count -= 1
-        ukey = mesh.face_vertex_descendant(fkey, vkey)
-        if vkey in mesh.halfedge[ukey] and mesh.halfedge[ukey][vkey] is not None:
-            fkey = mesh.halfedge[ukey][vkey]
-            if len(mesh.face_vertices(fkey)) == 5:
-                wkey = penta_to_quads(mesh, fkey, vkey)
-                fkey = mesh.halfedge[vkey][wkey]
-                vkey = wkey
-                continue
-            if len(mesh.face_vertices(fkey)) == 6:
-                hexa_to_quads(mesh, fkey, vkey)
-                break
-        break
-    fkey = mesh.halfedge[f][e]
-    vkey = e
-    count = mesh.number_of_faces()
-    while count > 0:
-        count -= 1
-        ukey = mesh.face_vertex_descendant(fkey, vkey)
-        if vkey in mesh.halfedge[ukey] and mesh.halfedge[ukey][vkey] is not None and len(mesh.face_vertices(mesh.halfedge[ukey][vkey])) != 4:
-            fkey = mesh.halfedge[ukey][vkey]
-            if len(mesh.face_vertices(fkey)) == 5:
-                wkey = penta_to_quads(mesh, fkey, vkey)
-                fkey = mesh.halfedge[vkey][wkey]
-                vkey = wkey
-                continue
-            if len(mesh.face_vertices(fkey)) == 6:
-                hexa_to_quads(mesh, fkey, vkey)
-                break
-        break
+    if not conform_mesh.is_quadmesh():
+        print 'invalid conform mesh'
+        return
     
-    vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
-    face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
-    mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
-    rs.AddLayer('edited_mesh')
-    rs.ObjectLayer(mesh_guid, layer = 'edited_mesh')
+    dense_mesh = quad_mesh_densification(conform_mesh, target_length)
     
+    vertices = [dense_mesh.vertex_coordinates(vkey) for vkey in dense_mesh.vertices()]
+    face_vertices = [dense_mesh.face_vertices(fkey) for fkey in dense_mesh.faces()]
+    dense_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
+    edges = []
+    rs.AddLayer('dense_mesh')
+    guids = rs.ObjectsByLayer('dense_mesh')
+    rs.DeleteObjects(guids)
+    rs.ObjectLayer(dense_mesh_guid, layer = 'dense_mesh')
     
     rs.EnableRedraw(True)
     
-    # mesh densification
+    bool = rs.GetInteger(message = 'smooth on surface?', number = 1, minimum = 0, maximum = 1)
+    if not bool:
+        return
+     
+    rs.LayerVisible('dense_mesh', visible = False)
     
     # mapping and smoothing on spatial shape
     
