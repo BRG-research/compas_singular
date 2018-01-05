@@ -8,8 +8,6 @@ def start():
     
     from compas.datastructures.mesh import Mesh
     
-    on_surface = rs.GetInteger(message = 'mesh on surface?', number = 1, minimum = 0, maximum = 1)
-    
     # collect spatial shape: surface + features
     surface_guid = rs.GetObject('select surface', filter = 8)
     curve_features_guids = rs.GetObjects('select curve features', filter = 4)
@@ -55,9 +53,6 @@ def start():
     
     rs.EnableRedraw(True)
     
-    bool = rs.GetInteger(message = 'generate Delaunay mesh?', number = 1, minimum = 0, maximum = 1)
-    if not bool:
-        return
         
     rs.LayerVisible('boundary_polyline_planar', visible = False)
     rs.LayerVisible('hole_polyline_planar', visible = False)
@@ -82,10 +77,6 @@ def start():
     
     rs.EnableRedraw(True)
     
-    bool = rs.GetInteger(message = 'generate patch decomposition?', number = 1, minimum = 0, maximum = 1)
-    if not bool:
-        return
-    
     rs.LayerVisible('delaunay_mesh', visible = False)
     
     # patch polylines from Delaunay mesh
@@ -106,10 +97,6 @@ def start():
     
     rs.EnableRedraw(True)
     
-    bool = rs.GetInteger(message = 'generate control mesh?', number = 1, minimum = 0, maximum = 1)
-    if not bool:
-        return
-    
     rs.LayerVisible('patch_decomposition', visible = False)
     
     # conversion patch polylines to control mesh
@@ -129,10 +116,6 @@ def start():
     
     rs.EnableRedraw(True)
     
-    bool = rs.GetInteger(message = 'generate quad patch decomposition?', number = 1, minimum = 0, maximum = 1)
-    if not bool:
-        return
-    
     rs.LayerVisible('control_mesh', visible = False)
     
     # patch decomposition to valid quad patch decomposition with potential pseudo-quads
@@ -142,14 +125,13 @@ def start():
     
     conform_mesh = conforming_initial_patch_decomposition(mesh, planar_polyline_features = planar_polyline_features)
     
-    if on_surface:
-        for vkey in conform_mesh.vertices():
-            uv0 = conform_mesh.vertex_coordinates(vkey)
-            x, y, z = mapping_point_to_surface(uv0, surface_guid)
-            attr = conform_mesh.vertex[vkey]
-            attr['x'] = x
-            attr['y'] = y
-            attr['z'] = z
+    for vkey in conform_mesh.vertices():
+        uv0 = conform_mesh.vertex_coordinates(vkey)
+        x, y, z = mapping_point_to_surface(uv0, surface_guid)
+        attr = conform_mesh.vertex[vkey]
+        attr['x'] = x
+        attr['y'] = y
+        attr['z'] = z
     
     vertices = [conform_mesh.vertex_coordinates(vkey) for vkey in conform_mesh.vertices()]
     face_vertices = [conform_mesh.face_vertices(fkey) for fkey in conform_mesh.faces()]
@@ -161,9 +143,6 @@ def start():
     
     rs.EnableRedraw(True)
     
-    bool = rs.GetInteger(message = 'densify mesh?', number = 1, minimum = 0, maximum = 1)
-    if not bool:
-        return
      
     rs.LayerVisible('conform_mesh', visible = False)
     
@@ -220,7 +199,6 @@ def start():
     vertices = [dense_mesh.vertex_coordinates(vkey) for vkey in dense_mesh.vertices()]
     face_vertices = [dense_mesh.face_vertices(fkey) for fkey in dense_mesh.faces()]
     dense_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
-    edges = []
     rs.AddLayer('dense_mesh')
     guids = rs.ObjectsByLayer('dense_mesh')
     rs.DeleteObjects(guids)
@@ -228,13 +206,36 @@ def start():
     
     rs.EnableRedraw(True)
     
-    bool = rs.GetInteger(message = 'smooth on surface?', number = 1, minimum = 0, maximum = 1)
-    if not bool:
-        return
      
     rs.LayerVisible('dense_mesh', visible = False)
     
     # mapping and smoothing on spatial shape
+    from compas.geometry.algorithms.smoothing import mesh_smooth_centroid
+    
+    from compas_pattern.algorithms.constrained_smoothing import define_constraints
+    from compas_pattern.algorithms.constrained_smoothing import apply_constraints
+    
+    smooth_mesh = dense_mesh.copy()
+    
+    smoothing_iterations = rs.GetInteger('number of iterations for smoothing', number = 20)
+    damping_value = rs.GetReal('damping value for smoothing', number = .5)
+    
+    rs.EnableRedraw(False)
+    
+    constraints, surface_boundaries = define_constraints(smooth_mesh, surface_guid, curve_constraints = curve_features_guids, point_constraints = point_features_guids)
+    fixed_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'surface_corner']
+    mesh_smooth_centroid(smooth_mesh, fixed = fixed_vertices, kmax = smoothing_iterations, damping = damping_value, callback = apply_constraints, callback_args = [smooth_mesh, constraints])
+    rs.DeleteObjects(surface_boundaries)
+    
+    vertices = [smooth_mesh.vertex_coordinates(vkey) for vkey in smooth_mesh.vertices()]
+    face_vertices = [smooth_mesh.face_vertices(fkey) for fkey in smooth_mesh.faces()]
+    smooth_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
+    rs.AddLayer('smooth_mesh')
+    guids = rs.ObjectsByLayer('smooth_mesh')
+    rs.DeleteObjects(guids)
+    rs.ObjectLayer(smooth_mesh_guid, layer = 'smooth_mesh')
+    
+    rs.EnableRedraw(True)
     
     # conversion to pattern
 

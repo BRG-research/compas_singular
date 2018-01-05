@@ -53,7 +53,9 @@ def spatial_NURBS_input_to_planar_discrete_output(discretization_spacing, surfac
 
     """
     
-    boundaries = rs.JoinCurves(surface_borders(surface_guid, border_type = 1), delete_input = True)
+    boundaries = surface_borders(surface_guid, border_type = 1)
+    if len(boundaries) > 1:
+        boundaries = rs.JoinCurves(boundaries, delete_input = True)
     boundary_polyline = rs.ConvertCurveToPolyline(boundaries[0], angle_tolerance = 5.0, tolerance = 0.01, delete_input = True, min_edge_length = 0, max_edge_length = discretization_spacing)
     uv_boundary_polyline = [rs.SurfaceClosestPoint(surface_guid, vertex) for vertex in rs.PolylineVertices(boundary_polyline)]
     planar_boundary_polyline = [[u, v, 0] for u, v in uv_boundary_polyline]
