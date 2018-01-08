@@ -24,7 +24,8 @@ def conforming_initial_patch_decomposition(mesh, planar_point_features = None, p
     1. Remove tri patches that sould not be pseudo-quad patches due to insufficient refinement.
     2. Propagate T-junctions from polyline features
     3. Ensure at least one tri patch at the non-boundary extremities of polyline features.
-    4. Convert tri patches into quad patches with double vertex at pole location [a, b, c] -> [a, a, b, c]
+    4. Enforce an edge at concavities
+    5. Convert tri patches into quad patches with double vertex at pole location [a, b, c] -> [a, a, b, c]
     
     Parameters
     ----------
@@ -255,6 +256,8 @@ def conforming_initial_patch_decomposition(mesh, planar_point_features = None, p
                                     break
 
     # 4
+
+    # 5
     # collect pole points
     poles = []
     if planar_point_features is not None:
