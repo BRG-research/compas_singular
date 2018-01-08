@@ -123,7 +123,7 @@ def start():
     
     rs.EnableRedraw(False)
     
-    conform_mesh = conforming_initial_patch_decomposition(mesh, planar_polyline_features = planar_polyline_features)
+    conform_mesh = conforming_initial_patch_decomposition(mesh, planar_point_features = planar_point_features, planar_polyline_features = planar_polyline_features)
     
     for vkey in conform_mesh.vertices():
         uv0 = conform_mesh.vertex_coordinates(vkey)
@@ -206,11 +206,11 @@ def start():
     
     rs.EnableRedraw(True)
     
-     
     rs.LayerVisible('dense_mesh', visible = False)
     
     # mapping and smoothing on spatial shape
     from compas.geometry.algorithms.smoothing import mesh_smooth_centroid
+    from compas.geometry.algorithms.smoothing import mesh_smooth_area
     
     from compas_pattern.algorithms.constrained_smoothing import define_constraints
     from compas_pattern.algorithms.constrained_smoothing import apply_constraints
@@ -224,7 +224,7 @@ def start():
     
     constraints, surface_boundaries = define_constraints(smooth_mesh, surface_guid, curve_constraints = curve_features_guids, point_constraints = point_features_guids)
     fixed_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'surface_corner']
-    mesh_smooth_centroid(smooth_mesh, fixed = fixed_vertices, kmax = smoothing_iterations, damping = damping_value, callback = apply_constraints, callback_args = [smooth_mesh, constraints])
+    mesh_smooth_area(smooth_mesh, fixed = fixed_vertices, kmax = smoothing_iterations, damping = damping_value, callback = apply_constraints, callback_args = [smooth_mesh, constraints])
     rs.DeleteObjects(surface_boundaries)
     
     vertices = [smooth_mesh.vertex_coordinates(vkey) for vkey in smooth_mesh.vertices()]
@@ -234,6 +234,8 @@ def start():
     guids = rs.ObjectsByLayer('smooth_mesh')
     rs.DeleteObjects(guids)
     rs.ObjectLayer(smooth_mesh_guid, layer = 'smooth_mesh')
+    
+    rs.LayerVisible('smooth_mesh', visible = True)
     
     rs.EnableRedraw(True)
     

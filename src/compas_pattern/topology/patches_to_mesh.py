@@ -109,7 +109,7 @@ def patches_to_mesh_old(boundary_polylines, non_boundary_polylines):
     nb_halfedges = 0
     halfedges = {}
     flip_he = {}
-    he_vectors = {} # NEW
+    he_vectors = {}
     #{('u', 'v'): guid}
     edge_guid = {}
     for index, guid in edges.items():

@@ -19,11 +19,12 @@ __all__ = [
     'conforming_initial_patch_decomposition',
 ]
 
-def conforming_initial_patch_decomposition(mesh, planar_polyline_features = None):
+def conforming_initial_patch_decomposition(mesh, planar_point_features = None, planar_polyline_features = None):
     """Transform the initial patch decomposition in a valid quad patch decomposition. Potentially with pseudo-quads.
     1. Remove tri patches that sould not be pseudo-quad patches due to insufficient refinement.
     2. Propagate T-junctions from polyline features
     3. Ensure at least one tri patch at the non-boundary extremities of polyline features.
+    4. Convert tri patches into quad patches with double vertex at pole location [a, b, c] -> [a, a, b, c]
     
     Parameters
     ----------
@@ -253,6 +254,33 @@ def conforming_initial_patch_decomposition(mesh, planar_polyline_features = None
                                             break
                                     break
 
+    # 4
+    # collect pole points
+    poles = []
+    if planar_point_features is not None:
+        poles += [geometric_key(pt) for pt in planar_point_features]
+    if planar_polyline_features is not None:
+        for polyline in planar_polyline_features:
+            poles += [geometric_key(polyline[0]), geometric_key(polyline[-1])]
+
+    # modify tri faces into quad faces with a double vertex as pole point
+    for fkey in mesh.faces():
+        face_vertices = mesh.face_vertices(fkey)
+        if len(face_vertices) == 3:
+            # find pole location
+            pole = None
+            for vkey in face_vertices:
+                geom_key = geometric_key(mesh.vertex_coordinates(vkey))
+                if geom_key in poles:
+                    pole = vkey
+                    break
+            # modify face
+            if pole is not None:
+                new_face_vertices = face_vertices[:]
+                idx = new_face_vertices.index(vkey)
+                new_face_vertices.insert(idx, vkey)
+                mesh.delete_face(fkey)
+                mesh.add_face(new_face_vertices, fkey)
 
     return mesh
 

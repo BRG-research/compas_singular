@@ -15,6 +15,7 @@ from compas.utilities import geometric_key
 from compas_pattern.topology.polyline_extraction import mesh_polylines_boundary
 
 from compas_pattern.cad.rhino.spatial_NURBS_input_to_planar_discrete_output import surface_borders
+from compas_pattern.cad.rhino.utilities import is_point_on_curve
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
@@ -59,12 +60,16 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
     # set point constraints at point feature, curve feature extremities and boundary curve corners
     constrained_points = []
     for curve_guid in surface_boundaries:
-        start = geometric_key(rs.CurveStartPoint(curve_guid))
-        end = geometric_key(rs.CurveEndPoint(curve_guid))
-        if start not in constrained_points:
-            constrained_points.append(start)
-        if end not in constrained_points:
-            constrained_points.append(end)
+        start_tgt = rs.CurveTangent(curve_guid, rs.CurveParameter(curve_guid, 0))
+        end_tgt = rs.CurveTangent(curve_guid, rs.CurveParameter(curve_guid, 1))
+        # add only if not closed or closed with a kink
+        if not rs.IsCurveClosed(curve_guid) or not rs.IsVectorParallelTo(start_tgt, end_tgt):
+            start = geometric_key(rs.CurveStartPoint(curve_guid))
+            end = geometric_key(rs.CurveEndPoint(curve_guid))
+            if start not in constrained_points:
+                constrained_points.append(start)
+            if end not in constrained_points:
+                constrained_points.append(end)
 
     for vkey in mesh.vertices():
         xyz = mesh.vertex_coordinates(vkey)
@@ -115,30 +120,83 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
 
     # constrain a mesh boundary to a surface boundary if the two extremities of the mesh boundary are on the surface boundary
     for mesh_bdry in split_mesh_boundaries:
-        
+
         if mesh_bdry[0] == mesh_bdry[-1]:
-            xyz = mesh.vertex_coordinates(mesh_bdry[0])
-            distance_min = -1
-            crv = None
-            for srf_bdry in surface_boundaries:
-                t = rs.CurveClosestPoint(srf_bdry, xyz)
-                pt = rs.EvaluateCurve(srf_bdry, t)
-                distance = rs.Distance(xyz, pt)
-                if distance < distance_min or distance_min < 0:
-                    distance_min = distance
-                    crv = srf_bdry
-            if crv is not None:
+            crv_cstr = None
+            for vkey in mesh_bdry:
+                xyz = mesh.vertex_coordinates(vkey)
+                for srf_bdry in surface_boundaries:
+                    if is_point_on_curve(srf_bdry, xyz):
+                        crv_cstr = srf_bdry
+                        break
+                if crv_cstr is not None:
+                    break
+            if crv_cstr is not None:
                 for vkey in mesh_bdry:
+                    xyz = mesh.vertex_coordinates(vkey)
+                    if is_point_on_curve(crv_cstr, xyz) and vkey not in constraints:
+                        constraints[vkey] = ('curve', crv_cstr)
+                for i, vkey in enumerate(mesh_bdry):
                     if vkey not in constraints:
-                        constraints[vkey] = ('curve', crv)
+                        # find next contrained point
+                        n_plus = 1
+                        norm_t_plus = None
+                        count = len(mesh_bdry)
+                        while count > 0:
+                            count -= 1
+                            vkey_plus = mesh_bdry[i + n_plus - len(mesh_bdry)]
+                            if vkey_plus in constraints:
+                                norm_t_plus = rs.CurveNormalizedParameter(crv_cstr, rs.CurveClosestPoint(crv_cstr, mesh.vertex_coordinates(vkey_plus)))
+                            else:
+                                n_plus += 1
+                        # find previous contrained point
+                        n_minus = 1
+                        norm_t_minus = None
+                        count = len(mesh_bdry)
+                        while count > 0:
+                            count -= 1
+                            vkey_minus = mesh_bdry[i - n_minus]
+                            if vkey_minus in constraints:
+                                norm_t_minus = rs.CurveNormalizedParameter(crv_cstr, rs.CurveClosestPoint(crv_cstr, mesh.vertex_coordinates(vkey_minus)))
+                            else:
+                                n_minus += 1
+                        # calculate barycentric parameter and move to it
+                        # dichotomy required in case of curve seam being between the two parameters
+                        #print n_minus, norm_t_minus, n_plus, norm_t_plus
+                        if norm_t_minus == norm_t_plus:
+                            norm_t = (norm_t_plus + .5) % 1
+                        elif norm_t_minus < norm_t_plus:
+                            norm_t = (n_minus * norm_t_plus + n_plus * norm_t_minus) / (n_minus + n_plus)
+                        else:
+                            norm_t_plus += 1
+                            norm_t = (n_minus * norm_t_plus + n_plus * norm_t_minus) / (n_minus + n_plus)
+                        # update coordiantes
+                        t = rs.CurveParameter(crv_cstr, norm_t)
+                        x, y, z = rs.EvaluateCurve(crv_cstr, t)
+                        attr = mesh.vertex[vkey]
+                        attr['x'] = x
+                        attr['y'] = y
+                        attr['z'] = z
+                        # store constraint
+                        constraints[vkey] = ('curve', crv_cstr)
         
         else:
             for srf_bdry in surface_boundaries:
                 start_xyz = mesh.vertex_coordinates(mesh_bdry[0])
                 end_xyz = mesh.vertex_coordinates(mesh_bdry[-1])
-                if rs.IsPointOnCurve(srf_bdry, start_xyz) and rs.IsPointOnCurve(srf_bdry, end_xyz):
-                    for vkey in mesh_bdry:
+                if is_point_on_curve(srf_bdry, start_xyz) and is_point_on_curve(srf_bdry, end_xyz):
+                    start_t = rs.CurveClosestPoint(srf_bdry, start_xyz)
+                    end_t = rs.CurveClosestPoint(srf_bdry, end_xyz)
+                    for i, vkey in enumerate(mesh_bdry):
                         if vkey not in constraints:
+                            # project point on curve constraint at barycentric curve parameter 
+                            n = len(mesh_bdry)
+                            t = (i * end_t + (n - 1 - i) * start_t) / (n - 1)
+                            x, y, z = rs.EvaluateCurve(srf_bdry, t)
+                            attr = mesh.vertex[vkey]
+                            attr['x'] = x
+                            attr['y'] = y
+                            attr['z'] = z
                             constraints[vkey] = ('curve', srf_bdry)
                     break
 
