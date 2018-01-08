@@ -200,6 +200,10 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
                             constraints[vkey] = ('curve', srf_bdry)
                     break
 
+
+    # constrain to curve features
+    
+    
     # set surface constraints by default for the others
     for vkey in mesh.vertices():
         if vkey not in constraints:

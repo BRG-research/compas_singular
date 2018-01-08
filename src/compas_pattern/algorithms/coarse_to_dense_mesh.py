@@ -3,6 +3,7 @@ import math
 from compas.datastructures.mesh import Mesh
 
 from compas_pattern.topology.polyline_extraction import quad_mesh_polylines_all
+from compas_pattern.topology.polyline_extraction import dual_edge_groups
 
 from compas.geometry.algorithms.interpolation import discrete_coons_patch
 
@@ -43,38 +44,50 @@ def quad_mesh_densification(mesh, target_length):
     if not mesh.is_quadmesh():
         return None
 
-    # collect dual polyedges based on polyfaces
-    polyfaces = quad_mesh_polylines_all(mesh, dual = True)
+    # # collect dual polyedges based on polyfaces
+    # polyfaces = quad_mesh_polylines_all(mesh, dual = True)
+
+    # dual_polyedges = []
+    # for polyface in polyfaces:
+    #     dual_polyedge = []
+
+    #     for i in range(len(polyface) - 1):
+    #         u, v = mesh.face_adjacency_halfedge(polyface[i], polyface[i + 1])
+            
+    #         # first edge
+    #         if i == 0 and polyface[0] != polyface[-1]:
+    #             w = mesh.face_vertex_descendant(polyface[i], v)
+    #             x = mesh.face_vertex_descendant(polyface[i], w)
+    #             dual_polyedge.append([x, w])
+
+    #         # regular edges
+    #         dual_polyedge.append([u, v])
+            
+    #         # last edge
+    #         if i == len(polyface) - 2 and polyface[0] != polyface[-1]:
+    #             w = mesh.face_vertex_ancestor(polyface[i + 1], v)
+    #             x = mesh.face_vertex_ancestor(polyface[i + 1], w)
+    #             dual_polyedge.append([x, w])
+
+    #     dual_polyedges.append(dual_polyedge)
+
+    edge_groups, max_group = dual_edge_groups(mesh)
+
     dual_polyedges = []
-    for polyface in polyfaces:
+    for i in range(max_group + 1):
         dual_polyedge = []
-
-        for i in range(len(polyface) - 1):
-            u, v = mesh.face_adjacency_halfedge(polyface[i], polyface[i + 1])
-            
-            # first edge
-            if i == 0 and polyface[0] != polyface[-1]:
-                w = mesh.face_vertex_descendant(polyface[i], v)
-                x = mesh.face_vertex_descendant(polyface[i], w)
-                dual_polyedge.append([x, w])
-
-            # regular edges
-            dual_polyedge.append([u, v])
-            
-            # last edge
-            if i == len(polyface) - 2 and polyface[0] != polyface[-1]:
-                w = mesh.face_vertex_ancestor(polyface[i + 1], v)
-                x = mesh.face_vertex_ancestor(polyface[i + 1], w)
-                dual_polyedge.append([x, w])
-
-        dual_polyedges.append(dual_polyedge)
+        for u, v in edge_groups:
+            if edge_groups[(u, v)] == i:
+                if (v, u) not in dual_polyedge:
+                    dual_polyedge.append(([u, v]))
+        if len(dual_polyedge) > 0:
+            dual_polyedges.append(dual_polyedge)
 
     # determine subdivision parameter based on target length and dual edge average length
     group_subdivision = {}
     edge_group = {}
 
     for i, dual_polyedge in enumerate(dual_polyedges):
-
         average_length = 0
         for u, v in dual_polyedge:
             average_length += mesh.edge_length(u, v)
@@ -91,7 +104,7 @@ def quad_mesh_densification(mesh, target_length):
     meshes = []
 
     for fkey in mesh.faces():
-        a, b, c, d = mesh.face_vertices(fkey)
+        a, b, c, d = mesh.face_vertices(fkey)  
         group_1 = edge_group[(a, b)]
         group_2 = edge_group[(b, c)]
         n = int(group_subdivision[group_1])

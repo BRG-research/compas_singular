@@ -118,10 +118,10 @@ def quad_mesh_polylines_all(mesh, dual = False):
                 # start from last edge
                 u, v = polyline[-2], polyline[-1]
                 count -= 1
-                # for not boundary polyline: stop if the last vertex is on the boundary or if it is a singularity or if the polyline just closed
+                # for not boundary polyline: stop if the last vertex is on the boundary or if it is a singularity or if the polyline is closed "without kink"
                 if not is_boundary_polyline and (mesh.is_vertex_on_boundary(v) or len(mesh.vertex_neighbours(v)) != 4 or polyline[0] == polyline[-1]):
                     break
-                # for  boundary polyline: stop if the last vertex is on the boundary or if it is a singularity or if the polyline just closed
+                # for boundary polyline: stop if the last vertex is on the boundary or if it is a singularity or if the polyline is closed "without kink"
                 elif is_boundary_polyline and (len(mesh.vertex_neighbours(v)) != 3 or polyline[0] == polyline[-1]):
                     break             
                 # get next vertex of polyline
@@ -149,6 +149,68 @@ def quad_mesh_polylines_all(mesh, dual = False):
 
     return polylines
 
+def dual_edge_groups(mesh):
+    """Groups edges that are opposite to each other in a quad face.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A quad mesh.
+
+    Returns
+    -------
+    list or None
+        The list of edge groups as lists of edges.
+        None if not a quad mesh.
+
+    Raises
+    ------
+    -
+
+    """
+
+    # check if is a quad mesh
+    if not mesh.is_quadmesh():
+        return None
+    
+
+    edge_groups = {}
+    max_group = 0
+    for fkey in mesh.faces():
+        a, b, c, d = mesh.face_vertices(fkey)
+        for u, v, w, x in [ [a, b, c, d], [b, c, d, a] ]:
+ 
+            if (u, v) in edge_groups and (w, x) in edge_groups:
+                # flip one
+                new_group = edge_groups[(u, v)]
+                old_group = edge_groups[(w, x)]
+                for e0, e1 in edge_groups:
+                    if edge_groups[(e0, e1)] == old_group:
+                        edge_groups[(e0, e1)] = new_group
+                        edge_groups[(e1, e0)] = new_group
+
+            elif (u, v) not in edge_groups and (w, x) in edge_groups:
+                # add the other
+                group = edge_groups[(w, x)]
+                edge_groups[(u, v)] = group
+                edge_groups[(v, u)] = group
+
+            elif (u, v) in edge_groups and (w, x) not in edge_groups:
+                # add the other
+                group = edge_groups[(u, v)]
+                edge_groups[(w, x)] = group
+                edge_groups[(x, w)] = group
+
+            else:
+                # start new group
+                max_group += 1
+                edge_groups[(u, v)] = max_group
+                edge_groups[(v, u)] = max_group
+                edge_groups[(w, x)] = max_group
+                edge_groups[(x, w)] = max_group
+
+    return edge_groups, max_group
+
 # ==============================================================================
 # Main
 # ==============================================================================
@@ -162,14 +224,14 @@ if __name__ == '__main__':
 
     mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
 
-    polylines = quad_mesh_to_polylines(mesh, dual = False)
+    polylines = quad_mesh_polylines_all(mesh, dual = False)
     print(polylines)
 
-    dual_polylines = quad_mesh_to_polylines(mesh, dual = True)
+    dual_polylines = quad_mesh_polylines_all(mesh, dual = True)
     print(dual_polylines)
 
     vertices = [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 2.0, 0.0], [0.0, 3.0, 0.0], [0.0, 4.0, 0.0], [0.0, 5.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [1.0, 2.0, 0.0], [1.0, 3.0, 0.0], [1.0, 4.0, 0.0], [1.0, 5.0, 0.0], [2.0, 0.0, 0.0], [2.0, 1.0, 0.0], [2.0, 2.0, 0.0], [2.0, 3.0, 0.0], [2.0, 4.0, 0.0], [2.0, 5.0, 0.0], [3.0, 0.0, 0.0], [3.0, 1.0, 0.0], [3.0, 2.0, 0.0], [3.0, 3.0, 0.0], [3.0, 4.0, 0.0], [3.0, 5.0, 0.0], [4.0, 0.0, 0.0], [4.0, 1.0, 0.0], [4.0, 2.0, 0.0], [4.0, 3.0, 0.0], [4.0, 4.0, 0.0], [4.0, 5.0, 0.0], [5.0, 0.0, 0.0], [5.0, 1.0, 0.0], [5.0, 2.0, 0.0], [5.0, 3.0, 0.0], [5.0, 4.0, 0.0], [5.0, 5.0, 0.0]]
     face_vertices = [[7, 1, 0, 6], [8, 2, 1, 7], [9, 3, 2, 8], [10, 4, 3, 9], [11, 5, 4, 10], [13, 7, 6, 12], [14, 8, 7, 13], [16, 10, 9, 15], [17, 11, 10, 16], [19, 13, 12, 18], [20, 14, 13, 19], [21, 15, 14, 20], [22, 16, 15, 21], [23, 17, 16, 22], [25, 19, 18, 24], [26, 20, 19, 25], [27, 21, 20, 26], [28, 22, 21, 27], [29, 23, 22, 28], [31, 25, 24, 30], [32, 26, 25, 31], [33, 27, 26, 32], [34, 28, 27, 33], [35, 29, 28, 34]]
     mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
 
-    print mesh_boundaries(mesh)
+    print mesh_polylines_boundary(mesh)
