@@ -122,6 +122,8 @@ def quad_mesh_densification(mesh, target_length):
 
     dense_mesh = join_and_weld_meshes(meshes)
 
+    # unweld along two-sided openings
+
     return dense_mesh
 
 # ==============================================================================

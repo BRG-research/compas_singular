@@ -54,22 +54,30 @@ def spatial_NURBS_input_to_planar_discrete_output(discretization_spacing, surfac
     """
     
     boundaries = surface_borders(surface_guid, border_type = 1)
-    if len(boundaries) > 1:
-        boundaries = rs.JoinCurves(boundaries, delete_input = True)
-    boundary_polyline = rs.ConvertCurveToPolyline(boundaries[0], angle_tolerance = 5.0, tolerance = 0.01, delete_input = True, min_edge_length = 0, max_edge_length = discretization_spacing)
-    uv_boundary_polyline = [rs.SurfaceClosestPoint(surface_guid, vertex) for vertex in rs.PolylineVertices(boundary_polyline)]
-    planar_boundary_polyline = [[u, v, 0] for u, v in uv_boundary_polyline]
+
+    #if len(boundaries) > 1:
+    #    boundaries = rs.JoinCurves(boundaries, delete_input = True)
+    boundary_polylines = [curve_to_polyline(boundary, discretization_spacing) for boundary in boundaries]
+    #boundary_polyline = rs.ConvertCurveToPolyline(boundaries[0], angle_tolerance = 45.0, tolerance = discretization_spacing, delete_input = True, min_edge_length = 0.9 * discretization_spacing, max_edge_length = 1.1 * discretization_spacing)
+    uv_boundary_polylines = [[rs.SurfaceClosestPoint(surface_guid, vertex) for vertex in rs.PolylineVertices(boundary_polyline)] for boundary_polyline in boundary_polylines]
+    planar_boundary_polylines = [[[u, v, 0] for u, v in uv_boundary_polyline] for uv_boundary_polyline in uv_boundary_polylines]
+    planar_boundary_polyline = []
+    for polyline in planar_boundary_polylines:
+        planar_boundary_polyline += polyline[: -1]
+    planar_boundary_polyline.append(planar_boundary_polyline[0])
     rs.DeleteObjects(boundaries)
 
     holes = surface_borders(surface_guid, border_type = 2)
     if len(holes) > 1:
         holes = rs.JoinCurves(holes, delete_input = True)
-    hole_polylines = [rs.ConvertCurveToPolyline(hole, angle_tolerance = 5.0, tolerance = 0.01, delete_input = True, min_edge_length = 0, max_edge_length = discretization_spacing) for hole in holes]
+    hole_polylines = [curve_to_polyline(hole, discretization_spacing) for hole in holes]
+    #hole_polylines = [rs.ConvertCurveToPolyline(hole, angle_tolerance = 45.0, tolerance = discretization_spacing, delete_input = True, min_edge_length = 0.9 * discretization_spacing, max_edge_length = 1.1 * discretization_spacing) for hole in holes]
     uv_hole_polylines = [[rs.SurfaceClosestPoint(surface_guid, vertex) for vertex in rs.PolylineVertices(hole_polyline)] for hole_polyline in hole_polylines]
     planar_hole_polylines = [[[u, v, 0] for u, v in hole] for hole in uv_hole_polylines]
     rs.DeleteObjects(holes)
 
-    polyline_features = [rs.ConvertCurveToPolyline(curve_features_guid, angle_tolerance = 5.0, tolerance = 0.01, delete_input = True, min_edge_length = 0, max_edge_length = discretization_spacing) for curve_features_guid in curve_features_guids]
+    polyline_features = [curve_to_polyline(curve_features_guid, discretization_spacing) for curve_features_guid in curve_features_guids]
+    #polyline_features = [rs.ConvertCurveToPolyline(curve_features_guid, angle_tolerance = 45.0, tolerance = discretization_spacing, delete_input = True, min_edge_length = 0.9 * discretization_spacing, max_edge_length = 1.1 * discretization_spacing) for curve_features_guid in curve_features_guids]
     uv_polyline_features = [[rs.SurfaceClosestPoint(surface_guid, vertex) for vertex in rs.PolylineVertices(polyline_feature)] for polyline_feature in polyline_features]
     planar_polyline_features = [[[u, v, 0] for u, v in feature] for feature in uv_polyline_features]
 
@@ -77,6 +85,13 @@ def spatial_NURBS_input_to_planar_discrete_output(discretization_spacing, surfac
     planar_point_features = [[u, v, 0] for u, v in uv_point_features]
 
     return planar_boundary_polyline, planar_hole_polylines, planar_polyline_features, planar_point_features
+
+def curve_to_polyline(curve_guid, discretization_spacing):
+    n = int(rs.CurveLength(curve_guid) / discretization_spacing) + 1
+    points = rs.DivideCurve(curve_guid, n)
+    if rs.IsCurveClosed(curve_guid):
+        points.append(points[0])
+    return rs.AddPolyline(points)
 
 def mapping_point_to_surface(point, surface_guid):
     """Maps a point in the plan on a spatial surface based on its parameterisation.
