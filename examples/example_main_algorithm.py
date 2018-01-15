@@ -143,7 +143,7 @@ def start():
      
     rs.LayerVisible('conform_mesh', visible = False)
     
-    
+    return
     
     
     ## possibility to apply grammar rules
@@ -205,7 +205,7 @@ def start():
     
     rs.LayerVisible('dense_mesh', visible = False)
     
-    return
+    
     
     # mapping and smoothing on spatial shape
     from compas.geometry.algorithms.smoothing import mesh_smooth_centroid

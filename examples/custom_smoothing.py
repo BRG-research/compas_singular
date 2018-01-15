@@ -79,9 +79,12 @@ def custom_constraints(mesh, surface):
     srf_dots = {rs.AddTextDot('srf_boundary', rs.CurveMidPoint(srf_bdry)): srf_bdry for srf_bdry in surface_boundaries}
     
     for mesh_bdry in split_mesh_boundaries:
-        idx = int(math.floor(len(mesh_bdry) / 2))
-        xyz = mesh.vertex_coordinates(mesh_bdry[idx])
-        mesh_dot = rs.AddTextDot('mesh boundary', xyz)
+        if len(mesh_bdry) == 2:
+            xyz = mesh.edge_midpoint(mesh_bdry[0], mesh_bdry[1])
+        else:
+            idx = int(math.floor(len(mesh_bdry) / 2))
+            xyz = mesh.vertex_coordinates(mesh_bdry[idx])
+        mesh_dot = rs.AddTextDot('?', xyz)
         
         rs.EnableRedraw(True)
         crv_cstr = srf_dots[rs.GetObject('boundary constraint', filter = 8192)]
@@ -131,12 +134,11 @@ def start():
     vertices = [smooth_mesh.vertex_coordinates(vkey) for vkey in smooth_mesh.vertices()]
     face_vertices = [smooth_mesh.face_vertices(fkey) for fkey in smooth_mesh.faces()]
     smooth_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
-    rs.AddLayer('smooth_mesh')
-    guids = rs.ObjectsByLayer('smooth_mesh')
-    rs.DeleteObjects(guids)
-    rs.ObjectLayer(smooth_mesh_guid, layer = 'smooth_mesh')
+    layer_name = 'smooth_mesh_4'
+    rs.AddLayer(layer_name)
+    rs.ObjectLayer(smooth_mesh_guid, layer = layer_name)
     
-    rs.LayerVisible('smooth_mesh', visible = True)
+    rs.LayerVisible(layer_name, visible = True)
     
     rs.EnableRedraw(True)
 
