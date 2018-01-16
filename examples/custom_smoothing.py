@@ -134,7 +134,7 @@ def start():
     vertices = [smooth_mesh.vertex_coordinates(vkey) for vkey in smooth_mesh.vertices()]
     face_vertices = [smooth_mesh.face_vertices(fkey) for fkey in smooth_mesh.faces()]
     smooth_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
-    layer_name = 'smooth_mesh_4'
+    layer_name = 'smooth_mesh_6'
     rs.AddLayer(layer_name)
     rs.ObjectLayer(smooth_mesh_guid, layer = layer_name)
     

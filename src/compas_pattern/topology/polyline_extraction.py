@@ -10,6 +10,7 @@ __email__      = 'oval@arch.ethz.ch'
 __all__ = [
     'mesh_polylines_boundary',
     'quad_mesh_polylines_all',
+    'singularity_polylines',
 ]
 
 def mesh_polylines_boundary(mesh):
@@ -210,6 +211,71 @@ def dual_edge_groups(mesh):
                 edge_groups[(x, w)] = max_group
 
     return edge_groups, max_group
+
+def singularity_polylines(mesh):
+    """Collect vertex polylines in a quad mesh that stem from singularities.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A quad mesh.
+
+    Returns
+    -------
+    list or None
+        The list of polylines as lists of vertices.
+        None if not a quad mesh.
+
+    Raises
+    ------
+    -
+
+    """
+
+    # check if is a quad mesh
+    if not mesh.is_quadmesh():
+        return None
+
+    singularities = [vkey for vkey in mesh.vertices() if (mesh.is_vertex_on_boundary(vkey) and len(mesh.vertex_neighbours(vkey)) != 3) or (not mesh.is_vertex_on_boundary(vkey) and len(mesh.vertex_neighbours(vkey)) != 4)]
+    polylines = []
+    
+    # start from singularuty
+    for sing in singularities:
+
+        # propagate in each direction
+        for nbr in mesh.vertex_neighbours(sing):
+            # initiate
+            u = sing
+            v = nbr
+            polyline = [u, v]
+            is_polyline_on_boundary = mesh.is_vertex_on_boundary(polyline[1])
+            count = mesh.number_of_vertices()
+
+            # continue until next singularity
+            while polyline[-1] not in singularities and count > 0:
+                if not mesh.is_vertex_on_boundary(polyline[1]) and mesh.is_vertex_on_boundary(polyline[-1]):
+                    break
+                count -= 1
+                u = polyline[-2]
+                v = polyline[-1]
+                nbrs = mesh.vertex_neighbours(v, True)
+                idx = nbrs.index(u)
+                # if not on boundary
+                if not mesh.is_vertex_on_boundary(v):
+                    w = nbrs[idx - 2]
+                # if on boundary
+                else:
+                    if mesh.is_vertex_on_boundary(nbrs[idx - 1]):
+                        w = nbrs[idx - 1]
+                    else:
+                        w = nbrs[idx - 2]
+                polyline.append(w)
+
+            # avoid duplicate polylines (additional criteria for loops)
+            if polyline[-1] not in singularities or polyline[0] < polyline[-1] or (polyline[0] == polyline[-1] and polyline[1] < polyline[-2]):
+                polylines.append(polyline)
+
+    return polylines
 
 # ==============================================================================
 # Main

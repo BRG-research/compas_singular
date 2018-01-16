@@ -17,7 +17,7 @@ dense_mesh = quad_mesh_densification(conform_mesh, target_length)
 vertices = [dense_mesh.vertex_coordinates(vkey) for vkey in dense_mesh.vertices()]
 face_vertices = [dense_mesh.face_vertices(fkey) for fkey in dense_mesh.faces()]
 dense_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
-layer_name = 'dense_mesh'
+layer_name = 'dense_mesh_6'
 rs.AddLayer(layer_name)
 rs.ObjectLayer(dense_mesh_guid, layer = layer_name)
 
