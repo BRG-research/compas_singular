@@ -9,6 +9,8 @@ from compas.geometry.algorithms.interpolation import discrete_coons_patch
 
 from compas_pattern.topology.joining_welding import join_and_weld_meshes
 
+from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -104,9 +106,16 @@ def quad_mesh_densification(mesh, target_length):
     meshes = []
 
     for fkey in mesh.faces():
-        a, b, c, d = mesh.face_vertices(fkey)  
-        group_1 = edge_group[(a, b)]
-        group_2 = edge_group[(b, c)]
+        a, b, c, d = mesh.face_vertices(fkey) 
+        # exceptions if pseudo quad face with a (u, u) edge in no groups
+        if (a, b) in edge_group: 
+            group_1 = edge_group[(a, b)]
+        else:
+            group_1 = edge_group[(c, d)]
+        if (b, c) in edge_group:
+            group_2 = edge_group[(b, c)]
+        else:
+            group_2 = edge_group[(d, a)]
         n = int(group_subdivision[group_1])
         m = int(group_subdivision[group_2])
         # subdivision points
@@ -117,10 +126,29 @@ def quad_mesh_densification(mesh, target_length):
 
         # create mesh
         vertices, face_vertices = discrete_coons_patch(ab, bc, dc, ad)
-        face_mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
+        face_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
         meshes.append(face_mesh)
 
-    dense_mesh = join_and_weld_meshes(meshes)
+    dense_mesh = join_and_weld_meshes(PseudoQuadMesh, meshes)
+
+    # remove pseudo quads: [a, b, c, c] -> [a, b, c]
+    for fkey in dense_mesh.faces():
+        to_change = False
+        face_vertices = dense_mesh.face_vertices(fkey)
+        new_face_vertices = []
+        for vkey in face_vertices:
+            if len(new_face_vertices) == 0 or vkey != new_face_vertices[-1]:
+                new_face_vertices.append(vkey)
+            else:
+                to_change = True
+        if new_face_vertices[0] == new_face_vertices[-1]:
+            del new_face_vertices[-1]
+            to_change = True
+        if to_change:
+            dense_mesh.delete_face(fkey)
+            dense_mesh.add_face(new_face_vertices, fkey)
+
+    
 
     # unweld along two-sided openings
 

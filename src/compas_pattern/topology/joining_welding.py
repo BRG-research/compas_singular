@@ -14,7 +14,7 @@ __all__ = [
     'join_and_weld_meshes',
 ]
 
-def weld_mesh(mesh, precision = '3f'):
+def weld_mesh(cls, mesh, precision = '3f'):
     """Welds vertices of a mesh within some precision.
 
     Parameters
@@ -59,11 +59,11 @@ def weld_mesh(mesh, precision = '3f'):
             new_face_vertices.append(vertex_map[xyz])
         face_vertices.append(new_face_vertices)
 
-    welded_mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
+    welded_mesh = cls.from_vertices_and_faces(vertices, face_vertices)
 
     return welded_mesh
 
-def join_and_weld_meshes(meshes, precision = '3f'):
+def join_and_weld_meshes(cls, meshes, precision = '3f'):
     """Joins and welds vertices of meshes within some precision.
 
     Parameters
@@ -109,11 +109,11 @@ def join_and_weld_meshes(meshes, precision = '3f'):
                 new_face_vertices.append(vertex_map[xyz])
             face_vertices.append(new_face_vertices)
 
-    joined_and_welded_mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
+    joined_and_welded_mesh = cls.from_vertices_and_faces(vertices, face_vertices)
 
     return joined_and_welded_mesh
 
-def join_meshes(meshes):
+def join_meshes(cls, meshes):
     """Joins meshes without welding.
 
     Parameters
@@ -146,7 +146,7 @@ def join_meshes(meshes):
         for fkey in mesh.faces():
             face_vertices.append([remap_vertices[vkey] for vkey in mesh.face_vertices(fkey)])
 
-    joined_mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
+    joined_mesh = cls.from_vertices_and_faces(vertices, face_vertices)
 
     return joined_mesh
 

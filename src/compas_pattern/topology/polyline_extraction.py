@@ -181,6 +181,19 @@ def dual_edge_groups(mesh):
         a, b, c, d = mesh.face_vertices(fkey)
         for u, v, w, x in [ [a, b, c, d], [b, c, d, a] ]:
  
+            # exceptions if pseudo quad mesh with faces like [a, b, c, c]
+            if u == v:
+                if (w, x) not in edge_groups:
+                    max_group += 1
+                    edge_groups[(w, x)] = max_group
+                    edge_groups[(x, w)] = max_group
+            elif w == x:
+                if (u, v) not in edge_groups:
+                    max_group += 1
+                    edge_groups[(u, v)] = max_group
+                    edge_groups[(v, u)] = max_group
+
+
             if (u, v) in edge_groups and (w, x) in edge_groups:
                 # flip one
                 new_group = edge_groups[(u, v)]

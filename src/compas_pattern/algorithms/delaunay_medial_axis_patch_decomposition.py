@@ -6,8 +6,6 @@ from compas.utilities import geometric_key
 
 from compas_pattern.datastructures.mesh import face_circle
 
-from compas_pattern.topology.joining_welding import weld_mesh
-
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
