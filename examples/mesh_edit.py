@@ -105,10 +105,17 @@ mesh = face_strip_collapse(Mesh, mesh, ukey, vkey)
 #                 break
 #         break
 
-
+print mesh
+for u, v in mesh.edges():
+    u_xyz = mesh.vertex_coordinates(u)
+    v_xyz = mesh.vertex_coordinates(v)
+    if u_xyz == v_xyz:
+        print u_xyz, v_xyz
+    rs.AddLine(u_xyz, v_xyz)
 # draw mesh
 vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
 face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
 mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
+#rhino.helpers.mesh_draw(mesh, show_faces = False)
 #rs.AddLayer('edited_mesh')
 #rs.ObjectLayer(mesh_guid, layer = 'edited_mesh')
