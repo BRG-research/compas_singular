@@ -23,6 +23,8 @@ def custom_constraints(mesh, surface):
     vertex_dots = {rs.AddTextDot(vkey, mesh.vertex_coordinates(vkey)): vkey for vkey in mesh.vertices()}
     rs.EnableRedraw(True)
     fixed_vertices = rs.GetObjects('fixed vertices', filter = 8192)
+    if fixed_vertices is None:
+        fixed_vertices = []
     vkeys = [vertex_dots[vkey] for vkey in fixed_vertices]
     rs.DeleteObjects(vertex_dots)
     rs.EnableRedraw(False)
@@ -134,11 +136,11 @@ def start():
     vertices = [smooth_mesh.vertex_coordinates(vkey) for vkey in smooth_mesh.vertices()]
     face_vertices = [smooth_mesh.face_vertices(fkey) for fkey in smooth_mesh.faces()]
     smooth_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
-    layer_name = 'smooth_mesh_6'
-    rs.AddLayer(layer_name)
-    rs.ObjectLayer(smooth_mesh_guid, layer = layer_name)
+    #layer_name = 'smooth_mesh_6'
+    #rs.AddLayer(layer_name)
+    #rs.ObjectLayer(smooth_mesh_guid, layer = layer_name)
     
-    rs.LayerVisible(layer_name, visible = True)
+    #rs.LayerVisible(layer_name, visible = True)
     
     rs.EnableRedraw(True)
 

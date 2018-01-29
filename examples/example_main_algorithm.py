@@ -122,13 +122,13 @@ def start():
     
     conform_mesh = conforming_initial_patch_decomposition(mesh, planar_point_features = planar_point_features, planar_polyline_features = planar_polyline_features)
     
-    #for vkey in conform_mesh.vertices():
-    #    uv0 = conform_mesh.vertex_coordinates(vkey)
-    #    x, y, z = mapping_point_to_surface(uv0, surface_guid)
-    #    attr = conform_mesh.vertex[vkey]
-    #    attr['x'] = x
-    #    attr['y'] = y
-    #    attr['z'] = z
+    for vkey in conform_mesh.vertices():
+        uv0 = conform_mesh.vertex_coordinates(vkey)
+        x, y, z = mapping_point_to_surface(uv0, surface_guid)
+        attr = conform_mesh.vertex[vkey]
+        attr['x'] = x
+        attr['y'] = y
+        attr['z'] = z
     
     vertices = [conform_mesh.vertex_coordinates(vkey) for vkey in conform_mesh.vertices()]
     face_vertices = [conform_mesh.face_vertices(fkey) for fkey in conform_mesh.faces()]
@@ -143,7 +143,6 @@ def start():
      
     rs.LayerVisible('conform_mesh', visible = False)
     
-    return
     
     
     ## possibility to apply grammar rules
