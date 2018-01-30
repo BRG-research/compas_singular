@@ -56,6 +56,7 @@ def face_strip_collapse(cls, mesh, u, v):
             if fkey is not None:
                 mesh.delete_face(fkey)
 
+    to_cull = []
     # merge vertices of collapsed edges
     boundary_vertices = mesh.vertices_on_boundary()
     for u, v in edges_to_collapse:
@@ -76,7 +77,7 @@ def face_strip_collapse(cls, mesh, u, v):
                 face_vertices[idx] = w
                 mesh.delete_face(fkey)
                 mesh.add_face(face_vertices, fkey)
-
+        
     # clean mesh
     mesh = weld_mesh(cls, mesh)
     mesh.cull_vertices()

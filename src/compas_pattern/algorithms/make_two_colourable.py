@@ -8,6 +8,8 @@ from compas_pattern.topology.polyline_extraction import dual_edge_groups
 
 from compas.topology import vertex_coloring
 
+from compas_pattern.topology.face_strip_operations import face_strip_collapse
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -18,6 +20,7 @@ __all__ = [
     'generate_crossing_graph_from_patch_decomposition',
     'is_graph_two_colourable',
     'make_crossing_graph_two_colourable',
+    'make_patch_decomposition_two_colourable',
 ]
 
 def generate_crossing_graph_from_patch_decomposition(patches):
@@ -73,7 +76,7 @@ def generate_crossing_graph_from_patch_decomposition(patches):
     crossing_graph = Network.from_vertices_and_edges(vertices, edges)
     
 
-    return crossing_graph
+    return crossing_graph, edge_groups, groups
 
 
 def is_graph_two_colourable(graph):
@@ -95,53 +98,49 @@ def is_graph_two_colourable(graph):
         return True
 
 
-def make_crossing_graph_two_colourable():
-    """Densifies a quad mesh based on a target length.
-    
-    Parameters
-    ----------
-    mesh : Mesh
-        The quad mesh to densify.
-    target_length : float
-        Target length for densification.
+def make_crossing_graph_two_colourable(graph, kmax = 1):
+    import itertools
 
-    Returns
-    -------
-    dense_mesh: Mesh, None
-        Densified quad mesh.
-        None if not a quad mesh.
+    two_col_combinations = []
 
-    Raises
-    ------
-    -
+    k = -1
+    while k < kmax:
+        k += 1
+        vertices = list(graph.vertices())
+        combinations_to_disconnect = list(itertools.combinations(vertices, k))
+        print combinations_to_disconnect
+        for vertices_to_disconnect in combinations_to_disconnect:
+            new_graph = graph.copy()
+            for vkey in vertices_to_disconnect:
+                new_graph.delete_vertex(vkey)
+            if is_graph_two_colourable(new_graph):
+                print vertices_to_disconnect
+                two_col_combinations.append(vertices_to_disconnect)
 
-    """
+    return two_col_combinations
 
-    return 0
+def make_patch_decomposition_two_colourable(cls, patches, edge_groups, groups, combinations):
 
-def make_patch_decomposition_two_colourable():
-    """Densifies a quad mesh based on a target length.
-    
-    Parameters
-    ----------
-    mesh : Mesh
-        The quad mesh to densify.
-    target_length : float
-        Target length for densification.
+    two_col_patches_solutions = []
 
-    Returns
-    -------
-    dense_mesh: Mesh, None
-        Densified quad mesh.
-        None if not a quad mesh.
+    for combination in combinations:
+        new_patches = patches.copy()
+        for group_index in combination:
+            group = groups[group_index]
+            for edge, edge_group in edge_groups.items():
+                if edge_group == group:
+                    u, v = edge
+                    face_strip_collapse(cls, new_patches, u, v)
+                    break
+        two_col_patches_solutions.append(new_patches)
 
-    Raises
-    ------
-    -
+    return two_col_patches_solutions
 
-    """
-
-    return 0
+def compute_two_colourable_patches(cls, patches, kmax = 1):
+    crossing_graph, edge_groups, groups = generate_crossing_graph_from_patch_decomposition(patches)
+    two_col_combinations = make_crossing_graph_two_colourable(crossing_graph, kmax = kmax)
+    two_col_patches_solutions = make_patch_decomposition_two_colourable(cls, patches, edge_groups, groups, two_col_combinations)
+    return two_col_patches_solutions
 
 # ==============================================================================
 # Main
