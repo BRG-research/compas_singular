@@ -13,11 +13,13 @@ from compas_pattern.topology.grammar_primitive import primitive_3
 from compas_pattern.topology.grammar_primitive import primitive_4
 from compas_pattern.topology.grammar_primitive import primitive_5
 
+from compas_pattern.topology.grammar_extended import extended_21
+
 # mesh selection
 guid = rs.GetObject('get mesh')
 mesh = rhino.mesh_from_guid(Mesh, guid)
 
-rule = rs.GetInteger('rule #?', minimum = 1, maximum = 5)
+rule = rs.GetInteger('rule #?')
 
 if rule == 1:
     artist = rhino.MeshArtist(mesh, layer='mesh_artist')
@@ -114,6 +116,27 @@ if rule == 5:
     rs.DeleteLayer('mesh_artist')
     
     primitive_5(mesh, e, c)
+
+if rule == 21:
+    artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+    artist.clear_layer()
+    
+    artist.draw_facelabels()
+    artist.redraw()
+    fkey = rhino.mesh_select_face(mesh, message = 'fkey')
+    artist.clear_layer()
+    artist.redraw()
+    
+    artist.draw_vertices()
+    artist.draw_vertexlabels()
+    artist.redraw()
+    a = rhino.mesh_select_vertex(mesh, message = 'a')
+    artist.clear_layer()
+    artist.redraw()
+    
+    rs.DeleteLayer('mesh_artist')
+    
+    extended_21(mesh, fkey, a)
 
 #mesh = face_strip_collapse(Mesh, mesh, ukey, vkey)
 
