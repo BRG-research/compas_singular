@@ -21,7 +21,7 @@ for edge, group in edge_groups.items():
     index = groups.index(group)
     rs.AddTextDot(index, mesh.edge_midpoint(edge[0], edge[1]))
 
-two_col_patches_solutions = compute_two_colourable_patches(PseudoQuadMesh, mesh, kmax = 2)
+two_col_patches_solutions = compute_two_colourable_patches(PseudoQuadMesh, mesh, kmax = 3)
 
 rs.EnableRedraw(False)
 count = 1
@@ -30,7 +30,7 @@ for patch in two_col_patches_solutions:
     face_vertices = [patch.face_vertices(fkey) for fkey in patch.faces()]
     print len(vertices), len(face_vertices)
     patch_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
-    rs.MoveObject(patch_guid, [20 * count, 0, 0])
+    rs.MoveObject(patch_guid, [30 * count, 0, 0])
     count += 1
 rs.EnableRedraw(True)
 
