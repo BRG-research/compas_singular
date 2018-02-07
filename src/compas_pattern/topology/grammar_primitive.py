@@ -171,7 +171,7 @@ def primitive_3(mesh, a, c):
 
     return fkey
 
-def primitive_4(mesh, fkey, b):
+def primitive_4(mesh, fkey, a, b, c):
     """One quad into a quad and a triangle by adding an edge between edge midpoint and vertex.
 
     face(s):    
@@ -193,7 +193,7 @@ def primitive_4(mesh, fkey, b):
     -------
     e : int, None
         The new vertex.
-        None if the quad face is not a quad or if b is not on the face.
+        None if the quad face is not a quad or if [a, b, c] nor [c, b, a] is a subset of the face vertices.
 
     Raises
     ------
@@ -204,13 +204,19 @@ def primitive_4(mesh, fkey, b):
     # check validity of rule
     if len(mesh.face_vertices(fkey)) != 4:
         return None
-    if b not in mesh.face_vertices(fkey):
+    if (mesh.face_vertex_descendant(fkey, a) != b or mesh.face_vertex_descendant(fkey, b) != c) and (mesh.face_vertex_ancestor(fkey, a) != b or mesh.face_vertex_ancestor(fkey, b) != c):
         return None
 
-    c = mesh.face_vertex_descendant(fkey, b)
-    d = mesh.face_vertex_descendant(fkey, c)
-    a = mesh.face_vertex_descendant(fkey, d)
+    # if statement because of cycle
+    flip = False
+    if mesh.face_vertex_descendant(fkey, a) != b:
+        flip = True
 
+    if not flip:
+        d = mesh.face_vertex_descendant(fkey, c)
+    else:
+        d = mesh.face_vertex_ancestor(fkey, c)
+    
     # new vertices
     x, y, z = mesh.edge_midpoint(a, b)
     e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
@@ -219,20 +225,29 @@ def primitive_4(mesh, fkey, b):
     mesh.delete_face(fkey)
 
     # create new faces
-    mesh.add_face([a, e, c, d], fkey)
-    mesh.add_face([e, b, c])
+    if not flip:
+        mesh.add_face([a, e, c, d], fkey)
+        mesh.add_face([e, b, c])
+    else:
+        mesh.add_face(list(reversed([a, e, c, d])), fkey)
+        mesh.add_face(list(reversed([e, b, c])))
 
     # update adjacent faces
-    if a in mesh.halfedge[b] and mesh.halfedge[b][a] is not None:
-        fkey_1 = mesh.halfedge[b][a]
-        add_vertex_to_face(mesh, fkey_1, b, e)
+    if not flip:
+        if a in mesh.halfedge[b] and mesh.halfedge[b][a] is not None:
+            fkey_1 = mesh.halfedge[b][a]
+            add_vertex_to_face(mesh, fkey_1, b, e)
+    else:
+        if b in mesh.halfedge[a] and mesh.halfedge[a][b] is not None:
+            fkey_1 = mesh.halfedge[a][b]
+            add_vertex_to_face(mesh, fkey_1, a, e)
 
     return e
 
-def primitive_5(mesh, e, c):
+def primitive_5(mesh, fkey_quad, fkey_tri, e):
     """One quad and one triangle into two quads by moving an edge from a vertex to an edge midpoint.
 
-    face(s):    
+    face(s):
     [a, e, c, d] + [e, b, c] -> [a, e, f, d] + [e, b, c, f]
 
     neighbour(s):
@@ -251,7 +266,7 @@ def primitive_5(mesh, e, c):
     -------
     f : int, None
         The new vertex.
-        None if (e, c) does not point to a quad resp. tri face or if (c, e) does not point to a tri resp. quad face.
+        None if fkey_quad not a quad face or fkey_tri not a tri face or e not on fkey_quad or e not on fkey_tri.
 
     Raises
     ------
@@ -260,19 +275,27 @@ def primitive_5(mesh, e, c):
     """
 
     # check validity of rule
-    if c not in mesh.halfedge[e] or mesh.halfedge[e][c] is None:
+    if len(mesh.face_vertices(fkey_quad)) != 4:
+            return None
+    if len(mesh.face_vertices(fkey_tri)) != 3:
+            return None
+    if e not in mesh.face_vertices(fkey_quad):
         return None
-    if e not in mesh.halfedge[c] or mesh.halfedge[c][e] is None:
-        return None
-    if (len(mesh.face_vertices(mesh.halfedge[e][c])) != 4 or len(mesh.face_vertices(mesh.halfedge[c][e])) != 3) and (len(mesh.face_vertices(mesh.halfedge[e][c])) != 3 or len(mesh.face_vertices(mesh.halfedge[c][e])) != 4):
+    if e not in mesh.face_vertices(fkey_tri):
         return None
 
-    fkey_quad = mesh.halfedge[e][c]
-    fkey_tri = mesh.halfedge[c][e]
+    opp = mesh.face_vertex_descendant(fkey_quad, e)
 
-    d = mesh.face_vertex_descendant(fkey_quad, c)
-    a = mesh.face_vertex_descendant(fkey_quad, d)
-    b = mesh.face_vertex_descendant(fkey_tri, e)
+    if opp in mesh.face_vertices(fkey_tri):
+        c = opp
+        d = mesh.face_vertex_descendant(fkey_quad, c)
+        a = mesh.face_vertex_descendant(fkey_quad, d)
+        b = mesh.face_vertex_descendant(fkey_tri, e)
+    else:
+        a = opp
+        d = mesh.face_vertex_descendant(fkey_quad, a)
+        c = mesh.face_vertex_descendant(fkey_quad, d)
+        b = mesh.face_vertex_descendant(fkey_tri, c)
 
     # new vertices
     x, y, z = mesh.edge_midpoint(c, d)
