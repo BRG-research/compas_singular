@@ -6,6 +6,7 @@ from compas.datastructures.mesh import Mesh
 
 #from compas_pattern.topology.face_strip_operations import face_strip_collapse
 #from compas_pattern.topology.face_strip_operations import face_strip_subdivide
+#from compas_pattern.topology.face_strip_operations import face_strips_merge
 
 from compas_pattern.topology.grammar_primitive import primitive_1
 from compas_pattern.topology.grammar_primitive import primitive_2
@@ -16,8 +17,7 @@ from compas_pattern.topology.grammar_primitive import primitive_5
 from compas_pattern.topology.grammar_extended import extended_21 #6
 from compas_pattern.topology.grammar_extended import extended_21443 #7
 from compas_pattern.topology.grammar_extended import extended_212144321443 #8
-from compas_pattern.topology.grammar_extended import extended_443 #9
-from compas_pattern.topology.grammar_extended import extended_22122333 #10
+from compas_pattern.topology.grammar_extended import extended_22122333 #9
 
 # mesh selection
 guid = rs.GetObject('get mesh')
@@ -193,28 +193,6 @@ if rule == 8:
     extended_212144321443(mesh, fkey, a)
 
 if rule == 9:
-    artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-    artist.clear_layer()
-    
-    artist.draw_facelabels()
-    artist.redraw()
-    fkey_1 = rhino.mesh_select_face(mesh, message = 'fkey_1')
-    fkey_2 = rhino.mesh_select_face(mesh, message = 'fkey_2')
-    artist.clear_layer()
-    artist.redraw()
-    
-    artist.draw_vertices()
-    artist.draw_vertexlabels()
-    artist.redraw()
-    b = rhino.mesh_select_vertex(mesh, message = 'b')
-    artist.clear_layer()
-    artist.redraw()
-    
-    rs.DeleteLayer('mesh_artist')
-    
-    extended_443(mesh, fkey_1, fkey_2, b)
-
-if rule == 10:
     artist = rhino.MeshArtist(mesh, layer='mesh_artist')
     artist.clear_layer()
     

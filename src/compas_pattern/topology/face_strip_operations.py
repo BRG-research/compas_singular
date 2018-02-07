@@ -1,6 +1,7 @@
 from compas.datastructures.mesh import Mesh
 
 from compas_pattern.topology.polyline_extraction import dual_edge_groups
+from compas_pattern.topology.polyline_extraction import quad_mesh_polylines_all
 
 from compas_pattern.topology.joining_welding import weld_mesh
 
@@ -220,7 +221,75 @@ def face_strip_subdivide(cls, mesh, u, v):
     return mesh
 
 def face_strips_merge(cls, mesh, u, v):
-    return None
+    """Merge two parallel face strips in a quad mesh. The polyedge inbetween is composed of regular vertices only.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A quad mesh.
+    u: int
+        Start vertex key of an edge of the polyedge.
+    v: int
+        End vertex key of an edge of the polyedge.
+
+    Returns
+    -------
+    mesh : mesh, None
+        The modified quad mesh.
+        None if mesh is not a quad mesh or if (u, v) is on boundary or if (u,v) is not on a polyedge with only regular vertices.
+
+    Raises
+    ------
+    -
+
+    """
+
+    # check
+    if not mesh.is_quadmesh():
+        return None
+    if mesh.is_edge_on_boundary(u, v):
+        return None
+
+    # get polyedge
+    polylines = quad_mesh_polylines_all(mesh)
+    for polyline in polylines:
+        for i in range(len(polyline) - 1):
+            if (u == polyline[i] and v == polyline[i + 1]) or (v == polyline[i] and u == polyline[i + 1]):
+                polyedge = polyline
+
+    # check
+    for vkey in polyedge:
+        if (mesh.is_vertex_on_boundary(vkey) and len(mesh.vertex_neighbours(vkey)) != 3) or (not mesh.is_vertex_on_boundary(vkey) and len(mesh.vertex_neighbours(vkey)) != 4): 
+            return None
+
+
+    # store faces of new face strip
+    faces = []
+
+    for i in range(len(polyedge) - 1):
+        
+        # per edge
+        u, v = polyedge[i], polyedge[i + 1]
+        
+        # get adajcent faces
+        fkey_1 = mesh.halfedge[u][v]
+        fkey_2 = mesh.halfedge[v][u]
+
+        # collect vertices of new face
+        a = mesh.face_vertex_descendant(fkey_1, v)
+        b = mesh.face_vertex_descendant(fkey_1, a)
+        c = mesh.face_vertex_descendant(fkey_2, u)
+        d = mesh.face_vertex_descendant(fkey_2, c)
+
+        # delete old faces
+        mesh.delete_face(fkey_1)
+        mesh.delete_face(fkey_2)
+
+        # add new face
+        fkey = mesh.add_face([a, b, c, d])
+        faces.append(fkey)
+
+    return faces
 
 # ==============================================================================
 # Main
