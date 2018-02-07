@@ -17,11 +17,31 @@ __all__ = [
 
 def extended_21(mesh, fkey, a):
 
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+    d = mesh.face_vertex_descendant(fkey, c)
+
     c = primitive_2(mesh, fkey, a)
     fkey_1 = mesh.halfedge[a][c]
-    primitive_1(mesh, fkey_1, a, c)
+    e = primitive_1(mesh, fkey_1, a, c)
 
-    return 0
+    return [a, b, c, d, e]
+
+def extended_21443(mesh, fkey, a):
+    
+    a, b, c, d, g = extended_21(mesh, fkey, a)
+
+    fkey_1 = mesh.halfedge[g][c]
+
+    e = primitive_4(mesh, fkey_1, d, c, g)
+
+    fkey_2 = mesh.halfedge[c][g]
+
+    f = primitive_4(mesh, fkey_2, b, c, g)
+
+    fkey_3 = primitive_3(mesh, g, c)
+
+    return 0 #[a, b, c, d, e, f, g]
 
 # ==============================================================================
 # Main

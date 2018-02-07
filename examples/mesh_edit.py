@@ -14,6 +14,7 @@ from compas_pattern.topology.grammar_primitive import primitive_4
 from compas_pattern.topology.grammar_primitive import primitive_5
 
 from compas_pattern.topology.grammar_extended import extended_21
+from compas_pattern.topology.grammar_extended import extended_21443
 
 # mesh selection
 guid = rs.GetObject('get mesh')
@@ -93,29 +94,37 @@ if rule == 4:
     artist.draw_vertices()
     artist.draw_vertexlabels()
     artist.redraw()
+    a = rhino.mesh_select_vertex(mesh, message = 'a')
     b = rhino.mesh_select_vertex(mesh, message = 'b')
-    artist.clear_layer()
-    artist.redraw()
-    
-    rs.DeleteLayer('mesh_artist')
-    
-    primitive_4(mesh, fkey, b)
-
-if rule == 5:
-    artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-    artist.clear_layer()
-    
-    artist.draw_vertices()
-    artist.draw_vertexlabels()
-    artist.redraw()
-    e = rhino.mesh_select_vertex(mesh, message = 'e')
     c = rhino.mesh_select_vertex(mesh, message = 'c')
     artist.clear_layer()
     artist.redraw()
     
     rs.DeleteLayer('mesh_artist')
     
-    primitive_5(mesh, e, c)
+    primitive_4(mesh, fkey, a, b, c)
+
+if rule == 5:
+    artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+    artist.clear_layer()
+    
+    artist.draw_facelabels()
+    artist.redraw()
+    fkey_quad = rhino.mesh_select_face(mesh, message = 'fkey_quad')
+    fkey_tri = rhino.mesh_select_face(mesh, message = 'fkey_tri')
+    artist.clear_layer()
+    artist.redraw()
+    
+    artist.draw_vertices()
+    artist.draw_vertexlabels()
+    artist.redraw()
+    e = rhino.mesh_select_vertex(mesh, message = 'e')
+    artist.clear_layer()
+    artist.redraw()
+    
+    rs.DeleteLayer('mesh_artist')
+    
+    primitive_5(mesh, fkey_quad, fkey_tri, e)
 
 if rule == 21:
     artist = rhino.MeshArtist(mesh, layer='mesh_artist')
@@ -137,6 +146,27 @@ if rule == 21:
     rs.DeleteLayer('mesh_artist')
     
     extended_21(mesh, fkey, a)
+
+if rule == 21443:
+    artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+    artist.clear_layer()
+    
+    artist.draw_facelabels()
+    artist.redraw()
+    fkey = rhino.mesh_select_face(mesh, message = 'fkey')
+    artist.clear_layer()
+    artist.redraw()
+    
+    artist.draw_vertices()
+    artist.draw_vertexlabels()
+    artist.redraw()
+    a = rhino.mesh_select_vertex(mesh, message = 'a')
+    artist.clear_layer()
+    artist.redraw()
+    
+    rs.DeleteLayer('mesh_artist')
+    
+    extended_21443(mesh, fkey, a)
 
 #mesh = face_strip_collapse(Mesh, mesh, ukey, vkey)
 
@@ -200,6 +230,8 @@ if rule == 21:
 #    if u_xyz == v_xyz:
 #        print u_xyz, v_xyz
 #    rs.AddLine(u_xyz, v_xyz)
+#for fkey in mesh.faces():
+#    print mesh.face_vertices(fkey)
 # draw mesh
 vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
 face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
