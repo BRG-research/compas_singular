@@ -152,8 +152,10 @@ def primitive_3(mesh, a, c):
 
     # check validity of rule
     if c not in mesh.halfedge[a] or a not in mesh.halfedge[c]:
+        print 'halfedge pbm'
         return None
     if len(mesh.face_vertices(mesh.halfedge[a][c])) != 3 or len(mesh.face_vertices(mesh.halfedge[c][a])) != 3:
+        print 'edge pbm'
         return None
 
     fkey_0 = mesh.halfedge[c][a]
