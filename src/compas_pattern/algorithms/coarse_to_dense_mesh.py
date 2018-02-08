@@ -1,5 +1,13 @@
 import math
 
+try:
+    import rhinoscriptsyntax as rs
+
+except ImportError:
+    import platform
+    if platform.python_implementation() == 'IronPython':
+        raise
+
 from compas.datastructures.mesh import Mesh
 
 from compas_pattern.topology.polyline_extraction import quad_mesh_polylines_all
@@ -46,33 +54,6 @@ def quad_mesh_densification(mesh, target_length):
     if not mesh.is_quadmesh():
         return None
 
-    # # collect dual polyedges based on polyfaces
-    # polyfaces = quad_mesh_polylines_all(mesh, dual = True)
-
-    # dual_polyedges = []
-    # for polyface in polyfaces:
-    #     dual_polyedge = []
-
-    #     for i in range(len(polyface) - 1):
-    #         u, v = mesh.face_adjacency_halfedge(polyface[i], polyface[i + 1])
-            
-    #         # first edge
-    #         if i == 0 and polyface[0] != polyface[-1]:
-    #             w = mesh.face_vertex_descendant(polyface[i], v)
-    #             x = mesh.face_vertex_descendant(polyface[i], w)
-    #             dual_polyedge.append([x, w])
-
-    #         # regular edges
-    #         dual_polyedge.append([u, v])
-            
-    #         # last edge
-    #         if i == len(polyface) - 2 and polyface[0] != polyface[-1]:
-    #             w = mesh.face_vertex_ancestor(polyface[i + 1], v)
-    #             x = mesh.face_vertex_ancestor(polyface[i + 1], w)
-    #             dual_polyedge.append([x, w])
-
-    #     dual_polyedges.append(dual_polyedge)
-
     edge_groups, max_group = dual_edge_groups(mesh)
 
     dual_polyedges = []
@@ -101,6 +82,39 @@ def quad_mesh_densification(mesh, target_length):
         for u, v in dual_polyedge:
             edge_group[(u, v)] = i
             edge_group[(v, u)] = i
+
+    # propose customization of local density
+    count = 100
+    while count > 0:
+        count -= 1
+        rs.EnableRedraw(False)
+        all_dots = []
+        for dual_polyedge in dual_polyedges:
+            u0, v0 = dual_polyedge[0]
+            group = edge_group[(u0, v0)]
+            parameter = group_subdivision[group]
+            dots = []
+            for u, v in dual_polyedge:
+                if u > v:
+                    continue
+                point = mesh.edge_midpoint(u, v)
+                group = edge_group[(u, v)]
+                parameter = int(group_subdivision[group])
+                dots.append(rs.AddTextDot(parameter, point))
+            rs.AddGroup(group)
+            rs.AddObjectsToGroup(dots, group)
+            all_dots += dots
+        rs.EnableRedraw(True)
+        dot = rs.GetObject('edge group to modify', filter = 8192)
+        if dot is not None:
+            group = int(rs.ObjectGroups(dot)[0])
+            parameter = rs.GetInteger('subdivision parameter', number = 3, minimum = 1)
+            group_subdivision[group] = parameter
+        rs.EnableRedraw(False)
+        rs.DeleteObjects(all_dots)
+        rs.EnableRedraw(True)
+        if dot is None:
+            break
 
     # mesh each patch
     meshes = []
@@ -147,8 +161,6 @@ def quad_mesh_densification(mesh, target_length):
         if to_change:
             dense_mesh.delete_face(fkey)
             dense_mesh.add_face(new_face_vertices, fkey)
-
-    
 
     # unweld along two-sided openings
 
