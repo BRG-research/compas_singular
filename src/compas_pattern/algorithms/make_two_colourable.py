@@ -103,19 +103,21 @@ def make_crossing_graph_two_colourable(graph, kmax = 1):
 
     two_col_combinations = []
 
-    k = -1
+    k = 0
     while k < kmax:
         k += 1
         vertices = list(graph.vertices())
         combinations_to_disconnect = list(itertools.combinations(vertices, k))
-        print combinations_to_disconnect
+        #print combinations_to_disconnect
         for vertices_to_disconnect in combinations_to_disconnect:
             new_graph = graph.copy()
             for vkey in vertices_to_disconnect:
                 new_graph.delete_vertex(vkey)
             if is_graph_two_colourable(new_graph):
-                print vertices_to_disconnect
+                #print vertices_to_disconnect
                 two_col_combinations.append(vertices_to_disconnect)
+        if len(two_col_combinations) != 0:
+            break
 
     return two_col_combinations
 
@@ -138,6 +140,8 @@ def make_patch_decomposition_two_colourable(cls, patches, edge_groups, groups, c
 
 def compute_two_colourable_patches(cls, patches, kmax = 1):
     crossing_graph, edge_groups, groups = generate_crossing_graph_from_patch_decomposition(patches)
+    if is_graph_two_colourable(crossing_graph):
+        return patches
     two_col_combinations = make_crossing_graph_two_colourable(crossing_graph, kmax = kmax)
     two_col_patches_solutions = make_patch_decomposition_two_colourable(cls, patches, edge_groups, groups, two_col_combinations)
     return two_col_patches_solutions

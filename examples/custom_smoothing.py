@@ -20,13 +20,13 @@ def custom_constraints(mesh, surface):
     artist = rhino.MeshArtist(mesh, layer='mesh_artist')
     artist.clear_layer()
     
-    vertex_dots = {rs.AddTextDot(vkey, mesh.vertex_coordinates(vkey)): vkey for vkey in mesh.vertices()}
+    vertex_points = {rs.AddPoint(mesh.vertex_coordinates(vkey)): vkey for vkey in mesh.vertices()}
     rs.EnableRedraw(True)
-    fixed_vertices = rs.GetObjects('fixed vertices', filter = 8192)
+    fixed_vertices = rs.GetObjects('fixed vertices', filter = 1)
     if fixed_vertices is None:
         fixed_vertices = []
-    vkeys = [vertex_dots[vkey] for vkey in fixed_vertices]
-    rs.DeleteObjects(vertex_dots)
+    vkeys = [vertex_points[vkey] for vkey in fixed_vertices]
+    rs.DeleteObjects(vertex_points)
     rs.EnableRedraw(False)
     #artist.draw_vertexlabels()
     #artist.redraw()
