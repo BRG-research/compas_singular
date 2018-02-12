@@ -66,6 +66,7 @@ def spatial_NURBS_input_to_planar_discrete_output(discretization_spacing, surfac
         planar_boundary_polyline += polyline[: -1]
     planar_boundary_polyline.append(planar_boundary_polyline[0])
     rs.DeleteObjects(boundaries)
+    rs.DeleteObjects(boundary_polylines)
 
     holes = surface_borders(surface_guid, border_type = 2)
     if len(holes) > 1:
@@ -75,11 +76,13 @@ def spatial_NURBS_input_to_planar_discrete_output(discretization_spacing, surfac
     uv_hole_polylines = [[rs.SurfaceClosestPoint(surface_guid, vertex) for vertex in rs.PolylineVertices(hole_polyline)] for hole_polyline in hole_polylines]
     planar_hole_polylines = [[[u, v, 0] for u, v in hole] for hole in uv_hole_polylines]
     rs.DeleteObjects(holes)
+    rs.DeleteObjects(hole_polylines)
 
     polyline_features = [curve_to_polyline(curve_features_guid, discretization_spacing) for curve_features_guid in curve_features_guids]
     #polyline_features = [rs.ConvertCurveToPolyline(curve_features_guid, angle_tolerance = 45.0, tolerance = discretization_spacing, delete_input = True, min_edge_length = 0.9 * discretization_spacing, max_edge_length = 1.1 * discretization_spacing) for curve_features_guid in curve_features_guids]
     uv_polyline_features = [[rs.SurfaceClosestPoint(surface_guid, vertex) for vertex in rs.PolylineVertices(polyline_feature)] for polyline_feature in polyline_features]
     planar_polyline_features = [[[u, v, 0] for u, v in feature] for feature in uv_polyline_features]
+    rs.DeleteObjects(polyline_features)
 
     uv_point_features = [rs.SurfaceClosestPoint(surface_guid, point) for point in point_features_guids]
     planar_point_features = [[u, v, 0] for u, v in uv_point_features]

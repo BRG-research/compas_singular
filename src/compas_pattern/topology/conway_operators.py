@@ -16,11 +16,11 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
-    'dual',
-    'join',
-    'ambo',
-    'kis',
-    'needle',
+    'conway_dual',
+    'conway_join',
+    'conway_ambo',
+    'conway_kis',
+    'conway_needle',
 ]
 
 # Reference:

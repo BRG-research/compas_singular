@@ -8,6 +8,8 @@ except ImportError:
 
 from compas.utilities import geometric_key
 
+import compas_rhino as rhino
+
 from compas_pattern.cad.rhino.spatial_NURBS_input_to_planar_discrete_output import surface_borders
 
 __author__     = ['Robin Oval']
@@ -45,6 +47,12 @@ def surface_border_kinks(surface_guid):
                 kinks.append(start)
             if end not in kinks:
                 kinks.append(end)
+
+def draw_mesh(mesh):
+    vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
+    face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
+    mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
+    return mesh_guid
 
 # ==============================================================================
 # Main
