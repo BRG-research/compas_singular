@@ -2,7 +2,7 @@ from compas.datastructures.mesh import Mesh
 
 from compas.topology import mesh_flip_cycles
 
-from compas_pattern.datastructures.mesh import add_vertex_to_face
+from compas_pattern.datastructures.mesh import insert_vertex_in_face
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'

@@ -8,14 +8,14 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
-    'mesh_polylines_boundary',
-    'quad_mesh_polylines_all',
+    'mesh_boundaries',
+    'quad_mesh_polylines',
+    'dual_edge_polylines',
     'singularity_polylines',
 ]
 
-def mesh_polylines_boundary(mesh):
-    """Extracts the mesh outer and inner boundary polylines as lists of vertices.
-    Extension of compas vertices_on_boundary(self, ordered = True) for several boundaries.
+def mesh_boundaries(mesh, vertex_splits = []):
+    """Extracts the mesh outer and inner boundary polylines as lists of vertices with optional splits.
 
     Parameters
     ----------
@@ -33,34 +33,40 @@ def mesh_polylines_boundary(mesh):
 
     """
 
-    vertices = set()
-    for key, nbrs in iter(mesh.halfedge.items()):
-        for nbr, face in iter(nbrs.items()):
-            if face is None:
-                vertices.add(key)
-                vertices.add(nbr)
+    boundary_vertices = mesh.vertices_on_boundary()
 
-    vertices = list(vertices)
+    vertex_splits = [vkey for vkey in vertex_splits if vkey in boundary_vertices]
 
-    boundaries = []
-    while len(vertices) > 0:
-        boundary = [vertices.pop()]
-
+    # collect boundary polylines with splits
+    split_boundaries = []
+    while len(boundary_vertices) > 0:
+        if len(vertex_splits) > 0:
+            start = vertex_splits.pop()
+            boundary_vertices.remove(start)
+        else:
+            start = boundary_vertices.pop()
+        polyline = [start]
         while 1:
-            for nbr, fkey in iter(mesh.halfedge[boundary[-1]].items()):
+            for nbr, fkey in iter(mesh.halfedge[polyline[-1]].items()):
                 if fkey is None:
-                    boundary.append(nbr)
+                    if nbr in boundary_vertices:
+                        boundary_vertices.remove(nbr)
+                    polyline.append(nbr)
                     break
 
-            if boundary[0] == boundary[-1]:
-                boundaries.append(boundary)
+            # end of boundary element
+            if start == polyline[-1]:
+                split_boundaries.append(polyline)
                 break
-            else:
-                vertices.remove(boundary[-1])
+            # end of boundary subelement
+            elif polyline[-1] in vertex_splits:
+                split_boundaries.append(polyline)
+                vertex_splits.remove(polyline[-1])
+                polyline = polyline[-1 :]
 
-    return boundaries
+    return split_boundaries
 
-def quad_mesh_polylines_all(mesh, dual = False):
+def quad_mesh_polylines(mesh, dual = False):
     """Extracts the polylines as lists of vertices of a quad mesh or faces of a quad mesh dual.
 
     Parameters
@@ -150,7 +156,7 @@ def quad_mesh_polylines_all(mesh, dual = False):
 
     return polylines
 
-def dual_edge_groups(mesh):
+def dual_edge_polylines(mesh):
     """Groups edges that are opposite to each other in a quad face.
 
     Parameters

@@ -2,12 +2,12 @@ from compas.datastructures.mesh import Mesh
 
 from compas.utilities import geometric_key
 
-from compas_pattern.topology.grammar_rules import quad_tri_1
-from compas_pattern.topology.grammar_rules import mix_quad_1
-from compas_pattern.topology.grammar_rules import penta_quad_1
-from compas_pattern.topology.grammar_rules import hexa_quad_1
-from compas_pattern.topology.grammar_rules import poly_poly_1
-from compas_pattern.topology.grammar_rules import quad_mix_1
+from compas_pattern.topology.consistency import quad_tri_1
+from compas_pattern.topology.consistency import mix_quad_1
+from compas_pattern.topology.consistency import penta_quad_1
+from compas_pattern.topology.consistency import hexa_quad_1
+from compas_pattern.topology.consistency import poly_poly_1
+from compas_pattern.topology.consistency import quad_mix_1
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'

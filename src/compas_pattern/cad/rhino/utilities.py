@@ -10,8 +10,6 @@ from compas.utilities import geometric_key
 
 import compas_rhino as rhino
 
-from compas_pattern.cad.rhino.spatial_NURBS_input_to_planar_discrete_output import surface_borders
-
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -20,7 +18,10 @@ __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
     'is_point_on_curve',
+    'surface_borders',
     'surface_border_kinks',
+    'draw_mesh',
+    'curve_discretisation',
 ]
 
 
@@ -33,6 +34,11 @@ def is_point_on_curve(curve_guid, point_xyz):
         return True
     else:
         return False
+
+def surface_borders(surface, border_type = 0):
+        border = rs.DuplicateSurfaceBorder(surface, border_type)
+        curves = rs.ExplodeCurves(border, delete_input = True)
+        return curves
 
 def surface_border_kinks(surface_guid):
     kinks = []
@@ -53,6 +59,13 @@ def draw_mesh(mesh):
     face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
     mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
     return mesh_guid
+
+def curve_discretisation(curve_guid, discretisation_spacing):
+    n = int(rs.CurveLength(curve_guid) / discretisation_spacing) + 1
+    points = rs.DivideCurve(curve_guid, n)
+    if rs.IsCurveClosed(curve_guid):
+        points.append(points[0])
+    return rs.AddPolyline(points)
 
 # ==============================================================================
 # Main

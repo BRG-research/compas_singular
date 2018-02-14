@@ -12,9 +12,9 @@ from compas.datastructures.mesh import Mesh
 
 from compas.utilities import geometric_key
 
-from compas_pattern.topology.polyline_extraction import mesh_polylines_boundary
+from compas_pattern.topology.polyline_extraction import mesh_boundaries
 
-from compas_pattern.cad.rhino.spatial_NURBS_input_to_planar_discrete_output import surface_borders
+from compas_pattern.cad.rhino.utilities import surface_borders
 from compas_pattern.cad.rhino.utilities import is_point_on_curve
 
 __author__     = ['Robin Oval']
@@ -25,7 +25,7 @@ __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
     'define_constraints',
-    'define_constraints',
+    'apply_constraints',
 ]
 
 def define_constraints(mesh, surface_constraint, curve_constraints = [], point_constraints = []):
@@ -80,43 +80,43 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
     # set boundary curve constraints
 
     # collect boundary polylines with splits
-    mesh_boundaries = mesh_polylines_boundary(mesh)
+    #mesh_boundaries = mesh_boundaries(mesh)
     split_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'surface_corner']
+    split_mesh_boundaries = mesh_boundaries(mesh, vertex_splits = split_vertices)
+    # # add one vertex per mesh boundary element that has no split vertices yet, i.e. that has no corner vertices (2-valency)
+    # for boundary in mesh_boundaries:
+    #     to_add = True
+    #     for vkey in boundary:
+    #         if vkey in split_vertices:
+    #             to_add = False
+    #             break
+    #     if to_add:
+    #         split_vertices.append(boundary[0])
 
-    # add one vertex per mesh boundary element that has no split vertices yet, i.e. that has no corner vertices (2-valency)
-    for boundary in mesh_boundaries:
-        to_add = True
-        for vkey in boundary:
-            if vkey in split_vertices:
-                to_add = False
-                break
-        if to_add:
-            split_vertices.append(boundary[0])
 
+    # split_mesh_boundaries = []
+    # while len(split_vertices) > 0:
+    #     start = split_vertices.pop()
+    #     # exception if split vertex corresponds to a non-boundary point feature
+    #     if not mesh.is_vertex_on_boundary(start):
+    #         continue
+    #     polyline = [start]
 
-    split_mesh_boundaries = []
-    while len(split_vertices) > 0:
-        start = split_vertices.pop()
-        # exception if split vertex corresponds to a non-boundary point feature
-        if not mesh.is_vertex_on_boundary(start):
-            continue
-        polyline = [start]
+    #     while 1:
+    #         for nbr, fkey in iter(mesh.halfedge[polyline[-1]].items()):
+    #             if fkey is None:
+    #                 polyline.append(nbr)
+    #                 break
 
-        while 1:
-            for nbr, fkey in iter(mesh.halfedge[polyline[-1]].items()):
-                if fkey is None:
-                    polyline.append(nbr)
-                    break
-
-            # end of boundary element
-            if start == polyline[-1]:
-                split_mesh_boundaries.append(polyline)
-                break
-            # end of boundary subelement
-            elif polyline[-1] in split_vertices:
-                split_mesh_boundaries.append(polyline)
-                split_vertices.remove(polyline[-1])
-                polyline = polyline[-1 :]
+    #         # end of boundary element
+    #         if start == polyline[-1]:
+    #             split_mesh_boundaries.append(polyline)
+    #             break
+    #         # end of boundary subelement
+    #         elif polyline[-1] in split_vertices:
+    #             split_mesh_boundaries.append(polyline)
+    #             split_vertices.remove(polyline[-1])
+    #             polyline = polyline[-1 :]
 
     # constrain a mesh boundary to a surface boundary if the two extremities of the mesh boundary are on the surface boundary
     for mesh_bdry in split_mesh_boundaries:

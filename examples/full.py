@@ -6,11 +6,10 @@ from compas.datastructures.mesh import Mesh
 
 from compas_pattern.cad.rhino.utilities import draw_mesh
 
-from compas_pattern.cad.rhino.spatial_NURBS_input_to_planar_discrete_output import spatial_NURBS_input_to_planar_discrete_output
+from compas_pattern.cad.rhino.discrete_planar_mapping import discrete_planar_mapping
 from compas_pattern.algorithms.planar_polyline_boundaries_to_delaunay import planar_polyline_boundaries_to_delaunay
-from compas_pattern.cad.rhino.spatial_NURBS_input_to_planar_discrete_output import mapping_point_to_surface
 
-from compas_pattern.topology.patches_to_mesh import patches_to_mesh_old
+from compas_pattern.topology.patch_datastructure import patch_datastructure_old
 from compas_pattern.algorithms.delaunay_medial_axis_patch_decomposition import delaunay_medial_axis_patch_decomposition
 from compas_pattern.algorithms.conforming_initial_patch_decomposition import conforming_initial_patch_decomposition
 
@@ -32,6 +31,8 @@ def add_layer_structure():
     
     for layer in layers:
         rs.AddLayer(layer)
+        objects = rs.ObjectsByLayer(layer)
+        rs.DeleteObjects(objects)
         rs.LayerVisible(layer, visible = False)
     
     rs.LayerVisible(layers[-1], visible = True)
@@ -42,6 +43,7 @@ def start():
     
     # shape and features
     surface_guid = rs.GetObject('select surface', filter = 8)
+    surface_guid = rs.CopyObject(surface_guid)
     rs.ObjectLayer(surface_guid, 'shape_and_features')
     curve_features_guids = rs.GetObjects('select curve features', filter = 4)
     if curve_features_guids is None:
@@ -56,19 +58,19 @@ def start():
     discretisation = rs.GetReal('discretisation', number = 1)
     rs.EnableRedraw(False)
     
-    planar_boundary_polyline, planar_hole_polylines, planar_polyline_features, planar_point_features = spatial_NURBS_input_to_planar_discrete_output(discretisation, surface_guid, curve_features_guids = curve_features_guids, point_features_guids = point_features_guids)
+    planar_boundary_polyline, planar_hole_polylines, planar_polyline_features, planar_point_features = discrete_planar_mapping(discretisation, surface_guid, curve_features_guids = curve_features_guids, point_features_guids = point_features_guids)
     
     delaunay_mesh = planar_polyline_boundaries_to_delaunay(planar_boundary_polyline, holes = planar_hole_polylines, polyline_features = planar_polyline_features, point_features = planar_point_features)
     
     medial_branches, boundary_polylines = delaunay_medial_axis_patch_decomposition(delaunay_mesh)
     
-    patch_decomposition = patches_to_mesh_old(boundary_polylines, medial_branches)
+    patch_decomposition = patch_datastructure_old(Mesh, boundary_polylines, medial_branches)
     
     quad_patch_decomposition = conforming_initial_patch_decomposition(patch_decomposition, planar_point_features = planar_point_features, planar_polyline_features = planar_polyline_features)
     
     for vkey in quad_patch_decomposition.vertices():
-        uv0 = quad_patch_decomposition.vertex_coordinates(vkey)
-        x, y, z = mapping_point_to_surface(uv0, surface_guid)
+        u, v, w = quad_patch_decomposition.vertex_coordinates(vkey)
+        x, y, z = rs.EvaluateSurface(surface_guid, u, v)
         attr = quad_patch_decomposition.vertex[vkey]
         attr['x'] = x
         attr['y'] = y

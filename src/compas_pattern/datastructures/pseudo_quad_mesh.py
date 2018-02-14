@@ -15,7 +15,7 @@ class PseudoQuadMesh(Mesh):
         super(PseudoQuadMesh, self).__init__()
 
     def add_face(self, vertices, fkey=None, attr_dict=None, **kwattr):
-        """Add a face to the mesh object.
+        """Add a face to the mesh object. Allow [a, b, c, c] faces.
 
         Parameters
         ----------
@@ -90,7 +90,7 @@ class PseudoQuadMesh(Mesh):
         return fkey
 
     def delete_face(self, fkey):
-        """Delete a face from the mesh object.
+        """Delete a face from the mesh object. Valid for [a, b, c, c] faces.
 
         Parameters
         ----------

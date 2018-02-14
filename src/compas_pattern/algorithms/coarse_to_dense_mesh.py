@@ -10,8 +10,7 @@ except ImportError:
 
 from compas.datastructures.mesh import Mesh
 
-from compas_pattern.topology.polyline_extraction import quad_mesh_polylines_all
-from compas_pattern.topology.polyline_extraction import dual_edge_groups
+from compas_pattern.topology.polyline_extraction import dual_edge_polylines
 
 from compas.geometry.algorithms.interpolation import discrete_coons_patch
 
@@ -54,7 +53,7 @@ def quad_mesh_densification(mesh, target_length):
     if not mesh.is_quadmesh():
         return None
 
-    edge_groups, max_group = dual_edge_groups(mesh)
+    edge_groups, max_group = dual_edge_polylines(mesh)
 
     dual_polyedges = []
     for i in range(max_group + 1):

@@ -9,31 +9,10 @@ __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
     'face_circle',
-    'add_vertex_to_face',
+    'insert_vertex_in_face',
 ]
 
 def face_circle(mesh, fkey):
-    """Construct a circle from a triangle face.
-
-    Parameters
-    ----------
-    mesh : Mesh
-        A mesh.
-
-    fkey: int
-        Key of a triangle face.
-
-    Returns
-    -------
-    circle: tuple or None
-        Center, radius, normal of the circle.
-        None if not triangle face.
-
-    Raises
-    ------
-    -
-
-    """
 
     face_vertices = mesh.face_vertices(fkey)
     if len(face_vertices) != 3:
@@ -48,8 +27,8 @@ def face_circle(mesh, fkey):
     
     return center, radius, normal
 
-def add_vertex_to_face(mesh, fkey, vkey, added_vkey):
-    """Add a vertex in the vertices of a face after an existing vertex.
+def insert_vertex_in_face(mesh, fkey, vkey, added_vkey):
+    """Insert a vertex in the vertices of a face after a vertex.
 
     Parameters
     ----------
@@ -58,7 +37,7 @@ def add_vertex_to_face(mesh, fkey, vkey, added_vkey):
     fkey: int
         Face key.
     vkey: int
-        Vertex key before the new vertex to insert.
+        Vertex key to insert.
     added_vkey: int
         Vertex key to insert after the existing vertex.
 
@@ -66,7 +45,7 @@ def add_vertex_to_face(mesh, fkey, vkey, added_vkey):
     -------
     face_vertices: list or None
         New list of face vertices.
-        None if vkey) is not a vertex of the face.
+        None if vkey is not a vertex of the face.
 
     Raises
     ------
@@ -91,9 +70,4 @@ def add_vertex_to_face(mesh, fkey, vkey, added_vkey):
 
 if __name__ == '__main__':
 
-    vertices = [[0,0,0], [1,0,0], [0,1,0]]
-    face_vertices = [[0,1,2]]
-    mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
-
-    for fkey in mesh.faces():
-        print face_circle(mesh, fkey)
+    import compas

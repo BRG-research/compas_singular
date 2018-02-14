@@ -1,15 +1,5 @@
 from compas.datastructures.mesh import Mesh
 
-from compas_pattern.topology.polyline_extraction import dual_edge_groups
-from compas_pattern.topology.polyline_extraction import quad_mesh_polylines_all
-
-from compas_pattern.topology.joining_welding import weld_mesh
-
-from compas_pattern.topology.grammar_rules import quad_quad_1
-from compas_pattern.topology.grammar_rules import penta_quad_1
-from compas_pattern.topology.grammar_rules import hexa_quad_1
-from compas_pattern.topology.grammar_rules import quad_tri_1
-
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
