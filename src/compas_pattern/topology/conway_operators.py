@@ -1,5 +1,7 @@
 from compas.datastructures.mesh import Mesh
 
+from compas_pattern.datastructures.mesh import insert_vertices_in_face
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -11,6 +13,7 @@ __all__ = [
     'conway_ambo',
     'conway_kis',
     'conway_needle',
+    'conway_gyro',
 ]
 
 # Reference:
@@ -178,6 +181,58 @@ def conway_needle(mesh):
 
     return mesh
 
+def conway_gyro(mesh, orientation):
+
+    if orientation != 'left' and orientation != 'right':
+        return mesh
+
+    old_faces_vertices = {}
+    for fkey in mesh.faces():
+        old_faces_vertices[fkey] = mesh.face_vertices(fkey)[:]
+
+    old_edges = list(mesh.edges())
+    for u, v in old_edges:
+        x, y, z = mesh.edge_point(u, v, .33)
+        a = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+        x, y, z = mesh.edge_point(u, v, .67)
+        b = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+        if v in mesh.halfedge[u] and mesh.halfedge[u][v] is not None:
+            fkey = mesh.halfedge[u][v]
+            insert_vertices_in_face(mesh, fkey, u, [a, b])
+        if u in mesh.halfedge[v] and mesh.halfedge[v][u] is not None:
+            fkey = mesh.halfedge[v][u]
+            insert_vertices_in_face(mesh, fkey, v, [b, a])
+
+    new_faces = []
+    for fkey in mesh.faces():
+        x, y, z = mesh.face_centroid(fkey)
+        g = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+        old_face_vertices = old_faces_vertices[fkey]
+        for vkey in old_face_vertices:
+            if orientation == 'left':
+                a = vkey
+                b = mesh.face_vertex_descendant(fkey, a)
+                c = g
+                e = mesh.face_vertex_ancestor(fkey, a)
+                d = mesh.face_vertex_ancestor(fkey, e)
+            elif orientation == 'right':
+                a = vkey
+                b = mesh.face_vertex_descendant(fkey, a)
+                c = mesh.face_vertex_descendant(fkey, b)
+                d = g
+                e = mesh.face_vertex_ancestor(fkey, a)
+            new_faces.append([a, b, c, d, e])
+
+    from compas_pattern.datastructures.mesh import delete_face
+    old_faces = list(mesh.faces())
+    for fkey in old_faces:
+        delete_face(mesh, fkey)
+
+    for face_vertices in new_faces:
+        mesh.add_face(face_vertices)
+
+    return mesh
+
 # ==============================================================================
 # Main
 # ==============================================================================
@@ -185,4 +240,5 @@ def conway_needle(mesh):
 if __name__ == '__main__':
 
     import compas
+
 

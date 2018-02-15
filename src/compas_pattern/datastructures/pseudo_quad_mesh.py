@@ -125,6 +125,12 @@ class PseudoQuadMesh(Mesh):
                     del self.halfedge[v][u]
         del self.face[fkey]
 
+    def to_mesh(self):
+        vertices = [self.vertex_coordinates(vkey) for vkey in self.vertices()]
+        face_vertices = [self.face_vertices(fkey) for fkey in self.faces()]
+        mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
+        return mesh
+
 
 # ==============================================================================
 # Main

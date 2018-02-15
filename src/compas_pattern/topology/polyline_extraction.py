@@ -33,7 +33,7 @@ def mesh_boundaries(mesh, vertex_splits = []):
 
     """
 
-    boundary_vertices = mesh.vertices_on_boundary()
+    boundary_vertices = [vkey for vkey in mesh.vertices_on_boundary() if len(mesh.vertex_neighbours(vkey)) != 0]
 
     vertex_splits = [vkey for vkey in vertex_splits if vkey in boundary_vertices]
 
@@ -63,7 +63,7 @@ def mesh_boundaries(mesh, vertex_splits = []):
                 split_boundaries.append(polyline)
                 vertex_splits.remove(polyline[-1])
                 polyline = polyline[-1 :]
-
+                
     return split_boundaries
 
 def quad_mesh_polylines(mesh, dual = False):

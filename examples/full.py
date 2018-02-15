@@ -20,6 +20,7 @@ from compas_pattern.topology.conway_operators import conway_join
 from compas_pattern.topology.conway_operators import conway_ambo
 from compas_pattern.topology.conway_operators import conway_kis
 from compas_pattern.topology.conway_operators import conway_needle
+from compas_pattern.topology.conway_operators import conway_gyro
 
 from compas.geometry.algorithms.smoothing import mesh_smooth_centroid
 from compas.geometry.algorithms.smoothing import mesh_smooth_area
@@ -98,18 +99,21 @@ def start():
     conway_rule = rs.GetString('pattern conversion')
     rs.EnableRedraw(False)
     
-    if conway_rule == 'dual':
-        conway_dual(quad_mesh)
-    elif conway_rule == 'join':
-        conway_join(quad_mesh)
-    elif conway_rule == 'ambo':
-        conway_ambo(quad_mesh)
-    elif conway_rule == 'kis':
-        conway_kis(quad_mesh)
-    elif conway_rule == 'needle':
-        conway_needle(quad_mesh)
+    pattern_topology = quad_mesh.to_mesh()
     
-    pattern_topology = quad_mesh.copy()
+    if conway_rule == 'dual':
+        conway_dual(pattern_topology)
+    elif conway_rule == 'join':
+        conway_join(pattern_topology)
+    elif conway_rule == 'ambo':
+        conway_ambo(pattern_topology)
+    elif conway_rule == 'kis':
+        conway_kis(pattern_topology)
+    elif conway_rule == 'needle':
+        conway_needle(pattern_topology)
+    elif conway_rule == 'gyro':
+        orientation = rs.GetString('left or right?')
+        conway_gyro(pattern_topology, orientation)
     
     is_polygonal = False
     for fkey in pattern_topology.faces():
@@ -127,6 +131,7 @@ def start():
             edges.append(rs.AddLine(u_xyz, v_xyz))
         rs.AddGroup('pattern_topology')
         rs.AddObjectsToGroup(edges, 'pattern_topology')
+        rs.ObjectLayer(edges, layer = 'pattern_topology')
     
     #pattern geometry
     pattern_geometry = pattern_topology.copy()
@@ -138,6 +143,7 @@ def start():
     
     constraints, surface_boundaries = define_constraints(pattern_geometry, surface_guid, curve_constraints = curve_features_guids, point_constraints = point_features_guids)
     fixed_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'surface_corner']
+    
     mesh_smooth_area(pattern_geometry, fixed = fixed_vertices, kmax = smoothing_iterations, damping = damping_value, callback = apply_constraints, callback_args = [pattern_geometry, constraints])
     rs.DeleteObjects(surface_boundaries)
     
@@ -152,6 +158,7 @@ def start():
             edges.append(rs.AddLine(u_xyz, v_xyz))
         rs.AddGroup('pattern_geometry')
         rs.AddObjectsToGroup(edges, 'pattern_geometry')
+        rs.ObjectLayer(edges, layer = 'pattern_geometry')
     
     rs.EnableRedraw(True)
 

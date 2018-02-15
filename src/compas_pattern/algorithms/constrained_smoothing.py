@@ -78,45 +78,8 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
             constraints[vkey] = ('surface_corner', xyz)
 
     # set boundary curve constraints
-
-    # collect boundary polylines with splits
-    #mesh_boundaries = mesh_boundaries(mesh)
     split_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'surface_corner']
     split_mesh_boundaries = mesh_boundaries(mesh, vertex_splits = split_vertices)
-    # # add one vertex per mesh boundary element that has no split vertices yet, i.e. that has no corner vertices (2-valency)
-    # for boundary in mesh_boundaries:
-    #     to_add = True
-    #     for vkey in boundary:
-    #         if vkey in split_vertices:
-    #             to_add = False
-    #             break
-    #     if to_add:
-    #         split_vertices.append(boundary[0])
-
-
-    # split_mesh_boundaries = []
-    # while len(split_vertices) > 0:
-    #     start = split_vertices.pop()
-    #     # exception if split vertex corresponds to a non-boundary point feature
-    #     if not mesh.is_vertex_on_boundary(start):
-    #         continue
-    #     polyline = [start]
-
-    #     while 1:
-    #         for nbr, fkey in iter(mesh.halfedge[polyline[-1]].items()):
-    #             if fkey is None:
-    #                 polyline.append(nbr)
-    #                 break
-
-    #         # end of boundary element
-    #         if start == polyline[-1]:
-    #             split_mesh_boundaries.append(polyline)
-    #             break
-    #         # end of boundary subelement
-    #         elif polyline[-1] in split_vertices:
-    #             split_mesh_boundaries.append(polyline)
-    #             split_vertices.remove(polyline[-1])
-    #             polyline = polyline[-1 :]
 
     # constrain a mesh boundary to a surface boundary if the two extremities of the mesh boundary are on the surface boundary
     for mesh_bdry in split_mesh_boundaries:
@@ -240,23 +203,6 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
                                 attr['z'] = z
                                 # store constraint
                                 constraints[vkey] = ('curve', crv_cstr)
-
-
-                        # start_t = rs.CurveClosestPoint(srf_bdry, start_xyz)
-                        # end_t = rs.CurveClosestPoint(srf_bdry, end_xyz)
-                        # for i, vkey in enumerate(mesh_bdry):
-                        #     if vkey not in constraints:
-                        #         # project point on curve constraint at barycentric curve parameter 
-                        #         n = len(mesh_bdry)
-                        #         t = (i * end_t + (n - 1 - i) * start_t) / (n - 1)
-                        #         x, y, z = rs.EvaluateCurve(srf_bdry, t)
-                        #         attr = mesh.vertex[vkey]
-                        #         attr['x'] = x
-                        #         attr['y'] = y
-                        #         attr['z'] = z
-                        #         constraints[vkey] = ('curve', srf_bdry)
-                        #break
-
 
     # constrain to curve features
     
