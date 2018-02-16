@@ -52,12 +52,15 @@ def weld_mesh(cls, mesh, precision = '3f'):
 
     # update face vertices with index matching geometric key
     for fkey in mesh.faces():
-        old_face_vertices = mesh.face_vertices(fkey)
-        new_face_vertices = []
-        for vkey in old_face_vertices:
-            xyz = geometric_key(mesh.vertex_coordinates(vkey), precision)
-            new_face_vertices.append(vertex_map[xyz])
-        face_vertices.append(new_face_vertices)
+            new_face_vertices = []
+            for vkey in mesh.face_vertices(fkey):
+                xyz = geometric_key(mesh.vertex_coordinates(vkey), precision)
+                new_face_vertices.append(vertex_map[xyz])
+            cleaned_face_vertices = []
+            # remove consecutive duplicates
+            for i, vkey in enumerate(new_face_vertices):
+                if vkey != new_face_vertices[i - 1]:
+                    cleaned_face_vertices.append(vkey)
 
     welded_mesh = cls.from_vertices_and_faces(vertices, face_vertices)
 
@@ -102,11 +105,16 @@ def join_and_weld_meshes(cls, meshes, precision = '3f'):
 
         # update face vertices with index matching geometric key
         for fkey in mesh.faces():
-            old_face_vertices = mesh.face_vertices(fkey)
             new_face_vertices = []
-            for vkey in old_face_vertices:
+            for vkey in mesh.face_vertices(fkey):
                 xyz = geometric_key(mesh.vertex_coordinates(vkey), precision)
                 new_face_vertices.append(vertex_map[xyz])
+            cleaned_face_vertices = []
+            # remove consecutive duplicates
+            for i, vkey in enumerate(new_face_vertices):
+                if vkey != new_face_vertices[i - 1]:
+                    cleaned_face_vertices.append(vkey)
+
             face_vertices.append(new_face_vertices)
 
     joined_and_welded_mesh = cls.from_vertices_and_faces(vertices, face_vertices)

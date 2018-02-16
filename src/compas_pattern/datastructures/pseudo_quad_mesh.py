@@ -127,7 +127,15 @@ class PseudoQuadMesh(Mesh):
 
     def to_mesh(self):
         vertices = [self.vertex_coordinates(vkey) for vkey in self.vertices()]
-        face_vertices = [self.face_vertices(fkey) for fkey in self.faces()]
+        face_vertices = []
+        # remove consecutive duplicates in pseudo quad faces
+        for fkey in self.faces():
+            non_pseudo_face = []
+            pseudo_face = self.face_vertices(fkey)
+            for i, vkey in enumerate(pseudo_face):
+                if vkey != pseudo_face[i - 1]:
+                    non_pseudo_face.append(vkey)
+            face_vertices.append(non_pseudo_face)
         mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
         return mesh
 

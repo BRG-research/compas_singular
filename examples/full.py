@@ -3,6 +3,7 @@ import rhinoscriptsyntax as rs
 import compas_rhino as rhino
 
 from compas.datastructures.mesh import Mesh
+from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
 
 from compas_pattern.cad.rhino.utilities import draw_mesh
 
@@ -49,10 +50,12 @@ def start():
     curve_features_guids = rs.GetObjects('select curve features', filter = 4)
     if curve_features_guids is None:
         curve_features_guids = []
+    curve_features_guids = rs.CopyObjects(curve_features_guids)
     rs.ObjectLayer(curve_features_guids, 'shape_and_features')
     point_features_guids = rs.GetObjects('select point features', filter = 1)
     if point_features_guids is None:
         point_features_guids = []
+    point_features_guids = rs.CopyObjects(point_features_guids)
     rs.ObjectLayer(point_features_guids, 'shape_and_features')
     
     # quad patch decomposition
@@ -65,7 +68,7 @@ def start():
     
     medial_branches, boundary_polylines = delaunay_medial_axis_patch_decomposition(delaunay_mesh)
     
-    patch_decomposition = patch_datastructure_old(Mesh, boundary_polylines, medial_branches)
+    patch_decomposition = patch_datastructure_old(PseudoQuadMesh, boundary_polylines, medial_branches)
     
     quad_patch_decomposition = conforming_initial_patch_decomposition(patch_decomposition, planar_point_features = planar_point_features, planar_polyline_features = planar_polyline_features)
     
@@ -82,6 +85,10 @@ def start():
     
     if not quad_patch_decomposition.is_quadmesh():
         print 'non quad patch decomposition'
+        for fkey in quad_patch_decomposition.faces():
+            fv = quad_patch_decomposition.face_vertices(fkey)
+            if len(fv) != 4:
+                print fv
         return
     
     # quad mesh
@@ -128,7 +135,8 @@ def start():
         for u, v in pattern_topology.edges():
             u_xyz = pattern_topology.vertex_coordinates(u)
             v_xyz = pattern_topology.vertex_coordinates(v)
-            edges.append(rs.AddLine(u_xyz, v_xyz))
+            if u_xyz != v_xyz:
+                edges.append(rs.AddLine(u_xyz, v_xyz))
         rs.AddGroup('pattern_topology')
         rs.AddObjectsToGroup(edges, 'pattern_topology')
         rs.ObjectLayer(edges, layer = 'pattern_topology')
@@ -155,7 +163,8 @@ def start():
         for u, v in pattern_geometry.edges():
             u_xyz = pattern_geometry.vertex_coordinates(u)
             v_xyz = pattern_geometry.vertex_coordinates(v)
-            edges.append(rs.AddLine(u_xyz, v_xyz))
+            if u_xyz != v_xyz:
+                edges.append(rs.AddLine(u_xyz, v_xyz))
         rs.AddGroup('pattern_geometry')
         rs.AddObjectsToGroup(edges, 'pattern_geometry')
         rs.ObjectLayer(edges, layer = 'pattern_geometry')

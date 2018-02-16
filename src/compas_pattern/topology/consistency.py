@@ -89,11 +89,11 @@ def quad_quad_1(mesh, fkey, halfedge):
     # [*, c, b, *] -> [*, c, f, b, *]
     if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
         fkey_1 = mesh.halfedge[c][b]
-        add_vertex_to_face(mesh, fkey_1, c, f)
+        insert_vertex_in_face(mesh, fkey_1, c, f)
     # [*, a, d, *] -> [*, a, e, d, *]
     if d in mesh.halfedge[a] and mesh.halfedge[a][d] is not None:
         fkey_2 = mesh.halfedge[a][d]
-        add_vertex_to_face(mesh, fkey_2, a, e)
+        insert_vertex_in_face(mesh, fkey_2, a, e)
 
 
     return (e, f)
@@ -211,11 +211,11 @@ def quad_quad_3(mesh, fkey, vkey):
     # [*, c, b, *] -> [*, c, e, b, *]
     if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
         fkey_1 = mesh.halfedge[c][b]
-        add_vertex_to_face(mesh, fkey_1, c, e)
+        insert_vertex_in_face(mesh, fkey_1, c, e)
     # [*, d, c, *] -> [*, d, f, c, *]
     if c in mesh.halfedge[d] and mesh.halfedge[d][c] is not None:
         fkey_2 = mesh.halfedge[d][c]
-        add_vertex_to_face(mesh, fkey_2, d, f)
+        insert_vertex_in_face(mesh, fkey_2, d, f)
 
     return g
 
@@ -324,15 +324,15 @@ def tri_quad_1(mesh, fkey):
     # [*, b, a, *] -> [*, b, e, a, *]
     if a in mesh.halfedge[b] and mesh.halfedge[b][a] is not None:
         fkey_1 = mesh.halfedge[b][a]
-        add_vertex_to_face(mesh, fkey_1, b, e)
+        insert_vertex_in_face(mesh, fkey_1, b, e)
     # [*, c, b, *] -> [*, c, f, b, *]
     if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
         fkey_2 = mesh.halfedge[c][b]
-        add_vertex_to_face(mesh, fkey_2, c, f)
+        insert_vertex_in_face(mesh, fkey_2, c, f)
     # [*, a, c, *] -> [*, a, d, c, *]
     if c in mesh.halfedge[a] and mesh.halfedge[a][c] is not None:
         fkey_3 = mesh.halfedge[a][c]
-        add_vertex_to_face(mesh, fkey_3, a, d)
+        insert_vertex_in_face(mesh, fkey_3, a, d)
 
     return f
 
@@ -392,7 +392,7 @@ def penta_quad_1(mesh, fkey, vkey):
     # [*, c, b, *] -> [*, c, f, b, *]
     if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
         fkey_1 = mesh.halfedge[c][b]
-        add_vertex_to_face(mesh, fkey_1, c, f)
+        insert_vertex_in_face(mesh, fkey_1, c, f)
 
     return f
 
@@ -521,7 +521,7 @@ def poly_poly_1(mesh, fkey, vkey):
     # [*, c, b, *] -> [*, c, f, b, *]
     if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
         fkey_1 = mesh.halfedge[c][b]
-        add_vertex_to_face(mesh, fkey_1, c, f)
+        insert_vertex_in_face(mesh, fkey_1, c, f)
 
     return f
 
@@ -597,7 +597,7 @@ def mix_quad_1(mesh, fkey_tri, fkey_quad, vkey):
     # [*, a, e, *] -> [*, a, f, e, *]
     if e in mesh.halfedge[a] and mesh.halfedge[a][e] is not None:
         fkey_1 = mesh.halfedge[a][e]
-        add_vertex_to_face(mesh, fkey_1, a, f)
+        insert_vertex_in_face(mesh, fkey_1, a, f)
 
     # reflip cycles in faces
     if flip:
@@ -668,7 +668,7 @@ def quad_mix_1(mesh, fkey, vkey, ukey):
     # [*, c, b, *] -> [*, c, e, b, *]
     if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
         fkey_1 = mesh.halfedge[c][b]
-        add_vertex_to_face(mesh, fkey_1, c, e)
+        insert_vertex_in_face(mesh, fkey_1, c, e)
 
     # reflip cycles in faces
     if flip:
@@ -684,11 +684,3 @@ if __name__ == '__main__':
 
     import compas
 
-    vertices = [[0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0]]
-    face_vertices = [[0, 1, 2, 3, 4, 5, 6], [1, 7, 8, 2]]
-
-    mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
-
-    poly_poly_1(mesh, 0, 4)
-    for fkey in mesh.faces():
-        print mesh.face_vertices(fkey)
