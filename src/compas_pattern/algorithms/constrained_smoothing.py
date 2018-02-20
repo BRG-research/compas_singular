@@ -75,10 +75,10 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
         xyz = mesh.vertex_coordinates(vkey)
         geom_key = geometric_key(xyz)
         if geom_key in constrained_points:
-            constraints[vkey] = ('surface_corner', xyz)
+            constraints[vkey] = ('point', xyz)
 
     # set boundary curve constraints
-    split_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'surface_corner']
+    split_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'point']
     split_mesh_boundaries = mesh_boundaries(mesh, vertex_splits = split_vertices)
 
     # constrain a mesh boundary to a surface boundary if the two extremities of the mesh boundary are on the surface boundary
@@ -204,9 +204,59 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
                                 # store constraint
                                 constraints[vkey] = ('curve', crv_cstr)
 
+    # constrain to point features
+    point_constraints_keys = [geometric_key(rs.PointCoordinates(pt)) for pt in point_constraints]
+    for vkey in mesh.vertices():
+        xyz = mesh.vertex_coordinates(vkey)
+        geom_key = geometric_key(xyz)
+        if geom_key in point_constraints_keys:
+            constraints[vkey] = ('point', xyz)
+
     # constrain to curve features
-    
-    
+    for crv in curve_constraints:
+        # extremities
+        start = rs.CurveStartPoint(crv)
+        start_geom_key = geometric_key(start)
+        end = rs.CurveEndPoint(crv)
+        end_geom_key = geometric_key(end)
+        for vkey in mesh.vertices():
+            xyz = mesh.vertex_coordinates(vkey)
+            geom_key = geometric_key(xyz)
+            if geom_key == start_geom_key:
+                constraints[vkey] = ('point', xyz)
+                start_key = vkey
+            if geom_key == end_geom_key:
+                constraints[vkey] = ('point', xyz)
+                end_key = vkey
+        # regular nodes
+        path = [start_key]
+        for nbr in mesh.vertex_neighbours(start_key):
+            completed = False
+            if mesh.is_vertex_on_boundary(nbr):
+                continue
+            path.append(nbr)
+            count = len(list(mesh.vertices()))
+            while count > 0:
+                count -= 1
+                u, v = path[-2], path[-1]
+                fkey = mesh.halfedge[u][v]
+                x = mesh.face_vertex_descendant(fkey, v)
+                fkey = mesh.halfedge[x][v]
+                w = mesh.face_vertex_descendant(fkey, v)
+                path.append(w)
+                if w == end_key:
+                    completed = True
+                    break
+                elif mesh.is_vertex_on_boundary(w) or len(mesh.vertex_neighbours(w)) != 4:
+                    break
+            if completed:
+                break
+            else:
+                path = [start_key]
+        for vkey in path[1 : -1]:
+            constraints[vkey] = ('curve', crv)
+
+        
     # set surface constraints by default for the others
     for vkey in mesh.vertices():
         if vkey not in constraints:

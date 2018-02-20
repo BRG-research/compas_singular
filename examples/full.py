@@ -103,7 +103,7 @@ def start():
     
     # pattern topology
     rs.EnableRedraw(True)
-    conway_rule = rs.GetString('pattern conversion')
+    conway_rule = rs.GetString('pattern conversion? dual, join, ambo, kis, needle, gyro or nothing')
     rs.EnableRedraw(False)
     
     pattern_topology = quad_mesh.to_mesh()
@@ -150,7 +150,7 @@ def start():
     rs.EnableRedraw(False)
     
     constraints, surface_boundaries = define_constraints(pattern_geometry, surface_guid, curve_constraints = curve_features_guids, point_constraints = point_features_guids)
-    fixed_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'surface_corner']
+    fixed_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'point']
     
     mesh_smooth_area(pattern_geometry, fixed = fixed_vertices, kmax = smoothing_iterations, damping = damping_value, callback = apply_constraints, callback_args = [pattern_geometry, constraints])
     rs.DeleteObjects(surface_boundaries)
