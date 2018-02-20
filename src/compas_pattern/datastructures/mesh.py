@@ -12,6 +12,23 @@ __all__ = [
     'insert_vertex_in_face',
 ]
 
+
+def face_point(mesh, vertices, weights):
+    n = len(vertices)
+    if len(weights) != n:
+        weights = [1] * n
+    x, y, z = 0, 0, 0
+    for i, vkey in enumerate(vertices):
+        xyz = mesh.vertex_coordinates(vkey)
+        x += xyz[0] * weights[i]
+        y += xyz[1] * weights[i]
+        z += xyz[2] * weights[i]
+    sum_weights = sum(weights)
+    x /= sum_weights
+    y /= sum_weights
+    z /= sum_weights
+    return x, y, z
+
 def face_circle(mesh, fkey):
 
     face_vertices = mesh.face_vertices(fkey)

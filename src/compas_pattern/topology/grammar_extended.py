@@ -1,10 +1,8 @@
 from compas.datastructures.mesh import Mesh
 
-from compas_pattern.topology.grammar_primitive import primitive_1
-from compas_pattern.topology.grammar_primitive import primitive_2
-from compas_pattern.topology.grammar_primitive import primitive_3
-from compas_pattern.topology.grammar_primitive import primitive_4
-from compas_pattern.topology.grammar_primitive import primitive_5
+from compas_pattern.topology.grammar_primitive import insert_vertex
+from compas_pattern.topology.grammar_primitive import split_quad
+from compas_pattern.topology.grammar_primitive import remove_edge
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -12,12 +10,27 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
-    'extended_21',
+    'flat_corner_2',
     'extended_22122333',
     'extended_21443',
     'extended_212144321443',
     'extended_121443',
 ]
+
+def flat_corner_2(mesh, fkey, corner):
+    opposite_corner = split_quad(mesh, fkey, corner)
+    mid_face = insert_vertex(mesh, (corner, opposite_corner))
+    return mid_face
+
+def vertex_pole(mesh, fkey, pole):
+    opposite_corner = split_quad(mesh, fkey, pole)
+    return opposite_corner
+
+def vertex_partial_pole(mesh, fkey, pole, edge):
+    opposite_corner = split_quad(mesh, fkey, pole)
+    edge_midpoint = insert_vertex(mesh, edge)
+    midpoint_edge = split_quad(mesh, )
+
 
 def extended_21(mesh, fkey, a):
 
