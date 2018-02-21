@@ -102,7 +102,7 @@ if rule == 'face_opening':
     
     rs.DeleteLayer('mesh_artist')
     
-    face_opening(mesh, fkey, pole)
+    face_opening(mesh, fkey)
 
 if rule == 'flat_corner_2':
     artist = rhino.MeshArtist(mesh, layer='mesh_artist')

@@ -81,14 +81,11 @@ def edge_pole(mesh, fkey, edge):
     x, y, z = mesh.edge_point(b, c, t = .25)
     g = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
 
-    x, y, z = mesh.edge_point(b, c, t = .5)
+    x, y, z = mesh.edge_point(b, c, t = .75)
     h = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
 
-    x, y, z = mesh.edge_point(b, c, t = .75)
-    i = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
     x, y, z = mesh.edge_point(d, a, t = .25)
-    j = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    i = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
 
     mesh.delete_face(fkey)
 
@@ -96,17 +93,16 @@ def edge_pole(mesh, fkey, edge):
     fkey_2 = mesh.add_face([e, e, f, g])
     fkey_3 = mesh.add_face([e, e, g, h])
     fkey_4 = mesh.add_face([e, e, h, i])
-    fkey_5 = mesh.add_face([e, e, i, j])
-    fkey_6 = mesh.add_face([d, j, i, c])
+    fkey_5 = mesh.add_face([d, i, h, c])
 
     if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
         fkey = mesh.halfedge[c][b]
-        insert_vertices_in_face(mesh, fkey, c, [i, h, g])
+        insert_vertices_in_face(mesh, fkey, c, [h, g])
     if d in mesh.halfedge[a] and mesh.halfedge[a][d] is not None:
         fkey = mesh.halfedge[a][d]
-        insert_vertices_in_face(mesh, fkey, a, [f, e, j])
+        insert_vertices_in_face(mesh, fkey, a, [f, e, i])
 
-    return fkey_1, fkey_2, fkey_3, fkey_4, fkey_5, fkey_6
+    return fkey_1, fkey_2, fkey_3, fkey_4, fkey_5
 
 def face_opening(mesh, fkey):
 
