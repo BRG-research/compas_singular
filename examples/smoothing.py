@@ -7,7 +7,7 @@ import compas_rhino as rhino
 from compas.datastructures.mesh import Mesh
 
 def custom_constraints(mesh, surface):
-    from compas_pattern.cad.rhino.spatial_NURBS_input_to_planar_discrete_output import surface_borders
+    from compas_pattern.cad.rhino.utilities import surface_borders
     
     #surface_boundaries = surface_borders(surface, border_type = 0)
     
@@ -39,8 +39,8 @@ def custom_constraints(mesh, surface):
             constraints[vkey] = ('fixed', mesh.vertex_coordinates(vkey)) 
     
     # collect boundayr polylines with splits
-    from compas_pattern.topology.polyline_extraction import mesh_polylines_boundary
-    mesh_boundaries = mesh_polylines_boundary(mesh)
+    from compas_pattern.topology.polyline_extraction import mesh_boundaries
+    mesh_boundaries = mesh_boundaries(mesh)
     split_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'fixed']
 
     # add one vertex per mesh boundary element that has no split vertices yet, i.e. that has no corner vertices (2-valency)

@@ -65,8 +65,12 @@ def start():
     planar_boundary_polyline, planar_hole_polylines, planar_polyline_features, planar_point_features = discrete_planar_mapping(discretisation, surface_guid, curve_features_guids = curve_features_guids, point_features_guids = point_features_guids)
     
     delaunay_mesh = planar_polyline_boundaries_to_delaunay(planar_boundary_polyline, holes = planar_hole_polylines, polyline_features = planar_polyline_features, point_features = planar_point_features)
+    draw_mesh(delaunay_mesh)
     
     medial_branches, boundary_polylines = delaunay_medial_axis_patch_decomposition(delaunay_mesh)
+    patch_curves = medial_branches + boundary_polylines
+    for crv in patch_curves:
+        rs.AddPolyline(crv)
     
     patch_decomposition = patch_datastructure_old(PseudoQuadMesh, boundary_polylines, medial_branches)
     
@@ -80,9 +84,14 @@ def start():
         attr['y'] = y
         attr['z'] = z
     
+    #for u, v in quad_patch_decomposition.edges():
+    #    u = quad_patch_decomposition.vertex_coordinates(u)
+    #    v = quad_patch_decomposition.vertex_coordinates(v)
+    #    if u != v:
+    #        rs.AddLine(u, v)
     quad_patch_decomposition_guid = draw_mesh(quad_patch_decomposition)
     rs.ObjectLayer(quad_patch_decomposition_guid, layer = 'quad_patch_decomposition')
-    
+    return
     if not quad_patch_decomposition.is_quadmesh():
         print 'non quad patch decomposition'
         for fkey in quad_patch_decomposition.faces():
