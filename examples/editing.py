@@ -29,6 +29,8 @@ from compas_pattern.topology.grammar import face_opening
 from compas_pattern.topology.grammar import flat_corner_2
 from compas_pattern.topology.grammar import flat_corner_3
 from compas_pattern.topology.grammar import flat_corner_33
+from compas_pattern.topology.grammar import split_35
+from compas_pattern.topology.grammar import split_26
 
 # mesh selection
 guid = rs.GetObject('get mesh')
@@ -163,6 +165,46 @@ if rule == 'flat_corner_33':
     rs.DeleteLayer('mesh_artist')
     
     flat_corner_33(mesh, fkey, corner)
+
+if rule == 'split_35':
+    artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+    artist.clear_layer()
+    
+    artist.draw_facelabels()
+    artist.redraw()
+    fkey = rhino.mesh_select_face(mesh, message = 'fkey')
+    artist.clear_layer()
+    artist.redraw()
+    
+    artist.draw_edgelabels()
+    artist.redraw()
+    edge = rhino.mesh_select_edge(mesh, message = 'edge')
+    artist.clear_layer()
+    artist.redraw()
+    
+    rs.DeleteLayer('mesh_artist')
+    
+    split_35(mesh, fkey, edge)
+
+if rule == 'split_26':
+    artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+    artist.clear_layer()
+    
+    artist.draw_facelabels()
+    artist.redraw()
+    fkey = rhino.mesh_select_face(mesh, message = 'fkey')
+    artist.clear_layer()
+    artist.redraw()
+    
+    artist.draw_edgelabels()
+    artist.redraw()
+    edge = rhino.mesh_select_edge(mesh, message = 'edge')
+    artist.clear_layer()
+    artist.redraw()
+    
+    rs.DeleteLayer('mesh_artist')
+    
+    split_26(mesh, fkey, edge)
 
 mesh = mesh.to_mesh()
 
