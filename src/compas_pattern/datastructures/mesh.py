@@ -8,10 +8,38 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
+    'add_vertex_from_vertices',
+    'insert_vertices_in_halfedge',
+    'face_point',
     'face_circle',
     'insert_vertex_in_face',
+    'insert_vertices_in_face',
+    'delete_face',
 ]
 
+def add_vertex_from_vertices(mesh, vertices, weights):
+    n = len(vertices)
+    if len(weights) != n:
+        weights = [1] * n
+    x, y, z = 0, 0, 0
+    for i, vkey in enumerate(vertices):
+        xyz = mesh.vertex_coordinates(vkey)
+        x += xyz[0] * weights[i]
+        y += xyz[1] * weights[i]
+        z += xyz[2] * weights[i]
+    sum_weights = sum(weights)
+    x /= sum_weights
+    y /= sum_weights
+    z /= sum_weights
+
+    return mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+
+def insert_vertices_in_halfedge(mesh, u, v, vertices):
+    if v in mesh.halfedge[u] and mesh.halfedge[u][v] is not None:
+        fkey = mesh.halfedge[u][v]
+        return insert_vertices_in_face(mesh, fkey, u, vertices)
+    else:
+        return 0
 
 def face_point(mesh, vertices, weights):
     n = len(vertices)

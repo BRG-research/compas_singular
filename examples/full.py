@@ -69,8 +69,10 @@ def start():
     
     medial_branches, boundary_polylines = delaunay_medial_axis_patch_decomposition(delaunay_mesh)
     patch_curves = medial_branches + boundary_polylines
+    rs.EnableRedraw(False)
     for crv in patch_curves:
         rs.AddPolyline(crv)
+    rs.EnableRedraw(True)
     
     patch_decomposition = patch_datastructure_old(PseudoQuadMesh, boundary_polylines, medial_branches)
     
@@ -91,7 +93,7 @@ def start():
     #        rs.AddLine(u, v)
     quad_patch_decomposition_guid = draw_mesh(quad_patch_decomposition)
     rs.ObjectLayer(quad_patch_decomposition_guid, layer = 'quad_patch_decomposition')
-    return
+    
     if not quad_patch_decomposition.is_quadmesh():
         print 'non quad patch decomposition'
         for fkey in quad_patch_decomposition.faces():

@@ -39,9 +39,14 @@ for fkey in conform_mesh.faces():
             new_face_vertices.insert(idx, vkey)
             conform_mesh.delete_face(fkey)
             conform_mesh.add_face(new_face_vertices, fkey)
-
+print conform_mesh
+for fkey in conform_mesh.faces():
+    val = len(conform_mesh.face_vertices(fkey))
+    if val != 4:
+        xyz = conform_mesh.face_centroid(fkey)
+        rs.AddTextDot(val, xyz)
 dense_mesh = quad_mesh_densification(conform_mesh, target_length)
-
+print dense_mesh
 
 vertices = [dense_mesh.vertex_coordinates(vkey) for vkey in dense_mesh.vertices()]
 face_vertices = [dense_mesh.face_vertices(fkey) for fkey in dense_mesh.faces()]

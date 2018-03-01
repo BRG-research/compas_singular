@@ -2,6 +2,8 @@ from compas.datastructures.mesh import Mesh
 
 from compas_pattern.datastructures.mesh import face_point
 from compas_pattern.datastructures.mesh import insert_vertex_in_face
+from compas_pattern.datastructures.mesh import add_vertex_from_vertices
+from compas_pattern.datastructures.mesh import insert_vertices_in_halfedge
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -16,9 +18,10 @@ __all__ = [
     'flat_corner_2',
     'flat_corner_3',
     'flat_corner_33',
+    'split_35'
 ]
 
-def vertex_pole(mesh, fkey, pole):
+def vertex_pole_old(mesh, fkey, pole):
 
     if len(mesh.face_vertices(fkey)) != 4:
         return None
@@ -35,7 +38,39 @@ def vertex_pole(mesh, fkey, pole):
 
     return fkey_1, fkey_2
 
-def face_pole(mesh, fkey):
+def vertex_pole(mesh, fkey, pole):
+
+    if len(mesh.face_vertices(fkey)) != 4:
+        return None
+
+    a = pole
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+    d = mesh.face_vertex_descendant(fkey, c)
+
+    e = add_vertex_from_vertices(mesh, [a, b], [1, 2])
+    f = add_vertex_from_vertices(mesh, [b, c], [1, 2])
+    g = add_vertex_from_vertices(mesh, [c, d], [2, 1])
+    h = add_vertex_from_vertices(mesh, [d, a], [2, 1])
+
+    i = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 1, 2, 1])
+    
+    mesh.delete_face(fkey)
+
+    fkey_1 = mesh.add_face([a, a, i, h])
+    fkey_2 = mesh.add_face([a, a, e, i])
+    fkey_3 = mesh.add_face([e, b, f, i])
+    fkey_4 = mesh.add_face([h, i, g, d])
+    fkey_5 = mesh.add_face([i, f, c, g])
+
+    insert_vertices_in_halfedge(mesh, b, a, [e])
+    insert_vertices_in_halfedge(mesh, c, b, [f])
+    insert_vertices_in_halfedge(mesh, d, c, [g])
+    insert_vertices_in_halfedge(mesh, a, d, [h])
+
+    return fkey_1, fkey_2, fkey_3, fkey_4, fkey_5
+
+def face_pole_old(mesh, fkey):
 
     if len(mesh.face_vertices(fkey)) != 4:
         return None
@@ -54,7 +89,53 @@ def face_pole(mesh, fkey):
 
     return fkey_1, fkey_2, fkey_3, fkey_4
 
-def edge_pole(mesh, fkey, edge):
+def face_pole(mesh, fkey):
+
+    if len(mesh.face_vertices(fkey)) != 4:
+        return None
+
+    a, b, c, d = mesh.face_vertices(fkey)
+
+
+    e = add_vertex_from_vertices(mesh, [a, b], [2, 1])
+    f = add_vertex_from_vertices(mesh, [a, b], [1, 2])
+    g = add_vertex_from_vertices(mesh, [b, c], [2, 1])
+    h = add_vertex_from_vertices(mesh, [b, c], [1, 2])
+    i = add_vertex_from_vertices(mesh, [c, d], [2, 1])
+    j = add_vertex_from_vertices(mesh, [c, d], [1, 2])
+    k = add_vertex_from_vertices(mesh, [d, a], [2, 1])
+    l = add_vertex_from_vertices(mesh, [d, a], [1, 2])
+
+    m = add_vertex_from_vertices(mesh, [a, b, c, d], [2, 1, 1, 1])
+    n = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 2, 1, 1])
+    o = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 1, 2, 1])
+    p = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 1, 1, 2])
+
+    q = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 1, 1, 1])
+
+    mesh.delete_face(fkey)
+
+    fkey_1 = mesh.add_face([a, e, m, l])
+    fkey_2 = mesh.add_face([e, f, n, m])
+    fkey_3 = mesh.add_face([f, b, g, n])
+    fkey_4 = mesh.add_face([l, m, p, k])
+    fkey_5 = mesh.add_face([m, q, q, p])
+    fkey_6 = mesh.add_face([m, n, q, q])
+    fkey_7 = mesh.add_face([q, q, n, o])
+    fkey_8 = mesh.add_face([n, g, h, o])
+    fkey_9 = mesh.add_face([p, q, q, o])
+    fkey_10 = mesh.add_face([k, p, j, d])
+    fkey_11 = mesh.add_face([p, o, i, j])
+    fkey_12 = mesh.add_face([o, h, c, i])
+
+    insert_vertices_in_halfedge(mesh, b, a, [f, e])
+    insert_vertices_in_halfedge(mesh, c, b, [h, g])
+    insert_vertices_in_halfedge(mesh, d, c, [j, i])
+    insert_vertices_in_halfedge(mesh, a, d, [l, k])
+
+    return fkey_1, fkey_2, fkey_3, fkey_4, fkey_5, fkey_6, fkey_7, fkey_8, fkey_9, fkey_10, fkey_11, fkey_12
+
+def edge_pole_old(mesh, fkey, edge):
 
     u, v = edge
 
@@ -103,6 +184,55 @@ def edge_pole(mesh, fkey, edge):
         insert_vertices_in_face(mesh, fkey, a, [f, e, i])
 
     return fkey_1, fkey_2, fkey_3, fkey_4, fkey_5
+
+def edge_pole(mesh, fkey, edge):
+
+    u, v = edge
+
+    if len(mesh.face_vertices(fkey)) != 4:
+        return None
+    if (u, v) not in mesh.face_halfedges(fkey) and (v, u) not in mesh.face_halfedges(fkey):
+        return None
+
+    if v in mesh.halfedge[u] and mesh.halfedge[u][v] == fkey:
+        a = u
+    else:
+        a = v
+
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+    d = mesh.face_vertex_descendant(fkey, c)
+
+
+    e = add_vertex_from_vertices(mesh, [a, b], [2, 1])
+    f = add_vertex_from_vertices(mesh, [a, b], [1, 1])
+    g = add_vertex_from_vertices(mesh, [a, b], [1, 2])
+    h = add_vertex_from_vertices(mesh, [b, c], [1, 2])
+    i = add_vertex_from_vertices(mesh, [c, d], [2, 1])
+    j = add_vertex_from_vertices(mesh, [c, d], [1, 2])
+    k = add_vertex_from_vertices(mesh, [d, a], [2, 1])
+
+    l = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 1, 1, 2])
+    m = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 1, 2, 1])
+    
+    mesh.delete_face(fkey)
+
+    fkey_1 = mesh.add_face([a, e, l, k])
+    fkey_2 = mesh.add_face([e, f, f, l])
+    fkey_3 = mesh.add_face([l, f, f, m])
+    fkey_4 = mesh.add_face([f, f, g, m])
+    fkey_5 = mesh.add_face([g, b, h, m])
+    fkey_6 = mesh.add_face([k, l, j, d])
+    fkey_7 = mesh.add_face([l, m, i, j])
+    fkey_8 = mesh.add_face([m, h, c, i])
+
+    insert_vertices_in_halfedge(mesh, b, a, [g, f, e])
+    insert_vertices_in_halfedge(mesh, c, b, [h])
+    insert_vertices_in_halfedge(mesh, d, c, [j, i])
+    insert_vertices_in_halfedge(mesh, a, d, [k])
+
+    return fkey_1, fkey_2, fkey_3, fkey_4, fkey_5, fkey_6, fkey_7, fkey_8
+
 
 def face_opening(mesh, fkey):
 
