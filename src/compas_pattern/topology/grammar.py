@@ -241,17 +241,10 @@ def face_opening(mesh, fkey):
 
     a, b, c, d = mesh.face_vertices(fkey)
 
-    x, y, z = face_point(mesh, [a, b, c, d], [2, 1, 1, 1])
-    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
-    x, y, z = face_point(mesh, [a, b, c, d], [1, 2, 1, 1])
-    f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
-    x, y, z = face_point(mesh, [a, b, c, d], [1, 1, 2, 1])
-    g = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-    
-    x, y, z = face_point(mesh, [a, b, c, d], [1, 1, 1, 2])
-    h = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    e = add_vertex_from_vertices(mesh, [a, b, c, d], [2, 1, 1, 1])
+    f = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 2, 1, 1])
+    g = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 1, 2, 1])    
+    h = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 1, 1, 2])
 
     mesh.delete_face(fkey)
 
@@ -274,9 +267,8 @@ def flat_corner_2(mesh, fkey, corner):
     c = mesh.face_vertex_descendant(fkey, b)
     d = mesh.face_vertex_descendant(fkey, c)
 
-    x, y, z = mesh.face_centroid(fkey)
-    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
+    e = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 1, 1, 1])
+    
     mesh.delete_face(fkey)
 
     fkey_1 = mesh.add_face([a, b, c, e])
@@ -296,27 +288,18 @@ def flat_corner_3(mesh, fkey, corner):
     c = mesh.face_vertex_descendant(fkey, b)
     d = mesh.face_vertex_descendant(fkey, c)
 
-    x, y, z = mesh.edge_midpoint(b, c)
-    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
-    x, y, z = mesh.edge_midpoint(c, d)
-    f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
-    x, y, z = mesh.face_centroid(fkey)
-    g = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
+    e = add_vertex_from_vertices(mesh, [b, c], [1, 1])
+    f = add_vertex_from_vertices(mesh, [c, d], [1, 1])
+    g = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 1, 1, 1])
+    
     mesh.delete_face(fkey)
 
     fkey_1 = mesh.add_face([a, b, e, g])
     fkey_2 = mesh.add_face([e, c, f, g])
     fkey_3 = mesh.add_face([d, a, g, f])
 
-    if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
-        fkey = mesh.halfedge[c][b]
-        insert_vertex_in_face(mesh, fkey, c, e)
-    if c in mesh.halfedge[d] and mesh.halfedge[d][c] is not None:
-        fkey = mesh.halfedge[d][c]
-        insert_vertex_in_face(mesh, fkey, d, f)
+    insert_vertices_in_halfedge(mesh, c, b, [e])
+    insert_vertices_in_halfedge(mesh, d, c, [f])
 
     return fkey_1, fkey_2, fkey_3
 
@@ -332,26 +315,14 @@ def flat_corner_33(mesh, fkey, corner):
     c = mesh.face_vertex_descendant(fkey, b)
     d = mesh.face_vertex_descendant(fkey, c)
 
-    x, y, z = mesh.edge_midpoint(d, a)
-    e = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    e = add_vertex_from_vertices(mesh, [d, a], [1, 1])
+    f = add_vertex_from_vertices(mesh, [a, b], [1, 1])
+    g = add_vertex_from_vertices(mesh, [b, c], [1, 1])
+    h = add_vertex_from_vertices(mesh, [c, d], [1, 1])
 
-    x, y, z = mesh.edge_midpoint(a, b)
-    f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
-    x, y, z = mesh.edge_midpoint(b, c)
-    g = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
-    x, y, z = mesh.edge_midpoint(c, d)
-    h = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
-    x, y, z = face_point(mesh, [a, b, c, d], [1, 1, 1, 2])
-    i = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
-    x, y, z = face_point(mesh, [a, b, c, d], [1, 2, 1, 1])
-    j = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
-    x, y, z = mesh.face_centroid(fkey)
-    k = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    i = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 1, 1, 2])
+    j = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 2, 1, 1])
+    k = add_vertex_from_vertices(mesh, [a, b, c, d], [1, 1, 1, 1])
 
     mesh.delete_face(fkey)
 
@@ -362,24 +333,15 @@ def flat_corner_33(mesh, fkey, corner):
     fkey_5 = mesh.add_face([k, c, h, i])
     fkey_6 = mesh.add_face([e, i, h, d])
 
-    u, v = b, a
-    if v in mesh.halfedge[u] and mesh.halfedge[u][v] is not None:
-        fkey = mesh.halfedge[u][v]
-        insert_vertex_in_face(mesh, fkey, u, f)
-    u, v = c, b
-    if v in mesh.halfedge[u] and mesh.halfedge[u][v] is not None:
-        fkey = mesh.halfedge[u][v]
-        insert_vertex_in_face(mesh, fkey, u, g)
-    u, v = d, c
-    if v in mesh.halfedge[u] and mesh.halfedge[u][v] is not None:
-        fkey = mesh.halfedge[u][v]
-        insert_vertex_in_face(mesh, fkey, u, h)
-    u, v = a, d
-    if v in mesh.halfedge[u] and mesh.halfedge[u][v] is not None:
-        fkey = mesh.halfedge[u][v]
-        insert_vertex_in_face(mesh, fkey, u, e)
+    insert_vertices_in_halfedge(mesh, b, a, [f])
+    insert_vertices_in_halfedge(mesh, c, b, [g])
+    insert_vertices_in_halfedge(mesh, d, c, [h])
+    insert_vertices_in_halfedge(mesh, a, d, [e])
 
     return fkey_1, fkey_2, fkey_3, fkey_4, fkey_5, fkey_6
+
+
+
 
 # ==============================================================================
 # Main
