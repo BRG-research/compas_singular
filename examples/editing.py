@@ -31,6 +31,10 @@ from compas_pattern.topology.grammar import flat_corner_3
 from compas_pattern.topology.grammar import flat_corner_33
 from compas_pattern.topology.grammar import split_35
 from compas_pattern.topology.grammar import split_26
+from compas_pattern.topology.grammar import simple_split
+from compas_pattern.topology.grammar import double_split
+from compas_pattern.topology.grammar import insert_pole
+from compas_pattern.topology.grammar import insert_partial_pole
 
 # mesh selection
 guid = rs.GetObject('get mesh')
@@ -205,6 +209,86 @@ if rule == 'split_26':
     rs.DeleteLayer('mesh_artist')
     
     split_26(mesh, fkey, edge)
+
+if rule == 'simple_split':
+    artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+    artist.clear_layer()
+    
+    artist.draw_facelabels()
+    artist.redraw()
+    fkey = rhino.mesh_select_face(mesh, message = 'fkey')
+    artist.clear_layer()
+    artist.redraw()
+    
+    artist.draw_edgelabels()
+    artist.redraw()
+    edge = rhino.mesh_select_edge(mesh, message = 'edge')
+    artist.clear_layer()
+    artist.redraw()
+    
+    rs.DeleteLayer('mesh_artist')
+    
+    simple_split(mesh, fkey, edge)
+
+if rule == 'double_split':
+    artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+    artist.clear_layer()
+    
+    artist.draw_facelabels()
+    artist.redraw()
+    fkey = rhino.mesh_select_face(mesh, message = 'fkey')
+    artist.clear_layer()
+    artist.redraw()
+    
+    rs.DeleteLayer('mesh_artist')
+    
+    double_split(mesh, fkey)
+
+if rule == 'insert_pole':
+    artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+    artist.clear_layer()
+    
+    artist.draw_facelabels()
+    artist.redraw()
+    fkey = rhino.mesh_select_face(mesh, message = 'fkey')
+    artist.clear_layer()
+    artist.redraw()
+    
+    artist.draw_vertices()
+    artist.redraw()
+    pole = rhino.mesh_select_vertex(mesh, message = 'pole')
+    artist.clear_layer()
+    artist.redraw()
+    
+    rs.DeleteLayer('mesh_artist')
+    
+    insert_pole(mesh, fkey, pole)
+
+if rule == 'insert_partial_pole':
+    artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+    artist.clear_layer()
+    
+    artist.draw_facelabels()
+    artist.redraw()
+    fkey = rhino.mesh_select_face(mesh, message = 'fkey')
+    artist.clear_layer()
+    artist.redraw()
+    
+    artist.draw_vertices()
+    artist.redraw()
+    pole = rhino.mesh_select_vertex(mesh, message = 'pole')
+    artist.clear_layer()
+    artist.redraw()
+    
+    artist.draw_edgelabels()
+    artist.redraw()
+    edge = rhino.mesh_select_edge(mesh, message = 'edge')
+    artist.clear_layer()
+    artist.redraw()
+    
+    rs.DeleteLayer('mesh_artist')
+    
+    insert_partial_pole(mesh, fkey, pole, edge)
 
 mesh = mesh.to_mesh()
 
