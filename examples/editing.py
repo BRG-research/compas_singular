@@ -36,11 +36,15 @@ from compas_pattern.topology.grammar import double_split
 from compas_pattern.topology.grammar import insert_pole
 from compas_pattern.topology.grammar import insert_partial_pole
 
+from compas_pattern.topology.global_propagation import mesh_propagation
+
 # mesh selection
 guid = rs.GetObject('get mesh')
 mesh = rhino.mesh_from_guid(PseudoQuadMesh, guid)
 
 rule = rs.GetString('rule?')
+
+original_vertices = list(mesh.vertices())
 
 if rule == 'face_pole':
     artist = rhino.MeshArtist(mesh, layer='mesh_artist')
@@ -357,8 +361,17 @@ mesh = mesh.to_mesh()
 #for fkey in mesh.faces():
 #    print mesh.face_vertices(fkey)
 
+mesh_propagation(mesh, original_vertices)
+
 # draw mesh
-mesh_guid = draw_mesh(mesh)
+
+#mesh_guid = draw_mesh(mesh)
+for u, v in mesh.edges():
+    u_xyz = mesh.vertex_coordinates(u)
+    v_xyz = mesh.vertex_coordinates(v)
+    if u_xyz != v_xyz:
+        rs.AddLine(u_xyz, v_xyz)
+
 
 #rs.AddLayer('edited_mesh')
 #rs.ObjectLayer(mesh_guid, layer = 'edited_mesh')
