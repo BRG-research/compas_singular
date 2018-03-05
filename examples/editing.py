@@ -365,12 +365,12 @@ mesh_propagation(mesh, original_vertices)
 
 # draw mesh
 
-#mesh_guid = draw_mesh(mesh)
-for u, v in mesh.edges():
-    u_xyz = mesh.vertex_coordinates(u)
-    v_xyz = mesh.vertex_coordinates(v)
-    if u_xyz != v_xyz:
-        rs.AddLine(u_xyz, v_xyz)
+mesh_guid = draw_mesh(mesh)
+#for u, v in mesh.edges():
+#    u_xyz = mesh.vertex_coordinates(u)
+#    v_xyz = mesh.vertex_coordinates(v)
+#    if u_xyz != v_xyz:
+#        rs.AddLine(u_xyz, v_xyz)
 
 
 #rs.AddLayer('edited_mesh')

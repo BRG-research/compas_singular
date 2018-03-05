@@ -79,7 +79,6 @@ def face_propagation(mesh, fkey, original_vertices):
         ad = list(reversed([mesh.vertex_coordinates(vkey) for vkey in da]))
         update[(b, c)] = bc
 
-    print ab, bc, dc, ad
     new_vertices, new_face_vertices = discrete_coons_patch(ab, bc, dc, ad)
     
     vertex_remap = []
@@ -95,7 +94,7 @@ def face_propagation(mesh, fkey, original_vertices):
     mesh.delete_face(fkey)
 
     for face in new_face_vertices:
-        mesh.add_face([vertex_remap[vkey] for vkey in face])
+        mesh.add_face(list(reversed([vertex_remap[vkey] for vkey in face])))
     
     vertex_map = {geometric_key(mesh.vertex_coordinates(vkey)): vkey for vkey in mesh.vertices()}
 
@@ -103,8 +102,6 @@ def face_propagation(mesh, fkey, original_vertices):
         u, v = edge
         if u in mesh.halfedge[v] and mesh.halfedge[v][u] is not None:
             vertices = [vertex_map[geometric_key(point)] for point in points]
-            print u, v
-            print vertices
             insert_vertices_in_halfedge(mesh, v, u, list(reversed(vertices[1 : -1])))
 
     return mesh
