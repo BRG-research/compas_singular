@@ -19,6 +19,7 @@ __all__ = [
     'face_strip_collapse',
     'face_strip_subdivide',
     'face_strips_merge',
+    'face_strip_insert',
 ]
 
 
@@ -290,6 +291,9 @@ def face_strips_merge(cls, mesh, u, v):
         faces.append(fkey)
 
     return faces
+
+def face_strip_insert(cls, mesh, polyedge):
+    return 0
 
 # ==============================================================================
 # Main
