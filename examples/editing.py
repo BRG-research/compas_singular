@@ -40,9 +40,11 @@ from compas_pattern.topology.global_propagation import mesh_propagation
 
 # mesh selection
 guid = rs.GetObject('get mesh')
+layer = rs.ObjectLayer(guid)
 mesh = rhino.mesh_from_guid(PseudoQuadMesh, guid)
 
-rule = rs.GetString('rule?')
+rules = ['face_pole', 'edge_pole', 'vertex_pole', 'face_opening', 'flat_corner_2', 'flat_corner_3', 'flat_corner_33', 'split_35', 'split_26', 'simple_split', 'double_split', 'insert_pole', 'insert_partial_pole']
+rule = rs.GetString('rule?', strings = rules)
 
 original_vertices = list(mesh.vertices())
 
@@ -70,7 +72,7 @@ if rule == 'edge_pole':
     artist.clear_layer()
     artist.redraw()
     
-    artist.draw_edgelabels()
+    artist.draw_edgelabels(text = {(u, v): "{}-{}".format(u, v) for u, v in mesh.face_halfedges(fkey)})
     artist.redraw()
     edge = rhino.mesh_select_edge(mesh, message = 'edge')
     artist.clear_layer()
@@ -90,7 +92,7 @@ if rule == 'vertex_pole':
     artist.clear_layer()
     artist.redraw()
     
-    artist.draw_vertices()
+    artist.draw_vertexlabels(text = {key: str(key) for key in mesh.face_vertices(fkey)})
     artist.redraw()
     pole = rhino.mesh_select_vertex(mesh, message = 'pole')
     artist.clear_layer()
@@ -124,7 +126,7 @@ if rule == 'flat_corner_2':
     artist.clear_layer()
     artist.redraw()
     
-    artist.draw_vertices()
+    artist.draw_vertexlabels(text = {key: str(key) for key in mesh.face_vertices(fkey)})
     artist.redraw()
     corner = rhino.mesh_select_vertex(mesh, message = 'corner')
     artist.clear_layer()
@@ -144,7 +146,7 @@ if rule == 'flat_corner_3':
     artist.clear_layer()
     artist.redraw()
     
-    artist.draw_vertices()
+    artist.draw_vertexlabels(text = {key: str(key) for key in mesh.face_vertices(fkey)})
     artist.redraw()
     corner = rhino.mesh_select_vertex(mesh, message = 'corner')
     artist.clear_layer()
@@ -164,7 +166,7 @@ if rule == 'flat_corner_33':
     artist.clear_layer()
     artist.redraw()
     
-    artist.draw_vertices()
+    artist.draw_vertexlabels(text = {key: str(key) for key in mesh.face_vertices(fkey)})
     artist.redraw()
     corner = rhino.mesh_select_vertex(mesh, message = 'corner')
     artist.clear_layer()
@@ -184,7 +186,7 @@ if rule == 'split_35':
     artist.clear_layer()
     artist.redraw()
     
-    artist.draw_edgelabels()
+    artist.draw_edgelabels(text = {(u, v): "{}-{}".format(u, v) for u, v in mesh.face_halfedges(fkey)})
     artist.redraw()
     edge = rhino.mesh_select_edge(mesh, message = 'edge')
     artist.clear_layer()
@@ -204,7 +206,7 @@ if rule == 'split_26':
     artist.clear_layer()
     artist.redraw()
     
-    artist.draw_edgelabels()
+    artist.draw_edgelabels(text = {(u, v): "{}-{}".format(u, v) for u, v in mesh.face_halfedges(fkey)})
     artist.redraw()
     edge = rhino.mesh_select_edge(mesh, message = 'edge')
     artist.clear_layer()
@@ -224,7 +226,7 @@ if rule == 'simple_split':
     artist.clear_layer()
     artist.redraw()
     
-    artist.draw_edgelabels()
+    artist.draw_edgelabels(text = {(u, v): "{}-{}".format(u, v) for u, v in mesh.face_halfedges(fkey)})
     artist.redraw()
     edge = rhino.mesh_select_edge(mesh, message = 'edge')
     artist.clear_layer()
@@ -258,7 +260,7 @@ if rule == 'insert_pole':
     artist.clear_layer()
     artist.redraw()
     
-    artist.draw_vertices()
+    artist.draw_vertexlabels(text = {key: str(key) for key in mesh.face_vertices(fkey)})
     artist.redraw()
     pole = rhino.mesh_select_vertex(mesh, message = 'pole')
     artist.clear_layer()
@@ -278,13 +280,13 @@ if rule == 'insert_partial_pole':
     artist.clear_layer()
     artist.redraw()
     
-    artist.draw_vertices()
+    artist.draw_vertexlabels(text = {key: str(key) for key in mesh.face_vertices(fkey)})
     artist.redraw()
     pole = rhino.mesh_select_vertex(mesh, message = 'pole')
     artist.clear_layer()
     artist.redraw()
     
-    artist.draw_edgelabels()
+    artist.draw_edgelabels({(u, v): "{}-{}".format(u, v) for u, v in mesh.face_halfedges(fkey) if u != pole and v!= pole})
     artist.redraw()
     edge = rhino.mesh_select_edge(mesh, message = 'edge')
     artist.clear_layer()
@@ -296,76 +298,13 @@ if rule == 'insert_partial_pole':
 
 mesh = mesh.to_mesh()
 
-#mesh = face_strip_collapse(Mesh, mesh, ukey, vkey)
-
-#mesh = face_strip_subdivide(Mesh, mesh, ukey, vkey)
-
-#e = quad_mix_1(mesh, fkey, vkey, ukey)
-#
-### conforming: propagate T-junctions
-## propagate until boundary or closed loop
-#is_loop = False
-#wkey = e
-#count = mesh.number_of_faces()
-#while count > 0:
-#    count -= 1
-#    next_fkey = mesh.halfedge[vkey][wkey]
-#    ukey = mesh.face_vertex_descendant(next_fkey, wkey)
-#    if wkey in mesh.halfedge[ukey] and mesh.halfedge[ukey][wkey] is not None:
-#        next_fkey = mesh.halfedge[ukey][wkey]
-#        if len(mesh.face_vertices(next_fkey)) == 5:
-#            vkey = wkey
-#            wkey = penta_quad_1(mesh, next_fkey, wkey)
-#            # add to faces along feature to check
-#            continue
-#        if len(mesh.face_vertices(next_fkey)) == 6:
-#            vkey = wkey
-#            wkey = hexa_quad_1(mesh, next_fkey, wkey)
-#            #if wkey == e2:
-#            #    is_loop = True
-#            # add to faces along feature to check
-#            break
-#    break
-# # if not loop, propaget in other direction
-# if not is_loop:
-#     vkey = v
-#     wkey = e2
-#     count = mesh.number_of_faces()
-#     while count > 0:
-#         count -= 1
-#         next_fkey = mesh.halfedge[vkey][wkey]
-#         ukey = mesh.face_vertex_descendant(next_fkey, wkey)
-#         if wkey in mesh.halfedge[ukey] and mesh.halfedge[ukey][wkey] is not None:
-#             next_fkey = mesh.halfedge[ukey][wkey]
-#             if len(mesh.face_vertices(next_fkey)) == 5:
-#                 vkey = wkey
-#                 wkey = penta_quad_1(mesh, next_fkey, wkey)
-#                 # add to faces along feature to check
-#                 continue
-#             if len(mesh.face_vertices(next_fkey)) == 6:
-#                 vkey = wkey
-#                 wkey = hexa_quad_1(mesh, next_fkey, wkey)
-#                 if wkey == e2:
-#                     is_loop = True
-#                 # add to faces along feature to check
-#                 break
-#         break
-
-#print mesh
-#for u, v in mesh.edges():
-#    u_xyz = mesh.vertex_coordinates(u)
-#    v_xyz = mesh.vertex_coordinates(v)
-#    if u_xyz == v_xyz:
-#        print u_xyz, v_xyz
-#    rs.AddLine(u_xyz, v_xyz)
-#for fkey in mesh.faces():
-#    print mesh.face_vertices(fkey)
-
 mesh_propagation(mesh, original_vertices)
 
 # draw mesh
 
 mesh_guid = draw_mesh(mesh)
+rs.ObjectLayer(mesh_guid, layer = layer)
+rs.DeleteObject(guid)
 #for u, v in mesh.edges():
 #    u_xyz = mesh.vertex_coordinates(u)
 #    v_xyz = mesh.vertex_coordinates(v)
