@@ -1,5 +1,7 @@
 from compas.datastructures.mesh import Mesh
 
+from compas.utilities import geometric_key
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -139,6 +141,52 @@ class PseudoQuadMesh(Mesh):
         mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
         return mesh
 
+def pqm_from_mesh(mesh, poles):
+    """Converts a mesh into a pseuod-quad mesh with poles inducing face of the type [a, b, c, c].
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    poles: list
+        List of pole coordinates.
+
+    Returns
+    -------
+    vertices, new_face_vertices: list
+        The vertices with the new face_vertices.
+
+    Raises
+    ------
+    -
+
+    """
+
+    vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
+    vertex_conversion = {vkey: i for i, vkey in enumerate(mesh.vertices())}
+    new_face_vertices = []
+
+    poles = [geometric_key(pole) for pole in poles]
+
+    for fkey in mesh.faces():
+        face_vertices = mesh.face_vertices(fkey)[:]
+        if len(face_vertices) == 3:
+            # find pole location
+            pole = None
+            for vkey in face_vertices:
+                geom_key = geometric_key(mesh.vertex_coordinates(vkey))
+                if geom_key in poles:
+                    pole = vkey
+                    break
+            # modify face
+            if pole is not None:
+                idx = face_vertices.index(vkey)
+                face_vertices.insert(idx, vkey)
+
+        # store new face
+        new_face_vertices.append([vertex_conversion[vkey] for vkey in face_vertices])
+
+    return vertices, new_face_vertices
 
 # ==============================================================================
 # Main

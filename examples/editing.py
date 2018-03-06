@@ -300,17 +300,11 @@ mesh = mesh.to_mesh()
 
 mesh_propagation(mesh, original_vertices)
 
-# draw mesh
-
+# replace mesh
 mesh_guid = draw_mesh(mesh)
 rs.ObjectLayer(mesh_guid, layer = layer)
 rs.DeleteObject(guid)
-#for u, v in mesh.edges():
-#    u_xyz = mesh.vertex_coordinates(u)
-#    v_xyz = mesh.vertex_coordinates(v)
-#    if u_xyz != v_xyz:
-#        rs.AddLine(u_xyz, v_xyz)
 
-
-#rs.AddLayer('edited_mesh')
-#rs.ObjectLayer(mesh_guid, layer = 'edited_mesh')
+#layer = 'edited_mesh'
+#rs.AddLayer('layer')
+#rs.ObjectLayer(mesh_guid, layer = layer)
