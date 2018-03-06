@@ -14,12 +14,12 @@ from compas_pattern.cad.rhino.utilities import draw_mesh
 coarse_quad_mesh = rs.GetObject('mesh to densify', filter = 32)
 coarse_quad_mesh = rhino.mesh_from_guid(PseudoQuadMesh, coarse_quad_mesh)
 
+target_length = rs.GetReal('target length for densification', number = 1)
+
 poles = rs.GetObjects('pole points', filter = 1)
 if poles is None:
     poles = []
 poles = [rs.PointCoordinates(pole) for pole in poles]
-
-target_length = rs.GetReal('target length for densification', number = 1)
 
 rs.EnableRedraw(False)
 

@@ -3,24 +3,11 @@ import rhinoscriptsyntax as rs
 import compas_rhino as rhino
 
 from compas.datastructures.mesh import Mesh
+from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
+from compas_pattern.datastructures.pseudo_quad_mesh import pqm_from_mesh
 
 from compas_pattern.cad.rhino.utilities import draw_mesh
 from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
-
-#from compas_pattern.topology.face_strip_operations import face_strip_collapse
-#from compas_pattern.topology.face_strip_operations import face_strip_subdivide
-#from compas_pattern.topology.face_strip_operations import face_strips_merge
-
-#from compas_pattern.topology.grammar_primitive import primitive_1
-#from compas_pattern.topology.grammar_primitive import primitive_2
-#from compas_pattern.topology.grammar_primitive import primitive_3
-#from compas_pattern.topology.grammar_primitive import primitive_4
-#from compas_pattern.topology.grammar_primitive import primitive_5
-
-#from compas_pattern.topology.grammar_extended import extended_21 #6
-#from compas_pattern.topology.grammar_extended import extended_21443 #7
-#from compas_pattern.topology.grammar_extended import extended_212144321443 #8
-#from compas_pattern.topology.grammar_extended import extended_22122333 #9
 
 from compas_pattern.topology.grammar import face_pole
 from compas_pattern.topology.grammar import edge_pole
@@ -42,6 +29,16 @@ from compas_pattern.topology.global_propagation import mesh_propagation
 guid = rs.GetObject('get mesh')
 layer = rs.ObjectLayer(guid)
 mesh = rhino.mesh_from_guid(PseudoQuadMesh, guid)
+
+poles = rs.GetObjects('pole points', filter = 1)
+if poles is None:
+    poles = []
+poles = [rs.PointCoordinates(pole) for pole in poles]
+
+vertices, face_vertices = pqm_from_mesh(mesh, poles)
+
+mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
+
 
 rules = ['face_pole', 'edge_pole', 'vertex_pole', 'face_opening', 'flat_corner_2', 'flat_corner_3', 'flat_corner_33', 'split_35', 'split_26', 'simple_split', 'double_split', 'insert_pole', 'insert_partial_pole']
 rule = rs.GetString('rule?', strings = rules)
@@ -295,6 +292,12 @@ if rule == 'insert_partial_pole':
     rs.DeleteLayer('mesh_artist')
     
     insert_partial_pole(mesh, fkey, pole, edge)
+
+for fkey in mesh.faces():
+    fv = mesh.face_vertices(fkey)
+    if len(fv) != 4:
+        print fv
+        print mesh.face_centroid(fkey)
 
 mesh = mesh.to_mesh()
 

@@ -8,6 +8,8 @@ from compas.datastructures.mesh import Mesh
 
 from compas_pattern.topology.conway_operators import conway_join
 
+from compas_pattern.cad.rhino.utilities import draw_mesh
+
 def custom_constraints(mesh, surface):
     from compas_pattern.cad.rhino.utilities import surface_borders
     
@@ -136,15 +138,10 @@ def start():
     fixed_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'fixed']
     mesh_smooth_area(smooth_mesh, fixed = fixed_vertices, kmax = smoothing_iterations, damping = damping_value, callback = apply_constraints, callback_args = [smooth_mesh, constraints])
     
-    
-    vertices = [smooth_mesh.vertex_coordinates(vkey) for vkey in smooth_mesh.vertices()]
-    face_vertices = [smooth_mesh.face_vertices(fkey) for fkey in smooth_mesh.faces()]
-    smooth_mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
-    #layer_name = 'smooth_mesh_6'
-    #rs.AddLayer(layer_name)
-    #rs.ObjectLayer(smooth_mesh_guid, layer = layer_name)
-    
-    #rs.LayerVisible(layer_name, visible = True)
+    smooth_mesh_guid = draw_mesh(smooth_mesh)
+    #layer = 'smooth_mesh'
+    #rs.AddLayer(layer)
+    #rs.ObjectLayer(smooth_mesh_guid, layer = layer)
     
     rs.EnableRedraw(True)
 

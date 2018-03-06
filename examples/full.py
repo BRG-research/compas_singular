@@ -4,6 +4,7 @@ import compas_rhino as rhino
 
 from compas.datastructures.mesh import Mesh
 from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
+from compas_pattern.datastructures.pseudo_quad_mesh import pqm_from_mesh
 
 from compas_pattern.cad.rhino.utilities import draw_mesh
 
@@ -29,7 +30,7 @@ from compas_pattern.algorithms.constrained_smoothing import define_constraints
 from compas_pattern.algorithms.constrained_smoothing import apply_constraints
 
 def add_layer_structure():
-    layers = ['shape_and_features', 'quad_patch_decomposition', 'quad_mesh', 'pattern_topology', 'pattern_geometry']
+    layers = ['shape_and_features', 'coarse_quad_mesh', 'quad_mesh', 'pattern_topology', 'pattern_geometry']
     
     for layer in layers:
         rs.AddLayer(layer)
@@ -65,7 +66,7 @@ def start():
     planar_boundary_polyline, planar_hole_polylines, planar_polyline_features, planar_point_features = discrete_planar_mapping(discretisation, surface_guid, curve_features_guids = curve_features_guids, point_features_guids = point_features_guids)
     
     delaunay_mesh = planar_polyline_boundaries_to_delaunay(planar_boundary_polyline, holes = planar_hole_polylines, polyline_features = planar_polyline_features, point_features = planar_point_features)
-    draw_mesh(delaunay_mesh)
+    #draw_mesh(delaunay_mesh)
     
     medial_branches, boundary_polylines = delaunay_medial_axis_patch_decomposition(delaunay_mesh)
     patch_curves = medial_branches + boundary_polylines
@@ -76,28 +77,23 @@ def start():
     
     patch_decomposition = patch_datastructure_old(PseudoQuadMesh, boundary_polylines, medial_branches)
     
-    quad_patch_decomposition = conforming_initial_patch_decomposition(patch_decomposition, planar_point_features = planar_point_features, planar_polyline_features = planar_polyline_features)
+    coarse_quad_mesh = conforming_initial_patch_decomposition(patch_decomposition, planar_point_features = planar_point_features, planar_polyline_features = planar_polyline_features)
     
-    for vkey in quad_patch_decomposition.vertices():
-        u, v, w = quad_patch_decomposition.vertex_coordinates(vkey)
+    for vkey in coarse_quad_mesh.vertices():
+        u, v, w = coarse_quad_mesh.vertex_coordinates(vkey)
         x, y, z = rs.EvaluateSurface(surface_guid, u, v)
-        attr = quad_patch_decomposition.vertex[vkey]
+        attr = coarse_quad_mesh.vertex[vkey]
         attr['x'] = x
         attr['y'] = y
         attr['z'] = z
     
-    #for u, v in quad_patch_decomposition.edges():
-    #    u = quad_patch_decomposition.vertex_coordinates(u)
-    #    v = quad_patch_decomposition.vertex_coordinates(v)
-    #    if u != v:
-    #        rs.AddLine(u, v)
-    quad_patch_decomposition_guid = draw_mesh(quad_patch_decomposition)
-    rs.ObjectLayer(quad_patch_decomposition_guid, layer = 'quad_patch_decomposition')
+    coarse_quad_mesh_guid = draw_mesh(coarse_quad_mesh)
+    rs.ObjectLayer(coarse_quad_mesh_guid, layer = 'coarse_quad_mesh')
     
-    if not quad_patch_decomposition.is_quadmesh():
+    if not coarse_quad_mesh.is_quadmesh():
         print 'non quad patch decomposition'
-        for fkey in quad_patch_decomposition.faces():
-            fv = quad_patch_decomposition.face_vertices(fkey)
+        for fkey in coarse_quad_mesh.faces():
+            fv = coarse_quad_mesh.face_vertices(fkey)
             if len(fv) != 4:
                 print fv
         return
@@ -105,9 +101,19 @@ def start():
     # quad mesh
     rs.EnableRedraw(True)
     target_length = rs.GetReal('target length for densification', number = 1)
+    
+    poles = rs.GetObjects('pole points', filter = 1)
     rs.EnableRedraw(False)
     
-    quad_mesh = quad_mesh_densification(quad_patch_decomposition, target_length)
+    if poles is None:
+        poles = []
+    poles = [rs.PointCoordinates(pole) for pole in poles]
+    
+    vertices, face_vertices = pqm_from_mesh(coarse_quad_mesh, poles)
+    
+    coarse_quad_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
+    
+    quad_mesh = quad_mesh_densification(coarse_quad_mesh, target_length)
     
     quad_mesh_guid = draw_mesh(quad_mesh)
     rs.ObjectLayer(quad_mesh_guid, layer = 'quad_mesh')
