@@ -1,14 +1,14 @@
 from compas.datastructures.mesh import Mesh
 
-from compas_pattern.topology.polyline_extraction import dual_edge_groups
-from compas_pattern.topology.polyline_extraction import quad_mesh_polylines_all
+from compas_pattern.topology.polyline_extraction import dual_edge_polylines
+from compas_pattern.topology.polyline_extraction import quad_mesh_polylines
 
 from compas_pattern.topology.joining_welding import weld_mesh
 
-from compas_pattern.topology.grammar_rules import quad_quad_1
-from compas_pattern.topology.grammar_rules import penta_quad_1
-from compas_pattern.topology.grammar_rules import hexa_quad_1
-from compas_pattern.topology.grammar_rules import quad_tri_1
+from compas_pattern.topology.consistency import quad_quad_1
+from compas_pattern.topology.consistency import penta_quad_1
+from compas_pattern.topology.consistency import hexa_quad_1
+from compas_pattern.topology.consistency import quad_tri_1
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -54,7 +54,7 @@ def face_strip_collapse(cls, mesh, u, v):
         return None
 
     # get edges in the face strip
-    edge_groups, max_group = dual_edge_groups(mesh)
+    edge_groups, max_group = dual_edge_polylines(mesh)
     group_number = edge_groups[(u, v)]
     edges_to_collapse = [edge for edge, group in edge_groups.items() if group == group_number]
 
@@ -91,7 +91,7 @@ def face_strip_collapse(cls, mesh, u, v):
     mesh = weld_mesh(cls, mesh)
     mesh.cull_vertices()
 
-    return mesh
+    return 0
 
 def face_strip_subdivide(cls, mesh, u, v):
     """Subdivide a face strip in a quad mesh.
@@ -219,7 +219,7 @@ def face_strip_subdivide(cls, mesh, u, v):
                     break
             break
 
-    return mesh
+    return 0
 
 def face_strips_merge(cls, mesh, u, v):
     """Merge two parallel face strips in a quad mesh. The polyedge inbetween is composed of regular vertices only.
@@ -252,7 +252,7 @@ def face_strips_merge(cls, mesh, u, v):
         return None
 
     # get polyedge
-    polylines = quad_mesh_polylines_all(mesh)
+    polylines = quad_mesh_polylines(mesh)
     for polyline in polylines:
         for i in range(len(polyline) - 1):
             if (u == polyline[i] and v == polyline[i + 1]) or (v == polyline[i] and u == polyline[i + 1]):

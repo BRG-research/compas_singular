@@ -70,10 +70,6 @@ def start():
     
     medial_branches, boundary_polylines = delaunay_medial_axis_patch_decomposition(delaunay_mesh)
     patch_curves = medial_branches + boundary_polylines
-    rs.EnableRedraw(False)
-    for crv in patch_curves:
-        rs.AddPolyline(crv)
-    rs.EnableRedraw(True)
     
     patch_decomposition = patch_datastructure_old(PseudoQuadMesh, boundary_polylines, medial_branches)
     
