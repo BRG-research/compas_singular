@@ -5,317 +5,11 @@ import compas_rhino as rhino
 from compas.datastructures.mesh import Mesh
 from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
 from compas_pattern.datastructures.pseudo_quad_mesh import pqm_from_mesh
-
 from compas_pattern.cad.rhino.utilities import draw_mesh
-from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
-
-from compas_pattern.topology.grammar import face_pole
-from compas_pattern.topology.grammar import edge_pole
-from compas_pattern.topology.grammar import vertex_pole
-from compas_pattern.topology.grammar import face_opening
-from compas_pattern.topology.grammar import flat_corner_2
-from compas_pattern.topology.grammar import flat_corner_3
-from compas_pattern.topology.grammar import flat_corner_33
-from compas_pattern.topology.grammar import split_35
-from compas_pattern.topology.grammar import split_26
-from compas_pattern.topology.grammar import simple_split
-from compas_pattern.topology.grammar import double_split
-from compas_pattern.topology.grammar import insert_pole
-from compas_pattern.topology.grammar import insert_partial_pole
-
-from compas_pattern.topology.polyline_extraction import dual_edge_polylines
-from compas_pattern.topology.face_strip_operations import face_strip_collapse
 
 from compas_pattern.topology.global_propagation import mesh_propagation
 
-def apply_rule(mesh):
-    rules = ['face_pole', 'edge_pole', 'vertex_pole', 'face_opening', 'flat_corner_2', 'flat_corner_3', 'flat_corner_33', 'split_35', 'split_26', 'simple_split', 'double_split', 'insert_pole', 'insert_partial_pole', 'face_strip_collapse', 'STOP']
-    rule = rs.GetString('rule?', strings = rules)
-    
-    if rule == 'STOP':
-        return 1
-    
-    if rule == 'face_pole':
-        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-        artist.clear_layer()
-        
-        artist.draw_facelabels()
-        artist.redraw()
-        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
-        artist.clear_layer()
-        artist.redraw()
-        
-        rs.DeleteLayer('mesh_artist')
-        
-        face_pole(mesh, fkey)
-    
-    if rule == 'edge_pole':
-        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-        artist.clear_layer()
-        
-        artist.draw_facelabels()
-        artist.redraw()
-        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
-        artist.clear_layer()
-        artist.redraw()
-        
-        artist.draw_edgelabels(text = {(u, v): "{}-{}".format(u, v) for u, v in mesh.face_halfedges(fkey)})
-        artist.redraw()
-        edge = rhino.mesh_select_edge(mesh, message = 'edge')
-        artist.clear_layer()
-        artist.redraw()
-        
-        rs.DeleteLayer('mesh_artist')
-        
-        edge_pole(mesh, fkey, edge)
-    
-    if rule == 'vertex_pole':
-        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-        artist.clear_layer()
-        
-        artist.draw_facelabels()
-        artist.redraw()
-        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
-        artist.clear_layer()
-        artist.redraw()
-        
-        artist.draw_vertexlabels(text = {key: str(key) for key in mesh.face_vertices(fkey)})
-        artist.redraw()
-        pole = rhino.mesh_select_vertex(mesh, message = 'pole')
-        artist.clear_layer()
-        artist.redraw()
-        
-        rs.DeleteLayer('mesh_artist')
-        
-        vertex_pole(mesh, fkey, pole)
-    
-    if rule == 'face_opening':
-        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-        artist.clear_layer()
-        
-        artist.draw_facelabels()
-        artist.redraw()
-        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
-        artist.clear_layer()
-        artist.redraw()
-        
-        rs.DeleteLayer('mesh_artist')
-        
-        face_opening(mesh, fkey)
-    
-    if rule == 'flat_corner_2':
-        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-        artist.clear_layer()
-        
-        artist.draw_facelabels()
-        artist.redraw()
-        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
-        artist.clear_layer()
-        artist.redraw()
-        
-        artist.draw_vertexlabels(text = {key: str(key) for key in mesh.face_vertices(fkey)})
-        artist.redraw()
-        corner = rhino.mesh_select_vertex(mesh, message = 'corner')
-        artist.clear_layer()
-        artist.redraw()
-        
-        rs.DeleteLayer('mesh_artist')
-        
-        flat_corner_2(mesh, fkey, corner)
-    
-    if rule == 'flat_corner_3':
-        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-        artist.clear_layer()
-        
-        artist.draw_facelabels()
-        artist.redraw()
-        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
-        artist.clear_layer()
-        artist.redraw()
-        
-        artist.draw_vertexlabels(text = {key: str(key) for key in mesh.face_vertices(fkey)})
-        artist.redraw()
-        corner = rhino.mesh_select_vertex(mesh, message = 'corner')
-        artist.clear_layer()
-        artist.redraw()
-        
-        rs.DeleteLayer('mesh_artist')
-        
-        flat_corner_3(mesh, fkey, corner)
-    
-    if rule == 'flat_corner_33':
-        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-        artist.clear_layer()
-        
-        artist.draw_facelabels()
-        artist.redraw()
-        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
-        artist.clear_layer()
-        artist.redraw()
-        
-        artist.draw_vertexlabels(text = {key: str(key) for key in mesh.face_vertices(fkey)})
-        artist.redraw()
-        corner = rhino.mesh_select_vertex(mesh, message = 'corner')
-        artist.clear_layer()
-        artist.redraw()
-        
-        rs.DeleteLayer('mesh_artist')
-        
-        flat_corner_33(mesh, fkey, corner)
-    
-    if rule == 'split_35':
-        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-        artist.clear_layer()
-        
-        artist.draw_facelabels()
-        artist.redraw()
-        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
-        artist.clear_layer()
-        artist.redraw()
-        
-        artist.draw_edgelabels(text = {(u, v): "{}-{}".format(u, v) for u, v in mesh.face_halfedges(fkey)})
-        artist.redraw()
-        edge = rhino.mesh_select_edge(mesh, message = 'edge')
-        artist.clear_layer()
-        artist.redraw()
-        
-        rs.DeleteLayer('mesh_artist')
-        
-        split_35(mesh, fkey, edge)
-    
-    if rule == 'split_26':
-        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-        artist.clear_layer()
-        
-        artist.draw_facelabels()
-        artist.redraw()
-        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
-        artist.clear_layer()
-        artist.redraw()
-        
-        artist.draw_edgelabels(text = {(u, v): "{}-{}".format(u, v) for u, v in mesh.face_halfedges(fkey)})
-        artist.redraw()
-        edge = rhino.mesh_select_edge(mesh, message = 'edge')
-        artist.clear_layer()
-        artist.redraw()
-        
-        rs.DeleteLayer('mesh_artist')
-        
-        split_26(mesh, fkey, edge)
-    
-    if rule == 'simple_split':
-        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-        artist.clear_layer()
-        
-        artist.draw_facelabels()
-        artist.redraw()
-        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
-        artist.clear_layer()
-        artist.redraw()
-        
-        artist.draw_edgelabels(text = {(u, v): "{}-{}".format(u, v) for u, v in mesh.face_halfedges(fkey)})
-        artist.redraw()
-        edge = rhino.mesh_select_edge(mesh, message = 'edge')
-        artist.clear_layer()
-        artist.redraw()
-        
-        rs.DeleteLayer('mesh_artist')
-        
-        simple_split(mesh, fkey, edge)
-    
-    if rule == 'double_split':
-        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-        artist.clear_layer()
-        
-        artist.draw_facelabels()
-        artist.redraw()
-        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
-        artist.clear_layer()
-        artist.redraw()
-        
-        rs.DeleteLayer('mesh_artist')
-        
-        double_split(mesh, fkey)
-    
-    if rule == 'insert_pole':
-        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-        artist.clear_layer()
-        
-        artist.draw_facelabels()
-        artist.redraw()
-        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
-        artist.clear_layer()
-        artist.redraw()
-        
-        artist.draw_vertexlabels(text = {key: str(key) for key in mesh.face_vertices(fkey)})
-        artist.redraw()
-        pole = rhino.mesh_select_vertex(mesh, message = 'pole')
-        artist.clear_layer()
-        artist.redraw()
-        
-        rs.DeleteLayer('mesh_artist')
-        
-        insert_pole(mesh, fkey, pole)
-    
-    if rule == 'insert_partial_pole':
-        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-        artist.clear_layer()
-        
-        artist.draw_facelabels()
-        artist.redraw()
-        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
-        artist.clear_layer()
-        artist.redraw()
-        
-        artist.draw_vertexlabels(text = {key: str(key) for key in mesh.face_vertices(fkey)})
-        artist.redraw()
-        pole = rhino.mesh_select_vertex(mesh, message = 'pole')
-        artist.clear_layer()
-        artist.redraw()
-        
-        artist.draw_edgelabels({(u, v): "{}-{}".format(u, v) for u, v in mesh.face_halfedges(fkey) if u != pole and v!= pole})
-        artist.redraw()
-        edge = rhino.mesh_select_edge(mesh, message = 'edge')
-        artist.clear_layer()
-        artist.redraw()
-        
-        rs.DeleteLayer('mesh_artist')
-        
-        insert_partial_pole(mesh, fkey, pole, edge)
-    
-    if rule == 'face_strip_collapse':
-        edge_groups, max_group = dual_edge_polylines(mesh)
-        
-        groups = {}
-        
-        for edge, group in edge_groups.items():
-            u, v = edge
-            if group in groups:
-                if (v, u) not in groups[group]:
-                    groups[group].append((u, v))
-            else:
-                groups[group] = [(u, v)]
-        
-        rs.EnableRedraw(False)
-        dots = {}
-        for group, edges in groups.items():
-            k = float(group) / float(max_group) * 255
-            RGB = [k] * 3
-            rs.AddGroup(group)
-            for u, v in edges:
-                dot = rs.AddTextDot(group, mesh.edge_midpoint(u, v))
-                dots[dot] = (u, v)
-                rs.ObjectColor(dot, RGB)
-                rs.AddObjectToGroup(dot, group)
-        rs.EnableRedraw(True)
-        
-        dot = rs.GetObject('dual polyedge to collapse', filter = 8192)
-        u, v = dots[dot]
-        rs.DeleteObjects(dots)
-        
-        face_strip_collapse(PseudoQuadMesh, mesh, u, v)
-    
-    return 0
+from compas_pattern.cad.rhino.editing_artist import apply_rule
 
 # mesh selection
 guid = rs.GetObject('get mesh')
@@ -331,16 +25,33 @@ vertices, face_vertices = pqm_from_mesh(mesh, poles)
 
 mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
 
-original_vertices = list(mesh.vertices())
+regular_vertices = list(mesh.vertices())
 
 while 1:
-    stop = apply_rule(mesh)
+    rules = ['face_pole', 'edge_pole', 'vertex_pole', 'face_opening', 'flat_corner_2', 'flat_corner_3', 'flat_corner_33', 'split_35', 'split_26', 'simple_split', 'double_split', 'insert_pole', 'insert_partial_pole', 'face_strip_collapse', 'face_strip_insert', 'PROPAGATE', 'STOP']
+    rule = rs.GetString('rule?', strings = rules)
+    
+    if rule == 'PROPAGATE':
+        mesh_propagation(mesh, regular_vertices)
+        stop = 0
+    else:
+        stop = apply_rule(mesh, rule)
+    
+    for vkey in mesh.vertices():
+        regular = True
+        for fkey in mesh.vertex_faces(vkey):
+            if len(mesh.face_vertices(fkey)) != 4:
+                regular = False
+                break
+        if regular and vkey not in regular_vertices:
+            regular_vertices.append(vkey)
+    
     if stop:
         break
 
-mesh = mesh.to_mesh()
+mesh_propagation(mesh, regular_vertices)
 
-mesh_propagation(mesh, original_vertices)
+mesh = mesh.to_mesh()
 
 # replace mesh
 mesh_guid = draw_mesh(mesh)
