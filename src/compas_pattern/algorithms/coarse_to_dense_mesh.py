@@ -100,7 +100,10 @@ def quad_mesh_densification(mesh, target_length):
                 group = edge_group[(u, v)]
                 parameter = int(group_subdivision[group])
                 dots.append(rs.AddTextDot(parameter, point))
+            k = float(group) / float(max_group) * 255
+            RGB = [k] * 3
             rs.AddGroup(group)
+            rs.ObjectColor(dots, RGB)
             rs.AddObjectsToGroup(dots, group)
             all_dots += dots
         rs.EnableRedraw(True)

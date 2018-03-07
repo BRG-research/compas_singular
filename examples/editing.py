@@ -300,7 +300,7 @@ def apply_rule(mesh):
         dots = {}
         for group, edges in groups.items():
             k = float(group) / float(max_group) * 255
-            RGB = [k, k, k]
+            RGB = [k] * 3
             rs.AddGroup(group)
             for u, v in edges:
                 dot = rs.AddTextDot(group, mesh.edge_midpoint(u, v))
