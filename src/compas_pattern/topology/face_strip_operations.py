@@ -5,10 +5,15 @@ from compas_pattern.topology.polyline_extraction import quad_mesh_polylines
 
 from compas_pattern.topology.joining_welding import weld_mesh
 
+from compas_pattern.topology.unwelding import unweld_mesh_along_edge_path
+
 from compas_pattern.topology.consistency import quad_quad_1
 from compas_pattern.topology.consistency import penta_quad_1
 from compas_pattern.topology.consistency import hexa_quad_1
 from compas_pattern.topology.consistency import quad_tri_1
+
+from compas.geometry import scale_vector
+from compas.geometry import sum_vectors
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -292,7 +297,58 @@ def face_strips_merge(cls, mesh, u, v):
 
     return faces
 
-def face_strip_insert(cls, mesh, polyedge):
+def face_strip_insert(cls, mesh, vertex_path, factor = .33):
+
+    # check if vertex_path is a loop
+    if vertex_path[0] == vertex_path[-1]:
+        loop = True
+    else:
+        loop = False
+
+    edge_path = [[vertex_path[i], vertex_path[i + 1]] for i in range(len(vertex_path) - 1)]
+    if loop:
+        del edge_path[-1]
+
+    # duplicate the vertices along the edge_path by unwelding the mesh
+    duplicates = unweld_mesh_along_edge_path(mesh, edge_path)
+
+    duplicate_list = [i for uv in duplicates for i in uv]
+
+    # move the duplicated vertices towards the centroid of the adjacent faces
+    for uv in duplicates:
+        for vkey in uv:
+            # if was on boundary before unwelding, move along boundary edge
+            on_boundary = False
+            for nbr in mesh.vertex_neighbours(vkey):
+                if mesh.is_edge_on_boundary(vkey, nbr) and nbr not in duplicate_list:
+                    x, y, z = mesh.edge_point(vkey, nbr, factor)
+                    on_boundary = True
+            if not on_boundary:
+                centroids = [mesh.face_centroid(fkey) for fkey in mesh.vertex_faces(vkey)]
+                areas = [mesh.face_area(fkey) for fkey in mesh.vertex_faces(vkey)]
+                x, y, z = sum_vectors([scale_vector(centroid, area / sum(areas)) for centroid, area in zip(centroids, areas)])
+            attr = mesh.vertex[vkey]
+            # factor related to the width of the new face strip compared to the adjacent ones
+            attr['x'] += factor * (x - attr['x'])
+            attr['y'] += factor * (y - attr['y'])
+            attr['z'] += factor * (z - attr['z'])
+
+    # add new face strip
+    for i in range(len(duplicates) - 1):
+        a = duplicates[i][1]
+        b = duplicates[i][0]
+        c = duplicates[i + 1][0]
+        d = duplicates[i + 1][1]
+        mesh.add_face([a, b, c, d])
+    # close if loop
+    if loop:
+        a = duplicates[-1][1]
+        b = duplicates[i-1][0]
+        c = duplicates[0][0]
+        d = duplicates[0][1]
+        mesh.add_face([a, b, c, d])
+
+
     return 0
 
 # ==============================================================================

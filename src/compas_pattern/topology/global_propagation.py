@@ -16,7 +16,7 @@ __all__ = [
     'mesh_propagation',
 ]
 
-def face_propagation(mesh, fkey, original_vertices):
+def face_propagation(mesh, fkey, regular_vertices):
     """Subdivide a polygon face into quads which used to be a quad with four original vertices.
     Subdivision is valid only if opposite edges have the same number of points or if one only has two.
     "len(ab) = len(cd) or len(ab) = 2 or len(cd) = 2"
@@ -27,7 +27,7 @@ def face_propagation(mesh, fkey, original_vertices):
         A quad mesh.
     fkey: int
         Key of face to subdivide.
-    original_vertices: list
+    regular_vertices: list
         List of four face vertex indices.
 
     Returns
@@ -47,14 +47,14 @@ def face_propagation(mesh, fkey, original_vertices):
     face_vertex_map = {geometric_key(mesh.vertex_coordinates(vkey)): vkey for vkey in face_vertices}
 
     # need four original vertices of initial face
-    if len(original_vertices) != 4:
+    if len(regular_vertices) != 4:
         return None
-    for vkey in original_vertices:
+    for vkey in regular_vertices:
         if vkey not in face_vertices:
             return None
 
     # sort original vertices
-    a, b, c, d = sorted([face_vertices.index(vkey) for vkey in original_vertices])
+    a, b, c, d = sorted([face_vertices.index(vkey) for vkey in regular_vertices])
 
     # split face vertices per edge
     ab = face_vertices[a : b + 1 - len(face_vertices)]
@@ -136,14 +136,14 @@ def face_propagation(mesh, fkey, original_vertices):
 
     return mesh
 
-def mesh_propagation(mesh, original_vertices):
+def mesh_propagation(mesh, regular_vertices):
     """Global mesh propagation of local rule/operation that would break the quad constraint.
 
     Parameters
     ----------
     mesh : Mesh
         A quad mesh.
-    original_vertices: list
+    regular_vertices: list
         List of original vertices of the quad mesh before editing.
 
     Returns
@@ -168,7 +168,7 @@ def mesh_propagation(mesh, original_vertices):
             # if valency higher than 4
             if len(face_vertices) > 4:
                 # retrieve original vertices
-                face_original_vertices = [vkey for vkey in face_vertices if vkey in original_vertices]
+                face_original_vertices = [vkey for vkey in face_vertices if vkey in regular_vertices]
                 # propagate
                 face_propagation(mesh, fkey, face_original_vertices)
                 propagated = True
@@ -189,3 +189,15 @@ def mesh_propagation(mesh, original_vertices):
 if __name__ == '__main__':
 
     import compas
+
+    vertices = [[0,0,0],[1,0,0],[1,1,0],[0,1,0]]
+    face_vertices = [[0,1,2,3,3]]
+
+    mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
+
+    print mesh
+    
+    face_propagation(mesh, 0, [0,1,3,3])
+
+    print mesh
+

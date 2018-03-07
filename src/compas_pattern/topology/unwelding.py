@@ -31,6 +31,8 @@ def unweld_mesh_along_edge_path(mesh, edge_path):
 
     """
     
+    duplicates = []
+
     # convert edge path in vertex path
     vertex_path = [edge[0] for edge in edge_path]
     # add last vertex of edge path only if not closed loop
@@ -51,6 +53,7 @@ def unweld_mesh_along_edge_path(mesh, edge_path):
             # duplicate vertex and its attributes
             attr = mesh.vertex[vkey]
             new_vkey = mesh.add_vertex(attr_dict = attr)
+            duplicates.append([vkey, new_vkey])
             # split neighbours in two groups depending on the side of the path
             vertex_nbrs = mesh.vertex_neighbours(vkey, True)
             
@@ -98,7 +101,7 @@ def unweld_mesh_along_edge_path(mesh, edge_path):
         mesh.delete_face(fkey)
         mesh.add_face(face_vertices, fkey, attr_dict = attr)
 
-    return mesh
+    return duplicates
 
 # ==============================================================================
 # Main
