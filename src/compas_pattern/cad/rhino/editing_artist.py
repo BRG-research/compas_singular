@@ -42,7 +42,7 @@ __all__ = [
 
 
 def apply_rule(mesh, rule):
-    if rule == 'STOP':
+    if rule == 'DONE':
         return 1
     
     if rule == 'face_pole':

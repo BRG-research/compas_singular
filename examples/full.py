@@ -13,7 +13,10 @@ from compas_pattern.algorithms.planar_polyline_boundaries_to_delaunay import pla
 
 from compas_pattern.topology.patch_datastructure import patch_datastructure_old
 from compas_pattern.algorithms.delaunay_medial_axis_patch_decomposition import delaunay_medial_axis_patch_decomposition
-from compas_pattern.algorithms.conforming_initial_patch_decomposition import conforming_initial_patch_decomposition
+#from compas_pattern.algorithms.conforming_initial_patch_decomposition import conforming_initial_patch_decomposition
+
+from compas_pattern.cad.rhino.editing_artist import apply_rule
+from compas_pattern.topology.global_propagation import mesh_propagation
 
 from compas_pattern.algorithms.coarse_to_dense_mesh import quad_mesh_densification
 
@@ -30,15 +33,13 @@ from compas_pattern.algorithms.constrained_smoothing import define_constraints
 from compas_pattern.algorithms.constrained_smoothing import apply_constraints
 
 def add_layer_structure():
-    layers = ['shape_and_features', 'coarse_quad_mesh', 'quad_mesh', 'pattern_topology', 'pattern_geometry']
+    layers = ['shape_and_features', 'initial_coarse_quad_mesh', 'edited_coarse_quad_mesh', 'quad_mesh', 'pattern_topology', 'pattern_geometry']
     
     for layer in layers:
         rs.AddLayer(layer)
         objects = rs.ObjectsByLayer(layer)
         rs.DeleteObjects(objects)
         rs.LayerVisible(layer, visible = False)
-    
-    rs.LayerVisible(layers[-1], visible = True)
     
     return 0
 
@@ -59,7 +60,7 @@ def start():
     point_features_guids = rs.CopyObjects(point_features_guids)
     rs.ObjectLayer(point_features_guids, 'shape_and_features')
     
-    # quad patch decomposition
+    # initial coarse quad mesh
     discretisation = rs.GetReal('discretisation', number = 1)
     rs.EnableRedraw(False)
     
@@ -73,7 +74,8 @@ def start():
     
     patch_decomposition = patch_datastructure_old(PseudoQuadMesh, boundary_polylines, medial_branches)
     
-    coarse_quad_mesh = conforming_initial_patch_decomposition(patch_decomposition, planar_point_features = planar_point_features, planar_polyline_features = planar_polyline_features)
+    #coarse_quad_mesh = conforming_initial_patch_decomposition(patch_decomposition, planar_point_features = planar_point_features, planar_polyline_features = planar_polyline_features)
+    coarse_quad_mesh = patch_decomposition
     
     for vkey in coarse_quad_mesh.vertices():
         u, v, w = coarse_quad_mesh.vertex_coordinates(vkey)
@@ -84,21 +86,11 @@ def start():
         attr['z'] = z
     
     coarse_quad_mesh_guid = draw_mesh(coarse_quad_mesh)
-    rs.ObjectLayer(coarse_quad_mesh_guid, layer = 'coarse_quad_mesh')
+    rs.ObjectLayer(coarse_quad_mesh_guid, layer = 'initial_coarse_quad_mesh')
+    rs.LayerVisible('initial_coarse_quad_mesh', visible = True)
     
-    if not coarse_quad_mesh.is_quadmesh():
-        print 'non quad patch decomposition'
-        for fkey in coarse_quad_mesh.faces():
-            fv = coarse_quad_mesh.face_vertices(fkey)
-            if len(fv) != 4:
-                print fv
-        return
-    
-    # quad mesh
-    rs.EnableRedraw(True)
-    target_length = rs.GetReal('target length for densification', number = 1)
-    
-    poles = rs.GetObjects('pole points', filter = 1)
+    # coarse pseudo quad mesh
+    poles = point_features_guids
     rs.EnableRedraw(False)
     
     if poles is None:
@@ -109,10 +101,70 @@ def start():
     
     coarse_quad_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
     
+    # edited coarse quad mesh
+    
+    regular_vertices = list(coarse_quad_mesh.vertices())
+    
+    count = 100
+    while count > 0:
+        count -= 1
+        rs.EnableRedraw(False)
+        rs.LayerVisible('initial_coarse_quad_mesh', visible = False)
+        rs.LayerVisible('edited_coarse_quad_mesh', visible = True)
+        edges = [rs.AddLine(coarse_quad_mesh.vertex_coordinates(u), coarse_quad_mesh.vertex_coordinates(v)) for u,v in coarse_quad_mesh.edges() if u != v]
+        rs.ObjectLayer(edges, 'edited_coarse_quad_mesh')
+        rs.EnableRedraw(True)
+        rules = ['face_pole', 'edge_pole', 'vertex_pole', 'face_opening', 'flat_corner_2', 'flat_corner_3', 'flat_corner_33', 'split_35', 'split_26', 'simple_split', 'double_split', 'insert_pole', 'insert_partial_pole', 'face_strip_collapse', 'face_strip_insert', 'PROPAGATE', 'DONE']
+        rule = rs.GetString('rule?', strings = rules)
+        rs.EnableRedraw(False)
+        
+        if rule == 'PROPAGATE':
+            mesh_propagation(coarse_quad_mesh, regular_vertices)
+            DONE = 0
+        else:
+            DONE = apply_rule(coarse_quad_mesh, rule)
+        
+        rs.DeleteObjects(edges)
+        
+        for vkey in coarse_quad_mesh.vertices():
+            regular = True
+            for fkey in coarse_quad_mesh.vertex_faces(vkey):
+                if len(coarse_quad_mesh.face_vertices(fkey)) != 4:
+                    regular = False
+                    break
+            if regular and vkey not in regular_vertices:
+                regular_vertices.append(vkey)
+        
+        if DONE:
+            break
+    
+    mesh_propagation(coarse_quad_mesh, regular_vertices)
+    
+    # check validity
+    if not coarse_quad_mesh.is_quadmesh():
+        print 'non quad patch decomposition'
+        for fkey in coarse_quad_mesh.faces():
+            fv = coarse_quad_mesh.face_vertices(fkey)
+            if len(fv) != 4:
+                print fv
+        return
+    
+    rs.EnableRedraw(True)
+    
+    mesh = coarse_quad_mesh.to_mesh()
+    mesh_guid = draw_mesh(mesh)
+    rs.ObjectLayer(mesh_guid, layer = 'edited_coarse_quad_mesh')
+    
+    # quad mesh
+    rs.EnableRedraw(True)
+    target_length = rs.GetReal('target length for densification', number = 1)
+    
     quad_mesh = quad_mesh_densification(coarse_quad_mesh, target_length)
     
     quad_mesh_guid = draw_mesh(quad_mesh)
     rs.ObjectLayer(quad_mesh_guid, layer = 'quad_mesh')
+    rs.LayerVisible('edited_coarse_quad_mesh', visible = False)
+    rs.LayerVisible('quad_mesh', visible = True)
     
     # pattern topology
     rs.EnableRedraw(True)
@@ -154,6 +206,9 @@ def start():
         rs.AddObjectsToGroup(edges, 'pattern_topology')
         rs.ObjectLayer(edges, layer = 'pattern_topology')
     
+    rs.LayerVisible('quad_mesh', visible = False)
+    rs.LayerVisible('pattern_topology', visible = True)
+    
     #pattern geometry
     pattern_geometry = pattern_topology.copy()
     
@@ -181,6 +236,9 @@ def start():
         rs.AddGroup('pattern_geometry')
         rs.AddObjectsToGroup(edges, 'pattern_geometry')
         rs.ObjectLayer(edges, layer = 'pattern_geometry')
+    
+    rs.LayerVisible('pattern_topology', visible = False)
+    rs.LayerVisible('pattern_geometry', visible = True)
     
     rs.EnableRedraw(True)
 
