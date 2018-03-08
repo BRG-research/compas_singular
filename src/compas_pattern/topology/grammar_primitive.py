@@ -1,6 +1,8 @@
 from compas.datastructures.mesh import Mesh
 
+from compas_pattern.datastructures.mesh import insert_vertices_in_halfedge
 from compas_pattern.datastructures.mesh import insert_vertex_in_face
+from compas_pattern.datastructures.mesh import add_vertex_from_vertices
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -8,17 +10,13 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
-    'insert_vertex',
-    'split_quad',
-    'remove_edge',
+    'primitive_insert_vertex',
+    'primitive_insert_edge',
+    'primitive_remove_edge',
 ]
 
-def insert_vertex(mesh, edge):
-    """Insert vertex on an edge.
-
-    face(s):    
-    [*, u, v, *] -> [*, u, a, v, *]
-    [*, v, u, *] -> [*, v, a, u, *]
+def primitive_insert_vertex(mesh, edge):
+    """Insert a vertex on an edge.
 
     Parameters
     ----------
@@ -29,9 +27,9 @@ def insert_vertex(mesh, edge):
 
     Returns
     -------
-    a : int, None
+    x : int, None
         The new vertex.
-        None if the edges is not an edge of the mesh.
+        None if not an edge of the mesh.
 
     Raises
     ------
@@ -41,45 +39,34 @@ def insert_vertex(mesh, edge):
 
     u, v = edge
 
-    # check validity of rule
-    edges = list(mesh.edges())
-    if (u, v) not in edges and (v, u) not in edges:
+    # check validity
+    if (u, v) not in list(mesh.edges()) and (v, u) not in list(mesh.edges()):
         return None
 
     # new vertex
-    x, y, z = mesh.edge_midpoint(u, v)
-    a = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+    x = add_vertex_from_vertices(mesh, [u, v], [1, 1])
 
     # update adjacent faces
-    if v in mesh.halfedge[u] and mesh.halfedge[u][v] is not None:
-        fkey = mesh.halfedge[u][v]
-        insert_vertex_in_face(mesh, fkey, u, a)
-    if u in mesh.halfedge[v] and mesh.halfedge[v][u] is not None:
-        fkey = mesh.halfedge[v][u]
-        insert_vertex_in_face(mesh, fkey, v, a)
+    insert_vertices_in_halfedge(mesh, u, v, [x])
+    insert_vertices_in_halfedge(mesh, v, u, [x])
 
-    return a
+    return x
 
-def insert_edge(mesh, edge):
-    """Insert edge and split face.
-
-    face(s):    
-    [*, u, *, v, *] -> [*, u, v *] + [*, v, u, *]
+def primitive_insert_edge(mesh, vertices):
+    """Insert an edge by splitting a face.
 
     Parameters
     ----------
     mesh : Mesh
         A mesh.
-    fkey: int
-        Key of quad face.
-    a: int
-        Key of quad face vertex.
+    vertices: tuple
+        Keys of two non-adjacent vertices from the same face.
 
     Returns
     -------
-    c : int, None
-        The diagonally opposite vertex.
-        None if the quad face is not a quad or if a is not on the face.
+    (u, v): tuple, None
+        The new edge.
+        None if not two non-adjacent vertices from the same face.
 
     Raises
     ------
@@ -87,30 +74,52 @@ def insert_edge(mesh, edge):
 
     """
 
-    # check validity of rule
-    if len(mesh.face_vertices(fkey)) != 4:
+    # check validity
+
+    # two vertices
+    if len(vertices) != 2:
         return None
-    if a not in mesh.face_vertices(fkey):
+    u, v = vertices
+
+    # vertices of the mesh
+    mesh_vertices = list(mesh.vertices())
+    if u not in mesh_vertices or v not in mesh_vertices:
+        return None
+    
+    # non-adjacent vertices
+    mesh_edges = list(mesh.edges()) 
+    if (u, v) in mesh_edges or (v, u) in mesh_edges:
         return None
 
-    b = mesh.face_vertex_descendant(fkey, a)
-    c = mesh.face_vertex_descendant(fkey, b)
-    d = mesh.face_vertex_descendant(fkey, c)
-    
+    # one shared face
+    u_faces = mesh.vertex_faces(u)
+    v_faces = mesh.vertex_faces(v)
+    fkeys = [fkey for fkey in u_faces if fkey in v_faces]
+    if len(fkeys) != 1:
+        return None
+    fkey = fkeys[0]
+
+    # split face vertices
+    face_vertices = mesh.face_vertices(fkey)
+    u_idx = face_vertices.index(u)
+    v_idx = face_vertices.index(v)
+    min_idx = min(u_idx, v_idx)
+    max_idx = max(u_idx, v_idx)
+    face_vertices_1 = face_vertices[min_idx : max_idx + 1]
+    face_vertices_2 = face_vertices[max_idx :] + face_vertices[: min_idx + 1 - len(face_vertices)]
+    print face_vertices_1
+    print face_vertices_2
     # delete old faces
     mesh.delete_face(fkey)
 
     # create new faces
-    mesh.add_face([a, b, c])
-    mesh.add_face([a, c, d])
+    mesh.add_face(face_vertices_1)
+    mesh.add_face(face_vertices_2)
 
-    return c
+    return (u, v)
 
-def remove_edge(mesh, edge):
-    """Remove and edge by merging adjacent faces.
-
-    face(s):    
-    [*, u, v, *] + [*, v, u, *] -> [*, u, *, v, *]
+def primitive_remove_edge(mesh, edge):
+    """Remove and edge by merging two faces.
 
     Parameters
     ----------
@@ -123,7 +132,7 @@ def remove_edge(mesh, edge):
     -------
     fkey : int, None
         The new face.
-        None if edge is on boundary.
+        None if not a non-boundary edge.
 
     Raises
     ------
@@ -133,7 +142,13 @@ def remove_edge(mesh, edge):
 
     u, v = edge
 
-    # check validity of rule
+    # check validity
+
+    # is edge
+    if (u, v) not in list(mesh.edges()) and (v, u) not in list(mesh.edges()):
+        return None
+
+    # is non-boundary
     if mesh.is_edge_on_boundary(u, v):
         return None
 
@@ -167,3 +182,16 @@ if __name__ == '__main__':
 
     import compas
 
+    vertices = [[0,0,0],[1,0,0],[1,1,0],[0,1,0]]
+    faces = [[0,1,2,3]]
+    mesh = Mesh.from_vertices_and_faces(vertices, faces)
+
+    print mesh
+
+    primitive_insert_edge(mesh, (0,2))
+    #primitive_insert_vertex(mesh, (2,3))
+    #primitive_remove_edge(mesh, (0,2))
+
+    print mesh
+    for fkey in mesh.faces():
+        print mesh.face_vertices(fkey)

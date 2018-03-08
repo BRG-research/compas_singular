@@ -24,6 +24,7 @@ __all__ = [
     'double_split',
     'insert_pole',
     'insert_partial_pole',
+    'pseudo_quad_split',
 ]
 
 def vertex_pole(mesh, fkey, pole):
