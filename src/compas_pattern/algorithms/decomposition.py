@@ -12,10 +12,10 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
-    'delaunay_medial_axis_patch_decomposition',
+    'decomposition',
 ]
 
-def delaunay_medial_axis_patch_decomposition(delaunay_mesh):
+def decomposition(delaunay_mesh):
     """Constructs a patch decomposition from a Delaunay mesh based on pruning and grafting of its medial axis.
 
     Parameters

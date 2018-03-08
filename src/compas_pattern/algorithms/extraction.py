@@ -25,7 +25,7 @@ __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
     'patches_to_mesh',
-    'patches_to_mesh_old',
+    'extraction',
     'patches_to_mesh_very_old',
 ]
 
@@ -74,7 +74,7 @@ def patch_datastructure(cls, polylines):
 
     return 0
 
-def patch_datastructure_old(cls, boundary_polylines, non_boundary_polylines):
+def extraction(cls, boundary_polylines, non_boundary_polylines):
     """Constructs the mesh datastructure based on polylines forming a set of patches.
 
     Parameters

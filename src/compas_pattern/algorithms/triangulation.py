@@ -13,10 +13,10 @@ __email__      = 'oval@arch.ethz.ch'
 
 
 __all__ = [
-    'planar_polyline_boundaries_to_delaunay',
+    'triangulation',
 ]
 
-def planar_polyline_boundaries_to_delaunay(boundary, holes = [], polyline_features = [], point_features = []):
+def triangulation(boundary, holes = [], polyline_features = [], point_features = []):
     """Generates a trimmed Delaunay mesh on a closed outer boundary polyline with potential
     closed inner boundary polylines, polyline constraints and point constraints.
 

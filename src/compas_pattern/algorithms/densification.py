@@ -25,10 +25,10 @@ __email__      = 'oval@arch.ethz.ch'
 
 
 __all__ = [
-    'quad_mesh_densification',
+    'densification',
 ]
 
-def quad_mesh_densification(mesh, target_length):
+def densification(mesh, target_length):
     """Densifies a quad mesh based on a target length.
     
     Parameters

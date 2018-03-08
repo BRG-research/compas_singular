@@ -20,11 +20,11 @@ __email__      = 'oval@arch.ethz.ch'
 
 
 __all__ = [
-    'discrete_planar_mapping',
+    'mapping',
 ]
 
 
-def discrete_planar_mapping(discretization_spacing, surface_guid, curve_features_guids = [], point_features_guids = []):
+def mapping(discretization_spacing, surface_guid, curve_features_guids = [], point_features_guids = []):
     """Creates planar polylines from the boundaries of a NURBS surface, NURBS curves and point on the NURBS surface
     by using the UV parameterisation with a user-input discretisation spacing.
 

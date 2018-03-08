@@ -8,17 +8,18 @@ from compas_pattern.datastructures.pseudo_quad_mesh import pqm_from_mesh
 
 from compas_pattern.cad.rhino.utilities import draw_mesh
 
-from compas_pattern.cad.rhino.discrete_planar_mapping import discrete_planar_mapping
-from compas_pattern.algorithms.planar_polyline_boundaries_to_delaunay import planar_polyline_boundaries_to_delaunay
+from compas_pattern.algorithms.mapping import mapping
+from compas_pattern.algorithms.triangulation import triangulation
 
-from compas_pattern.topology.patch_datastructure import patch_datastructure_old
-from compas_pattern.algorithms.delaunay_medial_axis_patch_decomposition import delaunay_medial_axis_patch_decomposition
-#from compas_pattern.algorithms.conforming_initial_patch_decomposition import conforming_initial_patch_decomposition
+from compas_pattern.algorithms.extraction import extraction
+from compas_pattern.algorithms.decomposition import decomposition
+#from compas_pattern.algorithms.conforming import conforming
+from compas_pattern.algorithms.remapping import remapping
 
 from compas_pattern.cad.rhino.editing_artist import apply_rule
 from compas_pattern.topology.global_propagation import mesh_propagation
 
-from compas_pattern.algorithms.coarse_to_dense_mesh import quad_mesh_densification
+from compas_pattern.algorithms.densification import densification
 
 from compas_pattern.topology.conway_operators import conway_dual
 from compas_pattern.topology.conway_operators import conway_join
@@ -29,10 +30,11 @@ from compas_pattern.topology.conway_operators import conway_gyro
 
 from compas.geometry.algorithms.smoothing import mesh_smooth_centroid
 from compas.geometry.algorithms.smoothing import mesh_smooth_area
-from compas_pattern.algorithms.constrained_smoothing import define_constraints
-from compas_pattern.algorithms.constrained_smoothing import apply_constraints
+from compas_pattern.algorithms.smoothing import define_constraints
+from compas_pattern.algorithms.smoothing import apply_constraints
 
-def add_layer_structure():
+def start():
+    # layer structure
     layers = ['shape_and_features', 'initial_coarse_quad_mesh', 'edited_coarse_quad_mesh', 'quad_mesh', 'pattern_topology', 'pattern_geometry']
     
     for layer in layers:
@@ -40,11 +42,7 @@ def add_layer_structure():
         objects = rs.ObjectsByLayer(layer)
         rs.DeleteObjects(objects)
         rs.LayerVisible(layer, visible = False)
-    
-    return 0
-
-def start():
-    
+        
     # shape and features
     surface_guid = rs.GetObject('select surface', filter = 8)
     surface_guid = rs.CopyObject(surface_guid)
@@ -61,29 +59,22 @@ def start():
     rs.ObjectLayer(point_features_guids, 'shape_and_features')
     
     # initial coarse quad mesh
-    discretisation = rs.GetReal('discretisation', number = 1)
+    discretisation = rs.GetReal('triangulation discretisation', number = 1)
     rs.EnableRedraw(False)
     
-    planar_boundary_polyline, planar_hole_polylines, planar_polyline_features, planar_point_features = discrete_planar_mapping(discretisation, surface_guid, curve_features_guids = curve_features_guids, point_features_guids = point_features_guids)
+    planar_boundary_polyline, planar_hole_polylines, planar_polyline_features, planar_point_features = mapping(discretisation, surface_guid, curve_features_guids = curve_features_guids, point_features_guids = point_features_guids)
     
-    delaunay_mesh = planar_polyline_boundaries_to_delaunay(planar_boundary_polyline, holes = planar_hole_polylines, polyline_features = planar_polyline_features, point_features = planar_point_features)
-    #draw_mesh(delaunay_mesh)
+    delaunay_mesh = triangulation(planar_boundary_polyline, holes = planar_hole_polylines, polyline_features = planar_polyline_features, point_features = planar_point_features)
     
-    medial_branches, boundary_polylines = delaunay_medial_axis_patch_decomposition(delaunay_mesh)
+    medial_branches, boundary_polylines = decomposition(delaunay_mesh)
     patch_curves = medial_branches + boundary_polylines
     
-    patch_decomposition = patch_datastructure_old(PseudoQuadMesh, boundary_polylines, medial_branches)
+    patch_decomposition = extraction(PseudoQuadMesh, boundary_polylines, medial_branches)
     
-    #coarse_quad_mesh = conforming_initial_patch_decomposition(patch_decomposition, planar_point_features = planar_point_features, planar_polyline_features = planar_polyline_features)
+    #coarse_quad_mesh = conforming(patch_decomposition, planar_point_features = planar_point_features, planar_polyline_features = planar_polyline_features)
     coarse_quad_mesh = patch_decomposition
     
-    for vkey in coarse_quad_mesh.vertices():
-        u, v, w = coarse_quad_mesh.vertex_coordinates(vkey)
-        x, y, z = rs.EvaluateSurface(surface_guid, u, v)
-        attr = coarse_quad_mesh.vertex[vkey]
-        attr['x'] = x
-        attr['y'] = y
-        attr['z'] = z
+    remapping(coarse_quad_mesh, surface_guid)
     
     coarse_quad_mesh_guid = draw_mesh(coarse_quad_mesh)
     rs.ObjectLayer(coarse_quad_mesh_guid, layer = 'initial_coarse_quad_mesh')
@@ -159,7 +150,7 @@ def start():
     rs.EnableRedraw(True)
     target_length = rs.GetReal('target length for densification', number = 1)
     
-    quad_mesh = quad_mesh_densification(coarse_quad_mesh, target_length)
+    quad_mesh = densification(coarse_quad_mesh, target_length)
     
     quad_mesh_guid = draw_mesh(quad_mesh)
     rs.ObjectLayer(quad_mesh_guid, layer = 'quad_mesh')
@@ -242,5 +233,4 @@ def start():
     
     rs.EnableRedraw(True)
 
-add_layer_structure()
 start()
