@@ -301,6 +301,19 @@ def apply_constraints(k, args):
             xyz = mesh.vertex_coordinates(vkey)
             u, v = rs.SurfaceClosestPoint(cstr_object, xyz)
             x, y, z = rs.EvaluateSurface(cstr_object, u, v)
+            if not rs.IsPointOnSurface(cstr_object, [x, y, z]):
+                borders = surface_borders(cstr_object)
+                xyz0 = [x, y, z]
+                min_dist = -1
+                pt = None
+                for border in borders:
+                    t = rs.CurveClosestPoint(border, xyz0)
+                    xyz = rs.EvaluateCurve(border, t)
+                    dist = rs.Distance(xyz, xyz0)
+                    if dist < min_dist or min_dist < 0:
+                        min_dist = dist
+                        pt = xyz
+                x, y, z = pt
             attr = mesh.vertex[vkey]
             attr['x'] = x
             attr['y'] = y
