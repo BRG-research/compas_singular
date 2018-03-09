@@ -25,6 +25,7 @@ __all__ = [
     'insert_pole',
     'insert_partial_pole',
     'pseudo_quad_split',
+    'singular_boundary_1',
 ]
 
 def vertex_pole(mesh, fkey, pole):
@@ -504,7 +505,91 @@ def pseudo_quad_split(mesh, fkey):
     insert_vertices_in_halfedge(mesh, a, c, [f])
 
     return fkey_1, fkey_2, fkey_3
+    
+def singular_boundary_1(mesh, edge, vkey):
 
+    u, v = edge
+    if vkey != u and vkey != v:
+        return None
+
+    if mesh.is_edge_on_boundary(u, v):
+        return None
+    if len(mesh.face_vertices(mesh.halfedge[u][v])) != 4 or len(mesh.face_vertices(mesh.halfedge[v][u])) != 4:
+        return None
+
+    if vkey == u:
+        b = u
+        e = v
+    else:
+        b = v
+        e = u
+
+    fkey_1 = mesh.halfedge[b][e]
+    fkey_2 = mesh.halfedge[e][b]
+
+    f = mesh.face_vertex_descendant(fkey_1, e)
+    a = mesh.face_vertex_descendant(fkey_1, f)
+    c = mesh.face_vertex_descendant(fkey_2, b)
+    d = mesh.face_vertex_descendant(fkey_2, c)
+
+    mesh.delete_face(fkey_1)
+    mesh.delete_face(fkey_2)
+
+    g = add_vertex_from_vertices(mesh, [d, e], [1, 1])
+    h = add_vertex_from_vertices(mesh, [e, f], [1, 1])
+
+    fkey_1 = mesh.add_face([a, b, h, f])
+    fkey_2 = mesh.add_face([b, g, e, h])
+    fkey_3 = mesh.add_face([b, c, d, g])
+
+    insert_vertices_in_halfedge(mesh, e, d, [g])
+    insert_vertices_in_halfedge(mesh, f, e, [h])
+
+    return fkey_1, fkey_2, fkey_3
+
+def singular_boundary_2(mesh, edge, vkey):
+
+    u, v = edge
+    if vkey != u and vkey != v:
+        return None
+
+    if mesh.is_edge_on_boundary(u, v):
+        return None
+    if len(mesh.face_vertices(mesh.halfedge[u][v])) != 4 or len(mesh.face_vertices(mesh.halfedge[v][u])) != 4:
+        return None
+
+    if vkey == u:
+        b = u
+        e = v
+    else:
+        b = v
+        e = u
+
+    fkey_1 = mesh.halfedge[b][e]
+    fkey_2 = mesh.halfedge[e][b]
+
+    f = mesh.face_vertex_descendant(fkey_1, e)
+    a = mesh.face_vertex_descendant(fkey_1, f)
+    c = mesh.face_vertex_descendant(fkey_2, b)
+    d = mesh.face_vertex_descendant(fkey_2, c)
+
+    mesh.delete_face(fkey_1)
+    mesh.delete_face(fkey_2)
+
+    g = add_vertex_from_vertices(mesh, [d, e], [2, 1])
+    h = add_vertex_from_vertices(mesh, [d, e], [1, 2])
+    i = add_vertex_from_vertices(mesh, [e, f], [2, 1])
+    j = add_vertex_from_vertices(mesh, [e, f], [1, 2])
+
+    fkey_1 = mesh.add_face([a, b, j, f])
+    fkey_2 = mesh.add_face([b, e, i, j])
+    fkey_3 = mesh.add_face([b, g, h, e])
+    fkey_4 = mesh.add_face([b, c, d, g])
+
+    insert_vertices_in_halfedge(mesh, e, d, [h, g])
+    insert_vertices_in_halfedge(mesh, f, e, [j, i])
+
+    return fkey_1, fkey_2, fkey_3
 
 # ==============================================================================
 # Main

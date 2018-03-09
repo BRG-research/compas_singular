@@ -23,6 +23,8 @@ from compas_pattern.topology.grammar import simple_split
 from compas_pattern.topology.grammar import double_split
 from compas_pattern.topology.grammar import insert_pole
 from compas_pattern.topology.grammar import insert_partial_pole
+from compas_pattern.topology.grammar import singular_boundary_1
+from compas_pattern.topology.grammar import singular_boundary_2
 
 from compas_pattern.topology.polyline_extraction import dual_edge_polylines
 
@@ -290,6 +292,46 @@ def apply_rule(mesh, rule):
         
         insert_partial_pole(mesh, fkey, pole, edge)
     
+    if rule == 'singular_boundary_1':
+        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+        artist.clear_layer()
+        
+        artist.draw_edgelabels(text = {(u, v): "{}-{}".format(u, v) for u, v in mesh.edges()})
+        artist.redraw()
+        edge = rhino.mesh_select_edge(mesh, message = 'edge')
+        artist.clear_layer()
+        artist.redraw()
+
+        artist.draw_vertexlabels(text = {key: str(key) for key in edge})
+        artist.redraw()
+        vkey = rhino.mesh_select_vertex(mesh, message = 'vkey')
+        artist.clear_layer()
+        artist.redraw()
+        
+        rs.DeleteLayer('mesh_artist')
+        
+        singular_boundary_1(mesh, edge, vkey)
+
+    if rule == 'singular_boundary_2':
+        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+        artist.clear_layer()
+        
+        artist.draw_edgelabels(text = {(u, v): "{}-{}".format(u, v) for u, v in mesh.edges()})
+        artist.redraw()
+        edge = rhino.mesh_select_edge(mesh, message = 'edge')
+        artist.clear_layer()
+        artist.redraw()
+
+        artist.draw_vertexlabels(text = {key: str(key) for key in edge})
+        artist.redraw()
+        vkey = rhino.mesh_select_vertex(mesh, message = 'vkey')
+        artist.clear_layer()
+        artist.redraw()
+        
+        rs.DeleteLayer('mesh_artist')
+        
+        singular_boundary_2(mesh, edge, vkey)
+
     if rule == 'face_strip_collapse':
         edge_groups, max_group = dual_edge_polylines(mesh)
         

@@ -1,19 +1,21 @@
 import rhinoscriptsyntax as rs
-
 import compas_rhino as rhino
 
 from compas.datastructures.mesh import Mesh
 from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
 from compas_pattern.datastructures.pseudo_quad_mesh import pqm_from_mesh
-
 from compas_pattern.cad.rhino.utilities import draw_mesh
 
 from compas_pattern.algorithms.mapping import mapping
+
 from compas_pattern.algorithms.triangulation import triangulation
 
 from compas_pattern.algorithms.extraction import extraction
+
 from compas_pattern.algorithms.decomposition import decomposition
+
 #from compas_pattern.algorithms.conforming import conforming
+
 from compas_pattern.algorithms.remapping import remapping
 
 from compas_pattern.algorithms.editing import editing
