@@ -21,6 +21,7 @@ __all__ = [
 # https://en.wikipedia.org/wiki/Conway_polyhedron_notation
 
 def conway_dual(mesh):
+    # dual mesh
 
     old_vertices = list(mesh.vertices())
 
@@ -54,7 +55,8 @@ def conway_dual(mesh):
     return mesh
 
 def conway_join(mesh):
-    
+    # diagonal mesh
+
     old_face_to_new_vertices = {}
     
     for fkey in mesh.faces():
@@ -85,6 +87,7 @@ def conway_join(mesh):
     return mesh
 
 def conway_ambo(mesh):
+    # dual of diagonal mesh
 
     old_vertices = list(mesh.vertices())
 
@@ -124,7 +127,7 @@ def conway_ambo(mesh):
     return mesh
 
 def conway_kis(mesh):
-
+    # mesh plus diagonals
     new_faces = []
 
     for fkey in mesh.faces():
@@ -143,7 +146,7 @@ def conway_kis(mesh):
     return mesh
 
 def conway_needle(mesh):
-
+    # mesh plus diagonals of dual
     old_face_to_new_vertices = {}
     
     for fkey in mesh.faces():
@@ -181,8 +184,11 @@ def conway_needle(mesh):
 
     return mesh
 
-def conway_gyro(mesh, orientation):
+def conway_gyro(mesh):
+    # Cairo pentagonal pattern
 
+    orientation = 'left'
+    
     if orientation != 'left' and orientation != 'right':
         return mesh
 
@@ -223,10 +229,9 @@ def conway_gyro(mesh, orientation):
                 e = mesh.face_vertex_ancestor(fkey, a)
             new_faces.append([a, b, c, d, e])
 
-    from compas_pattern.datastructures.mesh import delete_face
     old_faces = list(mesh.faces())
     for fkey in old_faces:
-        delete_face(mesh, fkey)
+        mesh.delete_face(fkey)
 
     for face_vertices in new_faces:
         mesh.add_face(face_vertices)
@@ -240,5 +245,3 @@ def conway_gyro(mesh, orientation):
 if __name__ == '__main__':
 
     import compas
-
-

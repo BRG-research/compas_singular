@@ -55,10 +55,15 @@ def surface_border_kinks(surface_guid):
                 kinks.append(end)
 
 def draw_mesh(mesh):
+    # if quad/tri mesh add mesh, else add edges
+    for fkey in mesh.faces():
+        if len(mesh.face_vertices(fkey)) > 4:
+            #return edges
+            return [rs.AddLine(mesh.vertex_coordinates(u), mesh.vertex_coordinates(v)) for u, v in mesh.edges()]
+    # return mesh
     vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
     face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
-    mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
-    return mesh_guid
+    return rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
 
 def curve_discretisation(curve_guid, discretisation_spacing):
     n = int(rs.CurveLength(curve_guid) / discretisation_spacing) + 1

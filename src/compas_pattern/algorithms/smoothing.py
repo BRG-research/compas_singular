@@ -314,6 +314,7 @@ def apply_constraints(k, args):
                         min_dist = dist
                         pt = xyz
                 x, y, z = pt
+                rs.DeleteObjects(borders)
             attr = mesh.vertex[vkey]
             attr['x'] = x
             attr['y'] = y

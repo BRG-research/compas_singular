@@ -9,7 +9,6 @@ except ImportError:
 import compas_rhino as rhino
 
 from compas.datastructures.mesh import Mesh
-from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
 
 from compas_pattern.topology.grammar import face_pole
 from compas_pattern.topology.grammar import edge_pole
@@ -42,8 +41,6 @@ __all__ = [
 
 
 def apply_rule(mesh, rule):
-    if rule == 'DONE':
-        return 1
     
     if rule == 'face_pole':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
@@ -323,7 +320,7 @@ def apply_rule(mesh, rule):
         u, v = dots[dot]
         rs.DeleteObjects(dots)
 
-        face_strip_collapse(PseudoQuadMesh, mesh, u, v)
+        face_strip_collapse(Mesh, mesh, u, v)
 
     if rule == 'face_strip_insert':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
@@ -351,7 +348,7 @@ def apply_rule(mesh, rule):
         
         rs.DeleteLayer('mesh_artist')
 
-        face_strip_insert(PseudoQuadMesh, mesh, vertex_path)
+        face_strip_insert(Mesh, mesh, vertex_path)
     
     return 0
 
