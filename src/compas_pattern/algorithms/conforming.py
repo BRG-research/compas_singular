@@ -19,7 +19,13 @@ __all__ = [
     'conforming',
 ]
 
-def conforming(mesh, planar_point_features = None, planar_polyline_features = None):
+
+def conforming(delaunay_mesh, medial_branches, boundary_polylines, feature_points, feature_polylines, patch_decomposition):
+    # split sliver and flipped patches
+    # open unwanted triangular patches
+    # add elements to unmarked concave corners
+
+def conforming_old(mesh, planar_point_features = None, planar_polyline_features = None):
     """Transform the initial patch decomposition in a valid quad patch decomposition. Potentially with pseudo-quads.
     1. Remove tri patches that sould not be pseudo-quad patches due to insufficient refinement.
     2. Propagate T-junctions from polyline features
