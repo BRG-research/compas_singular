@@ -32,25 +32,28 @@ from compas_pattern.algorithms.smoothing import apply_constraints
 def start():
     # -1. layer structure
     layers = ['shape_and_features', 'initial_coarse_quad_mesh', 'edited_coarse_quad_mesh', 'quad_mesh', 'pattern_topology', 'pattern_geometry']
-    
-    for layer in layers:
+    colours = [[255,0,0], [0,0,0], [0,0,0], [200,200,200], [100,100,100], [0,0,0]]
+    for layer, colour in zip(layers, colours):
         rs.AddLayer(layer)
+        rs.LayerColor(layer, colour)
         objects = rs.ObjectsByLayer(layer)
         rs.DeleteObjects(objects)
-        rs.LayerVisible(layer, visible = False)
-        
+    
     # 0. input
     surface_guid = rs.GetObject('select surface', filter = 8)
+    rs.ObjectColor(surface_guid, [255,0,0])
     surface_guid = rs.CopyObject(surface_guid)
     rs.ObjectLayer(surface_guid, 'shape_and_features')
     curve_features_guids = rs.GetObjects('select curve features', filter = 4)
     if curve_features_guids is None:
         curve_features_guids = []
+    rs.ObjectColor(curve_features_guids, [255,0,0])
     curve_features_guids = rs.CopyObjects(curve_features_guids)
     rs.ObjectLayer(curve_features_guids, 'shape_and_features')
     point_features_guids = rs.GetObjects('select point features', filter = 1)
     if point_features_guids is None:
         point_features_guids = []
+    rs.ObjectColor(point_features_guids, [255,0,0])
     point_features_guids = rs.CopyObjects(point_features_guids)
     rs.ObjectLayer(point_features_guids, 'shape_and_features')
     

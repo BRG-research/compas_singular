@@ -58,7 +58,7 @@ def triangulation(boundary, holes = [], polyline_features = [], point_features =
     delaunay_points = list(delaunay_point_map.values())
 
     holes = [hole[: -1] for hole in holes]
-
+    
     # generate Delaunay mesh
     delaunay_faces = delaunay_from_points(delaunay_points, boundary = boundary[: -1], holes = holes)
     delaunay_mesh = Mesh.from_vertices_and_faces(delaunay_points, delaunay_faces)

@@ -7,7 +7,7 @@ from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
 
 from compas_pattern.datastructures.pseudo_quad_mesh import pqm_from_mesh
 
-from compas_pattern.algorithms.coarse_to_dense_mesh import quad_mesh_densification
+from compas_pattern.algorithms.densification import densification
 
 from compas_pattern.cad.rhino.utilities import draw_mesh
 
@@ -27,7 +27,7 @@ vertices, face_vertices = pqm_from_mesh(coarse_quad_mesh, poles)
 
 coarse_quad_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
 
-quad_mesh = quad_mesh_densification(coarse_quad_mesh, target_length)
+quad_mesh = densification(coarse_quad_mesh, target_length)
 
 quad_mesh_guid = draw_mesh(quad_mesh)
 

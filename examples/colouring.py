@@ -4,7 +4,7 @@ import compas_rhino as rhino
 
 from compas.datastructures.mesh import Mesh
 
-from compas_pattern.topology.polyline_extraction import quad_mesh_polylines_all
+from compas_pattern.topology.polyline_extraction import quad_mesh_polylines
 
 import math
 
@@ -12,7 +12,7 @@ from compas.datastructures.network import Network
 
 from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
 
-from compas_pattern.topology.polyline_extraction import dual_edge_groups
+from compas_pattern.topology.polyline_extraction import dual_edge_polylines
 
 from compas.topology import vertex_coloring
 
@@ -22,7 +22,7 @@ from compas_pattern.topology.face_strip_operations import face_strip_collapse
 guid = rs.GetObject('get mesh')
 mesh = rhino.mesh_from_guid(Mesh, guid)
 
-init_polyedges = quad_mesh_polylines_all(mesh)
+init_polyedges = quad_mesh_polylines(mesh)
 
 polyedges = init_polyedges[:]
 
