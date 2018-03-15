@@ -91,7 +91,8 @@ def face_strip_collapse(cls, mesh, u, v):
                 mesh.add_face(face_vertices, fkey)
         
     # clean mesh
-    mesh = weld_mesh(cls, mesh)
+    vertices, face_vertices = weld_mesh(mesh)
+    mesh = cls.from_vertices_and_faces(vertices, face_vertices)
     mesh.cull_vertices()
 
     return 0

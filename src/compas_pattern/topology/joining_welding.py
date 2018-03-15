@@ -14,7 +14,7 @@ __all__ = [
     'join_and_weld_meshes',
 ]
 
-def weld_mesh(cls, mesh, precision = '3f'):
+def weld_mesh(mesh, precision = '3f'):
     """Welds vertices of a mesh within some precision.
 
     Parameters
@@ -27,8 +27,10 @@ def weld_mesh(cls, mesh, precision = '3f'):
 
     Returns
     -------
-    mesh : Mesh
-        The welded mesh.
+    vertices : list
+        The coordinates of the vertices after welding.
+    face_vertices : list
+        The vertices of the faces after welding.
 
     Raises
     ------
@@ -62,11 +64,9 @@ def weld_mesh(cls, mesh, precision = '3f'):
                 if vkey != new_face_vertices[i - 1]:
                     cleaned_face_vertices.append(vkey)
 
-    welded_mesh = cls.from_vertices_and_faces(vertices, face_vertices)
+    return vertices, face_vertices
 
-    return welded_mesh
-
-def join_and_weld_meshes(cls, meshes, precision = '3f'):
+def join_and_weld_meshes(meshes, precision = '3f'):
     """Joins and welds vertices of meshes within some precision.
 
     Parameters
@@ -79,8 +79,10 @@ def join_and_weld_meshes(cls, meshes, precision = '3f'):
 
     Returns
     -------
-    mesh : Mesh
-        The joined and welded mesh.
+    vertices : list
+        The coordinates of the vertices after joining and welding.
+    face_vertices : list
+        The vertices of the faces after joining and welding.
 
     Raises
     ------
@@ -117,11 +119,9 @@ def join_and_weld_meshes(cls, meshes, precision = '3f'):
 
             face_vertices.append(new_face_vertices)
 
-    joined_and_welded_mesh = cls.from_vertices_and_faces(vertices, face_vertices)
+    return vertices, face_vertices
 
-    return joined_and_welded_mesh
-
-def join_meshes(cls, meshes):
+def join_meshes(meshes):
     """Joins meshes without welding.
 
     Parameters
@@ -131,8 +131,10 @@ def join_meshes(cls, meshes):
 
     Returns
     -------
-    mesh : Mesh
-        The unwelded joined mesh.
+    vertices : list
+        The coordinates of the vertices after joining.
+    face_vertices : list
+        The vertices of the faces after joining.
 
     Raises
     ------
@@ -154,9 +156,7 @@ def join_meshes(cls, meshes):
         for fkey in mesh.faces():
             face_vertices.append([remap_vertices[vkey] for vkey in mesh.face_vertices(fkey)])
 
-    joined_mesh = cls.from_vertices_and_faces(vertices, face_vertices)
-
-    return joined_mesh
+    return vertices, face_vertices
 
 # ==============================================================================
 # Main

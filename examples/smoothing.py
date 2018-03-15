@@ -6,12 +6,12 @@ import compas_rhino as rhino
 
 from compas.datastructures.mesh import Mesh
 
-from compas_pattern.topology.conway_operators import conway_dual
-from compas_pattern.topology.conway_operators import conway_join
-from compas_pattern.topology.conway_operators import conway_ambo
-from compas_pattern.topology.conway_operators import conway_kis
-from compas_pattern.topology.conway_operators import conway_needle
-from compas_pattern.topology.conway_operators import conway_gyro
+from compas_pattern.topology.pattern_operators import conway_dual
+from compas_pattern.topology.pattern_operators import conway_join
+from compas_pattern.topology.pattern_operators import conway_ambo
+from compas_pattern.topology.pattern_operators import conway_kis
+from compas_pattern.topology.pattern_operators import conway_needle
+from compas_pattern.topology.pattern_operators import conway_gyro
 
 from compas_pattern.cad.rhino.utilities import draw_mesh
 
@@ -122,13 +122,14 @@ def start():
     from compas.geometry.algorithms.smoothing import mesh_smooth_centroid
     from compas.geometry.algorithms.smoothing import mesh_smooth_area
     
-    from compas_pattern.algorithms.constrained_smoothing import define_constraints
-    from compas_pattern.algorithms.constrained_smoothing import apply_constraints
+    from compas_pattern.algorithms.smoothing import define_constraints
+    from compas_pattern.algorithms.smoothing import apply_constraints
     
     dense_mesh = rs.GetObject('mesh to smooth', filter = 32)
     dense_mesh = rhino.mesh_from_guid(Mesh, dense_mesh)
     
-    dense_mesh = conway_dual(dense_mesh)
+    #dense_mesh = conway_ambo(dense_mesh)
+    #dense_mesh = conway_dual(dense_mesh)
     
     surface_guid = rs.GetSurfaceObject('surface constraint')[0]
     

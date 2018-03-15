@@ -145,7 +145,8 @@ def densification(mesh, target_length):
         face_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
         meshes.append(face_mesh)
 
-    dense_mesh = join_and_weld_meshes(PseudoQuadMesh, meshes)
+    vertices, face_vertices = join_and_weld_meshes(meshes)
+    dense_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
 
     # remove pseudo quads: [a, b, c, c] -> [a, b, c]
     for fkey in dense_mesh.faces():

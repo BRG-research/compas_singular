@@ -59,7 +59,10 @@ def draw_mesh(mesh):
     for fkey in mesh.faces():
         if len(mesh.face_vertices(fkey)) > 4:
             #return edges
-            return [rs.AddLine(mesh.vertex_coordinates(u), mesh.vertex_coordinates(v)) for u, v in mesh.edges()]
+            edges =  [rs.AddLine(mesh.vertex_coordinates(u), mesh.vertex_coordinates(v)) for u, v in mesh.edges()]
+            group = rs.AddGroup()
+            rs.AddObjectsToGroup(edges, group)
+            return edges
     # return mesh
     vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
     face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]

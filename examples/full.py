@@ -14,7 +14,7 @@ from compas_pattern.algorithms.extraction import extraction
 
 from compas_pattern.algorithms.decomposition import decomposition
 
-#from compas_pattern.algorithms.conforming import conforming
+from compas_pattern.algorithms.conforming import conforming
 
 from compas_pattern.algorithms.remapping import remapping
 
@@ -69,12 +69,10 @@ def start():
     medial_branches, boundary_polylines = decomposition(delaunay_mesh)
     
     # 4. conforming
-    
-    
     # 5. extraction
-    patch_decomposition = extraction(Mesh, boundary_polylines, medial_branches)
-    #coarse_quad_mesh = conforming(patch_decomposition, planar_point_features = planar_point_features, planar_polyline_features = planar_polyline_features)
-    coarse_quad_mesh = patch_decomposition
+    vertices, faces = extraction(boundary_polylines, medial_branches)
+    patch_decomposition = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
+    coarse_quad_mesh = conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_polylines, planar_point_features, planar_polyline_features)
     
     # 6. remapping
     remapping(coarse_quad_mesh, surface_guid)
@@ -84,17 +82,10 @@ def start():
     rs.LayerVisible('initial_coarse_quad_mesh', visible = True)
     
     # 7. editing
-    poles = point_features_guids
-    poles = [rs.PointCoordinates(pole) for pole in poles]
     rs.EnableRedraw(False)
-    vertices, face_vertices = pqm_from_mesh(coarse_quad_mesh, poles)
-    coarse_quad_mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
-    
     rs.LayerVisible('initial_coarse_quad_mesh', visible = False)
-    
     editing(coarse_quad_mesh)
-    
-    coarse_quad_mesh_guid = draw_mesh(coarse_quad_mesh)
+    coarse_quad_mesh_guid = draw_mesh(coarse_quad_mesh.to_mesh())
     rs.ObjectLayer(coarse_quad_mesh_guid, layer = 'edited_coarse_quad_mesh')
     rs.LayerVisible('edited_coarse_quad_mesh', visible = True)
     
@@ -116,9 +107,6 @@ def start():
     pattern_topology = patterning(quad_mesh, patterning_operator)
     
     pattern_topology_guid = draw_mesh(pattern_topology)
-    if isinstance(pattern_topology_guid, list):
-        rs.AddGroup('pattern_topology')
-        rs.AddObjectsToGroup(pattern_topology_guid, 'pattern_topology')
     rs.ObjectLayer(pattern_topology_guid, layer = 'pattern_topology')
     
     rs.LayerVisible('quad_mesh', visible = False)
@@ -136,9 +124,6 @@ def start():
     rs.DeleteObjects(surface_boundaries)
     
     pattern_geometry_guid = draw_mesh(pattern_geometry)
-    if isinstance(pattern_geometry_guid, list):
-        rs.AddGroup('pattern_geometry')
-        rs.AddObjectsToGroup(pattern_geometry_guid, 'pattern_geometry')
     rs.ObjectLayer(pattern_geometry_guid, layer = 'pattern_geometry')
     
     rs.LayerVisible('pattern_topology', visible = False)

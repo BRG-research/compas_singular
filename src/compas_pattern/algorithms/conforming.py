@@ -2,12 +2,12 @@ from compas.datastructures.mesh import Mesh
 
 from compas.utilities import geometric_key
 
-from compas_pattern.topology.consistency import quad_tri_1
-from compas_pattern.topology.consistency import mix_quad_1
-from compas_pattern.topology.consistency import penta_quad_1
-from compas_pattern.topology.consistency import hexa_quad_1
-from compas_pattern.topology.consistency import poly_poly_1
-from compas_pattern.topology.consistency import quad_mix_1
+#from compas_pattern.topology.consistency import quad_tri_1
+#from compas_pattern.topology.consistency import mix_quad_1
+#from compas_pattern.topology.consistency import penta_quad_1
+#from compas_pattern.topology.consistency import hexa_quad_1
+#from compas_pattern.topology.consistency import poly_poly_1
+#from compas_pattern.topology.consistency import quad_mix_1
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
@@ -20,10 +20,35 @@ __all__ = [
 ]
 
 
-def conforming(delaunay_mesh, medial_branches, boundary_polylines, feature_points, feature_polylines, patch_decomposition):
-    # split sliver and flipped patches
-    # open unwanted triangular patches
-    # add elements to unmarked concave corners
+def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_polylines, feature_points = [], feature_polylines = []):
+    # convert tri faces [a, b, c] into quad faces [a, b, c, c]
+    
+    # collect pole locations
+    poles = []
+    poles += [geometric_key(pt) for pt in feature_points]
+    for polyline in feature_polylines:
+        poles += [geometric_key(polyline[0]), geometric_key(polyline[-1])]
+
+    # modify tri faces into quad faces with a double vertex as pole point
+    for fkey in patch_decomposition.faces():
+        face_vertices = patch_decomposition.face_vertices(fkey)
+        if len(face_vertices) == 3:
+            # find pole location
+            pole = None
+            for vkey in face_vertices:
+                geom_key = geometric_key(patch_decomposition.vertex_coordinates(vkey))
+                if geom_key in poles:
+                    pole = vkey
+                    break
+            # modify face
+            if pole is not None:
+                new_face_vertices = face_vertices[:]
+                idx = new_face_vertices.index(vkey)
+                new_face_vertices.insert(idx, vkey)
+                patch_decomposition.delete_face(fkey)
+                patch_decomposition.add_face(new_face_vertices, fkey)
+
+    return patch_decomposition
 
 def conforming_old(mesh, planar_point_features = None, planar_polyline_features = None):
     """Transform the initial patch decomposition in a valid quad patch decomposition. Potentially with pseudo-quads.

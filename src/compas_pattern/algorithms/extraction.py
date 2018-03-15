@@ -74,7 +74,7 @@ def patch_datastructure(cls, polylines):
 
     return 0
 
-def extraction(cls, boundary_polylines, non_boundary_polylines):
+def extraction(boundary_polylines, non_boundary_polylines):
     """Constructs the mesh datastructure based on polylines forming a set of patches.
 
     Parameters
@@ -209,10 +209,8 @@ def extraction(cls, boundary_polylines, non_boundary_polylines):
                     break
             if not boundary:
                 final_fv.append(face_vertices)
-    
-    mesh = cls.from_vertices_and_faces(final_v, final_fv)
 
-    return mesh
+    return final_v, final_fv
 
 def patch_datastructure_very_old(cls, boundary_polylines, non_boundary_polylines):
     """Constructs the mesh datastructure based on polylines forming a set of patches.
