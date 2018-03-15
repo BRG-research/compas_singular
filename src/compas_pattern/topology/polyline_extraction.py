@@ -199,35 +199,35 @@ def dual_edge_polylines(mesh):
                     edge_groups[(u, v)] = max_group
                     edge_groups[(v, u)] = max_group
 
-
-            if (u, v) in edge_groups and (w, x) in edge_groups:
-                # flip one
-                new_group = edge_groups[(u, v)]
-                old_group = edge_groups[(w, x)]
-                for e0, e1 in edge_groups:
-                    if edge_groups[(e0, e1)] == old_group:
-                        edge_groups[(e0, e1)] = new_group
-                        edge_groups[(e1, e0)] = new_group
-
-            elif (u, v) not in edge_groups and (w, x) in edge_groups:
-                # add the other
-                group = edge_groups[(w, x)]
-                edge_groups[(u, v)] = group
-                edge_groups[(v, u)] = group
-
-            elif (u, v) in edge_groups and (w, x) not in edge_groups:
-                # add the other
-                group = edge_groups[(u, v)]
-                edge_groups[(w, x)] = group
-                edge_groups[(x, w)] = group
-
             else:
-                # start new group
-                max_group += 1
-                edge_groups[(u, v)] = max_group
-                edge_groups[(v, u)] = max_group
-                edge_groups[(w, x)] = max_group
-                edge_groups[(x, w)] = max_group
+                if (u, v) in edge_groups and (w, x) in edge_groups:
+                    # flip one
+                    new_group = edge_groups[(u, v)]
+                    old_group = edge_groups[(w, x)]
+                    for e0, e1 in edge_groups:
+                        if edge_groups[(e0, e1)] == old_group:
+                            edge_groups[(e0, e1)] = new_group
+                            edge_groups[(e1, e0)] = new_group
+
+                elif (u, v) not in edge_groups and (w, x) in edge_groups:
+                    # add the other
+                    group = edge_groups[(w, x)]
+                    edge_groups[(u, v)] = group
+                    edge_groups[(v, u)] = group
+
+                elif (u, v) in edge_groups and (w, x) not in edge_groups:
+                    # add the other
+                    group = edge_groups[(u, v)]
+                    edge_groups[(w, x)] = group
+                    edge_groups[(x, w)] = group
+
+                else:
+                    # start new group
+                    max_group += 1
+                    edge_groups[(u, v)] = max_group
+                    edge_groups[(v, u)] = max_group
+                    edge_groups[(w, x)] = max_group
+                    edge_groups[(x, w)] = max_group
 
     return edge_groups, max_group
 
