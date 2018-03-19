@@ -57,13 +57,13 @@ def start():
     point_features_guids = rs.CopyObjects(point_features_guids)
     rs.ObjectLayer(point_features_guids, 'shape_and_features')
     
-    use_template = rs.GetBoolean('use template?', ['template', 'True', 'False'], False)
-    if use_template:
-        a = rs.GetObjects('1st vertex', filter = 1)
-        b = rs.GetObjects('2nd vertex', filter = 1)
-        c = rs.GetObjects('3rd vertex', filter = 1)
-        d = rs.GetObjects('4th vertex', filter = 1)
-        vertices = [rs.PointCoordinates(a), rs.PointCoordinates(b), rs.PointCoordinates(c), rs.PointCoordinates(d)]
+    use_template = rs.GetString('use template?', defaultString = 'False', strings = ['True', 'False'])
+    if use_template == 'True':
+        a = rs.GetPoint('1st vertex')
+        b = rs.GetPoint('2nd vertex')
+        c = rs.GetPoint('3rd vertex')
+        d = rs.GetPoint('4th vertex')
+        vertices = [a, b, c, d]
         faces = [[0,1,2,3]]
         coarse_quad_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
     
