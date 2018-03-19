@@ -1,4 +1,5 @@
 from compas.datastructures.mesh import Mesh
+from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
 
 from compas.utilities import geometric_key
 
@@ -62,6 +63,14 @@ def face_propagation(mesh, fkey, regular_vertices):
     cd = face_vertices[c : d + 1 ]#- len(face_vertices)]
     da = face_vertices[d :] + face_vertices[: a + 1 - len(face_vertices)]
 
+    # correction if has a double vertex
+    for uv in [ab, bc, cd, da]:
+        if len(uv) == 1:
+            uv.append(uv[0])
+        elif uv[0] == uv[1]:
+            del uv[0]
+    #print ab, bc, cd, da
+
     # check validity for operation
     if len(ab) != len(cd) and len(ab) != 2 and len(cd) != 2:
         return None
@@ -109,16 +118,19 @@ def face_propagation(mesh, fkey, regular_vertices):
 
     # vertices and faces from coons patching of face
     new_vertices, new_face_vertices = discrete_coons_patch(ab, bc, dc, ad)
-    
     # add new vertices only if does not match an existing face
     vertex_remap = []
     for vertex in new_vertices:
         geom_key = geometric_key(vertex)
+        #print geom_key
+        #print face_vertex_map
         if geom_key in face_vertex_map:
             vertex_remap.append(face_vertex_map[geom_key])
         else:
             x, y, z = vertex
             vkey = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+            #print vkey
+            #print x, y, z
             vertex_remap.append(vkey)
 
     # delete old face and add new faces
@@ -130,6 +142,8 @@ def face_propagation(mesh, fkey, regular_vertices):
     vertex_map = {geometric_key(mesh.vertex_coordinates(vkey)): vkey for vkey in mesh.vertices()}
     for edge, points in update.items():
         u, v = edge
+        if u == v:
+            continue
         if u in mesh.halfedge[v] and mesh.halfedge[v][u] is not None:
             vertices = [vertex_map[geometric_key(point)] for point in points]
             insert_vertices_in_halfedge(mesh, v, u, list(reversed(vertices[1 : -1])))
@@ -190,14 +204,11 @@ if __name__ == '__main__':
 
     import compas
 
-    vertices = [[0,0,0],[1,0,0],[1,1,0],[0,1,0]]
-    face_vertices = [[0,1,2,3,3]]
+    vertices = [[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,.5,0],[1,.5,0],[2,.5,0]]
+    face_vertices = [[0,1,5,4],[4,5,2,3],[1,6,6,2,5]]
 
-    mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
-
-    print mesh
+    mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
     
-    face_propagation(mesh, 0, [0,1,3,3])
+    mesh_propagation(mesh, [0,1,2,3,6])
 
     print mesh
-
