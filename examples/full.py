@@ -57,25 +57,36 @@ def start():
     point_features_guids = rs.CopyObjects(point_features_guids)
     rs.ObjectLayer(point_features_guids, 'shape_and_features')
     
-    # 1. mapping
-    discretisation = rs.GetReal('NURBS element discretisation', number = 1)
-    rs.EnableRedraw(False)
-    planar_boundary_polyline, planar_hole_polylines, planar_polyline_features, planar_point_features = mapping(discretisation, surface_guid, curve_features_guids = curve_features_guids, point_features_guids = point_features_guids)
+    use_template = rs.GetBoolean('use template?', ['template', 'True', 'False'], False)
+    if use_template:
+        a = rs.GetObjects('1st vertex', filter = 1)
+        b = rs.GetObjects('2nd vertex', filter = 1)
+        c = rs.GetObjects('3rd vertex', filter = 1)
+        d = rs.GetObjects('4th vertex', filter = 1)
+        vertices = [rs.PointCoordinates(a), rs.PointCoordinates(b), rs.PointCoordinates(c), rs.PointCoordinates(d)]
+        faces = [[0,1,2,3]]
+        coarse_quad_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
     
-    # 2. triangulation
-    delaunay_mesh = triangulation(planar_boundary_polyline, holes = planar_hole_polylines, polyline_features = planar_polyline_features, point_features = planar_point_features)
-    
-    # 3. decomposition
-    medial_branches, boundary_polylines = decomposition(delaunay_mesh)
-    
-    # 4. conforming
-    # 5. extraction
-    vertices, faces = extraction(boundary_polylines, medial_branches)
-    patch_decomposition = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
-    coarse_quad_mesh = conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_polylines, planar_point_features, planar_polyline_features)
-    
-    # 6. remapping
-    remapping(coarse_quad_mesh, surface_guid)
+    else:
+        # 1. mapping
+        discretisation = rs.GetReal('NURBS element discretisation', number = 1)
+        rs.EnableRedraw(False)
+        planar_boundary_polyline, planar_hole_polylines, planar_polyline_features, planar_point_features = mapping(discretisation, surface_guid, curve_features_guids = curve_features_guids, point_features_guids = point_features_guids)
+        
+        # 2. triangulation
+        delaunay_mesh = triangulation(planar_boundary_polyline, holes = planar_hole_polylines, polyline_features = planar_polyline_features, point_features = planar_point_features)
+        draw_mesh(delaunay_mesh)
+        # 3. decomposition
+        medial_branches, boundary_polylines = decomposition(delaunay_mesh)
+        
+        # 4. conforming
+        # 5. extraction
+        vertices, faces = extraction(boundary_polylines, medial_branches)
+        patch_decomposition = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
+        coarse_quad_mesh = conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_polylines, planar_point_features, planar_polyline_features)
+        
+        # 6. remapping
+        remapping(coarse_quad_mesh, surface_guid)
     
     coarse_quad_mesh_guid = draw_mesh(coarse_quad_mesh)
     rs.ObjectLayer(coarse_quad_mesh_guid, layer = 'initial_coarse_quad_mesh')
