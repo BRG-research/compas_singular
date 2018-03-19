@@ -112,7 +112,7 @@ def editing(mesh):
         # update edges
         rs.EnableRedraw(False)
         rs.DeleteObjects(edges)
-        edges = [rs.AddLine(mesh.vertex_coordinates(u), mesh.vertex_coordinates(v)) for u, v in mesh.edges() if u != v]
+        edges = [rs.AddLine(mesh.vertex_coordinates(u), mesh.vertex_coordinates(v)) for u, v in mesh.edges() if mesh.vertex_coordinates(u) != mesh.vertex_coordinates(v)]
         rs.ObjectLayer(edges, 'temp')
         rs.EnableRedraw(True)
 
