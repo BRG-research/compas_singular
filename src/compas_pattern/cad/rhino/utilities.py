@@ -53,6 +53,7 @@ def surface_border_kinks(surface_guid):
                 kinks.append(start)
             if end not in kinks:
                 kinks.append(end)
+    return kinks
 
 def draw_mesh(mesh):
     # if quad/tri mesh add mesh, else add edges
@@ -69,10 +70,23 @@ def draw_mesh(mesh):
     return rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
 
 def curve_discretisation(curve_guid, discretisation_spacing):
+    points = []
     n = int(rs.CurveLength(curve_guid) / discretisation_spacing) + 1
-    points = rs.DivideCurve(curve_guid, n)
-    if rs.IsCurveClosed(curve_guid):
-        points.append(points[0])
+    curve_guids = rs.ExplodeCurves(curve_guid)
+
+    if len(curve_guids) == 0:
+        points += rs.DivideCurve(curve_guid, n)
+        if rs.IsCurveClosed(curve_guid):
+            points.append(points[0])
+    
+    else:
+        for guid in curve_guids:
+            points += rs.DivideCurve(guid, n)[: -1]
+        pts = rs.DivideCurve(curve_guids[-1], n)
+        points.append(pts[-1])
+
+    rs.DeleteObjects(curve_guids)
+    
     return rs.AddPolyline(points)
 
 # ==============================================================================

@@ -62,6 +62,7 @@ def mapping(discretization_spacing, surface_guid, curve_features_guids = [], poi
     rs.DeleteObjects(boundary_polylines)
 
     holes = surface_borders(surface_guid, border_type = 2)
+    holes = rs.JoinCurves(holes, delete_input = True)
     hole_polylines = [curve_discretisation(hole, discretization_spacing) for hole in holes]
     uv_hole_polylines = [[rs.SurfaceClosestPoint(surface_guid, vertex) for vertex in rs.PolylineVertices(hole_polyline)] for hole_polyline in hole_polylines]
     planar_hole_polylines = [[[u, v, 0] for u, v in hole] for hole in uv_hole_polylines]

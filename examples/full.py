@@ -105,10 +105,8 @@ def start():
     patterning_operator = rs.GetString('patterning operator', strings = operators)
     rs.EnableRedraw(False)    
     pattern_topology = patterning(quad_mesh, patterning_operator)
-    
     pattern_topology_guid = draw_mesh(pattern_topology)
     rs.ObjectLayer(pattern_topology_guid, layer = 'pattern_topology')
-    
     rs.LayerVisible('quad_mesh', visible = False)
     rs.LayerVisible('pattern_topology', visible = True)
     
@@ -122,10 +120,8 @@ def start():
     fixed_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'point']
     mesh_smooth_area(pattern_geometry, fixed = fixed_vertices, kmax = smoothing_iterations, damping = damping_value, callback = apply_constraints, callback_args = [pattern_geometry, constraints])
     rs.DeleteObjects(surface_boundaries)
-    
     pattern_geometry_guid = draw_mesh(pattern_geometry)
     rs.ObjectLayer(pattern_geometry_guid, layer = 'pattern_geometry')
-    
     rs.LayerVisible('pattern_topology', visible = False)
     rs.LayerVisible('pattern_geometry', visible = True)
     
