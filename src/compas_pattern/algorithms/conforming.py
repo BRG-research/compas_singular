@@ -1,6 +1,20 @@
 from compas.datastructures.mesh import Mesh
 
+from math import acos
+from math import asin
+from math import pi
+
 from compas.utilities import geometric_key
+
+from compas.geometry import subtract_vectors
+from compas.geometry import normalize_vector
+from compas.geometry import dot_vectors
+from compas.geometry import cross_vectors
+
+from compas_pattern.topology.grammar import simple_split
+from compas_pattern.topology.grammar import remove_tri
+
+from compas_pattern.topology.global_propagation import mesh_propagation
 
 #from compas_pattern.topology.consistency import quad_tri_1
 #from compas_pattern.topology.consistency import mix_quad_1
@@ -22,7 +36,7 @@ __all__ = [
 
 def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_polylines, feature_points = [], feature_polylines = []):
     # convert tri faces [a, b, c] into quad faces [a, b, c, c]
-    
+
     # collect pole locations
     poles = []
     poles += [geometric_key(pt) for pt in feature_points]
@@ -47,6 +61,91 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
                 new_face_vertices.insert(idx, vkey)
                 patch_decomposition.delete_face(fkey)
                 patch_decomposition.add_face(new_face_vertices, fkey)
+
+    # remove remaining tri faces that are not pseudo quads
+    count = patch_decomposition.number_of_faces()
+    while count > 0:
+        count -= 1
+        try_again = False
+        for vkey in patch_decomposition.vertices_on_boundary():
+            for nbr in patch_decomposition.vertex_neighbours(vkey):
+                if nbr not in patch_decomposition.vertices_on_boundary():
+                    fkey_1 = patch_decomposition.halfedge[vkey][nbr]
+                    fkey_2 = patch_decomposition.halfedge[nbr][vkey]
+                    if len(patch_decomposition.face_vertices(fkey_1)) == 3 and len(patch_decomposition.face_vertices(fkey_2)) == 4:
+                        fkey_tri, fkey_quad = fkey_1, fkey_2
+                    elif len(patch_decomposition.face_vertices(fkey_1)) == 4 and len(patch_decomposition.face_vertices(fkey_2)) == 3:
+                        fkey_tri, fkey_quad = fkey_2, fkey_1
+                    else:
+                        continue
+                    remove_tri(patch_decomposition, fkey_tri, fkey_quad, vkey)
+                    try_again = True
+                    break
+            if try_again:
+                break
+        if try_again:
+            continue
+        else:
+            break
+
+
+
+
+    # curves = medial_branches + boundary_polylines
+    # #curve_map = {curve: (geometric_key(curve[0]), geometric_key(curve[-1])) for curve in curves}
+    # #extremities = list(curve_map.items())
+    # extremities = [(geometric_key(curve[0]), geometric_key(curve[-1])) for curve in curves]
+    # print len(extremities)
+    # initial_vertices = list(patch_decomposition.vertices())
+
+    # # split degenerated faces
+    # splits = []
+    # for fkey in patch_decomposition.faces():
+        # a, b, c, d = [patch_decomposition.vertex_coordinates(vkey) for vkey in patch_decomposition.face_vertices(fkey)]
+        # ab = normalize_vector(subtract_vectors(b, a))
+        # bc = normalize_vector(subtract_vectors(c, b))
+        # cd = normalize_vector(subtract_vectors(d, c))
+        # da = normalize_vector(subtract_vectors(a, d))
+        # cross = cross_vectors(ab, cd)
+        # print cross
+
+        # length = (ab[0] ** 2 + ab[1] ** 2) ** .5
+        # costheta = ab[0] / length
+        # sintheta = ab[1] / length
+        # if asin(sintheta) != 0 :
+        #     ab_angle = asin(sintheta) / abs(asin(sintheta)) * acos(costheta)
+        # else:
+        #     ab_angle = acos(costheta)
+        # if ab_angle < 0:
+        #     ab_angle += 2 * pi
+
+        # length = (cd[0] ** 2 + cd[1] ** 2) ** .5
+        # costheta = cd[0] / length
+        # sintheta = cd[1] / length
+        # if asin(sintheta) != 0 :
+        #     cd_angle = asin(sintheta) / abs(asin(sintheta)) * acos(costheta)
+        # else:
+        #     cd_angle = acos(costheta)
+        # if cd_angle < 0:
+        #     cd_angle += 2 * pi
+
+        #print cd_angle - ab_angle
+
+    #     split = False
+    #     for u, v in patch_decomposition.face_halfedges(fkey):
+    #         u_key = geometric_key(patch_decomposition.vertex_coordinates(u))
+    #         v_key = geometric_key(patch_decomposition.vertex_coordinates(v))
+    #         count = extremities.count((u_key, v_key)) + extremities.count((v_key, u_key))
+    #         print count
+    #         splits.append([fkey, [u, v]])
+    #         split = True
+    #         break
+    #     if split:
+    #         break
+    # for fkey, edge in splits:
+    #     simple_split(patch_decomposition, fkey, edge)
+
+    # mesh_propagation(patch_decomposition, initial_vertices)
 
     return patch_decomposition
 

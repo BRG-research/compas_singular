@@ -26,6 +26,7 @@ __all__ = [
     'insert_partial_pole',
     'pseudo_quad_split',
     'singular_boundary_1',
+    'remove_tri',
 ]
 
 def vertex_pole(mesh, fkey, pole):
@@ -591,6 +592,55 @@ def singular_boundary_2(mesh, edge, vkey):
 
     return fkey_1, fkey_2, fkey_3
 
+def remove_tri(mesh, fkey_tri, fkey_quad, pole, t = .5):
+
+    if len(mesh.face_vertices(fkey_tri)) != 3 or len(mesh.face_vertices(fkey_quad)) != 4:
+        return None
+
+    if fkey_tri not in mesh.face_neighbours(fkey_quad):
+        return None
+
+    if pole not in mesh.face_vertices(fkey_tri) or pole not in mesh.face_vertices(fkey_quad):
+        return None
+
+    nbr = mesh.face_vertex_descendant(fkey_quad, pole)
+
+    if nbr not in mesh.face_vertices(fkey_tri):
+        d = pole
+        e = nbr
+        a = mesh.face_vertex_descendant(fkey_quad, e)
+        b = mesh.face_vertex_descendant(fkey_quad, a)
+        c = mesh.face_vertex_descendant(fkey_tri, b)
+
+        mesh.delete_face(fkey_tri)
+        mesh.delete_face(fkey_quad)
+
+        f = add_vertex_from_vertices(mesh, [d, e], [1 - t, t])
+
+        fkey_tri = mesh.add_face([a, b, f, e])
+        fkey_quad = mesh.add_face([b, c, d, f])
+
+        insert_vertices_in_halfedge(mesh, e, d, [f])
+
+    else:
+        b = pole
+        d = nbr
+        e = mesh.face_vertex_descendant(fkey_quad, d)
+        a = mesh.face_vertex_descendant(fkey_quad, e)
+        c = mesh.face_vertex_descendant(fkey_tri, b)
+
+        mesh.delete_face(fkey_tri)
+        mesh.delete_face(fkey_quad)
+
+        f = add_vertex_from_vertices(mesh, [b, a], [1 - t, t])
+
+        fkey_tri = mesh.add_face([a, f, d, e])
+        fkey_quad = mesh.add_face([b, c, d, f])
+
+        insert_vertices_in_halfedge(mesh, b, a, [f])
+
+    return fkey_tri, fkey_quad
+
 # ==============================================================================
 # Main
 # ==============================================================================
@@ -599,3 +649,14 @@ if __name__ == '__main__':
 
     import compas
 
+    vertices = [[0,0,0],[1,0,0],[1,1,0],[0,1,0],[2,.5,0]]
+    faces = [[0,1,2,3],[1,4,2]]
+
+    mesh = Mesh.from_vertices_and_faces(vertices, faces)
+
+    remove_tri(mesh, 1, 0, 2)
+
+    for fkey in mesh.faces():
+        print mesh.face_vertices(fkey)
+
+    print mesh
