@@ -1,10 +1,14 @@
 import rhinoscriptsyntax as rs
 import compas_rhino as rhino
 
+from compas_pattern.cad.rhino.utilities import surface_borders
+
 from compas.datastructures.mesh import Mesh
 from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
 from compas_pattern.datastructures.pseudo_quad_mesh import pqm_from_mesh
 from compas_pattern.cad.rhino.utilities import draw_mesh
+
+from compas_pattern.algorithms.templating import templating
 
 from compas_pattern.algorithms.mapping import mapping
 
@@ -57,17 +61,13 @@ def start():
     point_features_guids = rs.CopyObjects(point_features_guids)
     rs.ObjectLayer(point_features_guids, 'shape_and_features')
     
-    use_template = rs.GetString('use template?', defaultString = 'False', strings = ['True', 'False'])
-    if use_template == 'True':
-        a = rs.GetPoint('1st vertex')
-        b = rs.GetPoint('2nd vertex')
-        c = rs.GetPoint('3rd vertex')
-        d = rs.GetPoint('4th vertex')
-        vertices = [a, b, c, d]
-        faces = [[0,1,2,3]]
-        coarse_quad_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
+    coarse_quad_mesh = None
+    if len(surface_borders(surface_guid, border_type = 2)) == 0 and len(curve_features_guids) == 0 and len(point_features_guids) == 0:
+        if rs.GetString('use template?', defaultString = 'False', strings = ['True', 'False']) == 'True':
+            vertices, faces = templating()
+            coarse_quad_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
     
-    else:
+    if coarse_quad_mesh is None:
         # 1. mapping
         discretisation = rs.GetReal('NURBS element discretisation', number = 1)
         rs.EnableRedraw(False)
@@ -75,7 +75,8 @@ def start():
         
         # 2. triangulation
         delaunay_mesh = triangulation(planar_boundary_polyline, holes = planar_hole_polylines, polyline_features = planar_polyline_features, point_features = planar_point_features)
-        draw_mesh(delaunay_mesh)
+        #draw_mesh(delaunay_mesh)
+        
         # 3. decomposition
         medial_branches, boundary_polylines = decomposition(delaunay_mesh)
         
