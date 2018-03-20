@@ -19,6 +19,7 @@ __all__ = [
     'flat_corner_3',
     'flat_corner_33',
     'split_35',
+    'split_35_diag',
     'split_26',
     'simple_split',
     'double_split',
@@ -312,6 +313,43 @@ def split_35(mesh, fkey, edge):
     insert_vertices_in_halfedge(mesh, a, d, [l, k])
 
     return fkey_1, fkey_2, fkey_3, fkey_4, fkey_5, fkey_6, fkey_7, fkey_8, fkey_9
+
+def split_35_diag(mesh, fkey, corner):
+
+    if len(mesh.face_vertices(fkey)) != 4:
+        return None
+    if corner not in mesh.face_vertices(fkey):
+        return None
+
+    a = corner
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+    d = mesh.face_vertex_descendant(fkey, c)
+
+    e = add_vertex_from_vertices(mesh, [a, b], [2, 1])
+    f = add_vertex_from_vertices(mesh, [a, b], [1, 2])
+    g = add_vertex_from_vertices(mesh, [b, c], [1, 2])
+    h = add_vertex_from_vertices(mesh, [c, d], [2, 1])
+    i = add_vertex_from_vertices(mesh, [d, a], [2, 1])
+    j = add_vertex_from_vertices(mesh, [d, a], [1, 2])
+    k = add_vertex_from_vertices(mesh, [a, c], [2, 1])
+    l = add_vertex_from_vertices(mesh, [a, c], [1, 2])
+
+    mesh.delete_face(fkey)
+
+    fkey_1 = mesh.add_face([a, e, k, j])
+    fkey_2 = mesh.add_face([e, f, l, k])
+    fkey_3 = mesh.add_face([f, b, g, l])
+    fkey_4 = mesh.add_face([j, k, l, i])
+    fkey_5 = mesh.add_face([i, l, h, d])
+    fkey_6 = mesh.add_face([l, g, c, h])
+
+    insert_vertices_in_halfedge(mesh, b, a, [f, e])
+    insert_vertices_in_halfedge(mesh, c, b, [g])
+    insert_vertices_in_halfedge(mesh, d, c, [h])
+    insert_vertices_in_halfedge(mesh, a, d, [j, i])
+
+    return fkey_1, fkey_2, fkey_3, fkey_4, fkey_5, fkey_6
 
 def split_26(mesh, fkey, edge):
 

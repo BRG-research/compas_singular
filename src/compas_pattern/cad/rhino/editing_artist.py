@@ -18,6 +18,7 @@ from compas_pattern.topology.grammar import flat_corner_2
 from compas_pattern.topology.grammar import flat_corner_3
 from compas_pattern.topology.grammar import flat_corner_33
 from compas_pattern.topology.grammar import split_35
+from compas_pattern.topology.grammar import split_35_diag
 from compas_pattern.topology.grammar import split_26
 from compas_pattern.topology.grammar import simple_split
 from compas_pattern.topology.grammar import double_split
@@ -191,6 +192,26 @@ def apply_rule(mesh, rule):
         rs.DeleteLayer('mesh_artist')
         
         split_35(mesh, fkey, edge)
+
+    if rule == 'split_35_diag':
+        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+        artist.clear_layer()
+        
+        artist.draw_facelabels()
+        artist.redraw()
+        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
+        artist.clear_layer()
+        artist.redraw()
+        
+        artist.draw_vertexlabels(text = {key: str(key) for key in mesh.face_vertices(fkey)})
+        artist.redraw()
+        corner = rhino.mesh_select_vertex(mesh, message = 'corner')
+        artist.clear_layer()
+        artist.redraw()
+        
+        rs.DeleteLayer('mesh_artist')
+        
+        split_35_diag(mesh, fkey, corner)
     
     if rule == 'split_26':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
