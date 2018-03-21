@@ -72,7 +72,7 @@ def draw_mesh(mesh):
 def curve_discretisation(curve_guid, discretisation_spacing):
     points = []
     n = int(rs.CurveLength(curve_guid) / discretisation_spacing) + 1
-    curve_guids = rs.ExplodeCurves(curve_guid)
+    curve_guids = rs.ExplodeCurves(curve_guid, delete_input = True)
 
     if len(curve_guids) == 0:
         points += rs.DivideCurve(curve_guid, n)
