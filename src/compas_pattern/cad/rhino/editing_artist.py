@@ -391,7 +391,7 @@ def apply_rule(mesh, rule):
 
         vertex_path = []
 
-        artist.draw_vertexlabels(text = {key: str(key) for key in mesh.vertices()})
+        artist.draw_vertexlabels(text = {key: str(key) for key in mesh.vertices_on_boundary()})
         artist.redraw()
         vertex_path.append(rhino.mesh_select_vertex(mesh, message = 'vertex'))
         artist.clear_layer()
@@ -402,11 +402,15 @@ def apply_rule(mesh, rule):
             artist.draw_vertexlabels(text = {key: str(key) for key in mesh.vertex_neighbours(vertex_path[-1])})
             artist.redraw()
             vkey = rhino.mesh_select_vertex(mesh, message = 'vertex')
+            if vkey is None:
+                break
             artist.clear_layer()
             artist.redraw()
             if vkey in list(mesh.vertices()):
                 vertex_path.append(vkey)
             else:
+                break
+            if vkey in mesh.vertices_on_boundary():
                 break
         
         rs.DeleteLayer('mesh_artist')
