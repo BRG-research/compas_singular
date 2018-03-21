@@ -14,24 +14,21 @@ __all__ = [
 ]
 
 def template(points = [ [0,0,0] , [1,0,0] , [1,1,0] , [0,1,0] ], types = ['False', 'False', 'False', 'False']):
-    """Subdivide a polygon face into quads which used to be a quad with four original vertices.
-    Subdivision is valid only if opposite edges have the same number of points or if one only has two.
-    "len(ab) = len(cd) or len(ab) = 2 or len(cd) = 2"
+    """Generate a template quad mesh based on four points with specific locations and types. type = 'True': singular ; type = 'False': regular.
 
     Parameters
     ----------
-    mesh : Mesh
-        A quad mesh.
-    fkey: int
-        Key of face to subdivide.
-    regular_vertices: list
-        List of four face vertex indices.
+    points : list
+        Four points.
+    types: list
+        Four types 'True' or 'False'.
 
     Returns
     -------
-    mesh : mesh, None
-        The modified quad mesh.
-        None if face was an original quad face with four original vertices or if subdivision if not valid.
+    vertices : list
+        Vertices of the template quad mesh.
+    faces_vertices : list
+        Faces of the template quad mesh.
 
     Raises
     ------

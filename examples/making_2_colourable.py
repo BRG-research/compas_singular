@@ -6,48 +6,55 @@ from compas.datastructures.mesh import Mesh
 from compas.datastructures.network import Network
 from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
 
-from compas_pattern.topology.face_strip_operations import face_strip_collapse
+from compas_pattern.algorithms.colouring import generate_crossing_graph
+from compas_pattern.algorithms.colouring import is_two_colourable
+from compas_pattern.algorithms.colouring import compute_two_colourable_meshes
 
-from compas_pattern.algorithms.make_two_colourable import generate_crossing_graph_from_patch_decomposition
-from compas_pattern.algorithms.make_two_colourable import compute_two_colourable_patches
+from compas_pattern.cad.rhino.utilities import draw_mesh
 
 # mesh selection
-guid = rs.GetObject('get quad patch decomposition')
+guid = rs.GetObject('coarse quad mesh to make two-colourable')
 mesh = rhino.mesh_from_guid(Mesh, guid)
 
-crossing_graph, edge_groups, groups = generate_crossing_graph_from_patch_decomposition(mesh)
+delta_x = 30
+delta_y = -20
 
-#for edge, group in edge_groups.items():
-#    index = groups.index(group)
-#    rs.AddTextDot(index, mesh.edge_midpoint(edge[0], edge[1]))
+rs.EnableRedraw(False)
 
-two_col_patches_solutions = compute_two_colourable_patches(PseudoQuadMesh, mesh, kmax = 2)
+crossing_graph, edge_groups, groups = generate_crossing_graph(mesh)
+is_two_colourable(crossing_graph)
+
+colours = [[255, 0, 0], [0, 0, 255], [0, 255, 0], [255, 255, 0], [255, 0, 255], [0, 255, 255]]
+
+graph_objects = [rs.AddLine(crossing_graph.vertex_coordinates(ukey), crossing_graph.vertex_coordinates(vkey)) for ukey, vkey in crossing_graph.edges()]
+for vkey in crossing_graph.vertices():
+    pt = rs.AddPoint(crossing_graph.vertex_coordinates(vkey))
+    colour_key = crossing_graph.get_vertex_attribute(vkey, 'colour')
+    colour = colours[colour_key]
+    rs.ObjectColor(pt, colour)
+    graph_objects.append(pt)
+rs.MoveObjects(graph_objects, [0, delta_y, 0])
+group = rs.AddGroup()
+rs.AddObjectsToGroup(graph_objects, group)
+
+rs.EnableRedraw(False)
+two_colourable_objects = compute_two_colourable_meshes(PseudoQuadMesh, mesh, kmax = 2)
 
 rs.EnableRedraw(False)
 count = 1
-for patch in two_col_patches_solutions:
-    vertices = [patch.vertex_coordinates(vkey) for vkey in patch.vertices()]
-    face_vertices = [patch.face_vertices(fkey) for fkey in patch.faces()]
-    patch_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
-    rs.MoveObject(patch_guid, [30 * count, 0, 0])
+for crossing_graph, mesh in two_colourable_objects:
+    mesh_guid = draw_mesh(mesh)
+    rs.MoveObject(mesh_guid, [delta_x * count, 0, 0])
+    graph_objects = [rs.AddLine(crossing_graph.vertex_coordinates(ukey), crossing_graph.vertex_coordinates(vkey)) for ukey, vkey in crossing_graph.edges()]
+    for vkey in crossing_graph.vertices():
+        pt = rs.AddPoint(crossing_graph.vertex_coordinates(vkey))
+        colour_key = crossing_graph.get_vertex_attribute(vkey, 'colour')
+        colour = colours[colour_key]
+        rs.ObjectColor(pt, colour)
+        graph_objects.append(pt)
+    rs.MoveObjects(graph_objects, [delta_x * count, delta_y, 0])
+    group = rs.AddGroup()
+    rs.AddObjectsToGroup(graph_objects, group)
     count += 1
+
 rs.EnableRedraw(True)
-
-#for u, v in crossing_graph.edges():
-#    u_xyz = crossing_graph.vertex_coordinates(u)
-#    v_xyz = crossing_graph.vertex_coordinates(v)
-#    rs.AddLine(u_xyz, v_xyz)
-
-#print crossing_graph
-#rhino.network_draw(crossing_graph)
-
-#mesh = face_strip_collapse(Mesh, mesh, ukey, vkey)
-
-
-
-## draw mesh
-#vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
-#face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
-#mesh_guid = rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
-##rs.AddLayer('edited_mesh')
-##rs.ObjectLayer(mesh_guid, layer = 'edited_mesh')

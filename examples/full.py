@@ -62,10 +62,12 @@ def start():
     rs.ObjectLayer(point_features_guids, 'shape_and_features')
     
     coarse_quad_mesh = None
-    if len(surface_borders(surface_guid, border_type = 2)) == 0 and len(curve_features_guids) == 0 and len(point_features_guids) == 0:
+    inner_borders = surface_borders(surface_guid, border_type = 2)
+    if len(inner_borders) == 0 and len(curve_features_guids) == 0 and len(point_features_guids) == 0:
         if rs.GetString('use template?', defaultString = 'False', strings = ['True', 'False']) == 'True':
             vertices, faces = templating()
             coarse_quad_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
+    rs.DeleteObjects(inner_borders)
     
     if coarse_quad_mesh is None:
         # 1. mapping

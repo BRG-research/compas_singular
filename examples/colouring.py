@@ -67,7 +67,7 @@ if rs.IsLayer(str(0)):
 if rs.IsLayer(str(1)):
     rs.LayerColor(str(1), [0, 0, 255])
 if rs.IsLayer(str(2)):
-    rs.LayerColor(str(1), [0, 255, 0])
+    rs.LayerColor(str(2), [0, 255, 0])
 
 rs.EnableRedraw(False)
 for key, polyedge in enumerate(init_polyedges):
