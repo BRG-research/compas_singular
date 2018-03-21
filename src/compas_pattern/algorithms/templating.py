@@ -20,24 +20,17 @@ __all__ = [
 ]
 
 def templating():
-    """Subdivide a polygon face into quads which used to be a quad with four original vertices.
-    Subdivision is valid only if opposite edges have the same number of points or if one only has two.
-    "len(ab) = len(cd) or len(ab) = 2 or len(cd) = 2"
+    """Apply one of the simple quad mesh templates based on four points.
 
     Parameters
     ----------
-    mesh : Mesh
-        A quad mesh.
-    fkey: int
-        Key of face to subdivide.
-    regular_vertices: list
-        List of four face vertex indices.
 
     Returns
     -------
-    mesh : mesh, None
-        The modified quad mesh.
-        None if face was an original quad face with four original vertices or if subdivision if not valid.
+    vertices : list
+        The vertices of the template.
+    faces : list
+        The faces of the template.
 
     Raises
     ------
@@ -66,4 +59,3 @@ def templating():
 if __name__ == '__main__':
 
     import compas
-
