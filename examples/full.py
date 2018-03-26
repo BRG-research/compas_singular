@@ -1,3 +1,4 @@
+
 import rhinoscriptsyntax as rs
 import compas_rhino as rhino
 
@@ -126,6 +127,7 @@ def start():
     
     # 10. smoothing
     pattern_geometry = pattern_topology.copy()
+    pattern_geometry.cull_vertices()
     rs.EnableRedraw(True)
     smoothing_iterations = rs.GetInteger('number of iterations for smoothing', number = 20)
     damping_value = rs.GetReal('damping value for smoothing', number = .5)
