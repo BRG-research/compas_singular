@@ -128,12 +128,12 @@ def start():
     # 10. smoothing
     pattern_geometry = pattern_topology.copy()
     pattern_geometry.cull_vertices()
+    constraints, surface_boundaries = define_constraints(pattern_geometry, surface_guid, curve_constraints = curve_features_guids, point_constraints = point_features_guids)
+    fixed_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'point']
     rs.EnableRedraw(True)
     smoothing_iterations = rs.GetInteger('number of iterations for smoothing', number = 20)
     damping_value = rs.GetReal('damping value for smoothing', number = .5)
     rs.EnableRedraw(False)
-    constraints, surface_boundaries = define_constraints(pattern_geometry, surface_guid, curve_constraints = curve_features_guids, point_constraints = point_features_guids)
-    fixed_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'point']
     mesh_smooth_area(pattern_geometry, fixed = fixed_vertices, kmax = smoothing_iterations, damping = damping_value, callback = apply_constraints, callback_args = [pattern_geometry, constraints])
     rs.DeleteObjects(surface_boundaries)
     pattern_geometry_guid = draw_mesh(pattern_geometry)

@@ -1,5 +1,7 @@
 import math
 
+import compas_rhino as rhino
+
 try:
     import rhinoscriptsyntax as rs
 
@@ -17,6 +19,8 @@ from compas_pattern.topology.polyline_extraction import mesh_boundaries
 from compas_pattern.cad.rhino.utilities import surface_borders
 from compas_pattern.cad.rhino.utilities import is_point_on_curve
 
+from compas_pattern.cad.rhino.utilities import draw_mesh
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -25,10 +29,20 @@ __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
     'define_constraints',
+    'automatic_constraints',
+    'customed_constraints',
     'apply_constraints',
 ]
 
 def define_constraints(mesh, surface_constraint, curve_constraints = [], point_constraints = []):
+
+    constraints, surface_boundaries = automatic_constraints(mesh, surface_constraint, curve_constraints = [], point_constraints = [])
+    
+    constraints = customed_constraints(mesh, constraints, surface_boundaries, surface_constraint)
+
+    return constraints, surface_boundaries
+
+def automatic_constraints(mesh, surface_constraint, curve_constraints = [], point_constraints = []):
     """Defines the constraints on the vertices of the mesh on a point, a curve or a surface.
     
     Parameters
@@ -75,7 +89,7 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
         xyz = mesh.vertex_coordinates(vkey)
         geom_key = geometric_key(xyz)
         if geom_key in constrained_points:
-            constraints[vkey] = ('point', xyz)
+            constraints[vkey] = ['point', xyz]
 
     # set boundary curve constraints
     split_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'point']
@@ -98,7 +112,7 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
                 for vkey in mesh_bdry:
                     xyz = mesh.vertex_coordinates(vkey)
                     if is_point_on_curve(crv_cstr, xyz) and vkey not in constraints:
-                        constraints[vkey] = ('curve', crv_cstr)
+                        constraints[vkey] = ['curve', crv_cstr]
                 for i, vkey in enumerate(mesh_bdry):
                     if vkey not in constraints:
                         # find next contrained point
@@ -141,7 +155,7 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
                         attr['y'] = y
                         attr['z'] = z
                         # store constraint
-                        constraints[vkey] = ('curve', crv_cstr)
+                        constraints[vkey] = ['curve', crv_cstr]
         
         else:
             for srf_bdry in surface_boundaries:
@@ -159,7 +173,7 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
                         for vkey in mesh_bdry:
                             xyz = mesh.vertex_coordinates(vkey)
                             if is_point_on_curve(crv_cstr, xyz) and vkey not in constraints:
-                                constraints[vkey] = ('curve', crv_cstr)
+                                constraints[vkey] = ['curve', crv_cstr]
                         for i, vkey in enumerate(mesh_bdry):
                             if vkey not in constraints:
                                 # find next contrained point
@@ -202,7 +216,7 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
                                 attr['y'] = y
                                 attr['z'] = z
                                 # store constraint
-                                constraints[vkey] = ('curve', crv_cstr)
+                                constraints[vkey] = ['curve', crv_cstr]
 
     # constrain to point features
     point_constraints_keys = [geometric_key(rs.PointCoordinates(pt)) for pt in point_constraints]
@@ -210,7 +224,7 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
         xyz = mesh.vertex_coordinates(vkey)
         geom_key = geometric_key(xyz)
         if geom_key in point_constraints_keys:
-            constraints[vkey] = ('point', xyz)
+            constraints[vkey] = ['point', xyz]
 
     # constrain to curve features
     for crv in curve_constraints:
@@ -223,10 +237,10 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
             xyz = mesh.vertex_coordinates(vkey)
             geom_key = geometric_key(xyz)
             if geom_key == start_geom_key:
-                constraints[vkey] = ('point', xyz)
+                constraints[vkey] = ['point', xyz]
                 start_key = vkey
             if geom_key == end_geom_key:
-                constraints[vkey] = ('point', xyz)
+                constraints[vkey] = ['point', xyz]
                 end_key = vkey
         # regular nodes
         path = [start_key]
@@ -254,15 +268,116 @@ def define_constraints(mesh, surface_constraint, curve_constraints = [], point_c
             else:
                 path = [start_key]
         for vkey in path[1 : -1]:
-            constraints[vkey] = ('curve', crv)
+            constraints[vkey] = ['curve', crv]
 
         
     # set surface constraints by default for the others
     for vkey in mesh.vertices():
         if vkey not in constraints:
-            constraints[vkey] = ('surface', surface_constraint)
+            constraints[vkey] = ['surface', surface_constraint]
+
+    # udpdate drawn mesh
+    layer = 'pattern_topology'
+    mesh_guid = rs.ObjectsByLayer(layer)[0]
+    rs.DeleteObject(mesh_guid)
+    mesh_guid = draw_mesh(mesh)
+    rs.ObjectLayer(mesh_guid, layer)
 
     return constraints, surface_boundaries
+
+def customed_constraints(mesh, constraints, surface_boundaries, surface_constraint):
+
+    count = 1000
+    while count > 0:
+        count -= 1
+
+
+        all_curve_constraints = []
+        for vkey, constraint in constraints.items():
+            constraint_type, constraint_object = constraint
+            if constraint_type == 'curve' and constraint_object not in all_curve_constraints:
+                all_curve_constraints.append(constraint_object)
+        n  = len(all_curve_constraints)
+        rs.EnableRedraw(False)
+        dots = []
+        for i, crv in enumerate(all_curve_constraints):
+            dot = rs.AddTextDot(i, rs.CurveMidPoint(crv))
+            dots.append(dot)
+            rs.ObjectColor(dot, [0, float(i) / n * 255, (n - float(i)) / n * 255])
+        rs.EnableRedraw(True)
+
+        # display  vertices to select with colour code
+        vertex_colors = {}
+        for vkey, constraint in constraints.items():
+            contraint_type, constraint_object = constraint
+            if contraint_type == 'point':
+                rgb = [255, 0, 255]
+            elif contraint_type == 'curve':
+                i = all_curve_constraints.index(constraint_object)
+                rgb = [0, float(i) / n * 255, (n - float(i)) / n * 255]
+            elif contraint_type == 'surface':
+                rgb = [255, 255, 255]
+            vertex_colors[vkey] = rgb
+
+        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+        artist.clear_layer()
+        
+        artist.draw_vertices(color = vertex_colors)
+        artist.redraw()
+        vkeys = rhino.mesh_select_vertices(mesh, message = 'change vertex constraints?')
+        artist.clear_layer()
+        artist.redraw()
+        
+        rs.DeleteLayer('mesh_artist')
+
+        if vkeys == []:
+            rs.DeleteObjects(dots)
+            return constraints
+
+        rs.EnableRedraw(True)
+
+        constraint_types = ['point', 'curve', 'surface']
+        new_constraint_type = rs.GetString('constraint type?', strings = constraint_types)
+
+        # set new point constraint
+        if new_constraint_type == 'point':
+            for vkey in vkeys:
+                constraints[vkey][0] = 'point'
+
+                # if single vertex, possibility to update position
+                if len(vkeys) == 1:
+                    xyz = rs.GetPoint('new point location?')
+                    if xyz is not None:
+                        constraints[vkey][1] = xyz
+                        x, y, z = xyz
+                        attr = mesh.vertex[vkey]
+                        attr['x'] = x
+                        attr['y'] = y
+                        attr['z'] = z
+
+                        # udpdate drawn mesh
+                        layer = 'pattern_topology'
+                        mesh_guid = rs.ObjectsByLayer(layer)[0]
+                        rs.DeleteObject(mesh_guid)
+                        mesh_guid = draw_mesh(mesh)
+                        rs.ObjectLayer(mesh_guid, layer)
+
+        # set new curve constraint
+        elif new_constraint_type == 'curve':
+            curve_constraint = rs.GetObject('curve constraint?', filter = 4)
+            for vkey in vkeys:
+                constraints[vkey] = ['curve', curve_constraint]
+
+        # set new surface constraint
+        elif new_constraint_type == 'surface':
+            for vkey in vkeys:
+                constraints[vkey] = ['surface', surface_constraint]
+
+        rs.DeleteObjects(dots)
+
+        rs.EnableRedraw(False)
+
+    return constraints
 
 def apply_constraints(k, args):
     """Apply the constraints on the vertices of the mesh on a point, a curve or a surface.
