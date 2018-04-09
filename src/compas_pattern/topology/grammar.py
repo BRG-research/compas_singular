@@ -28,6 +28,7 @@ __all__ = [
     'pseudo_quad_split',
     'singular_boundary_1',
     'remove_tri',
+    'rotate_vertex',
 ]
 
 def vertex_pole(mesh, fkey, pole):
@@ -678,6 +679,27 @@ def remove_tri(mesh, fkey_tri, fkey_quad, pole, t = .5):
         insert_vertices_in_halfedge(mesh, b, a, [f])
 
     return fkey_tri, fkey_quad
+
+def rotate_vertex(mesh, vkey):
+
+    if vkey not in mesh.vertices():
+        return None
+    if vkey in mesh.vertices_on_boundary():
+        return None
+
+    face_vertices = {}
+    for nbr in mesh.vertex_neighbours(vkey, True):
+        fkey_0 = mesh.halfedge[vkey][nbr]
+        fkey_1 = mesh.halfedge[nbr][vkey]
+        ukey = mesh.face_vertex_descendant(fkey_0, nbr)
+        wkey = mesh.face_vertex_ancestor(fkey_1, nbr)
+        face_vertices[fkey_0] = [ukey, vkey, wkey, nbr]
+
+    for fkey, vertices in face_vertices.items():
+        mesh.delete_face(fkey)
+        mesh.add_face(vertices, fkey = fkey)
+
+    return 0
 
 # ==============================================================================
 # Main

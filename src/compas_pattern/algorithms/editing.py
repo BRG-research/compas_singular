@@ -50,7 +50,7 @@ def editing(mesh):
     rs.AddLayer('temp')
 
     # grammar rules + propagation scheme
-    rules = ['face_pole', 'edge_pole', 'vertex_pole', 'face_opening', 'flat_corner_2', 'flat_corner_3', 'flat_corner_33', 'split_35', 'split_35_diag', 'split_26', 'simple_split', 'double_split', 'insert_pole', 'insert_partial_pole', 'singular_boundary_1', 'singular_boundary_2', 'face_strip_collapse', 'face_strip_insert', 'PROPAGATE', 'MOVE', 'HELP!']
+    rules = ['face_pole', 'edge_pole', 'vertex_pole', 'face_opening', 'flat_corner_2', 'flat_corner_3', 'flat_corner_33', 'split_35', 'split_35_diag', 'split_26', 'simple_split', 'double_split', 'insert_pole', 'insert_partial_pole', 'singular_boundary_1', 'singular_boundary_2', 'face_strip_collapse', 'face_strip_insert', 'rotate_vertex', 'PROPAGATE', 'MOVE', 'HELP!']
     
     # regular vertices of initial mesh
     regular_vertices = list(mesh.vertices())

@@ -32,6 +32,8 @@ from compas_pattern.topology.polyline_extraction import dual_edge_polylines
 from compas_pattern.topology.face_strip_operations import face_strip_collapse
 from compas_pattern.topology.face_strip_operations import face_strip_insert
 
+from compas_pattern.topology.grammar import rotate_vertex
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -44,7 +46,7 @@ __all__ = [
 
 
 def apply_rule(mesh, rule):
-    
+
     if rule == 'face_pole':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
@@ -412,10 +414,24 @@ def apply_rule(mesh, rule):
                 break
             if vkey in mesh.vertices_on_boundary():
                 break
-        
+
         rs.DeleteLayer('mesh_artist')
 
         face_strip_insert(Mesh, mesh, vertex_path)
+
+    if rule == 'rotate_vertex':
+        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+        artist.clear_layer()
+
+        artist.draw_vertexlabels(text = {key: str(key) for key in mesh.vertices()})
+        artist.redraw()
+        vkey = rhino.mesh_select_vertex(mesh, message = 'vkey')
+        artist.clear_layer()
+        artist.redraw()
+
+        rs.DeleteLayer('mesh_artist')
+        
+        rotate_vertex(mesh, vkey)
     
     return 0
 
