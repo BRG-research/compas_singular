@@ -1,4 +1,3 @@
-
 import rhinoscriptsyntax as rs
 import compas_rhino as rhino
 
