@@ -31,6 +31,7 @@ from compas_pattern.algorithms.patterning import patterning
 
 from compas.geometry.algorithms.smoothing import mesh_smooth_centroid
 from compas.geometry.algorithms.smoothing import mesh_smooth_area
+from compas.geometry.algorithms.smoothing_cpp import smooth_centroid_cpp
 from compas_pattern.algorithms.smoothing import define_constraints
 from compas_pattern.algorithms.smoothing import apply_constraints
 
@@ -135,6 +136,10 @@ def start():
     damping_value = rs.GetReal('damping value for smoothing', number = .5)
     rs.EnableRedraw(False)
     mesh_smooth_area(pattern_geometry, fixed = fixed_vertices, kmax = smoothing_iterations, damping = damping_value, callback = apply_constraints, callback_args = [pattern_geometry, constraints])
+    #vertex_keys = pattern_geometry.vertices()
+    #vertices = [pattern_geometry.vertex_coordinates(vkey) for vkey in vertex_keys]
+    #adjacency = [[vertex_keys.index(nbr) for nbr in pattern_geometry.vertex_neighbours(vkey)] for vkey in vertex_keys]
+    #smooth_centroid_cpp(vertices, adjacency, fixed_vertices, kmax = smoothing_iterations, callback = apply_constraints, callback_args = [pattern_geometry, constraints])
     rs.DeleteObjects(surface_boundaries)
     pattern_geometry_guid = draw_mesh(pattern_geometry)
     rs.ObjectLayer(pattern_geometry_guid, layer = 'pattern_geometry')
