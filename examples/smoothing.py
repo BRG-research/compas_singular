@@ -13,6 +13,8 @@ from compas_pattern.topology.pattern_operators import conway_kis
 from compas_pattern.topology.pattern_operators import conway_needle
 from compas_pattern.topology.pattern_operators import conway_gyro
 
+from compas_pattern.datastructures.mesh import delete_face
+
 from compas_pattern.cad.rhino.utilities import draw_mesh
 
 def custom_constraints(mesh, surface):
@@ -128,8 +130,26 @@ def start():
     dense_mesh = rs.GetObject('mesh to smooth', filter = 32)
     dense_mesh = rhino.mesh_from_guid(Mesh, dense_mesh)
     
+    #lines = rs.GetObjects('lines', filter = 4)
+    #edges = [[rs.CurveStartPoint(line), rs.CurveEndPoint(line)] for line in lines]
+    #dense_mesh = Mesh.from_lines(edges)
+    
+    #faces = list(dense_mesh.faces())
+    #for fkey in faces:
+    #    if len(dense_mesh.face_vertices(fkey)) > 10:
+    #        delete_face(dense_mesh, fkey)
+    #        print '-1 face'
+    
     #dense_mesh = conway_ambo(dense_mesh)
     #dense_mesh = conway_dual(dense_mesh)
+    #dense_mesh = conway_gyro(dense_mesh)
+    #dense_mesh = conway_dual(dense_mesh)
+    #dense_mesh = conway_join(dense_mesh)
+    
+    #rs.EnableRedraw(False)
+    #draw_mesh(dense_mesh)
+    #rs.EnableRedraw(True)
+    #return
     
     surface_guid = rs.GetSurfaceObject('surface constraint')[0]
     
