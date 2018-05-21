@@ -34,11 +34,12 @@ __all__ = [
     'apply_constraints',
 ]
 
-def define_constraints(mesh, surface_constraint, curve_constraints = [], point_constraints = []):
+def define_constraints(mesh, surface_constraint, curve_constraints = [], point_constraints = [], custom = True):
 
-    constraints, surface_boundaries = automatic_constraints(mesh, surface_constraint, curve_constraints = [], point_constraints = [])
+    constraints, surface_boundaries = automatic_constraints(mesh, surface_constraint, curve_constraints, point_constraints)
     
-    constraints = customed_constraints(mesh, constraints, surface_boundaries, surface_constraint)
+    if custom:
+        constraints = customed_constraints(mesh, constraints, surface_boundaries, surface_constraint)
 
     return constraints, surface_boundaries
 
