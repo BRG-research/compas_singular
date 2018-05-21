@@ -35,12 +35,10 @@ def spatial_skeleton(vertices):
 
     """
 
-    delaunay_simplices = Delaunay(vertices).simplices.tolist()
+    simplices = Delaunay(vertices).simplices.tolist()
+    neighbors = Delaunay(vertices).neighbors.tolist()
 
-
-    print delaunay_simplices
-
-    return delaunay_simplices
+    return simplices, neighbors
 
 # ==============================================================================
 # Main
