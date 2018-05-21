@@ -27,6 +27,8 @@ from compas_pattern.algorithms.remapping import remapping
 
 from compas_pattern.algorithms.editing import editing
 
+from compas_pattern.topology.thickening import mesh_thickening
+
 from compas_pattern.algorithms.densification import densification
 
 from compas_pattern.algorithms.patterning import patterning
@@ -110,9 +112,18 @@ def start():
     rs.EnableRedraw(False)
     rs.LayerVisible('initial_coarse_quad_mesh', visible = False)
     editing(coarse_quad_mesh)
+    thickening = rs.GetString('thicken?', defaultString = 'False', strings = ['True', 'False'])
+    if thickening:
+        thickness = rs.GetReal(message = 'thickness', number = 1, minimum = .0001, maximum = 1000)
+        coarse_quad_mesh = mesh_thickening(coarse_quad_mesh, thickness = thickness)
+        #closed_mesh_guid = draw_mesh(closed_mesh.to_mesh())
+        #rs.ObjectLayer(closed_mesh_guid, layer = 'edited_coarse_quad_mesh')
+        #rs.LayerVisible('edited_coarse_quad_mesh', visible = True)
+        #return
     coarse_quad_mesh_guid = draw_mesh(coarse_quad_mesh.to_mesh())
     rs.ObjectLayer(coarse_quad_mesh_guid, layer = 'edited_coarse_quad_mesh')
     rs.LayerVisible('edited_coarse_quad_mesh', visible = True)
+    
     
     # 8. densification
     rs.EnableRedraw(True)
@@ -138,12 +149,18 @@ def start():
     # 10. smoothing
     pattern_geometry = pattern_topology.copy()
     pattern_geometry.cull_vertices()
-    constraints, surface_boundaries = define_constraints(pattern_geometry, surface_guid, curve_constraints = curve_features_guids, point_constraints = point_features_guids)
-    fixed_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'point']
     rs.EnableRedraw(True)
     smoothing_iterations = rs.GetInteger('number of iterations for smoothing', number = 20)
+    if smoothing_iterations == 0:
+        pattern_geometry_guid = draw_mesh(pattern_geometry)
+        rs.ObjectLayer(pattern_geometry_guid, layer = 'pattern_geometry')
+        rs.LayerVisible('pattern_topology', visible = False)
+        rs.LayerVisible('pattern_geometry', visible = True)
+        return
     damping_value = rs.GetReal('damping value for smoothing', number = .5)
     rs.EnableRedraw(False)
+    constraints, surface_boundaries = define_constraints(pattern_geometry, surface_guid, curve_constraints = curve_features_guids, point_constraints = point_features_guids)
+    fixed_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'point']
     mesh_smooth_area(pattern_geometry, fixed = fixed_vertices, kmax = smoothing_iterations, damping = damping_value, callback = apply_constraints, callback_args = [pattern_geometry, constraints])
     #vertex_keys = pattern_geometry.vertices()
     #vertices = [pattern_geometry.vertex_coordinates(vkey) for vkey in vertex_keys]
@@ -154,7 +171,5 @@ def start():
     rs.ObjectLayer(pattern_geometry_guid, layer = 'pattern_geometry')
     rs.LayerVisible('pattern_topology', visible = False)
     rs.LayerVisible('pattern_geometry', visible = True)
-    
-    rs.EnableRedraw(True)
 
 start()
