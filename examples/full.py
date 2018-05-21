@@ -2,6 +2,9 @@ import rhinoscriptsyntax as rs
 import compas_rhino as rhino
 
 from compas_pattern.cad.rhino.utilities import surface_borders
+from compas_pattern.topology.polyline_extraction import mesh_boundaries
+
+from compas.geometry import bounding_box
 
 from compas.datastructures.mesh import Mesh
 from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
@@ -35,7 +38,7 @@ from compas_pattern.algorithms.smoothing import define_constraints
 from compas_pattern.algorithms.smoothing import apply_constraints
 
 def start():
-    # -1. layer structure
+    # -2. layer structure
     layers = ['shape_and_features', 'initial_coarse_quad_mesh', 'edited_coarse_quad_mesh', 'quad_mesh', 'pattern_topology', 'pattern_geometry']
     colours = [[255,0,0], [0,0,0], [0,0,0], [200,200,200], [100,100,100], [0,0,0]]
     for layer, colour in zip(layers, colours):
@@ -44,8 +47,23 @@ def start():
         objects = rs.ObjectsByLayer(layer)
         rs.DeleteObjects(objects)
     
+    # -1. template
+    coarse_quad_mesh = None
+    if rs.GetString('use template?', defaultString = 'False', strings = ['True', 'False']) == 'True':
+            vertices, faces = templating()
+            coarse_quad_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
+            if len(mesh_boundaries(coarse_quad_mesh)) == 0:
+                coarse_quad_mesh_guid = draw_mesh(coarse_quad_mesh)
+                rs.ObjectLayer(coarse_quad_mesh_guid, layer = 'initial_coarse_quad_mesh')
+                rs.LayerVisible('initial_coarse_quad_mesh', visible = True)
+                return
+    
     # 0. input
     surface_guid = rs.GetObject('select surface', filter = 8)
+    if surface_guid is None:
+        box = bounding_box([coarse_quad_mesh.vertex_coordinates(vkey) for vkey in coarse_quad_mesh.vertices()])
+        points = box[:4]
+        surface_guid = rs.AddSrfPt(points)
     rs.ObjectColor(surface_guid, [255,0,0])
     surface_guid = rs.CopyObject(surface_guid)
     rs.ObjectLayer(surface_guid, 'shape_and_features')
@@ -61,14 +79,6 @@ def start():
     rs.ObjectColor(point_features_guids, [255,0,0])
     point_features_guids = rs.CopyObjects(point_features_guids)
     rs.ObjectLayer(point_features_guids, 'shape_and_features')
-    
-    coarse_quad_mesh = None
-    inner_borders = surface_borders(surface_guid, border_type = 2)
-    if len(inner_borders) == 0 and len(curve_features_guids) == 0 and len(point_features_guids) == 0:
-        if rs.GetString('use template?', defaultString = 'False', strings = ['True', 'False']) == 'True':
-            vertices, faces = templating()
-            coarse_quad_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
-    rs.DeleteObjects(inner_borders)
     
     if coarse_quad_mesh is None:
         # 1. mapping

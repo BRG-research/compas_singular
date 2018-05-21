@@ -10,18 +10,63 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
-    'template',
+    'template_disc',
+    'template_disc_advanced',
+    'template_sphere',
+    'template_sphere',
 ]
 
-def template(points = [ [0,0,0] , [1,0,0] , [1,1,0] , [0,1,0] ], types = ['False', 'False', 'False', 'False']):
-    """Generate a template quad mesh based on four points with specific locations and types. type = 'True': singular ; type = 'False': regular.
+def template_disc(X = 1, Y = 1):
+    """Generate a template coarse quad mesh with the topology of a disc.
 
     Parameters
     ----------
-    points : list
-        Four points.
-    types: list
-        Four types 'True' or 'False'.
+    X : real
+        Length along X-axis.
+    Y : real
+        Length along Y-axis.
+
+    Returns
+    -------
+    vertices : list
+        Vertices of the template coarse quad mesh.
+    faces_vertices : list
+        Faces of the template coarse quad mesh.
+
+    Raises
+    ------
+    -
+
+    """
+
+
+    a = [0, 0, 0]
+    b = [X, 0, 0]
+    c = [X, Y, 0]
+    d = [0, Y, 0]
+
+    vertices = [a, b, c, d]
+
+    faces = [[a, b, c, d] ]
+
+    face_vertices = []
+    for face in faces:
+        to_add = [vertices.index(vertex) for vertex in face]
+        face_vertices.append(to_add)
+
+    return vertices, face_vertices
+
+def template_disc_advanced(X = 1, Y = 1, singularities_at_corner = ['False', 'False', 'False', 'False']):
+    """Generate an advanced template coarse quad mesh with the topology of a disc.
+
+    Parameters
+    ----------
+    X : real
+        Length along X-axis.
+    Y : real
+        Length along Y-axis.
+    singularity_at_corner: list
+        Position of the four singularities close to the corners as booleans.
 
     Returns
     -------
@@ -36,7 +81,13 @@ def template(points = [ [0,0,0] , [1,0,0] , [1,1,0] , [0,1,0] ], types = ['False
 
     """
 
-    a, d, p, m = points
+    types = singularities_at_corner
+
+    a = [0, 0, 0]
+    d = [X, 0, 0]
+    p = [X, Y, 0]
+    m = [0, Y, 0]
+
     b = list(centroid_points([a, a, a, d]))
     c = list(centroid_points([a, d, d, d]))
     h = list(centroid_points([d, d, d, p]))
@@ -102,6 +153,108 @@ def template(points = [ [0,0,0] , [1,0,0] , [1,1,0] , [0,1,0] ], types = ['False
     
     return vertices, face_vertices
 
+def template_sphere(X = 1, Y = 1, Z = 1):
+    """Generate a template coarse quad mesh with the topology of a sphere.
+
+    Parameters
+    ----------
+    X : real
+        Length along X-axis.
+    Y : real
+        Length along Y-axis.
+    Z : real
+        Length along Z-axis.
+
+    Returns
+    -------
+    vertices : list
+        Vertices of the template coarse quad mesh.
+    faces_vertices : list
+        Faces of the template coarse quad mesh.
+
+    Raises
+    ------
+    -
+
+    """
+
+
+    a = [0, 0, 0]
+    b = [X, 0, 0]
+    c = [X, Y, 0]
+    d = [0, Y, 0]
+    e = [0, 0, Z]
+    f = [X, 0, Z]
+    g = [X, Y, Z]
+    h = [0, Y, Z]
+
+    vertices = [a, b, c, d, e, f, g, h]
+
+    faces = [[a, b, f, e], [b, c, g, f], [c, d, h, g], [d, a, e, h], [e, f, g, h], [d, c, b, a] ]
+
+    face_vertices = []
+    for face in faces:
+        to_add = [vertices.index(vertex) for vertex in face]
+        face_vertices.append(to_add)
+
+    return vertices, face_vertices
+
+def template_torus(X = 1, Y = 1, Z = 1, R = .25):
+    """Generate a template coarse quad mesh with the topology of a torus.
+
+    Parameters
+    ----------
+    X : real
+        Length along X-axis.
+    Y : real
+        Length along Y-axis.
+    Z : real
+        Length along Z-axis.
+    R : real
+        Radius of the handle.
+
+    Returns
+    -------
+    vertices : list
+        Vertices of the template coarse quad mesh.
+    faces_vertices : list
+        Faces of the template coarse quad mesh.
+
+    Raises
+    ------
+    -
+
+    """
+
+
+    a = [0, 0, 0]
+    b = [X, 0, 0]
+    c = [X, Y, 0]
+    d = [0, Y, 0]
+    e = [0, 0, Z]
+    f = [X, 0, Z]
+    g = [X, Y, Z]
+    h = [0, Y, Z]
+    i = [R, R, 0]
+    j = [X - R, R, 0]
+    k = [X - R, Y - R, 0]
+    l = [R, Y - R, 0]
+    m = [R, R, Z]
+    n = [X - R, R, Z]
+    o = [X - R, Y - R, Z]
+    p = [R, Y - R, Z]
+
+    vertices = [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p]
+
+    faces = [[a, b, f, e], [b, c, g, f], [c, d, h, g], [d, a, e, h], [e, f, n, m], [f, g, o, n], [g, h, p, o], [h, e, m, p], [i, j, b, a], [j, k, c, b], [k, l, d, c], [l, i, a, d], [m, n, j, i], [n, o, k, j], [o, p, l, k], [p, m, i, l] ]
+
+    face_vertices = []
+    for face in faces:
+        to_add = [vertices.index(vertex) for vertex in face]
+        face_vertices.append(to_add)
+
+    return vertices, face_vertices
+
 # ==============================================================================
 # Main
 # ==============================================================================
@@ -110,7 +263,7 @@ if __name__ == '__main__':
 
     import compas
 
-    vertices, faces = template()
+    vertices, faces = template_disc_advanced()
     mesh = Mesh.from_vertices_and_faces(vertices, faces)
 
     print mesh
