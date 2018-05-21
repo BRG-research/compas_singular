@@ -39,12 +39,13 @@ def patterning(mesh, operator):
     """
 
 
-    operators = {'dual': conway_dual, 
-                 'join': conway_join,
-                 'ambo': conway_ambo,
-                 'kis': conway_kis,
-                 'needle': conway_needle,
-                 'gyro': conway_gyro,
+    operators = {
+                'dual': conway_dual, 
+                'join': conway_join,
+                'ambo': conway_ambo,
+                'kis': conway_kis,
+                'needle': conway_needle,
+                'gyro': conway_gyro,
                  }
 
     try:
