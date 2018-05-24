@@ -113,7 +113,7 @@ def start():
     rs.LayerVisible('initial_coarse_quad_mesh', visible = False)
     editing(coarse_quad_mesh)
     thickening = rs.GetString('thicken?', defaultString = 'False', strings = ['True', 'False'])
-    if thickening:
+    if thickening == 'True':
         thickness = rs.GetReal(message = 'thickness', number = 1, minimum = .0001, maximum = 1000)
         coarse_quad_mesh = mesh_thickening(coarse_quad_mesh, thickness = thickness)
         #closed_mesh_guid = draw_mesh(closed_mesh.to_mesh())

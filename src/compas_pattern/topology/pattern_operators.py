@@ -52,6 +52,10 @@ def conway_dual(mesh):
     for face_vertices in new_faces:
         mesh.add_face(face_vertices)
 
+    unused_vertices = [vkey for vkey in mesh.vertices() if len(mesh.vertex_neighbours(vkey)) == 0]
+    for vkey in unused_vertices:
+        del mesh.vertex[vkey]
+
     return mesh
 
 def conway_join(mesh):
@@ -83,6 +87,10 @@ def conway_join(mesh):
 
     for face_vertices in new_faces:
         mesh.add_face(face_vertices)
+
+    unused_vertices = [vkey for vkey in mesh.vertices() if len(mesh.vertex_neighbours(vkey)) == 0]
+    for vkey in unused_vertices:
+        del mesh.vertex[vkey]
 
     return mesh
 
@@ -124,6 +132,10 @@ def conway_ambo(mesh):
     for face_vertices in new_faces:
         mesh.add_face(face_vertices)
 
+    unused_vertices = [vkey for vkey in mesh.vertices() if len(mesh.vertex_neighbours(vkey)) == 0]
+    for vkey in unused_vertices:
+        del mesh.vertex[vkey]
+
     return mesh
 
 def conway_kis(mesh):
@@ -142,6 +154,10 @@ def conway_kis(mesh):
 
     for face_vertices in new_faces:
         mesh.add_face(face_vertices)
+
+    unused_vertices = [vkey for vkey in mesh.vertices() if len(mesh.vertex_neighbours(vkey)) == 0]
+    for vkey in unused_vertices:
+        del mesh.vertex[vkey]
 
     return mesh
 
@@ -181,6 +197,10 @@ def conway_needle(mesh):
 
     for face_vertices in new_faces:
         mesh.add_face(face_vertices)
+
+    unused_vertices = [vkey for vkey in mesh.vertices() if len(mesh.vertex_neighbours(vkey)) == 0]
+    for vkey in unused_vertices:
+        del mesh.vertex[vkey]
 
     return mesh
 
@@ -236,6 +256,10 @@ def conway_gyro(mesh):
     for face_vertices in new_faces:
         mesh.add_face(face_vertices)
 
+    unused_vertices = [vkey for vkey in mesh.vertices() if len(mesh.vertex_neighbours(vkey)) == 0]
+    for vkey in unused_vertices:
+        del mesh.vertex[vkey]
+        
     return mesh
 
 # ==============================================================================
