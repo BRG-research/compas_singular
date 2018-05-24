@@ -1,9 +1,15 @@
 from compas.datastructures.mesh import Mesh
 
+from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
+
 from compas_pattern.datastructures.mesh import face_point
 from compas_pattern.datastructures.mesh import insert_vertex_in_face
 from compas_pattern.datastructures.mesh import add_vertex_from_vertices
 from compas_pattern.datastructures.mesh import insert_vertices_in_halfedge
+
+from compas_pattern.topology.polyline_extraction import mesh_boundaries
+
+from compas_pattern.topology.global_propagation import face_propagation
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -29,6 +35,7 @@ __all__ = [
     'singular_boundary_1',
     'remove_tri',
     'rotate_vertex',
+    'clear_faces',
 ]
 
 def vertex_pole(mesh, fkey, pole):
@@ -701,6 +708,27 @@ def rotate_vertex(mesh, vkey):
 
     return 0
 
+def clear_faces(mesh, fkeys, vkeys):
+    # groups of fkeys must be a topological disc
+    # vkeys must be four vertices part of the fkeys boundary
+
+    vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
+    face_vertices = [mesh.face_vertices(fkey) for fkey in fkeys]
+
+    faces_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
+    faces_boundary_vertices = mesh_boundaries(faces_mesh)[0]
+    faces_boundary_vertices = list(reversed(faces_boundary_vertices[:-1]))
+
+    for fkey in fkeys:
+        mesh.delete_face(fkey)
+
+    # orientation? reverse boundary vertices?
+    fkey = mesh.add_face(faces_boundary_vertices)
+
+    face_propagation(mesh, fkey, vkeys)
+
+    return 0
+
 # ==============================================================================
 # Main
 # ==============================================================================
@@ -712,9 +740,10 @@ if __name__ == '__main__':
     vertices = [[0,0,0],[1,0,0],[1,1,0],[0,1,0],[2,.5,0]]
     faces = [[0,1,2,3],[1,4,2]]
 
-    mesh = Mesh.from_vertices_and_faces(vertices, faces)
+    mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
 
-    remove_tri(mesh, 1, 0, 2)
+    #remove_tri(mesh, 1, 0, 2)
+    clear_faces(mesh, [0, 1], [0, 1, 2, 3])
 
     for fkey in mesh.faces():
         print mesh.face_vertices(fkey)

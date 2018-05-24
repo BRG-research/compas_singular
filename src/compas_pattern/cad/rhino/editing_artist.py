@@ -10,6 +10,9 @@ import compas_rhino as rhino
 
 from compas.datastructures.mesh import Mesh
 
+from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
+from compas_pattern.topology.polyline_extraction import mesh_boundaries
+
 from compas_pattern.topology.grammar import face_pole
 from compas_pattern.topology.grammar import edge_pole
 from compas_pattern.topology.grammar import vertex_pole
@@ -33,6 +36,8 @@ from compas_pattern.topology.face_strip_operations import face_strip_collapse
 from compas_pattern.topology.face_strip_operations import face_strip_insert
 
 from compas_pattern.topology.grammar import rotate_vertex
+
+from compas_pattern.topology.grammar import clear_faces
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
@@ -432,6 +437,32 @@ def apply_rule(mesh, rule):
         rs.DeleteLayer('mesh_artist')
         
         rotate_vertex(mesh, vkey)
+
+    if rule == 'clear_faces':
+        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+        artist.clear_layer()
+
+        artist.draw_facelabels()
+        artist.redraw()
+        fkeys = rhino.mesh_select_faces(mesh, message = 'fkeys')
+        artist.clear_layer()
+        artist.redraw()
+
+        vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
+        face_vertices = [mesh.face_vertices(fkey) for fkey in fkeys]
+
+        faces_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
+        faces_boundary_vertices = mesh_boundaries(faces_mesh)[0]
+
+        artist.draw_vertexlabels(text = {key: str(key) for key in faces_boundary_vertices})
+        artist.redraw()
+        vkeys = rhino.mesh_select_vertices(mesh, message = 'vkeys')
+        artist.clear_layer()
+        artist.redraw()
+
+        rs.DeleteLayer('mesh_artist')
+        
+        clear_faces(mesh, fkeys, vkeys)
     
     return 0
 
