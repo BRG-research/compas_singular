@@ -95,10 +95,11 @@ def start():
         # 3. decomposition
         medial_branches, boundary_polylines = decomposition(delaunay_mesh)
         
-        # 4. conforming
-        # 5. extraction
+        # 4. extraction
         vertices, faces = extraction(boundary_polylines, medial_branches)
         patch_decomposition = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
+        
+        # 5. conforming
         coarse_quad_mesh = conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_polylines, planar_point_features, planar_polyline_features)
         
         # 6. remapping
