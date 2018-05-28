@@ -3,6 +3,7 @@ from compas.datastructures.mesh import Mesh
 from math import acos
 from math import asin
 from math import pi
+from math import floor
 
 from compas.utilities import geometric_key
 
@@ -14,6 +15,7 @@ from compas.geometry import cross_vectors
 from compas_pattern.topology.grammar import simple_split
 from compas_pattern.topology.grammar import remove_tri
 
+from compas_pattern.topology.global_propagation import face_propagation
 from compas_pattern.topology.global_propagation import mesh_propagation
 
 #from compas_pattern.topology.consistency import quad_tri_1
@@ -63,32 +65,167 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
                 patch_decomposition.add_face(new_face_vertices, fkey)
 
     # remove remaining tri faces that are not pseudo quads
-    count = patch_decomposition.number_of_faces()
-    while count > 0:
-        count -= 1
-        try_again = False
-        for vkey in patch_decomposition.vertices_on_boundary():
-            for nbr in patch_decomposition.vertex_neighbours(vkey):
-                if nbr not in patch_decomposition.vertices_on_boundary():
-                    fkey_1 = patch_decomposition.halfedge[vkey][nbr]
-                    fkey_2 = patch_decomposition.halfedge[nbr][vkey]
-                    if len(patch_decomposition.face_vertices(fkey_1)) == 3 and len(patch_decomposition.face_vertices(fkey_2)) == 4:
-                        fkey_tri, fkey_quad = fkey_1, fkey_2
-                    elif len(patch_decomposition.face_vertices(fkey_1)) == 4 and len(patch_decomposition.face_vertices(fkey_2)) == 3:
-                        fkey_tri, fkey_quad = fkey_2, fkey_1
-                    else:
-                        continue
-                    remove_tri(patch_decomposition, fkey_tri, fkey_quad, vkey)
-                    try_again = True
-                    break
-            if try_again:
+    # loop over boundary vertices
+    boundary_vertices = patch_decomposition.vertices_on_boundary()
+    for vkey in boundary_vertices:
+        vertex_faces = patch_decomposition.vertex_faces(vkey, ordered = True)
+        vertex_neighbours = patch_decomposition.vertex_neighbours(vkey, ordered = True)
+        for fkey in vertex_faces:
+            # apply changes if there is an adjacent tri face (pseudo-quads are already transformed)
+            if len(patch_decomposition.face_vertices(fkey)) == 3:
+                # remove quad faces at each extremity
+                tri_faces = vertex_faces[1 : -1]
+                vertex_left = vertex_neighbours[-1]
+                vertex_right = vertex_neighbours[0]
+                new_vertices = []
+                n = len(tri_faces)
+                m = int(floor((n + 1) / 2))
+                # add new vertices on the adjacent boundary edges depending on the number of triangles to modify
+                vertices_left = [patch_decomposition.edge_point(vertex_left, vkey, t = .9 + float(i) / float(m) * .1) for i in range(m)]
+                vertices_left = [patch_decomposition.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z}) for x, y, z in vertices_left]
+                vertices_right = [patch_decomposition.edge_point(vertex_right, vkey, t = .9 + float(i) / float(m) * .1) for i in range(m)]
+                vertices_right = [patch_decomposition.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z}) for x, y, z in vertices_right]
+                vertex_centre = []
+                # add existing vertex if there is an even number of triangles
+                if n % 2 == 0:
+                    vertex_centre = [vkey]
+                vertices = vertices_right + vertex_centre + list(reversed(vertices_left))
+                # modfiy the triangle face vertices
+                for i, fkey in enumerate(tri_faces):
+                    face_vertices = patch_decomposition.face_vertices(fkey)[:]
+                    idx = face_vertices.index(vkey)
+                    face_vertices.insert(idx, vertices[i + 1])
+                    face_vertices.insert(idx, vertices[i])
+                    del face_vertices[idx + 2 - len(face_vertices)]
+                    patch_decomposition.delete_face(fkey)
+                    patch_decomposition.add_face(face_vertices, fkey)
+                # update quad face on the left
+                fkey_left = vertex_faces[-1]
+                face_vertices = patch_decomposition.face_vertices(fkey_left)[:]
+                idx = face_vertices.index(vkey)
+                face_vertices[idx] = vertices[-1]
+                patch_decomposition.delete_face(fkey_left)
+                patch_decomposition.add_face(face_vertices, fkey_left)
+                # update quad face on the right
+                fkey_right = vertex_faces[0]
+                face_vertices = patch_decomposition.face_vertices(fkey_right)[:]
+                idx = face_vertices.index(vkey)
+                face_vertices[idx] = vertices[0]
+                patch_decomposition.delete_face(fkey_right)
+                patch_decomposition.add_face(face_vertices, fkey_right)
                 break
-        if try_again:
-            continue
-        else:
-            break
+        
+    return patch_decomposition
 
 
+
+    # propagate across curve features
+    if feature_polylines is not None:
+        # store vertex keys on the polyline feature using the map of geometric keys
+        feature_map = [geometric_key(vkey) for polyline in feature_polylines for vkey in polyline]
+        vertices_on_feature = [vkey for vkey in patch_decomposition.vertices() if geometric_key(patch_decomposition.vertex_coordinates(vkey)) in feature_map]
+
+        # dictionary mapping vertex geometric keys to vertex indices
+        vertex_map = {geometric_key(patch_decomposition.vertex_coordinates(vkey)): vkey for vkey in patch_decomposition.vertices()}
+
+        # list of edges on curve features
+        polyline_keys = [[geometric_key(vkey) for vkey in polyline] for polyline in feature_polylines]
+        feature_edges = []
+        for u, v in patch_decomposition.edges():
+            u_key = geometric_key(patch_decomposition.vertex_coordinates(u))
+            v_key = geometric_key(patch_decomposition.vertex_coordinates(v))
+            for polyline in polyline_keys:
+                if u_key in polyline and v_key in polyline:
+                    feature_edges.append((u, v))
+                    break
+
+        # store face keys along the polyline
+        faces_along_feature = []
+        for vkey in vertices_on_feature:
+            for fkey in patch_decomposition.vertex_faces(vkey):
+                if fkey not in faces_along_feature:
+                    faces_along_feature.append(fkey)
+
+        for fkey in faces_along_feature:
+            # check if face has not been deleted in-between
+            if fkey not in list(patch_decomposition.faces()):
+                continue
+            face_vertices = patch_decomposition.face_vertices(fkey)
+            # check if not quad patch
+            if len(face_vertices) > 4:
+                print 'to split'
+                for u, v in patch_decomposition.face_halfedges(fkey):
+                    # check where to make the split
+                    if u not in vertices_on_feature and v in vertices_on_feature:
+                        vkey = patch_decomposition.face_vertex_descendant(fkey, v)
+                        wkey = poly_poly_1(patch_decomposition, fkey, vkey)
+                        faces_along_feature.append(patch_decomposition.halfedge[wkey][vkey])
+                        # update feature_edges
+                        b = patch_decomposition.face_vertex_descendant(patch_decomposition.halfedge[vkey][wkey], wkey)
+                        c = patch_decomposition.face_vertex_ancestor(patch_decomposition.halfedge[wkey][vkey], wkey)
+                        if (b, c) in feature_edges or (c, b) in feature_edges:
+                            if (b, c) in feature_edges:
+                                feature_edges.remove((b, c))
+                            else:
+                                feature_edges.remove((c, b))
+                            feature_edges.append((b, wkey))
+                            feature_edges.append((wkey, c))
+                        # propagate until boundary or closed loop
+                        count = patch_decomposition.number_of_faces()
+                        while count > 0:
+                            count -= 1
+                            next_fkey = patch_decomposition.halfedge[vkey][wkey]
+                            ukey = patch_decomposition.face_vertex_descendant(next_fkey, wkey)
+                            if wkey in patch_decomposition.halfedge[ukey] and patch_decomposition.halfedge[ukey][wkey] is not None:
+                                next_fkey = patch_decomposition.halfedge[ukey][wkey]
+                                if len(patch_decomposition.face_vertices(next_fkey)) == 5:
+                                    vkey = wkey
+                                    old_neighbours = patch_decomposition.vertex_neighbours(vkey)
+                                    #wkey = penta_quad_1(patch_decomposition, next_fkey, wkey)
+                                    original_vertices = patch_decomposition.face_vertices(next_fkey)
+                                    original_vertices.remove(vkey)
+                                    face_propagation(patch_decomposition, next_fkey, original_vertices)
+                                    new_neighbours = patch_decomposition.vertex_neighbours(vkey)
+                                    for nbr in new_neighbours:
+                                        if nbr not in old_neighbours:
+                                            wkey = nbr
+                                            break
+                                    # update feature_edges
+                                    b = patch_decomposition.face_vertex_descendant(patch_decomposition.halfedge[vkey][wkey], wkey)
+                                    c = patch_decomposition.face_vertex_ancestor(patch_decomposition.halfedge[wkey][vkey], wkey)
+                                    if (b, c) in feature_edges or (c, b) in feature_edges:
+                                        if (b, c) in feature_edges:
+                                            feature_edges.remove((b, c))
+                                        else:
+                                            feature_edges.remove((c, b))
+                                        feature_edges.append((b, wkey))
+                                        feature_edges.append((wkey, c))
+                                    # add to faces along feature to check
+                                    faces_along_feature.append(patch_decomposition.halfedge[vkey][wkey])
+                                    faces_along_feature.append(patch_decomposition.halfedge[wkey][vkey])
+                                    continue
+                                elif len(patch_decomposition.face_vertices(next_fkey)) == 6:
+                                    vkey = wkey
+                                    face_vertices =  patch_decomposition.face_vertices(next_fkey)
+                                    idx = face_vertices.index(vkey)
+                                    wkey = face_vertices[idx - 3]
+                                    #wkey = hexa_quad_1(patch_decomposition, next_fkey, wkey)
+                                    original_vertices = patch_decomposition.face_vertices(next_fkey)
+                                    original_vertices.remove(vkey)
+                                    original_vertices.remove(wkey)
+                                    face_propagation(patch_decomposition, next_fkey, original_vertices)
+                                    # add to faces along feature to check
+                                    faces_along_feature.append(patch_decomposition.halfedge[vkey][wkey])
+                                    faces_along_feature.append(patch_decomposition.halfedge[wkey][vkey])
+                                    break
+                                #elif len(patch_decomposition.face_vertices(next_fkey)) == 4:
+                                #        vkey = wkey
+                                #        wkey = quad_tri_1(patch_decomposition, next_fkey, wkey)
+                                #        # add to faces along feature to check
+                                #        faces_along_feature.append(patch_decomposition.halfedge[vkey][wkey])
+                                #        faces_along_feature.append(patch_decomposition.halfedge[wkey][vkey])
+                                #        break
+                            break
 
 
     # curves = medial_branches + boundary_polylines
