@@ -11,6 +11,10 @@ from compas.geometry import subtract_vectors
 from compas.geometry import normalize_vector
 from compas.geometry import dot_vectors
 from compas.geometry import cross_vectors
+from compas.geometry import area_polygon
+from compas.geometry import normal_polygon
+
+from compas_pattern.geometry.utilities import polyline_point
 
 from compas_pattern.topology.grammar import simple_split
 from compas_pattern.topology.grammar import remove_tri
@@ -36,7 +40,7 @@ __all__ = [
 ]
 
 
-def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_polylines, feature_points = [], feature_polylines = []):
+def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_polylines, edges_to_polyline, feature_points = [], feature_polylines = []):
     # convert tri faces [a, b, c] into quad faces [a, b, c, c]
 
     # collect pole locations
@@ -63,6 +67,8 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
                 new_face_vertices.insert(idx, vkey)
                 patch_decomposition.delete_face(fkey)
                 patch_decomposition.add_face(new_face_vertices, fkey)
+
+
 
     # remove remaining tri faces that are not pseudo quads
     # loop over boundary vertices
@@ -114,8 +120,102 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
                 patch_decomposition.delete_face(fkey_right)
                 patch_decomposition.add_face(face_vertices, fkey_right)
                 break
-        
+
+
+    for key, item in edges_to_polyline.items():
+        print key, item
+
+    # subidive low quality faces using reference to initial edge polyline 
+    faces = list(patch_decomposition.faces())
+    while len(faces) > 0:
+        fkey = faces.pop()
+        # face values
+        face_normal = patch_decomposition.face_normal(fkey)
+        face_area = patch_decomposition.face_area(fkey)
+        face_vertices = patch_decomposition.face_vertices(fkey)
+        # collect initial polylines
+        polylines = []
+        for i in range(len(face_vertices)):
+            # exception for pseudo-quads with poles
+            if face_vertices[i - 1] != face_vertices[i]:
+                print fkey, face_vertices[i - 1], face_vertices[i]
+                polylines.append(edges_to_polyline[(face_vertices[i - 1], face_vertices[i])])
+        # patch values
+        polygon = []
+        for polyline in polylines:
+            polygon += polyline[: -1]
+        patch_area = area_polygon(polygon)
+        patch_normal = normal_polygon(polygon)
+        signed_face_area = dot_vectors(face_normal, patch_normal) / abs(dot_vectors(face_normal, patch_normal)) * face_area
+        # if degenerated face compared to patch, modify
+        if signed_face_area < 0.1 * patch_area:
+            print fkey
+            for u, v in patch_decomposition.face_halfedges(fkey):
+                # collect vertices
+                if patch_decomposition.is_edge_on_boundary(u, v):
+                    w = patch_decomposition.face_vertex_descendant(fkey, v)
+                    x = patch_decomposition.face_vertex_descendant(fkey, w)
+                    fkey_bis = patch_decomposition.halfedge[x][w]
+                    if fkey_bis in faces:
+                        faces.remove(fkey_bis)
+                    z = patch_decomposition.face_vertex_descendant(fkey_bis, w)
+                    y = patch_decomposition.face_vertex_descendant(fkey_bis, z)
+                    # add new vertices on polylines
+                    xa, ya, za = polyline_point(edges_to_polyline[(u, v)], t = .5, snap_to_point = True)
+                    a = patch_decomposition.add_vertex(attr_dict = {'x': xa, 'y': ya, 'z': za})                
+                    xb, yb, zb = polyline_point(edges_to_polyline[(w, x)], t = .5, snap_to_point = True)
+                    b = patch_decomposition.add_vertex(attr_dict = {'x': xb, 'y': yb, 'z': zb})  
+                    xc, yc, zc = polyline_point(edges_to_polyline[(z, y)], t = .5, snap_to_point = True)
+                    c = patch_decomposition.add_vertex(attr_dict = {'x': xc, 'y': yc, 'z': zc})
+                    # update edges to polylines
+                    # uv -> ua + av (and flipped)
+                    polyline_uv = edges_to_polyline[(u, v)]
+                    del edges_to_polyline[(u, v)]
+                    del edges_to_polyline[(v, u)]
+                    idx_a = polyline_uv.index([xa, ya, za])
+                    edges_to_polyline[(u, a)] = polyline_uv[: idx_a + 1]
+                    edges_to_polyline[(a, u)] = list(reversed(polyline_uv[: idx_a + 1]))
+                    edges_to_polyline[(a, v)] = polyline_uv[idx_a :]
+                    edges_to_polyline[(v, a)] = list(reversed(polyline_uv[idx_a :]))
+                    # wx -> wb + bx (and flipped)
+                    polyline_wx = edges_to_polyline[(w, x)]
+                    del edges_to_polyline[(w, x)]
+                    del edges_to_polyline[(x, w)]
+                    idx_b = polyline_wx.index([xb, yb, zb])
+                    edges_to_polyline[(w, b)] = polyline_wx[: idx_b + 1]
+                    edges_to_polyline[(b, w)] = list(reversed(polyline_wx[: idx_b + 1]))
+                    edges_to_polyline[(b, x)] = polyline_wx[idx_b :]
+                    edges_to_polyline[(x, b)] = list(reversed(polyline_wx[idx_b :]))
+                    # zy -> zc + yc (and flipped)
+                    polyline_zy = edges_to_polyline[(z, y)]
+                    del edges_to_polyline[(z, y)]
+                    del edges_to_polyline[(y, z)]
+                    idx_c = polyline_zy.index([xc, yc, zc])
+                    edges_to_polyline[(z, c)] = polyline_zy[: idx_c + 1]
+                    edges_to_polyline[(c, z)] = list(reversed(polyline_zy[: idx_c + 1]))
+                    edges_to_polyline[(c, y)] = polyline_zy[idx_c :]
+                    edges_to_polyline[(y, c)] = list(reversed(polyline_zy[idx_c :]))
+                    # + ab + bc (and flipped)
+                    edges_to_polyline[(a, b)] = [patch_decomposition.vertex_coordinates(a), patch_decomposition.vertex_coordinates(b)]
+                    edges_to_polyline[(b, a)] = [patch_decomposition.vertex_coordinates(b), patch_decomposition.vertex_coordinates(a)]
+                    edges_to_polyline[(b, c)] = [patch_decomposition.vertex_coordinates(b), patch_decomposition.vertex_coordinates(c)]
+                    edges_to_polyline[(c, b)] = [patch_decomposition.vertex_coordinates(c), patch_decomposition.vertex_coordinates(b)]
+                    # delete faces
+                    patch_decomposition.delete_face(fkey)
+                    patch_decomposition.delete_face(fkey_bis)
+                    # add new faces
+                    face_1 = patch_decomposition.add_face([u, a, b, x])
+                    face_2 = patch_decomposition.add_face([a, v, w, b])
+                    face_3 = patch_decomposition.add_face([b, w, z, c])
+                    face_4 = patch_decomposition.add_face([b, c, y, x])
+                    faces += [face_1, face_2, face_3, face_4]
+                    break
+
     return patch_decomposition
+
+
+
+
 
 
 
