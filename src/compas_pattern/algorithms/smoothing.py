@@ -318,6 +318,8 @@ def customed_constraints(mesh, constraints, surface_boundaries, surface_constrai
                 rgb = [0, float(i) / n * 255, (n - float(i)) / n * 255]
             elif contraint_type == 'surface':
                 rgb = [255, 255, 255]
+            else:
+                rgb = [0, 0, 0]
             vertex_colors[vkey] = rgb
 
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
@@ -337,7 +339,7 @@ def customed_constraints(mesh, constraints, surface_boundaries, surface_constrai
 
         rs.EnableRedraw(True)
 
-        constraint_types = ['point', 'curve', 'surface']
+        constraint_types = ['point', 'curve', 'surface', 'none']
         new_constraint_type = rs.GetString('constraint type?', strings = constraint_types)
 
         # set new point constraint
@@ -373,6 +375,11 @@ def customed_constraints(mesh, constraints, surface_boundaries, surface_constrai
         elif new_constraint_type == 'surface':
             for vkey in vkeys:
                 constraints[vkey] = ['surface', surface_constraint]
+
+        # remove constraint
+        elif new_constraint_type == 'none':
+            for vkey in vkeys:
+                constraints[vkey] = ['none', None]
 
         rs.DeleteObjects(dots)
 
