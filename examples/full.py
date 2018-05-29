@@ -1,3 +1,4 @@
+
 import rhinoscriptsyntax as rs
 import compas_rhino as rhino
 
@@ -41,7 +42,7 @@ from compas_pattern.algorithms.smoothing import apply_constraints
 
 def start():
     # -2. layer structure
-    layers = ['shape_and_features', 'initial_coarse_quad_mesh', 'edited_coarse_quad_mesh', 'quad_mesh', 'pattern_topology', 'pattern_geometry']
+    layers = ['shape_and_features', 'delaunay_mesh', 'initial_coarse_quad_mesh', 'edited_coarse_quad_mesh', 'quad_mesh', 'pattern_topology', 'pattern_geometry']
     colours = [[255,0,0], [0,0,0], [0,0,0], [200,200,200], [100,100,100], [0,0,0]]
     for layer, colour in zip(layers, colours):
         rs.AddLayer(layer)
@@ -90,21 +91,27 @@ def start():
         
         # 2. triangulation
         delaunay_mesh = triangulation(planar_boundary_polyline, holes = planar_hole_polylines, polyline_features = planar_polyline_features, point_features = planar_point_features)
-        #draw_mesh(delaunay_mesh)
+        delaunay_mesh_remapped = delaunay_mesh.copy()
+        remapping(delaunay_mesh_remapped, surface_guid)
+        delaunay_mesh_guid = draw_mesh(delaunay_mesh_remapped)
+        rs.ObjectLayer(delaunay_mesh_guid, layer = 'delaunay_mesh')
+        rs.LayerVisible('delaunay_mesh', visible = True)
+        rs.EnableRedraw(False)
         
         # 3. decomposition
         medial_branches, boundary_polylines = decomposition(delaunay_mesh)
         
         # 4. extraction
-        vertices, faces = extraction(boundary_polylines, medial_branches)
+        vertices, faces, edges_to_polyline = extraction(boundary_polylines, medial_branches)
         patch_decomposition = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
         
         # 5. conforming
-        coarse_quad_mesh = conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_polylines, planar_point_features, planar_polyline_features)
+        coarse_quad_mesh = conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_polylines, edges_to_polyline, planar_point_features, planar_polyline_features)
         
         # 6. remapping
         remapping(coarse_quad_mesh, surface_guid)
     
+    rs.LayerVisible('delaunay_mesh', visible = False)
     coarse_quad_mesh_guid = draw_mesh(coarse_quad_mesh)
     rs.ObjectLayer(coarse_quad_mesh_guid, layer = 'initial_coarse_quad_mesh')
     rs.LayerVisible('initial_coarse_quad_mesh', visible = True)
