@@ -28,7 +28,7 @@ __all__ = [
     'densification',
 ]
 
-def densification(mesh, target_length):
+def densification(mesh, target_length, custom = True):
     """Densifies a quad mesh based on a target length.
     
     Parameters
@@ -37,6 +37,8 @@ def densification(mesh, target_length):
         The quad mesh to densify.
     target_length : float
         Target length for densification.
+    custom : bool
+        User modification of density parameters.
 
     Returns
     -------
@@ -82,41 +84,42 @@ def densification(mesh, target_length):
             edge_group[(u, v)] = i
             edge_group[(v, u)] = i
 
-    # propose customization of local density
-    count = 100
-    while count > 0:
-        count -= 1
-        rs.EnableRedraw(False)
-        all_dots = []
-        for dual_polyedge in dual_polyedges:
-            u0, v0 = dual_polyedge[0]
-            group = edge_group[(u0, v0)]
-            parameter = group_subdivision[group]
-            dots = []
-            for u, v in dual_polyedge:
-                if u > v:
-                    continue
-                point = mesh.edge_midpoint(u, v)
-                group = edge_group[(u, v)]
-                parameter = int(group_subdivision[group])
-                dots.append(rs.AddTextDot(parameter, point))
-            k = float(group) / float(max_group) * 255
-            RGB = [k] * 3
-            rs.AddGroup(group)
-            rs.ObjectColor(dots, RGB)
-            rs.AddObjectsToGroup(dots, group)
-            all_dots += dots
-        rs.EnableRedraw(True)
-        dot = rs.GetObject('edge group to modify', filter = 8192)
-        if dot is not None:
-            group = int(rs.ObjectGroups(dot)[0])
-            parameter = rs.GetInteger('subdivision parameter', number = 3, minimum = 1)
-            group_subdivision[group] = parameter
-        rs.EnableRedraw(False)
-        rs.DeleteObjects(all_dots)
-        rs.EnableRedraw(True)
-        if dot is None:
-            break
+    if custom:
+        # propose customization of local density
+        count = 100
+        while count > 0:
+            count -= 1
+            rs.EnableRedraw(False)
+            all_dots = []
+            for dual_polyedge in dual_polyedges:
+                u0, v0 = dual_polyedge[0]
+                group = edge_group[(u0, v0)]
+                parameter = group_subdivision[group]
+                dots = []
+                for u, v in dual_polyedge:
+                    if u > v:
+                        continue
+                    point = mesh.edge_midpoint(u, v)
+                    group = edge_group[(u, v)]
+                    parameter = int(group_subdivision[group])
+                    dots.append(rs.AddTextDot(parameter, point))
+                k = float(group) / float(max_group) * 255
+                RGB = [k] * 3
+                rs.AddGroup(group)
+                rs.ObjectColor(dots, RGB)
+                rs.AddObjectsToGroup(dots, group)
+                all_dots += dots
+            rs.EnableRedraw(True)
+            dot = rs.GetObject('edge group to modify', filter = 8192)
+            if dot is not None:
+                group = int(rs.ObjectGroups(dot)[0])
+                parameter = rs.GetInteger('subdivision parameter', number = 3, minimum = 1)
+                group_subdivision[group] = parameter
+            rs.EnableRedraw(False)
+            rs.DeleteObjects(all_dots)
+            rs.EnableRedraw(True)
+            if dot is None:
+                break
 
     # mesh each patch
     meshes = []
