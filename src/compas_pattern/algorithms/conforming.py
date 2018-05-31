@@ -14,6 +14,7 @@ from compas.geometry import cross_vectors
 from compas.geometry import area_polygon
 from compas.geometry import normal_polygon
 
+from compas_pattern.geometry.utilities import line_point
 from compas_pattern.geometry.utilities import polyline_point
 
 from compas_pattern.topology.grammar import simple_split
@@ -21,6 +22,8 @@ from compas_pattern.topology.grammar import remove_tri
 
 from compas_pattern.topology.global_propagation import face_propagation
 from compas_pattern.topology.global_propagation import mesh_propagation
+
+from compas.utilities import geometric_key
 
 #from compas_pattern.topology.consistency import quad_tri_1
 #from compas_pattern.topology.consistency import mix_quad_1
@@ -87,9 +90,25 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
                 n = len(tri_faces)
                 m = int(floor((n + 1) / 2))
                 # add new vertices on the adjacent boundary edges depending on the number of triangles to modify
-                vertices_left = [patch_decomposition.edge_point(vertex_left, vkey, t = .9 + float(i) / float(m) * .1) for i in range(m)]
+                polyline_left = edges_to_polyline[(vertex_left, vkey)]
+                point_left = polyline_point(polyline_left, t = .9, snap_to_point = True)
+                if point_left == polyline_left[-1]:
+                    # assuming there is at least 3 points
+                    point_left = polyline_left[-2]
+                #if geometric_key(point_left) == geometric_key(patch_decomposition.vertex_coordinates(vkey)):
+                #    point_left = patch_decomposition.edge_point(vertex_left, vkey, t = .9)
+                vertices_left = [line_point([point_left, patch_decomposition.vertex_coordinates(vkey)], t = float(i) / float(m)) for i in range(m)]
+                #vertices_left = [patch_decomposition.edge_point(vertex_left, vkey, t = .9 + float(i) / float(m) * .1) for i in range(m)]
                 vertices_left = [patch_decomposition.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z}) for x, y, z in vertices_left]
-                vertices_right = [patch_decomposition.edge_point(vertex_right, vkey, t = .9 + float(i) / float(m) * .1) for i in range(m)]
+                polyline_right = edges_to_polyline[(vertex_right, vkey)]
+                point_right = polyline_point(polyline_right, t = .9, snap_to_point = True)
+                if point_right == polyline_right[-1]:
+                    # assuming there is at least 3 points
+                    point_right = polyline_right[-2]
+                #if geometric_key(point_right) == geometric_key(patch_decomposition.vertex_coordinates(vkey)):
+                #    point_right = patch_decomposition.edge_point(vertex_right, vkey, t = .9)
+                vertices_right = [line_point([point_right, patch_decomposition.vertex_coordinates(vkey)], t = float(i) / float(m)) for i in range(m)]
+                #vertices_right = [patch_decomposition.edge_point(vertex_right, vkey, t = .9 + float(i) / float(m) * .1) for i in range(m)]
                 vertices_right = [patch_decomposition.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z}) for x, y, z in vertices_right]
                 vertex_centre = []
                 # add existing vertex if there is an even number of triangles
@@ -103,6 +122,19 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
                     face_vertices.insert(idx, vertices[i + 1])
                     face_vertices.insert(idx, vertices[i])
                     del face_vertices[idx + 2 - len(face_vertices)]
+                    # update edges_to_polyline
+                    b = face_vertices[idx - 3]
+                    c = face_vertices[idx - 2]
+                    d = face_vertices[idx - 1]
+                    a = face_vertices[idx]
+                    for u, v in [[a, b] , [a, d], [b, c]]:
+                        if (u, v) in edges_to_polyline:
+                            del edges_to_polyline[(u, v)]
+                        if (v, u) in edges_to_polyline:
+                            del edges_to_polyline[(v, u)]
+                        edges_to_polyline[(u, v)] = [patch_decomposition.vertex_coordinates(u), patch_decomposition.vertex_coordinates(v)]
+                        edges_to_polyline[(v, u)] = [patch_decomposition.vertex_coordinates(v), patch_decomposition.vertex_coordinates(u)]
+                    # update faces
                     patch_decomposition.delete_face(fkey)
                     patch_decomposition.add_face(face_vertices, fkey)
                 # update quad face on the left
@@ -112,6 +144,11 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
                 face_vertices[idx] = vertices[-1]
                 patch_decomposition.delete_face(fkey_left)
                 patch_decomposition.add_face(face_vertices, fkey_left)
+                del edges_to_polyline[(vertex_left, vkey)]
+                del edges_to_polyline[(vkey, vertex_left)]
+                idx = polyline_left.index(point_left)
+                edges_to_polyline[(vertex_left, vertices[-1])] = polyline_left[: idx + 1]
+                edges_to_polyline[(vertices[-1], vertex_left)] = list(reversed(polyline_left[: idx + 1]))
                 # update quad face on the right
                 fkey_right = vertex_faces[0]
                 face_vertices = patch_decomposition.face_vertices(fkey_right)[:]
@@ -119,11 +156,14 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
                 face_vertices[idx] = vertices[0]
                 patch_decomposition.delete_face(fkey_right)
                 patch_decomposition.add_face(face_vertices, fkey_right)
+                del edges_to_polyline[(vertex_right, vkey)]
+                del edges_to_polyline[(vkey, vertex_right)]
+                idx = polyline_right.index(point_right)
+                edges_to_polyline[(vertex_right, vertices[0])] = polyline_right[: idx + 1]
+                edges_to_polyline[(vertices[0], vertex_right)] = list(reversed(polyline_right[: idx + 1]))
                 break
 
 
-    for key, item in edges_to_polyline.items():
-        print key, item
 
     # subidive low quality faces using reference to initial edge polyline 
     faces = list(patch_decomposition.faces())
@@ -138,7 +178,6 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
         for i in range(len(face_vertices)):
             # exception for pseudo-quads with poles
             if face_vertices[i - 1] != face_vertices[i]:
-                print fkey, face_vertices[i - 1], face_vertices[i]
                 polylines.append(edges_to_polyline[(face_vertices[i - 1], face_vertices[i])])
         # patch values
         polygon = []
@@ -149,7 +188,6 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
         signed_face_area = dot_vectors(face_normal, patch_normal) / abs(dot_vectors(face_normal, patch_normal)) * face_area
         # if degenerated face compared to patch, modify
         if signed_face_area < 0.1 * patch_area:
-            print fkey
             for u, v in patch_decomposition.face_halfedges(fkey):
                 # collect vertices
                 if patch_decomposition.is_edge_on_boundary(u, v):
