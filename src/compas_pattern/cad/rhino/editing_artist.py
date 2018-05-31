@@ -229,7 +229,7 @@ def apply_rule(mesh, rule):
         fkey = rhino.mesh_select_face(mesh, message = 'fkey')
         artist.clear_layer()
         artist.redraw()
-        
+
         artist.draw_edgelabels(text = {(u, v): "{}-{}".format(u, v) for u, v in mesh.face_halfedges(fkey)})
         artist.redraw()
         edge = rhino.mesh_select_edge(mesh, message = 'edge')
@@ -463,7 +463,28 @@ def apply_rule(mesh, rule):
         rs.DeleteLayer('mesh_artist')
         
         clear_faces(mesh, fkeys, vkeys)
-    
+
+    if rule == 'move_vertices':
+        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+        artist.clear_layer()
+
+        artist.draw_vertexlabels(text = {key: str(key) for key in mesh.vertices()})
+        artist.redraw()
+        vkeys = rhino.mesh_select_vertices(mesh, message = 'vkeys')
+        artist.clear_layer()
+        artist.redraw()
+
+        rs.DeleteLayer('mesh_artist')
+        
+        x1, y1, z1 = rs.GetPoint(message = 'from...')
+        x2, y2, z2 = rs.GetPoint(message = '...to')
+
+        for vkey in vkeys:
+            attr = mesh.vertex[vkey]
+            attr['x'] += x2 - x1
+            attr['y'] += y2 - y1
+            attr['z'] += z2 - z1
+
     return 0
 
 # ==============================================================================
