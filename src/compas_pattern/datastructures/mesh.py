@@ -8,6 +8,9 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
+    'mesh_area',
+    'mesh_centroid',
+    'mesh_normal',
     'add_vertex_from_vertices',
     'insert_vertices_in_halfedge',
     'face_point',
@@ -15,7 +18,40 @@ __all__ = [
     'insert_vertex_in_face',
     'insert_vertices_in_face',
     'delete_face',
+    'dual_mesh',
 ]
+
+def mesh_area(mesh):
+
+    area = sum([mesh.face_area(fkey) for fkey in mesh.faces()])
+
+    return area
+    
+def mesh_centroid(mesh):
+
+    centroid = [0, 0, 0]
+    for fkey in mesh.faces():
+        x, y, z = mesh.face_centroid(fkey)
+        area = mesh.face_area(fkey)
+        centroid[0] += area * x
+        centroid[1] += area * y
+        centroid[2] += area * z
+    centroid = [xyz / n for xyz, n in zip(centroid, [mesh_area(mesh)] * 3)]  
+
+    return centroid
+
+def mesh_normal(mesh):
+
+    normal = [0, 0, 0]
+    for fkey in mesh.faces():
+        x, y, z = mesh.face_normal(fkey)
+        area = mesh.face_area(fkey)
+        normal[0] += area * x
+        normal[1] += area * y
+        normal[2] += area * z
+    normal = [xyz / n for xyz, n in zip(normal, [len(normal)] * 3)]  
+
+    return normal
 
 def add_vertex_from_vertices(mesh, vertices, weights):
     n = len(vertices)
@@ -180,6 +216,19 @@ def delete_face(mesh, fkey):
             del mesh.halfedge[u][v]
             del mesh.halfedge[v][u]
     del mesh.face[fkey]
+
+def dual_mesh(primal):
+
+    dual = Mesh.from_vertices_and_faces([],[])
+
+    for fkey in primal.faces():
+        x, y, z = primal.face_centroid(fkey)
+        dual.add_vertex(key = fkey, attr_dict = {'x': x, 'y': y, 'z': z})
+    for vkey in primal.vertices():
+        if not primal.is_vertex_on_boundary(vkey):
+            dual.add_face(primal.vertex_faces(vkey, ordered = True), fkey = vkey)
+
+    return dual
 
 # ==============================================================================
 # Main
