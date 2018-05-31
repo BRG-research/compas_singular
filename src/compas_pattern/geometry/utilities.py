@@ -10,20 +10,47 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
+	'line_point',
 	'polyline_point'
 ]
 
-def polyline_point(polyline, t = .5, snap_to_point = False):
-	"""Minimum in a list.
+def line_point(line, t = .5):
+	"""Point on a lyline at a normalised parameter.
 
 	Parameters
 	----------
-	polygon: list
-	    The XYZ coordinates of the nodes of the polyline. The polyline can be closed
+	polyline: list
+	    The XYZ coordinates of the extremities of the line.
+	t: float 
+	    The normalised parameter of the point on the polyline between 0 and 1.
+
+	Returns
+	-------
+	xyz: list, None
+		The point coordinates.
+		None if the parameter is not in [0,1]
+
+	Raises
+	------
+	-
+
+	"""
+
+	u, v = line
+	uv = subtract_vectors(v, u)
+	return add_vectors(u, scale_vector(uv, t))
+
+def polyline_point(polyline, t = .5, snap_to_point = False):
+	"""Point on a polyline at a normalised parameter. If asked, the found position is snapped to the closest polyline node.
+
+	Parameters
+	----------
+	polyline: list
+	    The XYZ coordinates of the nodes of the polyline. The polyline can be closed.
 	t: float 
 	    The normalised parameter of the point on the polyline between 0 and 1.
 	snap_to_point: bool
-		If true, the closest node on the polyline is returned, if false, a point on a line;
+		If true, the closest node on the polyline is returned, if false, a point on a line.
 
 	Returns
 	-------
