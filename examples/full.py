@@ -34,16 +34,18 @@ from compas_pattern.algorithms.densification import densification
 
 from compas_pattern.algorithms.patterning import patterning
 
+
 from compas.geometry.algorithms.smoothing import mesh_smooth_centroid
 from compas.geometry.algorithms.smoothing import mesh_smooth_area
 from compas.geometry.algorithms.smoothing_cpp import smooth_centroid_cpp
 from compas_pattern.algorithms.smoothing import define_constraints
 from compas_pattern.algorithms.smoothing import apply_constraints
 
+from compas_pattern.algorithms.evaluation import print_metrics
 def start():
     # -2. layer structure
     layers = ['shape_and_features', 'delaunay_mesh', 'initial_coarse_quad_mesh', 'edited_coarse_quad_mesh', 'quad_mesh', 'pattern_topology', 'pattern_geometry']
-    colours = [[255,0,0], [0,0,0], [0,0,0], [200,200,200], [100,100,100], [0,0,0]]
+    colours = [[255,0,0], [255, 255, 255], [0,0,0], [0,0,0], [200,200,200], [100,100,100], [0,0,0]]
     for layer, colour in zip(layers, colours):
         rs.AddLayer(layer)
         rs.LayerColor(layer, colour)
@@ -106,6 +108,7 @@ def start():
         patch_decomposition = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
         
         # 5. conforming
+        
         coarse_quad_mesh = conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_polylines, edges_to_polyline, planar_point_features, planar_polyline_features)
         
         # 6. remapping
@@ -120,6 +123,7 @@ def start():
     rs.EnableRedraw(False)
     rs.LayerVisible('initial_coarse_quad_mesh', visible = False)
     editing(coarse_quad_mesh)
+    rs.EnableRedraw(True)
     thickening = rs.GetString('thicken?', defaultString = 'False', strings = ['True', 'False'])
     if thickening == 'True':
         thickness = rs.GetReal(message = 'thickness', number = 1, minimum = .0001, maximum = 1000)
@@ -179,5 +183,7 @@ def start():
     rs.ObjectLayer(pattern_geometry_guid, layer = 'pattern_geometry')
     rs.LayerVisible('pattern_topology', visible = False)
     rs.LayerVisible('pattern_geometry', visible = True)
+    
+    print_metrics(pattern_geometry)
 
 start()
