@@ -18,7 +18,6 @@ __all__ = [
     'insert_vertex_in_face',
     'insert_vertices_in_face',
     'delete_face',
-    'dual_mesh',
 ]
 
 def mesh_area(mesh):
@@ -104,9 +103,9 @@ def face_circle(mesh, fkey):
     b = mesh.vertex_coordinates(b)
     c = mesh.vertex_coordinates(c)
 
-    center, radius, normal = circle_from_points(a, b, c)
+    centre, radius, normal = circle_from_points(a, b, c)
     
-    return center, radius, normal
+    return centre, radius, normal
 
 def insert_vertex_in_face(mesh, fkey, vkey, added_vkey):
     """Insert a vertex in the vertices of a face after a vertex.
@@ -216,19 +215,6 @@ def delete_face(mesh, fkey):
             del mesh.halfedge[u][v]
             del mesh.halfedge[v][u]
     del mesh.face[fkey]
-
-def dual_mesh(primal):
-
-    dual = Mesh.from_vertices_and_faces([],[])
-
-    for fkey in primal.faces():
-        x, y, z = primal.face_centroid(fkey)
-        dual.add_vertex(key = fkey, attr_dict = {'x': x, 'y': y, 'z': z})
-    for vkey in primal.vertices():
-        if not primal.is_vertex_on_boundary(vkey):
-            dual.add_face(primal.vertex_faces(vkey, ordered = True), fkey = vkey)
-
-    return dual
 
 # ==============================================================================
 # Main
