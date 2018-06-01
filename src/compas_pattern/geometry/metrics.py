@@ -28,7 +28,7 @@ __all__ = [
 	'face_aspect_ratios',
 	'face_skewnesses',
 	'face_curvatures',
-	'vertex_curvature',
+	'vertex_curvatures',
 	'vertex_polyedge_curvature',
 
 ]
