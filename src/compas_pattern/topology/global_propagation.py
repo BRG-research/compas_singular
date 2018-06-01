@@ -7,6 +7,14 @@ from compas.geometry.algorithms.interpolation import discrete_coons_patch
 
 from compas_pattern.datastructures.mesh import insert_vertices_in_halfedge
 
+try:
+    import rhinoscriptsyntax as rs
+
+except ImportError:
+    import platform
+    if platform.python_implementation() == 'IronPython':
+        raise
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -33,8 +41,8 @@ def face_propagation(mesh, fkey, regular_vertices):
 
     Returns
     -------
-    mesh : mesh, None
-        The modified quad mesh.
+    new_faces : list, None
+        The keys of the new faces that replace the old face.
         None if face was an original quad face with four original vertices or if subdivision if not valid.
 
     Raises
@@ -49,7 +57,16 @@ def face_propagation(mesh, fkey, regular_vertices):
 
     # need four original vertices of initial face
     if len(regular_vertices) != 4:
+        #exception if previous cross propagation: temporarily add vertices to the original vertices if is four-valent or if is three-valent and adjacent to only one four-valent face
+        if len(regular_vertices) == 2:
+            for vkey in face_vertices:
+                four_valent_adjacent_faces = [fkey2 for fkey2 in mesh.vertex_faces(vkey) if len(mesh.face_vertices(fkey2)) == 4]
+                if (not mesh.is_vertex_on_boundary(vkey) and len(mesh.vertex_neighbours(vkey)) == 4) or (not mesh.is_vertex_on_boundary(vkey) and len(mesh.vertex_neighbours(vkey)) == 3 and len(four_valent_adjacent_faces) == 1) or (mesh.is_vertex_on_boundary(vkey) and len(mesh.vertex_neighbours(vkey)) == 3):
+                    if vkey not in regular_vertices:
+                        regular_vertices.append(vkey)
+    if len(regular_vertices) != 4:
         return None
+
     for vkey in regular_vertices:
         if vkey not in face_vertices:
             return None
@@ -135,8 +152,9 @@ def face_propagation(mesh, fkey, regular_vertices):
 
     # delete old face and add new faces
     mesh.delete_face(fkey)
+    new_faces = []
     for face in new_face_vertices:
-        mesh.add_face(list(reversed([vertex_remap[vkey] for vkey in face])))
+        new_faces.append(mesh.add_face(list(reversed([vertex_remap[vkey] for vkey in face]))))
     
     # update adjacent faces by inserting new vertices
     vertex_map = {geometric_key(mesh.vertex_coordinates(vkey)): vkey for vkey in mesh.vertices()}
@@ -148,7 +166,7 @@ def face_propagation(mesh, fkey, regular_vertices):
             vertices = [vertex_map[geometric_key(point)] for point in points]
             insert_vertices_in_halfedge(mesh, v, u, list(reversed(vertices[1 : -1])))
 
-    return mesh
+    return new_faces
 
 def mesh_propagation(mesh, regular_vertices):
     """Global mesh propagation of local rule/operation that would break the quad constraint.
@@ -177,14 +195,17 @@ def mesh_propagation(mesh, regular_vertices):
     while count > 0:
         count -= 1
         propagated = False
-        for fkey in mesh.faces():
+        faces = list(mesh.faces())
+        for fkey in faces:
             face_vertices = mesh.face_vertices(fkey)
             # if valency higher than 4
             if len(face_vertices) > 4:
                 # retrieve original vertices
                 face_original_vertices = [vkey for vkey in face_vertices if vkey in regular_vertices]
                 # propagate
-                face_propagation(mesh, fkey, face_original_vertices)
+                new_faces = face_propagation(mesh, fkey, face_original_vertices)
+                faces += new_faces
+                count += len(new_faces)
                 propagated = True
                 break
         # if propagation, then try again
