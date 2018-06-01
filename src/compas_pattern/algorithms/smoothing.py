@@ -411,7 +411,14 @@ def apply_constraints(k, args):
     for vkey, constraint in constraints.items():
         cstr_type, cstr_object = constraint
 
-        if cstr_type == 'curve':
+        if cstr_type == 'point':
+            x, y, z = cstr_object
+            attr = mesh.vertex[vkey]
+            attr['x'] = x
+            attr['y'] = y
+            attr['z'] = z
+
+        elif cstr_type == 'curve':
             xyz = mesh.vertex_coordinates(vkey)
             t = rs.CurveClosestPoint(cstr_object, xyz)
             x, y, z = rs.EvaluateCurve(cstr_object, t)
