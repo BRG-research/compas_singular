@@ -15,6 +15,8 @@ except ImportError:
 from compas_pattern.cad.rhino.editing_artist import apply_rule
 from compas_pattern.topology.global_propagation import mesh_propagation
 
+from compas.utilities import geometric_key
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -57,7 +59,7 @@ def editing(mesh):
 
     # first visualisation
     rs.EnableRedraw(False)
-    edges = [rs.AddLine(mesh.vertex_coordinates(u), mesh.vertex_coordinates(v)) for u,v in mesh.edges() if u != v]
+    edges = [rs.AddLine(mesh.vertex_coordinates(u), mesh.vertex_coordinates(v)) for u,v in mesh.edges() if u != v and geometric_key(mesh.vertex_coordinates(u)) != geometric_key(mesh.vertex_coordinates(v))]
     rs.ObjectLayer(edges, 'temp')
     rs.EnableRedraw(True)
         
