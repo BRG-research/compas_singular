@@ -12,6 +12,7 @@ __all__ = [
     'quad_mesh_polylines',
     'dual_edge_polylines',
     'singularity_polylines',
+    'strip_polylines',
 ]
 
 def mesh_boundaries(mesh, vertex_splits = []):
@@ -296,6 +297,54 @@ def singularity_polylines(mesh):
 
     return polylines
 
+def strip_polylines(mesh):
+
+    edge_groups, max_group = dual_edge_polylines(mesh)
+
+    strip_polylines = {}
+    for fkey in mesh.faces():
+        a, b, c, d = mesh.face_vertices(fkey)
+        group_0 = edge_groups[(a, b)]
+        line_0 = [mesh.edge_midpoint(a, b), mesh.edge_midpoint(c, d)]
+        if group_0 in strip_polylines:
+            strip_polylines[group_0].append(line_0)
+        else:
+            strip_polylines[group_0] = [line_0]
+            
+        group_1 = edge_groups[(b, c)]
+        line_1 = [mesh.edge_midpoint(b, c), mesh.edge_midpoint(d, a)]
+        if group_1 in strip_polylines:
+            strip_polylines[group_1].append(line_1)
+        else:
+            strip_polylines[group_1] = [line_1]
+
+    polylines = []
+    for key, item in strip_polylines.items():
+        lines = item
+        polyline = lines.pop()
+        count = len(lines)
+        while len(lines) > 0 and count > 0:
+            count -= 1
+            to_remove = None
+            for u, v in lines:
+                if u == polyline[0]:
+                    polyline.insert(0, v)
+                    to_remove = [u, v]
+                elif u == polyline[-1]:
+                    polyline.append(v)
+                    to_remove = [u, v]
+                elif v == polyline[0]:
+                    polyline.insert(0, u)
+                    to_remove = [u, v]
+                elif v == polyline[-1]:
+                    polyline.append(u)
+                    to_remove = [u, v]
+                if to_remove is not None:
+                    break
+            lines.remove(to_remove)
+        polylines.append(polyline)
+
+    return polylines
 # ==============================================================================
 # Main
 # ==============================================================================
