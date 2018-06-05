@@ -20,8 +20,9 @@ __all__ = [
     'is_point_on_curve',
     'surface_borders',
     'surface_border_kinks',
-    'draw_mesh',
     'curve_discretisation',
+    'draw_mesh',
+    'draw_graph',
 ]
 
 
@@ -55,20 +56,6 @@ def surface_border_kinks(surface_guid):
                 kinks.append(end)
     return kinks
 
-def draw_mesh(mesh):
-    # if quad/tri mesh add mesh, else add edges
-    for fkey in mesh.faces():
-        if len(mesh.face_vertices(fkey)) > 4:
-            #return edges
-            edges =  [rs.AddLine(mesh.vertex_coordinates(u), mesh.vertex_coordinates(v)) for u, v in mesh.edges() if mesh.vertex_coordinates(u) != mesh.vertex_coordinates(v)]
-            group = rs.AddGroup()
-            rs.AddObjectsToGroup(edges, group)
-            return edges
-    # return mesh
-    vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
-    face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
-    return rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
-
 def curve_discretisation(curve_guid, discretisation_spacing):
     points = []
     n = int(rs.CurveLength(curve_guid) / discretisation_spacing) + 1
@@ -88,6 +75,27 @@ def curve_discretisation(curve_guid, discretisation_spacing):
     rs.DeleteObjects(curve_guids)
     
     return rs.AddPolyline(points)
+
+def draw_mesh(mesh):
+    # if quad/tri mesh add mesh, else add edges
+    for fkey in mesh.faces():
+        if len(mesh.face_vertices(fkey)) > 4:
+            #return edges
+            edges =  [rs.AddLine(mesh.vertex_coordinates(u), mesh.vertex_coordinates(v)) for u, v in mesh.edges() if mesh.vertex_coordinates(u) != mesh.vertex_coordinates(v)]
+            group = rs.AddGroup()
+            rs.AddObjectsToGroup(edges, group)
+            return edges
+    # return mesh
+    vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
+    face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
+    return rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
+
+def draw_graph(graph):
+    
+    vertices = [rs.AddPoint(graph.vertex_coordinates(vkey)) for vkey in graph.vertices()]
+    edges = [rs.AddLine(graph.vertex_coordinates(ukey), graph.vertex_coordinates(vkey)) for ukey, vkey in graph.edges()]
+    
+    return edges, vertices
 
 # ==============================================================================
 # Main
