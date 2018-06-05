@@ -11,6 +11,8 @@ from compas_pattern.topology.polyline_extraction import mesh_boundaries
 
 from compas_pattern.topology.global_propagation import face_propagation
 
+from compas.geometry import distance_point_point
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -36,6 +38,7 @@ __all__ = [
     'remove_tri',
     'rotate_vertex',
     'clear_faces',
+    'add_handle',
 ]
 
 def vertex_pole(mesh, fkey, pole):
@@ -726,6 +729,71 @@ def clear_faces(mesh, fkeys, vkeys):
     fkey = mesh.add_face(faces_boundary_vertices)
 
     face_propagation(mesh, fkey, vkeys)
+
+    return 0
+
+def add_handle(mesh, fkey_1, fkey_2, orientation = +1):
+    # add a handle between two faces by first punching a hole
+
+    vertices = [vkey for vkey in mesh.vertices()]
+
+    # add firtst opening
+    face_opening(mesh, fkey_1)
+    # find newly added vertices
+    vertices_1 = [vkey for vkey in mesh.vertices() if vkey not in vertices]
+
+
+    # add second opening
+    face_opening(mesh, fkey_2)
+    # find newly added vertices
+    vertices_2 = [vkey for vkey in mesh.vertices() if vkey not in vertices and vkey not in vertices_1]
+
+    # sort the vertices along the new boundary components
+    # first one
+    sorted_vertices_1 = [vertices_1.pop()]
+    count = 4
+    while len(vertices_1) > 0 and count > 0:
+        count -= 1
+        for vkey in vertices_1:
+            if vkey in mesh.halfedge[sorted_vertices_1[-1]] and mesh.halfedge[sorted_vertices_1[-1]][vkey] is not None:
+                sorted_vertices_1.append(vkey)
+                vertices_1.remove(vkey)
+                break
+    sorted_vertices_1 = list(reversed(sorted_vertices_1))
+
+    # second one
+    sorted_vertices_2 = [vertices_2.pop()]
+    count = 4
+    while len(vertices_2) > 0 and count > 0:
+        count -= 1
+        for vkey in vertices_2:
+            if vkey in mesh.halfedge[sorted_vertices_2[-1]] and mesh.halfedge[sorted_vertices_2[-1]][vkey] is not None:
+                sorted_vertices_2.append(vkey)
+                vertices_2.remove(vkey)
+                break        
+    sorted_vertices_2 = list(reversed(sorted_vertices_2))
+
+    # match the facing boundary vertices so as to reduce the total distance
+    min_dist = -1
+    sorted_vertices = []
+    for i in range(4):
+        a, b, c, d = sorted_vertices_1
+        e, f, g, h = [sorted_vertices_2[j - i] for j in range(4)]
+        d1 = distance_point_point(mesh.vertex_coordinates(a), mesh.vertex_coordinates(e))
+        d2 = distance_point_point(mesh.vertex_coordinates(b), mesh.vertex_coordinates(f))
+        d3 = distance_point_point(mesh.vertex_coordinates(c), mesh.vertex_coordinates(g))
+        d4 = distance_point_point(mesh.vertex_coordinates(d), mesh.vertex_coordinates(h))
+        dist = d1 + d2 + d3 + d4
+        if min_dist < 0 or dist < min_dist:
+            min_dist = dist
+            sorted_vertices = [a, b, c, d, e, f, g, h]
+
+    # add the new faces that close the holes as a handle
+    a, b, c, d, h, g, f, e = sorted_vertices
+    mesh.add_face([a, e, f, b])
+    mesh.add_face([b, f, g, c])
+    mesh.add_face([c, g, h, d])
+    mesh.add_face([d, h, e, a])
 
     return 0
 

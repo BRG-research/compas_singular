@@ -29,6 +29,7 @@ from compas_pattern.topology.grammar import insert_pole
 from compas_pattern.topology.grammar import insert_partial_pole
 from compas_pattern.topology.grammar import singular_boundary_1
 from compas_pattern.topology.grammar import singular_boundary_2
+from compas_pattern.topology.grammar import add_handle
 
 from compas_pattern.topology.polyline_extraction import dual_edge_polylines
 
@@ -422,7 +423,7 @@ def apply_rule(mesh, rule):
 
         rs.DeleteLayer('mesh_artist')
 
-        face_strip_insert(Mesh, mesh, vertex_path)
+        mesh = face_strip_insert(Mesh, mesh, vertex_path)
 
     if rule == 'rotate_vertex':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
@@ -463,6 +464,26 @@ def apply_rule(mesh, rule):
         rs.DeleteLayer('mesh_artist')
         
         clear_faces(mesh, fkeys, vkeys)
+
+    if rule == 'add_handle':
+        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+        artist.clear_layer()
+        
+        artist.draw_facelabels()
+        artist.redraw()
+        fkey_1 = rhino.mesh_select_face(mesh, message = 'fkey_1')
+        artist.clear_layer()
+        artist.redraw()
+
+        artist.draw_facelabels()
+        artist.redraw()
+        fkey_2 = rhino.mesh_select_face(mesh, message = 'fkey_2')
+        artist.clear_layer()
+        artist.redraw()
+        
+        rs.DeleteLayer('mesh_artist')
+        
+        add_handle(mesh, fkey_1, fkey_2)
 
     if rule == 'move_vertices':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')

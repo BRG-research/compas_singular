@@ -52,7 +52,7 @@ def editing(mesh):
     rs.AddLayer('temp')
 
     # grammar rules + propagation scheme
-    rules = ['face_pole', 'edge_pole', 'vertex_pole', 'face_opening', 'flat_corner_2', 'flat_corner_3', 'flat_corner_33', 'split_35', 'split_35_diag', 'split_26', 'simple_split', 'double_split', 'insert_pole', 'insert_partial_pole', 'singular_boundary_1', 'singular_boundary_2', 'face_strip_collapse', 'face_strip_insert', 'rotate_vertex', 'clear_faces', 'PROPAGATE', 'MOVE', 'HELP!']
+    rules = ['face_pole', 'edge_pole', 'vertex_pole', 'face_opening', 'flat_corner_2', 'flat_corner_3', 'flat_corner_33', 'split_35', 'split_35_diag', 'split_26', 'simple_split', 'double_split', 'insert_pole', 'insert_partial_pole', 'singular_boundary_1', 'singular_boundary_2', 'face_strip_collapse', 'face_strip_insert', 'rotate_vertex', 'clear_faces', 'add_handle', 'propagate', 'move_vertices', 'exit']
     
     # regular vertices of initial mesh
     regular_vertices = list(mesh.vertices())
@@ -73,7 +73,7 @@ def editing(mesh):
         rs.EnableRedraw(False)
         
         # exit
-        if rule == 'HELP!':
+        if rule == 'exit':
             # propapgate
             mesh_propagation(mesh, regular_vertices)
             rs.DeleteObjects(edges)
@@ -81,7 +81,7 @@ def editing(mesh):
             break
 
         # intermediary propagation
-        elif rule == 'PROPAGATE':
+        elif rule == 'propagate':
             mesh_propagation(mesh, regular_vertices)
             for vkey in mesh.vertices():
             # update regualr vertices
@@ -92,25 +92,6 @@ def editing(mesh):
                         break
                 if regular and vkey not in regular_vertices:
                     regular_vertices.append(vkey)
-        
-        elif rule == 'MOVE':
-            artist = rhino.MeshArtist(mesh, layer='mesh_artist')
-            artist.clear_layer()
-            
-            artist.draw_vertexlabels()
-            artist.redraw()
-            vkey = rhino.mesh_select_vertex(mesh, message = 'vkey')
-            artist.clear_layer()
-            artist.redraw()
-            
-            rs.DeleteLayer('mesh_artist')
-
-            x, y, z = rs.GetPoint(message = 'new location')
-
-            attr = mesh.vertex[vkey]
-            attr['x'] = x
-            attr['y'] = y
-            attr['z'] = z
 
         # apply editing rule
         elif rule in rules:
