@@ -12,6 +12,8 @@ from compas_pattern.topology.polyline_extraction import mesh_boundaries
 from compas_pattern.topology.global_propagation import face_propagation
 
 from compas.geometry import distance_point_point
+from compas.geometry import subtract_vectors
+from compas.geometry import dot_vectors
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -23,6 +25,7 @@ __all__ = [
     'face_pole',
     'edge_pole',
     'face_opening',
+    'close_opening',
     'flat_corner_2',
     'flat_corner_3',
     'flat_corner_33',
@@ -39,6 +42,7 @@ __all__ = [
     'rotate_vertex',
     'clear_faces',
     'add_handle',
+    'close_handle',
 ]
 
 def vertex_pole(mesh, fkey, pole):
@@ -189,6 +193,27 @@ def face_opening(mesh, fkey):
     fkey_4 = mesh.add_face([d, a, e, h])
 
     return fkey_1, fkey_2, fkey_3, fkey_4
+
+def close_opening(mesh, vkeys):
+    # vkeys of boundary component
+    # sorted and oriented towards opening
+
+    if vkeys[0] == vkeys[-1]:
+        del vkeys[-1]
+
+    if len(vkeys) == 4:
+        return mesh.add_face(vkeys)
+    
+    else:
+        g = add_vertex_from_vertices(mesh, vkeys, [1] * len(vkeys))
+        new_vkeys = []
+        for i in range(len(vkeys)):
+            u = vkeys[i - 1]
+            v = vkeys[i]
+            a = add_vertex_from_vertices(mesh, [u, v], [1, 1])
+            new_vkeys.append(a)
+            insert_vertices_in_halfedge(mesh, v, u, [a])
+        return [mesh.add_face([new_vkeys[i - 1], vkeys[i - 1], new_vkeys[i], g]) for i in range(len(vkeys))]
 
 def flat_corner_2(mesh, fkey, corner):
 
@@ -709,7 +734,7 @@ def rotate_vertex(mesh, vkey):
         mesh.delete_face(fkey)
         mesh.add_face(vertices, fkey = fkey)
 
-    return 0
+    return list(face_vertices.keys())
 
 def clear_faces(mesh, fkeys, vkeys):
     # groups of fkeys must be a topological disc
@@ -728,23 +753,32 @@ def clear_faces(mesh, fkeys, vkeys):
     # orientation? reverse boundary vertices?
     fkey = mesh.add_face(faces_boundary_vertices)
 
-    face_propagation(mesh, fkey, vkeys)
+    new_fkeys = face_propagation(mesh, fkey, vkeys)
 
-    return 0
+    return new_fkeys
 
-def add_handle(mesh, fkey_1, fkey_2, orientation = +1):
-    # add a handle between two faces by first punching a hole
+def add_handle(mesh, fkey_1, fkey_2):
+    # add a handle between two faces by first adding openings
+    # add from two openings directly?
+
+    # check orientation: is the normal of face i pointing towards face j?
+    v_12 = subtract_vectors(mesh.face_centroid(fkey_2), mesh.face_centroid(fkey_1))
+    orientation_1 = dot_vectors(v_12, mesh.face_normal(fkey_1))
+    v_21 = subtract_vectors(mesh.face_centroid(fkey_1), mesh.face_centroid(fkey_2))
+    orientation_2 = dot_vectors(v_21, mesh.face_normal(fkey_2))
+    # if both orientations are not the same, stop
+    if orientation_1 * orientation_2 < 0:
+        return None
 
     vertices = [vkey for vkey in mesh.vertices()]
 
     # add firtst opening
-    face_opening(mesh, fkey_1)
+    faces_1 = face_opening(mesh, fkey_1)
     # find newly added vertices
     vertices_1 = [vkey for vkey in mesh.vertices() if vkey not in vertices]
 
-
     # add second opening
-    face_opening(mesh, fkey_2)
+    faces_2 = face_opening(mesh, fkey_2)
     # find newly added vertices
     vertices_2 = [vkey for vkey in mesh.vertices() if vkey not in vertices and vkey not in vertices_1]
 
@@ -759,7 +793,6 @@ def add_handle(mesh, fkey_1, fkey_2, orientation = +1):
                 sorted_vertices_1.append(vkey)
                 vertices_1.remove(vkey)
                 break
-    sorted_vertices_1 = list(reversed(sorted_vertices_1))
 
     # second one
     sorted_vertices_2 = [vertices_2.pop()]
@@ -771,7 +804,6 @@ def add_handle(mesh, fkey_1, fkey_2, orientation = +1):
                 sorted_vertices_2.append(vkey)
                 vertices_2.remove(vkey)
                 break        
-    sorted_vertices_2 = list(reversed(sorted_vertices_2))
 
     # match the facing boundary vertices so as to reduce the total distance
     min_dist = -1
@@ -780,22 +812,47 @@ def add_handle(mesh, fkey_1, fkey_2, orientation = +1):
         a, b, c, d = sorted_vertices_1
         e, f, g, h = [sorted_vertices_2[j - i] for j in range(4)]
         d1 = distance_point_point(mesh.vertex_coordinates(a), mesh.vertex_coordinates(e))
-        d2 = distance_point_point(mesh.vertex_coordinates(b), mesh.vertex_coordinates(f))
+        d2 = distance_point_point(mesh.vertex_coordinates(b), mesh.vertex_coordinates(h))
         d3 = distance_point_point(mesh.vertex_coordinates(c), mesh.vertex_coordinates(g))
-        d4 = distance_point_point(mesh.vertex_coordinates(d), mesh.vertex_coordinates(h))
+        d4 = distance_point_point(mesh.vertex_coordinates(d), mesh.vertex_coordinates(f))
         dist = d1 + d2 + d3 + d4
         if min_dist < 0 or dist < min_dist:
             min_dist = dist
             sorted_vertices = [a, b, c, d, e, f, g, h]
 
     # add the new faces that close the holes as a handle
-    a, b, c, d, h, g, f, e = sorted_vertices
-    mesh.add_face([a, e, f, b])
-    mesh.add_face([b, f, g, c])
-    mesh.add_face([c, g, h, d])
-    mesh.add_face([d, h, e, a])
+    a, b, c, d, e, f, g, h = sorted_vertices
+    fkey_1 = mesh.add_face([a, d, f, e])
+    fkey_2 = mesh.add_face([d, c, g, f])
+    fkey_3 = mesh.add_face([c, b, h, g])
+    fkey_4 = mesh.add_face([b, a, e, h])
 
-    return 0
+    return faces_1 + faces_2 + (fkey_1, fkey_2, fkey_3, fkey_4)
+    
+def close_handle(mesh, fkeys):
+    # remove handle and close openings
+    # fkeys: closed face strip
+
+    if fkeys[0] == fkeys[-1]:
+        del fkeys[-1]
+
+    vertices = []
+    key_to_index = {}
+    for i, vkey in enumerate(mesh.vertices()):
+        vertices.append(mesh.vertex_coordinates(vkey))
+        key_to_index[vkey] = i
+    faces = [[key_to_index[vkey] for vkey in mesh.face_vertices(fkey)] for fkey in fkeys]
+    strip_mesh = Mesh.from_vertices_and_faces(vertices, faces)
+    
+    boundaries = mesh_boundaries(strip_mesh)
+
+    for fkey in fkeys:
+        mesh.delete_face(fkey)
+    new_fkeys = []
+    for bdry in boundaries:
+        new_fkeys += close_opening(mesh, list(reversed(bdry)))
+
+    return new_fkeys
 
 # ==============================================================================
 # Main
