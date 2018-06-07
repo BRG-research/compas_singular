@@ -2,12 +2,18 @@ from compas.datastructures.mesh import Mesh
 
 from compas.geometry import circle_from_points
 
+from compas.topology import mesh_unify_cycles
+
+
+from compas_pattern.topology.polyline_extraction import mesh_boundaries
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
+    'mesh_topology',
     'mesh_area',
     'mesh_centroid',
     'mesh_normal',
@@ -18,7 +24,19 @@ __all__ = [
     'insert_vertex_in_face',
     'insert_vertices_in_face',
     'delete_face',
+    'mesh_disjointed_parts',
 ]
+
+def mesh_topology(mesh):
+
+    V = mesh.number_of_vertices()
+    E = mesh.number_of_edges()
+    F = mesh.number_of_faces()
+    B = len(mesh_boundaries(mesh))
+    X = V - E + F + B
+    G = (2 - X) / 2
+
+    return V, E, F, B, X, G
 
 def mesh_area(mesh):
 
@@ -215,6 +233,31 @@ def delete_face(mesh, fkey):
             del mesh.halfedge[u][v]
             del mesh.halfedge[v][u]
     del mesh.face[fkey]
+
+def mesh_disjointed_parts(mesh):
+    # cycles must be unified or mesh_unify_cycles(mesh) must be extended to disjointed meshes
+
+    faces = list(mesh.faces())
+
+    disjointed_parts = []
+
+    count = len(faces)
+    while len(faces) > 0 and count > 0:
+        count -= 1
+        part = [faces.pop()]
+        next_neighbours = [part[-1]]
+        count_2  = count
+        while len(next_neighbours) > 0 and count_2 > 0:
+            count_2 -= 1
+            for fkey in mesh.face_neighbours(next_neighbours.pop()):
+                if fkey not in part:
+                    part.append(fkey)
+                    faces.remove(fkey)
+                    if fkey not in next_neighbours:
+                        next_neighbours.append(fkey)
+        disjointed_parts.append(part)
+
+    return disjointed_parts
 
 # ==============================================================================
 # Main
