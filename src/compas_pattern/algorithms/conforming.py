@@ -365,63 +365,6 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
                                 #        break
                             break
 
-
-    # curves = medial_branches + boundary_polylines
-    # #curve_map = {curve: (geometric_key(curve[0]), geometric_key(curve[-1])) for curve in curves}
-    # #extremities = list(curve_map.items())
-    # extremities = [(geometric_key(curve[0]), geometric_key(curve[-1])) for curve in curves]
-    # print len(extremities)
-    # initial_vertices = list(patch_decomposition.vertices())
-
-    # # split degenerated faces
-    # splits = []
-    # for fkey in patch_decomposition.faces():
-        # a, b, c, d = [patch_decomposition.vertex_coordinates(vkey) for vkey in patch_decomposition.face_vertices(fkey)]
-        # ab = normalize_vector(subtract_vectors(b, a))
-        # bc = normalize_vector(subtract_vectors(c, b))
-        # cd = normalize_vector(subtract_vectors(d, c))
-        # da = normalize_vector(subtract_vectors(a, d))
-        # cross = cross_vectors(ab, cd)
-        # print cross
-
-        # length = (ab[0] ** 2 + ab[1] ** 2) ** .5
-        # costheta = ab[0] / length
-        # sintheta = ab[1] / length
-        # if asin(sintheta) != 0 :
-        #     ab_angle = asin(sintheta) / abs(asin(sintheta)) * acos(costheta)
-        # else:
-        #     ab_angle = acos(costheta)
-        # if ab_angle < 0:
-        #     ab_angle += 2 * pi
-
-        # length = (cd[0] ** 2 + cd[1] ** 2) ** .5
-        # costheta = cd[0] / length
-        # sintheta = cd[1] / length
-        # if asin(sintheta) != 0 :
-        #     cd_angle = asin(sintheta) / abs(asin(sintheta)) * acos(costheta)
-        # else:
-        #     cd_angle = acos(costheta)
-        # if cd_angle < 0:
-        #     cd_angle += 2 * pi
-
-        #print cd_angle - ab_angle
-
-    #     split = False
-    #     for u, v in patch_decomposition.face_halfedges(fkey):
-    #         u_key = geometric_key(patch_decomposition.vertex_coordinates(u))
-    #         v_key = geometric_key(patch_decomposition.vertex_coordinates(v))
-    #         count = extremities.count((u_key, v_key)) + extremities.count((v_key, u_key))
-    #         print count
-    #         splits.append([fkey, [u, v]])
-    #         split = True
-    #         break
-    #     if split:
-    #         break
-    # for fkey, edge in splits:
-    #     simple_split(patch_decomposition, fkey, edge)
-
-    # mesh_propagation(patch_decomposition, initial_vertices)
-
     return patch_decomposition
 
 def conforming_old(mesh, planar_point_features = None, planar_polyline_features = None):
