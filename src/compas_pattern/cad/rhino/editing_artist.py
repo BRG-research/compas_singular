@@ -17,6 +17,7 @@ from compas_pattern.topology.grammar import face_pole
 from compas_pattern.topology.grammar import edge_pole
 from compas_pattern.topology.grammar import vertex_pole
 from compas_pattern.topology.grammar import face_opening
+from compas_pattern.topology.grammar import close_opening
 from compas_pattern.topology.grammar import flat_corner_2
 from compas_pattern.topology.grammar import flat_corner_3
 from compas_pattern.topology.grammar import flat_corner_33
@@ -30,6 +31,7 @@ from compas_pattern.topology.grammar import insert_partial_pole
 from compas_pattern.topology.grammar import singular_boundary_1
 from compas_pattern.topology.grammar import singular_boundary_2
 from compas_pattern.topology.grammar import add_handle
+from compas_pattern.topology.grammar import close_handle
 
 from compas_pattern.topology.polyline_extraction import dual_edge_polylines
 
@@ -67,7 +69,7 @@ def apply_rule(mesh, rule):
         
         face_pole(mesh, fkey)
     
-    if rule == 'edge_pole':
+    elif rule == 'edge_pole':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -87,7 +89,7 @@ def apply_rule(mesh, rule):
         
         edge_pole(mesh, fkey, edge)
     
-    if rule == 'vertex_pole':
+    elif rule == 'vertex_pole':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -107,7 +109,7 @@ def apply_rule(mesh, rule):
         
         vertex_pole(mesh, fkey, pole)
     
-    if rule == 'face_opening':
+    elif rule == 'face_opening':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -120,8 +122,28 @@ def apply_rule(mesh, rule):
         rs.DeleteLayer('mesh_artist')
         
         face_opening(mesh, fkey)
+
+    elif rule == 'close_opening':
+        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+        artist.clear_layer()
+        
+        boundaries = mesh_boundaries(mesh)
+        artist.draw_vertexlabels(text = {key: str(key) for key in [vkey for boundary in boundaries for vkey in boundary]})
+        artist.redraw()
+        vkey = rhino.mesh_select_vertex(mesh, message = 'vertex on the opening to close')
+        artist.clear_layer()
+        artist.redraw()
+
+        rs.DeleteLayer('mesh_artist')
+        
+        for boundary in boundaries:
+            if vkey in boundary:
+                vkeys = boundary
+                break
+
+        close_opening(mesh, vkeys)
     
-    if rule == 'flat_corner_2':
+    elif rule == 'flat_corner_2':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -141,7 +163,7 @@ def apply_rule(mesh, rule):
         
         flat_corner_2(mesh, fkey, corner)
     
-    if rule == 'flat_corner_3':
+    elif rule == 'flat_corner_3':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -161,7 +183,7 @@ def apply_rule(mesh, rule):
         
         flat_corner_3(mesh, fkey, corner)
     
-    if rule == 'flat_corner_33':
+    elif rule == 'flat_corner_33':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -181,7 +203,7 @@ def apply_rule(mesh, rule):
         
         flat_corner_33(mesh, fkey, corner)
     
-    if rule == 'split_35':
+    elif rule == 'split_35':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -201,7 +223,7 @@ def apply_rule(mesh, rule):
         
         split_35(mesh, fkey, edge)
 
-    if rule == 'split_35_diag':
+    elif rule == 'split_35_diag':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -221,7 +243,7 @@ def apply_rule(mesh, rule):
         
         split_35_diag(mesh, fkey, corner)
     
-    if rule == 'split_26':
+    elif rule == 'split_26':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -241,7 +263,7 @@ def apply_rule(mesh, rule):
         
         split_26(mesh, fkey, edge)
     
-    if rule == 'simple_split':
+    elif rule == 'simple_split':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -261,7 +283,7 @@ def apply_rule(mesh, rule):
         
         simple_split(mesh, fkey, edge)
     
-    if rule == 'double_split':
+    elif rule == 'double_split':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -275,7 +297,7 @@ def apply_rule(mesh, rule):
         
         double_split(mesh, fkey)
     
-    if rule == 'insert_pole':
+    elif rule == 'insert_pole':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -295,7 +317,7 @@ def apply_rule(mesh, rule):
         
         insert_pole(mesh, fkey, pole)
     
-    if rule == 'insert_partial_pole':
+    elif rule == 'insert_partial_pole':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -321,7 +343,7 @@ def apply_rule(mesh, rule):
         
         insert_partial_pole(mesh, fkey, pole, edge)
     
-    if rule == 'singular_boundary_1':
+    elif rule == 'singular_boundary_1':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -341,7 +363,7 @@ def apply_rule(mesh, rule):
         
         singular_boundary_1(mesh, edge, vkey)
 
-    if rule == 'singular_boundary_2':
+    elif rule == 'singular_boundary_2':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -361,7 +383,7 @@ def apply_rule(mesh, rule):
         
         singular_boundary_2(mesh, edge, vkey)
 
-    if rule == 'face_strip_collapse':
+    elif rule == 'face_strip_collapse':
         edge_groups, max_group = dual_edge_polylines(mesh)
         
         groups = {}
@@ -393,7 +415,7 @@ def apply_rule(mesh, rule):
 
         face_strip_collapse(Mesh, mesh, u, v)
 
-    if rule == 'face_strip_insert':
+    elif rule == 'face_strip_insert':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
 
@@ -425,7 +447,7 @@ def apply_rule(mesh, rule):
 
         mesh = face_strip_insert(Mesh, mesh, vertex_path)
 
-    if rule == 'rotate_vertex':
+    elif rule == 'rotate_vertex':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
 
@@ -439,7 +461,7 @@ def apply_rule(mesh, rule):
         
         rotate_vertex(mesh, vkey)
 
-    if rule == 'clear_faces':
+    elif rule == 'clear_faces':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
 
@@ -465,7 +487,7 @@ def apply_rule(mesh, rule):
         
         clear_faces(mesh, fkeys, vkeys)
 
-    if rule == 'add_handle':
+    elif rule == 'add_handle':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
@@ -485,7 +507,41 @@ def apply_rule(mesh, rule):
         
         add_handle(mesh, fkey_1, fkey_2)
 
-    if rule == 'move_vertices':
+    elif rule == 'close_handle':
+        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+        artist.clear_layer()
+        
+        artist.draw_facelabels()
+        artist.redraw()
+        fkey_1 = rhino.mesh_select_face(mesh, message = 'fkey_1')
+        artist.clear_layer()
+        artist.redraw()
+
+        artist.draw_facelabels(text = {key: str(key) for key in mesh.face_neighbours(fkey_1)})
+        artist.redraw()
+        fkey_2 = rhino.mesh_select_face(mesh, message = 'fkey_2')
+        artist.clear_layer()
+        artist.redraw()
+        
+        rs.DeleteLayer('mesh_artist')
+
+
+        count = mesh.number_of_faces()
+        fkeys = [fkey_1, fkey_2]
+        while count > 0:
+            count -= 1
+            u, v = mesh.face_adjacency_halfedge(fkeys[-2], fkeys[-1])
+            w = mesh.face_vertex_ancestor(fkeys[-1], v)
+            x = mesh.face_vertex_ancestor(fkeys[-1], w)
+            if x in mesh.halfedge[w] and mesh.halfedge[w][x] is not None:
+                fkey_3 = mesh.halfedge[w][x]
+                fkeys.append(fkey_3)
+                if fkeys[-1] == fkeys[0]:
+                    break
+
+        close_handle(mesh, fkeys)
+
+    elif rule == 'move_vertices':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
 
@@ -505,6 +561,16 @@ def apply_rule(mesh, rule):
             attr['x'] += x2 - x1
             attr['y'] += y2 - y1
             attr['z'] += z2 - z1
+
+    elif rule == 'project_on_surface':
+        srf = rs.GetObject('surface for projection', filter = 8)
+        for vkey in mesh.vertices():
+            u, v = rs.SurfaceClosestPoint(srf, mesh.vertex_coordinates(vkey))
+            x, y, z = rs.EvaluateSurface(srf, u, v)
+            attr = mesh.vertex[vkey]
+            attr['x'] = x
+            attr['y'] = y
+            attr['z'] = z
 
     return 0
 

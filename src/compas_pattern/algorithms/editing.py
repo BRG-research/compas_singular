@@ -52,8 +52,9 @@ def editing(mesh):
     rs.AddLayer('temp')
 
     # grammar rules + propagation scheme
-    rules = ['face_pole', 'edge_pole', 'vertex_pole', 'face_opening', 'flat_corner_2', 'flat_corner_3', 'flat_corner_33', 'split_35', 'split_35_diag', 'split_26', 'simple_split', 'double_split', 'insert_pole', 'insert_partial_pole', 'singular_boundary_1', 'singular_boundary_2', 'face_strip_collapse', 'face_strip_insert', 'rotate_vertex', 'clear_faces', 'add_handle', 'propagate', 'move_vertices', 'exit']
-    
+    rules = ['face_pole', 'edge_pole', 'vertex_pole', 'face_opening', 'close_opening', 'flat_corner_2', 'flat_corner_3', 'flat_corner_33', 'split_35', 'split_35_diag', 'split_26', 'simple_split', 'double_split', 'insert_partial_pole', 'singular_boundary_1', 'singular_boundary_2', 'face_strip_collapse', 'face_strip_insert', 'rotate_vertex', 'clear_faces', 'propagate', 'move_vertices', 'project_on_surface', 'others']
+    rules_2 = ['face_opening', 'close_opening', 'add_handle', 'close_handle']
+    all_rules = rules + rules_2
     # regular vertices of initial mesh
     regular_vertices = list(mesh.vertices())
 
@@ -71,17 +72,9 @@ def editing(mesh):
         #ask for rule
         rule = rs.GetString('rule?', strings = rules)
         rs.EnableRedraw(False)
-        
-        # exit
-        if rule == 'exit':
-            # propapgate
-            mesh_propagation(mesh, regular_vertices)
-            rs.DeleteObjects(edges)
-            rs.DeleteLayer('temp')
-            break
 
         # intermediary propagation
-        elif rule == 'propagate':
+        if rule == 'propagate':
             mesh_propagation(mesh, regular_vertices)
             for vkey in mesh.vertices():
             # update regualr vertices
@@ -93,23 +86,20 @@ def editing(mesh):
                 if regular and vkey not in regular_vertices:
                     regular_vertices.append(vkey)
 
+        
         # apply editing rule
-        elif rule in rules:
+        elif rule in all_rules:
+            if rule == 'others':
+                rule = rs.GetString('other rule?', strings = rules_2)
             apply_rule(mesh, rule)
 
         # if nothing, check if mesh is valid after a final propagation
         else:
             # propapgate
             mesh_propagation(mesh, regular_vertices)
-            # check validity
-            valid = True
-            for fkey in mesh.faces():
-                if len(mesh.face_vertices(fkey)) > 4:
-                    valid = False
-            if valid:
-                rs.DeleteObjects(edges)
-                rs.DeleteLayer('temp')
-                break
+            rs.DeleteObjects(edges)
+            rs.DeleteLayer('temp')
+            break
 
         # update regular vertices
         for vkey in mesh.vertices():
