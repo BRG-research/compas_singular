@@ -16,7 +16,7 @@ from compas_pattern.topology.polyline_extraction import mesh_boundaries
 from compas_pattern.topology.grammar import face_pole
 from compas_pattern.topology.grammar import edge_pole
 from compas_pattern.topology.grammar import vertex_pole
-from compas_pattern.topology.grammar import face_opening
+from compas_pattern.topology.grammar import add_opening
 from compas_pattern.topology.grammar import close_opening
 from compas_pattern.topology.grammar import flat_corner_2
 from compas_pattern.topology.grammar import flat_corner_3
@@ -109,7 +109,7 @@ def apply_rule(mesh, rule):
         
         vertex_pole(mesh, fkey, pole)
     
-    elif rule == 'face_opening':
+    elif rule == 'add_opening':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         

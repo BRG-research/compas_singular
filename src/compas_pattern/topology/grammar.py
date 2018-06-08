@@ -24,7 +24,7 @@ __all__ = [
     'vertex_pole',
     'face_pole',
     'edge_pole',
-    'face_opening',
+    'add_opening',
     'close_opening',
     'flat_corner_2',
     'flat_corner_3',
@@ -173,7 +173,7 @@ def edge_pole(mesh, fkey, edge):
 
     return fkey_1, fkey_2, fkey_3, fkey_4, fkey_5, fkey_6, fkey_7, fkey_8
 
-def face_opening(mesh, fkey):
+def add_opening(mesh, fkey):
 
     if len(mesh.face_vertices(fkey)) != 4:
         return None
