@@ -51,10 +51,17 @@ def editing(mesh):
     # temporary layer for visualisation
     rs.AddLayer('temp')
 
-    # grammar rules + propagation scheme
-    rules = ['face_pole', 'edge_pole', 'vertex_pole', 'face_opening', 'close_opening', 'flat_corner_2', 'flat_corner_3', 'flat_corner_33', 'split_35', 'split_35_diag', 'split_26', 'simple_split', 'double_split', 'insert_partial_pole', 'singular_boundary_1', 'singular_boundary_2', 'face_strip_collapse', 'face_strip_insert', 'rotate_vertex', 'clear_faces', 'propagate', 'move_vertices', 'project_on_surface', 'others']
-    rules_2 = ['face_opening', 'close_opening', 'add_handle', 'close_handle']
-    all_rules = rules + rules_2
+    # grammar rules
+    rules_subdivide = ['simple_split', 'double_split', 'flat_corner_2', 'flat_corner_3', 'flat_corner_33', 'split_35', 'split_35_diag', 'split_26']
+    rules_poles = ['face_pole', 'edge_pole', 'vertex_pole', 'insert_pole', 'insert_partial_pole']
+    rules_strips = ['face_strip_collapse', 'face_strip_insert']
+    rules_genus = ['add_opening', 'close_opening', 'add_handle', 'close_handle']
+    rules_others = ['singular_boundary_1', 'singular_boundary_2', 'rotate_vertex']
+    rules_geometry = ['move_vertices', 'project_on_surface']
+    
+    rule_cluster = ['subdivide', 'poles', 'strips', 'genus', 'others', 'geometry', 'propagate']
+
+    clusters = {'subdivide': rules_subdivide, 'poles': rules_poles, 'strips': rules_strips, 'genus': rules_genus, 'others': rules_others, 'geometry': rules_geometry}
     # regular vertices of initial mesh
     regular_vertices = list(mesh.vertices())
 
@@ -70,11 +77,11 @@ def editing(mesh):
         count -= 1
 
         #ask for rule
-        rule = rs.GetString('rule?', strings = rules)
+        cluster = rs.GetString('rule cluster?', strings = rule_cluster)
         rs.EnableRedraw(False)
 
         # intermediary propagation
-        if rule == 'propagate':
+        if cluster == 'propagate':
             mesh_propagation(mesh, regular_vertices)
             for vkey in mesh.vertices():
             # update regualr vertices
@@ -88,10 +95,10 @@ def editing(mesh):
 
         
         # apply editing rule
-        elif rule in all_rules:
-            if rule == 'others':
-                rule = rs.GetString('other rule?', strings = rules_2)
-            apply_rule(mesh, rule)
+        elif cluster in rule_cluster:
+            if cluster in clusters.keys():
+                rule = rs.GetString('rule?', strings = clusters[cluster])
+                apply_rule(mesh, rule)
 
         # if nothing, check if mesh is valid after a final propagation
         else:
