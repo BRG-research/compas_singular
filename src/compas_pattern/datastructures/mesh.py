@@ -33,8 +33,8 @@ def mesh_topology(mesh):
     E = mesh.number_of_edges()
     F = mesh.number_of_faces()
     B = len(mesh_boundaries(mesh))
-    X = V - E + F + B
-    G = (2 - X) / 2
+    X = V - E + F
+    G = (2 - X - B) / 2
 
     return V, E, F, B, X, G
 
