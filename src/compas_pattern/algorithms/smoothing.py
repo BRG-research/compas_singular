@@ -339,31 +339,14 @@ def customed_constraints(mesh, constraints, surface_boundaries, surface_constrai
 
         rs.EnableRedraw(True)
 
-        constraint_types = ['point', 'curve', 'surface', 'none']
+        constraint_types = ['point', 'curve', 'surface', 'none', 'move']
         new_constraint_type = rs.GetString('constraint type?', strings = constraint_types)
 
         # set new point constraint
         if new_constraint_type == 'point':
             for vkey in vkeys:
                 constraints[vkey][0] = 'point'
-
-                # if single vertex, possibility to update position
-                if len(vkeys) == 1:
-                    xyz = rs.GetPoint('new point location?')
-                    if xyz is not None:
-                        constraints[vkey][1] = xyz
-                        x, y, z = xyz
-                        attr = mesh.vertex[vkey]
-                        attr['x'] = x
-                        attr['y'] = y
-                        attr['z'] = z
-
-                        # udpdate drawn mesh
-                        layer = 'pattern_topology'
-                        mesh_guid = rs.ObjectsByLayer(layer)[0]
-                        rs.DeleteObject(mesh_guid)
-                        mesh_guid = draw_mesh(mesh)
-                        rs.ObjectLayer(mesh_guid, layer)
+                constraints[vkey][0] = mesh.vertex_coordinates(vkey)
 
         # set new curve constraint
         elif new_constraint_type == 'curve':
@@ -380,6 +363,24 @@ def customed_constraints(mesh, constraints, surface_boundaries, surface_constrai
         elif new_constraint_type == 'none':
             for vkey in vkeys:
                 constraints[vkey] = ['none', None]
+
+        # move nodes
+        elif new_constraint_type == 'move':
+            x0, y0, z0 = rs.GetPoint('from...')
+            x1, y1, z1 = rs.GetPoint('...to')
+            for vkey in vkeys:
+                attr = mesh.vertex[vkey]
+                attr['x'] += x1 - x0
+                attr['y'] += y1 - y0
+                attr['z'] += z1 - z0
+            # udpdate drawn mesh
+            layer = 'pattern_topology'
+            mesh_guid = rs.ObjectsByLayer(layer)[0]
+            rs.DeleteObject(mesh_guid)
+            mesh_guid = draw_mesh(mesh)
+            rs.ObjectLayer(mesh_guid, layer)
+            rs.EnableRedraw(True)
+            rs.EnableRedraw(False)
 
         rs.DeleteObjects(dots)
 
