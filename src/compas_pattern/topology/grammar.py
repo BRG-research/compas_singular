@@ -15,6 +15,12 @@ from compas.geometry import distance_point_point
 from compas.geometry import subtract_vectors
 from compas.geometry import dot_vectors
 
+from compas_pattern.topology.unjoining_unwelding import unweld_mesh_along_edge_path
+from compas_pattern.topology.unjoining_unwelding import unjoin_disjointed_parts
+
+from compas_pattern.datastructures.mesh import mesh_disjointed_parts
+from compas_pattern.datastructures.mesh import mesh_topology
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -43,6 +49,7 @@ __all__ = [
     'clear_faces',
     'add_handle',
     'close_handle',
+    'close_handle_2',
 ]
 
 def vertex_pole(mesh, fkey, pole):
@@ -202,7 +209,7 @@ def close_opening(mesh, vkeys):
         del vkeys[-1]
 
     if len(vkeys) == 4:
-        return mesh.add_face(vkeys)
+        return [mesh.add_face(vkeys)]
     
     else:
         g = add_vertex_from_vertices(mesh, vkeys, [1] * len(vkeys))
@@ -666,6 +673,41 @@ def singular_boundary_2(mesh, edge, vkey):
 
     return fkey_1, fkey_2, fkey_3
 
+def singular_boundary_minus_1(mesh, fkey, vkey):
+
+    if vkey not in mesh.face_vertices(fkey):
+        return None
+
+    a = vkey
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+    d = mesh.face_vertex_descendant(fkey, c)
+
+    fkey_1 = mesh.halfedge[c][b]
+    e = mesh.face_vertex_descendant(fkey_1, b)
+    f = mesh.face_vertex_descendant(fkey_1, e)
+
+    fkey_2 = mesh.halfedge[d][c]
+    g = mesh.face_vertex_descendant(fkey_2, c)
+    h = mesh.face_vertex_descendant(fkey_2, g)
+
+    mesh.delete_face(fkey)
+    mesh.delete_face(fkey_1)
+    mesh.delete_face(fkey_2)
+
+    i = add_vertex_from_vertices(mesh, [c, f], [1, 1])
+    j = add_vertex_from_vertices(mesh, [c, g], [1, 2])
+
+    fkey_1 = mesh.add_face([a, c, j, d])
+    fkey_2 = mesh.add_face([a, b, i, c])
+    fkey_3 = mesh.add_face([d, j, g, h])
+    fkey_4 = mesh.add_face([b, e, f, i])
+
+    insert_vertices_in_halfedge(mesh, c, f, [i])
+    insert_vertices_in_halfedge(mesh, g, c, [j])
+
+    return fkey_1, fkey_2, fkey_3, fkey_4
+
 def remove_tri(mesh, fkey_tri, fkey_quad, pole, t = .5):
 
     if len(mesh.face_vertices(fkey_tri)) != 3 or len(mesh.face_vertices(fkey_quad)) != 4:
@@ -852,6 +894,50 @@ def close_handle(mesh, fkeys):
     for bdry in boundaries:
         new_fkeys += close_opening(mesh, list(reversed(bdry)))
 
+    return new_fkeys
+
+def close_handle_2(mesh, edge_path_1, edge_path_2):
+    # two closed edge paths
+
+    # unweld
+    unweld_mesh_along_edge_path(mesh, edge_path_1)
+    unweld_mesh_along_edge_path(mesh, edge_path_2)
+
+    # explode
+    parts, meshes = unjoin_disjointed_parts(mesh)
+
+    # find parts with the topolog of a strip: two boundary components and an EUler characteristic of 0
+    # if there are several, select the topologically smallest one (lowest number of faces)
+    index = -1
+    size = -1
+    for i, submesh in enumerate(meshes):
+        V, E, F, B, X, G = mesh_topology(submesh)
+        if B == 2 and X == 0:
+            n = submesh.number_of_faces()
+            if index < 0 or n < size:
+                index = i
+                size = n
+
+    # collect the boundaries of the strip, oriented towards the outside of the strip
+    vertices = []
+    key_to_index = {}
+    for i, vkey in enumerate(mesh.vertices()):
+        vertices.append(mesh.vertex_coordinates(vkey))
+        key_to_index[vkey] = i
+    faces = [[key_to_index[vkey] for vkey in mesh.face_vertices(fkey)] for fkey in parts[index]]
+    strip_mesh = Mesh.from_vertices_and_faces(vertices, faces)
+    
+    boundaries = mesh_boundaries(strip_mesh)
+
+    # remove faces of the selected band
+    for fkey in parts[index]:
+        mesh.delete_face(fkey)
+
+    # close the two boundaries
+    new_fkeys = []
+    for bdry in boundaries:
+        new_fkeys += close_opening(mesh, list(reversed(bdry)))
+        
     return new_fkeys
 
 # ==============================================================================

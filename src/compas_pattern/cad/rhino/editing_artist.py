@@ -30,8 +30,10 @@ from compas_pattern.topology.grammar import insert_pole
 from compas_pattern.topology.grammar import insert_partial_pole
 from compas_pattern.topology.grammar import singular_boundary_1
 from compas_pattern.topology.grammar import singular_boundary_2
+from compas_pattern.topology.grammar import singular_boundary_minus_1
 from compas_pattern.topology.grammar import add_handle
 from compas_pattern.topology.grammar import close_handle
+from compas_pattern.topology.grammar import close_handle_2
 
 from compas_pattern.topology.polyline_extraction import dual_edge_polylines
 
@@ -382,6 +384,26 @@ def apply_rule(mesh, rule):
         rs.DeleteLayer('mesh_artist')
         
         singular_boundary_2(mesh, edge, vkey)
+        
+    elif rule == 'singular_boundary_minus_1':
+        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+        artist.clear_layer()
+        
+        artist.draw_facelabels()
+        artist.redraw()
+        fkey = rhino.mesh_select_face(mesh, message = 'fkey')
+        artist.clear_layer()
+        artist.redraw()
+
+        artist.draw_vertexlabels(text = {key: str(key) for key in mesh.face_vertices(fkey)})
+        artist.redraw()
+        vkey = rhino.mesh_select_vertex(mesh, message = 'vkey')
+        artist.clear_layer()
+        artist.redraw()
+        
+        rs.DeleteLayer('mesh_artist')
+        
+        singular_boundary_minus_1(mesh, fkey, vkey)
 
     elif rule == 'face_strip_collapse':
         edge_groups, max_group = dual_edge_polylines(mesh)
@@ -429,6 +451,7 @@ def apply_rule(mesh, rule):
 
         count = mesh.number_of_vertices()
         while count > 0:
+            count -= 1
             artist.draw_vertexlabels(text = {key: str(key) for key in mesh.vertex_neighbours(vertex_path[-1])})
             artist.redraw()
             vkey = rhino.mesh_select_vertex(mesh, message = 'vertex')
@@ -540,6 +563,46 @@ def apply_rule(mesh, rule):
                     break
 
         close_handle(mesh, fkeys)
+
+    elif rule == 'close_handle_2':
+        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+        artist.clear_layer()
+
+        edge_paths = []
+        for i in range(2):
+
+            vertex_path = []
+
+            artist.draw_vertexlabels(text = {key: str(key) for key in mesh.vertices()})
+            artist.redraw()
+            vertex_path.append(rhino.mesh_select_vertex(mesh, message = 'vertex'))
+            artist.clear_layer()
+            artist.redraw()
+
+            count = mesh.number_of_vertices()
+            while count > 0:
+                count -= 1
+                artist.draw_vertexlabels(text = {key: str(key) for key in mesh.vertex_neighbours(vertex_path[-1])})
+                artist.redraw()
+                vkey = rhino.mesh_select_vertex(mesh, message = 'vertex')
+                if vkey is None:
+                    break
+                artist.clear_layer()
+                artist.redraw()
+                if vkey in list(mesh.vertices()):
+                    vertex_path.append(vkey)
+                else:
+                    break
+                if vkey  == vertex_path[0]:
+                    break
+            del vertex_path[-1]
+            edge_paths.append([[vertex_path[i - 1], vertex_path[i]] for i in range(len(vertex_path))])
+
+        rs.DeleteLayer('mesh_artist')
+
+        edge_path_1, edge_path_2 = edge_paths
+
+        mesh = close_handle_2(mesh, edge_path_1, edge_path_2)
 
     elif rule == 'move_vertices':
         artist = rhino.MeshArtist(mesh, layer='mesh_artist')

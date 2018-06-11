@@ -55,8 +55,8 @@ def editing(mesh):
     rules_subdivide = ['simple_split', 'double_split', 'flat_corner_2', 'flat_corner_3', 'flat_corner_33', 'split_35', 'split_35_diag', 'split_26']
     rules_poles = ['face_pole', 'edge_pole', 'vertex_pole', 'insert_pole', 'insert_partial_pole']
     rules_strips = ['face_strip_collapse', 'face_strip_insert']
-    rules_genus = ['add_opening', 'close_opening', 'add_handle', 'close_handle']
-    rules_others = ['singular_boundary_1', 'singular_boundary_2', 'rotate_vertex']
+    rules_genus = ['add_opening', 'close_opening', 'add_handle', 'close_handle', 'close_handle_2']
+    rules_others = ['singular_boundary_1', 'singular_boundary_2', 'singular_boundary_minus_1', 'rotate_vertex']
     rules_geometry = ['move_vertices', 'project_on_surface']
     
     rule_cluster = ['subdivide', 'poles', 'strips', 'genus', 'others', 'geometry', 'propagate']
