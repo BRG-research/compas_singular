@@ -13,7 +13,7 @@ __all__ = [
     'template_disc',
     'template_disc_advanced',
     'template_sphere',
-    'template_sphere',
+    'template_torus',
 ]
 
 def template_disc(X = 1, Y = 1):
@@ -29,13 +29,10 @@ def template_disc(X = 1, Y = 1):
     Returns
     -------
     vertices : list
-        Vertices of the template coarse quad mesh.
+        Vertices of the template coarse quad mesh for a disc.
     faces_vertices : list
-        Faces of the template coarse quad mesh.
+        Faces of the template coarse quad mesh for a disc.
 
-    Raises
-    ------
-    -
 
     """
 
@@ -71,13 +68,9 @@ def template_disc_advanced(X = 1, Y = 1, singularities_at_corner = ['False', 'Fa
     Returns
     -------
     vertices : list
-        Vertices of the template quad mesh.
+        Vertices of the template quad mesh for a disc.
     faces_vertices : list
-        Faces of the template quad mesh.
-
-    Raises
-    ------
-    -
+        Faces of the template quad mesh for a disc.
 
     """
 
@@ -168,13 +161,9 @@ def template_sphere(X = 1, Y = 1, Z = 1):
     Returns
     -------
     vertices : list
-        Vertices of the template coarse quad mesh.
+        Vertices of the template coarse quad mesh for a sphere.
     faces_vertices : list
-        Faces of the template coarse quad mesh.
-
-    Raises
-    ------
-    -
+        Faces of the template coarse quad mesh for a sphere.
 
     """
 
@@ -216,13 +205,9 @@ def template_torus(X = 1, Y = 1, Z = 1, R = .25):
     Returns
     -------
     vertices : list
-        Vertices of the template coarse quad mesh.
+        Vertices of the template coarse quad mesh for a torus.
     faces_vertices : list
-        Faces of the template coarse quad mesh.
-
-    Raises
-    ------
-    -
+        Faces of the template coarse quad mesh for a torus.
 
     """
 
