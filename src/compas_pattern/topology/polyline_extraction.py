@@ -16,21 +16,19 @@ __all__ = [
 ]
 
 def mesh_boundaries(mesh, vertex_splits = []):
-    """Extracts the mesh outer and inner boundary polylines as lists of vertices with optional splits.
+    """Extract mesh outer and inner boundaries as lists of vertices with optional splits.
 
     Parameters
     ----------
     mesh : Mesh
         Mesh.
+    vertex_splits : list
+        List of boundary vertex keys for optional splits.
 
     Returns
     -------
-    boundaries: list
-        List of polylines as lists of vertices of the boundaries.
-
-    Raises
-    ------
-    -
+    split_boundaries: list
+        List of boundaries as lists of vertex keys.
 
     """
 
@@ -40,14 +38,18 @@ def mesh_boundaries(mesh, vertex_splits = []):
 
     # collect boundary polylines with splits
     split_boundaries = []
-    while len(boundary_vertices) > 0:
+    count = len(boundary_vertices) * 2
+    while len(boundary_vertices) > 0 and count > 0:
+        count -= 1
         if len(vertex_splits) > 0:
             start = vertex_splits.pop()
             boundary_vertices.remove(start)
         else:
             start = boundary_vertices.pop()
         polyline = [start]
-        while 1:
+        count_2 = len(boundary_vertices) * 2
+        while count_2 > 0:
+            count_2 -= 1
             for nbr, fkey in iter(mesh.halfedge[polyline[-1]].items()):
                 if fkey is None:
                     if nbr in boundary_vertices:
@@ -68,34 +70,26 @@ def mesh_boundaries(mesh, vertex_splits = []):
     return split_boundaries
 
 def quad_mesh_polylines(mesh, dual = False):
-    """Extracts the polylines as lists of vertices of a quad mesh or faces of a quad mesh dual.
+    """Extracts the polylines as lists of keys of vertices of a quad mesh or faces of the quad mesh dual.
 
     Parameters
     ----------
     mesh : Mesh
         A quad mesh.
-    dual: bool
-        False to collect the vertex polylines of the quad mesh.
-        True to collect the face polylines of the quad mesh dual.
+    dual : bool
+        False to collect the vertex keys of the quad mesh.
+        True to collect the face keys of the quad mesh dual.
 
     Returns
     -------
     list or None
         If on the primal:
-        The list of polylines as lists of vertex indices.
+        The list of polylines as lists of vertex keys.
         If on the dual:
-        The list of dual polylines as list of face indices.
+        The list of dual polylines as list of face keys.
         None if not a quad mesh.
 
-    Raises
-    ------
-    -
-
     """
-
-    # check if is a quad mesh
-    if not mesh.is_quadmesh():
-        return None
     
     # switch to dual
     if dual:
