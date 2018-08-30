@@ -112,6 +112,7 @@ def editing_primal_dual(primal, default_settings, curve_constraints, point_const
         elif rule in rules:
             regular_vertices = list(primal.vertices())
             apply_rule(primal, rule)
+            #if rule != 'clear_faces':
             mesh_propagation(primal, regular_vertices)
         
         rs.DeleteObjects(primal_guid)
