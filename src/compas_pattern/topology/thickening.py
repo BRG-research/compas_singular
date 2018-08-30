@@ -22,24 +22,19 @@ def mesh_thickening(mesh, thickness = 1):
     mesh : Mesh
         Mesh with the topology of a perforated disc.
     thickness : real
-        Closed mesh thickness. If zero, then set to .0001.
+        Mesh thickness
 
 
     Returns
     -------
-    vertices : list
-        The vertices of the closed mesh.
-    faces : list
-        The faces of the closed mesh.
-
-    Raises
-    ------
-    -
+    vertices : list, None
+        The vertices of the thickened mesh.
+        None if thicnkess not striclty positive.
+    faces : list, None
+        The faces of the thickened mesh.
+        None if thicnkess not striclty positive.
 
     """
-
-    if thickness == 0:
-        thickness == .0001
 
     offset_mesh = mesh.copy()
 
