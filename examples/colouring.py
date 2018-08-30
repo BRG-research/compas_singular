@@ -18,9 +18,21 @@ from compas.topology import vertex_coloring
 
 from compas_pattern.topology.face_strip_operations import face_strip_collapse
 
+from compas_pattern.datastructures.mesh import delete_face
+
 # mesh selection
 guid = rs.GetObject('get mesh')
 mesh = rhino.mesh_from_guid(Mesh, guid)
+
+#lines = rs.GetObjects('lines', filter = 4)
+#edges = [[rs.CurveStartPoint(line), rs.CurveEndPoint(line)] for line in lines]
+#mesh = Mesh.from_lines(edges)
+
+#faces = list(mesh.faces())
+#for fkey in faces:
+#    if len(mesh.face_vertices(fkey)) > 10:
+#        delete_face(mesh, fkey)
+#        print '-1 face'
 
 init_polyedges = quad_mesh_polylines(mesh)
 
