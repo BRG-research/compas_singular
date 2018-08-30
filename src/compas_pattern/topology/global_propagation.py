@@ -71,22 +71,38 @@ def face_propagation(mesh, fkey, regular_vertices):
         if vkey not in face_vertices:
             return None
 
-    # sort original vertices
-    a, b, c, d = sorted([face_vertices.index(vkey) for vkey in regular_vertices])
+    pole = None
+    for vkey in regular_vertices:
+        if regular_vertices.count(vkey) == 2:
+            pole = vkey
+            break
 
-    # split face vertices per edge
-    ab = face_vertices[a : b + 1 - len(face_vertices)]
-    bc = face_vertices[b : c + 1 - len(face_vertices)]
-    cd = face_vertices[c : d + 1 ]#- len(face_vertices)]
-    da = face_vertices[d :] + face_vertices[: a + 1 - len(face_vertices)]
-
-    # correction if has a double vertex
-    for uv in [ab, bc, cd, da]:
-        if len(uv) == 1:
-            uv.append(uv[0])
-        elif uv[0] == uv[1]:
-            del uv[0]
-    #print ab, bc, cd, da
+    if pole is None:
+        # sort original vertices
+        a, b, c, d = sorted([face_vertices.index(vkey) for vkey in regular_vertices])
+        # split face vertices per edge
+        ab = face_vertices[a : b + 1 - len(face_vertices)]
+        bc = face_vertices[b : c + 1 - len(face_vertices)]
+        cd = face_vertices[c : d + 1 ]#- len(face_vertices)]
+        da = face_vertices[d :] + face_vertices[: a + 1 - len(face_vertices)]
+    else:
+        seen = set()
+        seen_add = seen.add
+        trimmed_regular_vertices = [x for x in regular_vertices if not (x in seen or seen_add(x))]
+        seen = set()
+        seen_add = seen.add
+        trimmed_face_vertices = [x for x in face_vertices if not (x in seen or seen_add(x))]
+        a, b, c = sorted([trimmed_face_vertices.index(vkey) for vkey in trimmed_regular_vertices])
+        ab = trimmed_face_vertices[a : b + 1 - len(trimmed_face_vertices)]
+        bc = trimmed_face_vertices[b : c + 1]# - len(trimmed_face_vertices)]
+        ca = trimmed_face_vertices[c :] + trimmed_face_vertices[: a + 1 - len(trimmed_face_vertices)]
+        # correction if has a double vertex
+        abc = [ab, bc, ca]
+        for i in range(len(abc)):
+            if abc[i - 1][-1] == pole and abc[i][0] == pole:
+                abc.insert(i, [pole, pole])
+                break
+        ab, bc, cd, da = abc
 
     # check validity for operation
     if len(ab) != len(cd) and len(ab) != 2 and len(cd) != 2:
@@ -139,15 +155,11 @@ def face_propagation(mesh, fkey, regular_vertices):
     vertex_remap = []
     for vertex in new_vertices:
         geom_key = geometric_key(vertex)
-        #print geom_key
-        #print face_vertex_map
         if geom_key in face_vertex_map:
             vertex_remap.append(face_vertex_map[geom_key])
         else:
             x, y, z = vertex
             vkey = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-            #print vkey
-            #print x, y, z
             vertex_remap.append(vkey)
 
     # delete old face and add new faces
