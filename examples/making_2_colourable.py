@@ -10,14 +10,16 @@ from compas_pattern.algorithms.colouring import generate_crossing_graph
 from compas_pattern.algorithms.colouring import is_two_colourable
 from compas_pattern.algorithms.colouring import compute_two_colourable_meshes
 
-from compas_pattern.cad.rhino.utilities import draw_mesh
+from compas_rhino import draw
 
 # mesh selection
 guid = rs.GetObject('coarse quad mesh to make two-colourable')
 mesh = rhino.mesh_from_guid(Mesh, guid)
 
-delta_x = 30
-delta_y = -20
+delta_x = 100
+delta_y = -150
+
+kmax = 1
 
 rs.EnableRedraw(False)
 
@@ -38,7 +40,7 @@ group = rs.AddGroup()
 rs.AddObjectsToGroup(graph_objects, group)
 
 rs.EnableRedraw(False)
-two_colourable_objects = compute_two_colourable_meshes(PseudoQuadMesh, mesh, kmax = 2)
+two_colourable_objects = compute_two_colourable_meshes(PseudoQuadMesh, mesh, kmax= kmax)
 
 rs.EnableRedraw(False)
 count = 1
