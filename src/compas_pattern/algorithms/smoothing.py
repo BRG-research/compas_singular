@@ -345,8 +345,7 @@ def customed_constraints(mesh, constraints, surface_boundaries, surface_constrai
         # set new point constraint
         if new_constraint_type == 'point':
             for vkey in vkeys:
-                constraints[vkey][0] = 'point'
-                constraints[vkey][0] = mesh.vertex_coordinates(vkey)
+                constraints[vkey] = ['point', mesh.vertex_coordinates(vkey)]
 
         # set new curve constraint
         elif new_constraint_type == 'curve':
