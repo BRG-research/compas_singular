@@ -118,16 +118,17 @@ class PseudoQuadMesh(Mesh):
             plotter.show()
 
         """
+
         for u, v in self.face_halfedges(fkey):
-            self.halfedge[u][v] = None
-            if self.halfedge[v][u] is None:
-                del self.halfedge[u][v]
-                # exception for pseudo quad face
-                if u != v:
+            if u != v:
+                self.halfedge[u][v] = None
+                if self.halfedge[v][u] is None:
+                    del self.halfedge[u][v]
                     del self.halfedge[v][u]
+
         del self.face[fkey]
 
-    def to_mesh(self):
+    def to_mesh_2(self):
         vertices = [self.vertex_coordinates(vkey) for vkey in self.vertices()]
         face_vertices = []
         # remove consecutive duplicates in pseudo quad faces
@@ -139,6 +140,22 @@ class PseudoQuadMesh(Mesh):
                     non_pseudo_face.append(vkey)
             face_vertices.append(non_pseudo_face)
         mesh = Mesh.from_vertices_and_faces(vertices, face_vertices)
+        return mesh
+
+    def to_mesh(self):
+
+        vertices = [self.vertex_coordinates(vkey) for vkey in self.vertices()]
+        vertex_remap = list(self.vertices())
+        faces = []
+        for fkey in self.faces():
+            face_vertices = []
+            for vkey in self.face_vertices(fkey):
+                vkey_idx = vertex_remap.index(vkey)
+                if vkey_idx not in face_vertices:
+                    face_vertices.append(vkey_idx)
+            faces.append(face_vertices)
+
+        mesh = Mesh.from_vertices_and_faces(vertices, faces)
         return mesh
 
 def pqm_from_mesh(mesh, poles):
@@ -187,6 +204,45 @@ def pqm_from_mesh(mesh, poles):
         new_face_vertices.append([vertex_conversion[vkey] for vkey in face_vertices])
 
     return vertices, new_face_vertices
+
+def vertex_index(mesh, vkey):
+    """Return the index of a vertex in a coarse quad mesh with potential poles stored in pseudo-quad faces.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    vkey: int
+        Key of a vertex
+
+    Returns
+    -------
+    index: float
+        The index of the vertex.
+
+    Raises
+    ------
+    -
+
+    """
+
+    if not mesh.is_quadmesh():
+        return None
+        
+    valency = float(len(mesh.vertex_neighbours(vkey)))
+    boundary = mesh.is_vertex_on_boundary(vkey)
+    pole = True if vkey in mesh.vertex_neighbours(vkey) else False
+
+    if pole:
+        if not boundary:
+            return 1.
+        else:
+            return 1. / 2.
+    else:
+        if not boundary:
+            return 1. / 4. * (4. - valency)
+        else:
+            return 1. / 4. * (3. - valency)
 
 # ==============================================================================
 # Main
