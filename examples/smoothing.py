@@ -144,7 +144,8 @@ def start():
     #dense_mesh = conway_dual(dense_mesh)
     #dense_mesh = conway_gyro(dense_mesh)
     #dense_mesh = conway_dual(dense_mesh)
-    #dense_mesh = conway_join(dense_mesh)
+    #dense_mesh = conway_gyro(dense_mesh)
+    #dense_mesh = conway_kis(dense_mesh)
     
     #rs.EnableRedraw(False)
     #draw_mesh(dense_mesh)
@@ -161,10 +162,14 @@ def start():
     rs.EnableRedraw(False)
     
     constraints, surface_boundaries = custom_constraints(smooth_mesh, surface_guid)
+    #constraints, surface_boundaries = define_constraints(smooth_mesh, surface_guid)
+    
+    rs.EnableRedraw(False)
     fixed_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'fixed']
     mesh_smooth_area(smooth_mesh, fixed = fixed_vertices, kmax = smoothing_iterations, damping = damping_value, callback = apply_constraints, callback_args = [smooth_mesh, constraints])
     
     smooth_mesh_guid = draw_mesh(smooth_mesh)
+    
     #layer = 'smooth_mesh'
     #rs.AddLayer(layer)
     #rs.ObjectLayer(smooth_mesh_guid, layer = layer)
