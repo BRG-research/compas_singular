@@ -15,11 +15,12 @@ from compas.geometry import distance_point_point
 from compas.geometry import subtract_vectors
 from compas.geometry import dot_vectors
 
-from compas_pattern.topology.unjoining_unwelding import unweld_mesh_along_edge_path
-from compas_pattern.topology.unjoining_unwelding import unjoin_disjointed_parts
+from compas_pattern.topology.joining_welding import unweld_mesh_along_edge_path
+from compas_pattern.topology.joining_welding import explode_mesh
 
 from compas_pattern.datastructures.mesh import mesh_disjointed_parts
-from compas_pattern.datastructures.mesh import mesh_topology
+from compas_pattern.datastructures.mesh import mesh_euler
+from compas_pattern.topology.polyline_extraction import mesh_boundaries
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -446,14 +447,38 @@ def simple_split(mesh, fkey, edge):
     if (u, v) not in mesh.face_halfedges(fkey) and (v, u) not in mesh.face_halfedges(fkey):
         return None
 
+    pole = None
+    face_vertices = mesh.face_vertices(fkey)
+    for fkey_2 in face_vertices:
+        if face_vertices.count(fkey_2) == 2:
+            pole = fkey_2
+            break
+
     if v in mesh.halfedge[u] and mesh.halfedge[u][v] == fkey:
         a = u
     else:
         a = v
 
-    b = mesh.face_vertex_descendant(fkey, a)
-    c = mesh.face_vertex_descendant(fkey, b)
-    d = mesh.face_vertex_descendant(fkey, c)
+    if pole is None:
+        b = mesh.face_vertex_descendant(fkey, a)
+        c = mesh.face_vertex_descendant(fkey, b)
+        d = mesh.face_vertex_descendant(fkey, c)
+    else:
+        if pole in edge:
+            if pole == a:
+                b = [u, v]
+                b.remove(pole)
+                b = b[0]
+                c = mesh.face_vertex_descendant(fkey, b)
+                d = mesh.face_vertex_descendant(fkey, c)
+            else:
+                b = mesh.face_vertex_descendant(fkey, a)
+                c = b
+                d = mesh.face_vertex_ancestor(fkey, a)
+        else:
+            b = mesh.face_vertex_descendant(fkey, a)
+            c = mesh.face_vertex_descendant(fkey, b)
+            d = c
 
     e = add_vertex_from_vertices(mesh, [a, b], [1, 1])
     f = add_vertex_from_vertices(mesh, [c, d], [1, 1])
@@ -463,8 +488,10 @@ def simple_split(mesh, fkey, edge):
     fkey_1 = mesh.add_face([a, e, f, d])
     fkey_2 = mesh.add_face([e, b, c, f])
 
-    insert_vertices_in_halfedge(mesh, b, a, [e])
-    insert_vertices_in_halfedge(mesh, d, c, [f])
+    if b != a:
+        insert_vertices_in_halfedge(mesh, b, a, [e])
+    if d != c:
+        insert_vertices_in_halfedge(mesh, d, c, [f])
 
     return fkey_1, fkey_2
 
@@ -815,12 +842,12 @@ def add_handle(mesh, fkey_1, fkey_2):
     vertices = [vkey for vkey in mesh.vertices()]
 
     # add firtst opening
-    faces_1 = face_opening(mesh, fkey_1)
+    faces_1 = add_opening(mesh, fkey_1)
     # find newly added vertices
     vertices_1 = [vkey for vkey in mesh.vertices() if vkey not in vertices]
 
     # add second opening
-    faces_2 = face_opening(mesh, fkey_2)
+    faces_2 = add_opening(mesh, fkey_2)
     # find newly added vertices
     vertices_2 = [vkey for vkey in mesh.vertices() if vkey not in vertices and vkey not in vertices_1]
 
@@ -904,14 +931,16 @@ def close_handle_2(mesh, edge_path_1, edge_path_2):
     unweld_mesh_along_edge_path(mesh, edge_path_2)
 
     # explode
-    parts, meshes = unjoin_disjointed_parts(mesh)
+    parts = mesh_disjointed_parts(mesh)
+    meshes = explode_mesh(mesh, parts)
 
     # find parts with the topolog of a strip: two boundary components and an EUler characteristic of 0
     # if there are several, select the topologically smallest one (lowest number of faces)
     index = -1
     size = -1
     for i, submesh in enumerate(meshes):
-        V, E, F, B, X, G = mesh_topology(submesh)
+        B = len(mesh_boundaries(mesh))
+        X = mesh_euler(submesh)
         if B == 2 and X == 0:
             n = submesh.number_of_faces()
             if index < 0 or n < size:
