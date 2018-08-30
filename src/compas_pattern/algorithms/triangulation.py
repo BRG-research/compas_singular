@@ -4,7 +4,7 @@ from compas.topology import delaunay_from_points
 
 from compas.utilities import geometric_key
 
-from compas_pattern.topology.unwelding import unweld_mesh_along_edge_path
+from compas_pattern.topology.joining_welding import unweld_mesh_along_edge_path
 
 from compas_pattern.datastructures.mesh import face_circle
 
