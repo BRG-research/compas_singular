@@ -13,7 +13,8 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
-    'mesh_topology',
+    'mesh_euler',
+    'mesh_genus',
     'mesh_area',
     'mesh_centroid',
     'mesh_normal',
@@ -27,9 +28,18 @@ __all__ = [
     'mesh_disjointed_parts',
 ]
 
-def mesh_topology(mesh):
+def mesh_euler(mesh):
 
-    V = mesh.number_of_vertices()
+    V = len([vkey for vkey in mesh.vertices() if len(mesh.vertex_neighbours(vkey)) != 0])
+    E = mesh.number_of_edges()
+    F = mesh.number_of_faces()
+    X = V - E + F
+    
+    return X
+
+def mesh_genus(mesh):
+
+    V = len([vkey for vkey in mesh.vertices() if len(mesh.vertex_neighbours(vkey)) != 0])
     E = mesh.number_of_edges()
     F = mesh.number_of_faces()
     B = len(mesh_boundaries(mesh))
@@ -37,6 +47,7 @@ def mesh_topology(mesh):
     G = (2 - X - B) / 2
 
     return V, E, F, B, X, G
+
 
 def mesh_area(mesh):
 
@@ -258,6 +269,49 @@ def mesh_disjointed_parts(mesh):
         disjointed_parts.append(part)
 
     return disjointed_parts
+
+def is_mesh_manifold(mesh):
+    """Verify that the mesh is manifold.
+
+    A mesh is manifold if the fllowing conditions are fulfilled:
+
+    * Each edge is incident to only one or two faces.
+    * The faces incident to a vertex form a closed or an open fan.
+
+    Returns
+    -------
+    bool
+        True, if the mesh is manifold.
+        False, otherwise.
+
+    """
+    if not mesh.vertex:
+        return False
+
+    for key in mesh.vertices():
+        nbrs = mesh.vertex_neighbours(key, ordered=True)
+
+        if not nbrs:
+            return False
+
+        if mesh.halfedge[nbrs[0]][key] is None:
+            for nbr in nbrs[1:-1]:
+                if mesh.halfedge[key][nbr] is None:
+                    return False
+
+            if mesh.halfedge[key][nbrs[-1]] is not None:
+                return False
+        else:
+            for nbr in nbrs[1:]:
+                if mesh.halfedge[key][nbr] is None:
+                    return False
+
+        # additional check for multiple fans
+        nbr_faces = list(mesh.halfedge[key].values())
+        if nbr_faces.count(None) > 1:
+            return False
+
+    return True
 
 # ==============================================================================
 # Main
