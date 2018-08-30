@@ -29,8 +29,8 @@ __all__ = [
 	'face_skewnesses',
 	'face_curvatures',
 	'vertex_curvatures',
-	'vertex_polyedge_curvature',
-
+	'polyedge_curvatures',
+	'polyline_curvatures',
 ]
 
 def minimum(list):
@@ -263,6 +263,8 @@ def face_curvatures(mesh):
 		if len(mesh.face_vertices(fkey)) == 4:
 			u, v, w, x = [mesh.vertex_coordinates(vkey) for vkey in mesh.face_vertices(fkey)]
 			face_curvature_dict[fkey] = distance_line_line((u, w), (v, x)) / (distance_point_point(u, w) + distance_point_point(v, x)) * 2
+		elif len(mesh.face_vertices(fkey)) == 3:
+			face_curvature_dict[fkey] = 0
 		else:
 			face_curvature_dict[fkey] = None
 
@@ -302,6 +304,85 @@ def vertex_curvatures(mesh):
 			vertex_curvature_dict[vkey] = None
 
 	return vertex_curvature_dict
+
+def polyedge_curvatures(mesh, polyedges):
+	"""Curvatures of the mesh vertices along polyedges as dict (vertices): (curvatures).
+
+
+	Parameters
+	----------
+	mesh: Mesh
+		A mesh
+	polyedges: list
+		List of polyedges as sequences of vertices.
+
+	Returns
+	-------
+	polyedge_curvature_dict: dict
+		Dictionary of curvatures per vertex per polyedge {(vertices): (curvature)}.
+
+	Raises
+	------
+	-
+
+	"""
+
+	polyedge_curvature_dict = {}
+	for polyedge in polyedges:
+		curvatures = []
+		for i in range(len(polyedge)):
+			if i == 0 or i == len(polyedge) - 1:
+				curvatures.append(0)
+			else:
+				a, b, c = polyedge[i - 1], polyedge[i], polyedge[i + 1]
+				ab = subtract_vectors(mesh.vertex_coordinates(b), mesh.vertex_coordinates(a))
+				bc = subtract_vectors(mesh.vertex_coordinates(c), mesh.vertex_coordinates(b))
+				ac = subtract_vectors(mesh.vertex_coordinates(c), mesh.vertex_coordinates(a))
+				if cross_vectors(ab, bc) == 0:
+					curvatures.append(0)
+				else:
+					radius = length_vector(ac) / (2 * length_vector(cross_vectors(ab, bc))) * (length_vector(ab) * length_vector(bc))
+					curvatures.append(1 / radius)
+		polyedge_curvature_dict[tuple(polyedge)] = curvatures
+
+	return polyedge_curvature_dict
+
+def polyline_curvatures(polyline):
+	"""Curvatures of the polyline.
+
+
+	Parameters
+	----------
+	polyline: list
+		A list of points
+
+	Returns
+	-------
+	polyline_curvatures_list: list
+		List of curvatures per vertex per polyline []curvature].
+
+	Raises
+	------
+	-
+
+	"""
+
+	polyline_curvatures_list = []
+	for i in range(len(polyline)):
+		if i == 0 or i == len(polyline) - 1:
+			polyline_curvatures_list.append(0)
+		else:
+			a, b, c = polyline[i - 1], polyline[i], polyline[i + 1]
+			ab = subtract_vectors(b, a)
+			bc = subtract_vectors(c, b)
+			ac = subtract_vectors(c, a)
+			if cross_vectors(ab, bc) == 0:
+				polyline_curvatures_list.append(0)
+			else:
+				radius = length_vector(ac) / (2 * length_vector(cross_vectors(ab, bc))) * (length_vector(ab) * length_vector(bc))
+				polyline_curvatures_list.append(1 / radius)
+
+	return polyline_curvatures_list
 
 # ==============================================================================
 # Main
