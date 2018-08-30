@@ -86,8 +86,9 @@ def draw_mesh(mesh):
             rs.AddObjectsToGroup(edges, group)
             return edges
     # return mesh
+    vertex_remap = list(mesh.vertices())
     vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
-    face_vertices = [mesh.face_vertices(fkey) for fkey in mesh.faces()]
+    face_vertices = [[vertex_remap.index(vkey) for vkey in mesh.face_vertices(fkey)] for fkey in mesh.faces()]
     return rhino.utilities.drawing.xdraw_mesh(vertices, face_vertices, None, None)
 
 def draw_graph(graph):
