@@ -45,7 +45,7 @@ def decomposition(delaunay_mesh):
     singularities = {}
     reference_points = {}
     for fkey in delaunay_mesh.faces():
-        nb_nbrs = len(delaunay_mesh.face_neighbours(fkey))
+        nb_nbrs = len(delaunay_mesh.face_neighbors(fkey))
         if nb_nbrs == 3:
             singularities[fkey] = 3 
             reference_points[fkey] = face_circle(delaunay_mesh,fkey)[0]
@@ -62,7 +62,7 @@ def decomposition(delaunay_mesh):
     # collect branch paths that span from one singularity to another as series of faces
     branch_paths = []
     for singularity in singularities:
-        for nbr in delaunay_mesh.face_neighbours(singularity):
+        for nbr in delaunay_mesh.face_neighbors(singularity):
             # start a potential new branch based on a singularity u and a neighbour v
             branch_path = []
             u, v = singularity, nbr
@@ -73,7 +73,7 @@ def decomposition(delaunay_mesh):
             while not end_loop and count > 0:
                 count -= 1
                 if v not in singularities:
-                    face_nbrs = delaunay_mesh.face_neighbours(v)
+                    face_nbrs = delaunay_mesh.face_neighbors(v)
                     w = face_nbrs[face_nbrs.index(u) - 1]
                     branch_path.append(w)
                     u, v = v, w
