@@ -1,6 +1,8 @@
 import math
 
 import compas_rhino as rhino
+import compas_rhino.artists
+import compas_rhino.helpers
 
 try:
     import rhinoscriptsyntax as rs
@@ -322,12 +324,12 @@ def customed_constraints(mesh, constraints, surface_boundaries, surface_constrai
                 rgb = [0, 0, 0]
             vertex_colors[vkey] = rgb
 
-        artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+        artist = rhino.artists.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
         artist.draw_vertices(color = vertex_colors)
         artist.redraw()
-        vkeys = rhino.mesh_select_vertices(mesh, message = 'change vertex constraints?')
+        vkeys = rhino.helpers.mesh_select_vertices(mesh, message = 'change vertex constraints?')
         artist.clear_layer()
         artist.redraw()
         
