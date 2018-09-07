@@ -78,7 +78,7 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
     boundary_vertices = patch_decomposition.vertices_on_boundary()
     for vkey in boundary_vertices:
         vertex_faces = patch_decomposition.vertex_faces(vkey, ordered = True)
-        vertex_neighbours = patch_decomposition.vertex_neighbours(vkey, ordered = True)
+        vertex_neighbours = patch_decomposition.vertex_neighbors(vkey, ordered = True)
         for fkey in vertex_faces:
             # apply changes if there is an adjacent tri face (pseudo-quads are already transformed)
             if len(patch_decomposition.face_vertices(fkey)) == 3:
@@ -318,12 +318,12 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
                                 next_fkey = patch_decomposition.halfedge[ukey][wkey]
                                 if len(patch_decomposition.face_vertices(next_fkey)) == 5:
                                     vkey = wkey
-                                    old_neighbours = patch_decomposition.vertex_neighbours(vkey)
+                                    old_neighbours = patch_decomposition.vertex_neighbors(vkey)
                                     #wkey = penta_quad_1(patch_decomposition, next_fkey, wkey)
                                     original_vertices = patch_decomposition.face_vertices(next_fkey)
                                     original_vertices.remove(vkey)
                                     face_propagation(patch_decomposition, next_fkey, original_vertices)
-                                    new_neighbours = patch_decomposition.vertex_neighbours(vkey)
+                                    new_neighbours = patch_decomposition.vertex_neighbors(vkey)
                                     for nbr in new_neighbours:
                                         if nbr not in old_neighbours:
                                             wkey = nbr
@@ -525,7 +525,7 @@ def conforming_old(mesh, planar_point_features = None, planar_polyline_features 
                             is_pole = True
                             break
                     if not is_pole:
-                        nbrs = mesh.vertex_neighbours(v)
+                        nbrs = mesh.vertex_neighbors(v)
                         if len(nbrs) == 2:
                             if (v, nbrs[0]) or (nbrs[0], v) in feature_edges:
                                 u = nbrs[0]
