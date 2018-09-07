@@ -32,7 +32,7 @@ def mesh_boundaries(mesh, vertex_splits = []):
 
     """
 
-    boundary_vertices = [vkey for vkey in mesh.vertices_on_boundary() if len(mesh.vertex_neighbours(vkey)) != 0]
+    boundary_vertices = [vkey for vkey in mesh.vertices_on_boundary() if len(mesh.vertex_neighbors(vkey)) != 0]
 
     vertex_splits = [vkey for vkey in vertex_splits if vkey in boundary_vertices]
 
@@ -121,10 +121,10 @@ def quad_mesh_polylines(mesh, dual = False):
                 u, v = polyline[-2], polyline[-1]
                 count -= 1
                 # for not boundary polyline: stop if the last vertex is on the boundary or if it is a singularity or if the polyline is closed "without kink"
-                if not is_boundary_polyline and (mesh.is_vertex_on_boundary(v) or len(mesh.vertex_neighbours(v)) != 4 or polyline[0] == polyline[-1]):
+                if not is_boundary_polyline and (mesh.is_vertex_on_boundary(v) or len(mesh.vertex_neighbors(v)) != 4 or polyline[0] == polyline[-1]):
                     break
                 # for boundary polyline: stop if the last vertex is on the boundary or if it is a singularity or if the polyline is closed "without kink"
-                elif is_boundary_polyline and (len(mesh.vertex_neighbours(v)) != 3 or polyline[0] == polyline[-1]):
+                elif is_boundary_polyline and (len(mesh.vertex_neighbors(v)) != 3 or polyline[0] == polyline[-1]):
                     break             
                 # get next vertex of polyline
                 # dichotomy if halfedge u v points outside in case of boundary polylines
@@ -250,14 +250,14 @@ def singularity_polylines(mesh):
     if not mesh.is_quadmesh():
         return None
 
-    singularities = [vkey for vkey in mesh.vertices() if (mesh.is_vertex_on_boundary(vkey) and len(mesh.vertex_neighbours(vkey)) != 3) or (not mesh.is_vertex_on_boundary(vkey) and len(mesh.vertex_neighbours(vkey)) != 4)]
+    singularities = [vkey for vkey in mesh.vertices() if (mesh.is_vertex_on_boundary(vkey) and len(mesh.vertex_neighbors(vkey)) != 3) or (not mesh.is_vertex_on_boundary(vkey) and len(mesh.vertex_neighbors(vkey)) != 4)]
     polylines = []
     
     # start from singularuty
     for sing in singularities:
 
         # propagate in each direction
-        for nbr in mesh.vertex_neighbours(sing):
+        for nbr in mesh.vertex_neighbors(sing):
             # initiate
             u = sing
             v = nbr
@@ -272,7 +272,7 @@ def singularity_polylines(mesh):
                 count -= 1
                 u = polyline[-2]
                 v = polyline[-1]
-                nbrs = mesh.vertex_neighbours(v, True)
+                nbrs = mesh.vertex_neighbors(v, True)
                 idx = nbrs.index(u)
                 # if not on boundary
                 if not mesh.is_vertex_on_boundary(v):
