@@ -190,7 +190,7 @@ def unweld_mesh_along_edge_path(mesh, edge_path):
             new_vkey = mesh.add_vertex(attr_dict = attr)
             duplicates.append([vkey, new_vkey])
             # split neighbours in two groups depending on the side of the path
-            vertex_nbrs = mesh.vertex_neighbours(vkey, True)
+            vertex_nbrs = mesh.vertex_neighbors(vkey, True)
             
             # two exceptions on last_vkey or next_vkey if the vertex is on the boundary or a non-manifold vertex in case of the last vertex of a closed edge path
             if edge_path[0][0] == edge_path[-1][-1] and i == len(vertex_path) - 1:
