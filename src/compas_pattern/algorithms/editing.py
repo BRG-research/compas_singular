@@ -67,7 +67,8 @@ def editing(mesh):
 
     # first visualisation
     rs.EnableRedraw(False)
-    edges = [rs.AddLine(mesh.vertex_coordinates(u), mesh.vertex_coordinates(v)) for u,v in mesh.edges() if u != v and geometric_key(mesh.vertex_coordinates(u)) != geometric_key(mesh.vertex_coordinates(v))]
+    copy_mesh = mesh.to_mesh()
+    edges = [rs.AddLine(copy_mesh.vertex_coordinates(u), copy_mesh.vertex_coordinates(v)) for u,v in copy_mesh.edges() if u != v and geometric_key(copy_mesh.vertex_coordinates(u)) != geometric_key(copy_mesh.vertex_coordinates(v))]
     rs.ObjectLayer(edges, 'temp')
     rs.EnableRedraw(True)
         
@@ -121,7 +122,8 @@ def editing(mesh):
         # update edges
         rs.EnableRedraw(False)
         rs.DeleteObjects(edges)
-        edges = [rs.AddLine(mesh.vertex_coordinates(u), mesh.vertex_coordinates(v)) for u, v in mesh.edges() if mesh.vertex_coordinates(u) != mesh.vertex_coordinates(v)]
+        copy_mesh = mesh.to_mesh()
+        edges = [rs.AddLine(copy_mesh.vertex_coordinates(u), copy_mesh.vertex_coordinates(v)) for u,v in copy_mesh.edges() if u != v and geometric_key(copy_mesh.vertex_coordinates(u)) != geometric_key(copy_mesh.vertex_coordinates(v))]
         rs.ObjectLayer(edges, 'temp')
         rs.EnableRedraw(True)
 
