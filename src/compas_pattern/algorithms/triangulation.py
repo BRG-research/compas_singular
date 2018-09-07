@@ -67,6 +67,7 @@ def triangulation(boundary, holes = [], polyline_features = [], point_features =
     # remove duplicates based on their geometric keys
     delaunay_point_map = {}
     for point in delaunay_points:
+        point = [float(point[0]), float(point[1]), float(point[2])]
         geom_key = geometric_key(point)
         if geom_key not in delaunay_point_map:
             delaunay_point_map[geom_key] = point
