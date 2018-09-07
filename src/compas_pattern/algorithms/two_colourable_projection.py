@@ -241,14 +241,14 @@ def is_graph_two_colourable(graph):
 	rank_to_keys = {}
 	current_colour = 0
 	current_rank = 0
-	unvisited = [key for key in graph.vertices() if len(graph.vertex_neighbours(key)) > 0]
+	unvisited = [key for key in graph.vertices() if len(graph.vertex_neighbors(key)) > 0]
 	# case of isolated vertices
-	isolated_vertices = [key for key in graph.vertices() if len(graph.vertex_neighbours(key)) == 0]
+	isolated_vertices = [key for key in graph.vertices() if len(graph.vertex_neighbors(key)) == 0]
 	key_to_colour.update({key: 1 - current_colour for key in isolated_vertices})
 	rank_to_keys[-1] = isolated_vertices
 
 	# start from one of the vertices with the highest valency
-	key_to_degree = {key: len(graph.vertex_neighbours(key)) for key in unvisited}
+	key_to_degree = {key: len(graph.vertex_neighbors(key)) for key in unvisited}
 	univisted = sorted(unvisited, key=lambda key: key_to_degree[key])
 	key_0 = unvisited.pop()
 	key_to_colour[key_0] = current_colour
@@ -264,7 +264,7 @@ def is_graph_two_colourable(graph):
 		current_keys = []
 		# collect valid neighbours of previous rank to form next rank
 		for key in rank_to_keys[current_rank - 1]:
-			for nbr in graph.vertex_neighbours(key):
+			for nbr in graph.vertex_neighbors(key):
 				if nbr in unvisited and nbr not in current_keys:
 					current_keys.append(nbr)
 		#if no current keys (if graph has disconnected parts) start from a new one
@@ -274,7 +274,7 @@ def is_graph_two_colourable(graph):
 		for key in current_keys:
 			for key_2 in current_keys:
 				if key < key_2:
-					if key_2 in graph.vertex_neighbours(key):
+					if key_2 in graph.vertex_neighbors(key):
 								two_colourable = False
 		# return None if not two colourable
 		if not two_colourable:
@@ -299,7 +299,7 @@ def graph_mutiple_vertex_deletion(graph, vertices):
 def mesh_multiple_strip_collapse(cls, mesh, strips_to_collapse):
 
 	boundary_vertices = mesh.vertices_on_boundary()
-	boundary_corner_vertices = [vkey for vkey in boundary_vertices if len(mesh.vertex_neighbours(vkey)) == 2]
+	boundary_corner_vertices = [vkey for vkey in boundary_vertices if len(mesh.vertex_neighbors(vkey)) == 2]
 
 	edges_to_strips = edges_to_strips_dict(mesh)
 	edges_to_collapse = [edge for edge, strip in edges_to_strips.items() if strip in strips_to_collapse]
