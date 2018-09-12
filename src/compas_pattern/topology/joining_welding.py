@@ -113,17 +113,16 @@ def join_meshes(meshes):
     """
 
     vertices = []
+    vertex_map = {}
     index = 0
     faces = []
 
     for mesh in meshes:
-        vertex_map = {}
         for vkey in mesh.vertices():
             vertex_map[vkey] = index
             index += 1
             vertices.append(mesh.vertex_coordinates(vkey))
-        for fkey in mesh.faces():
-            faces.append([vertex_map[vkey] for vkey in mesh.face_vertices(fkey)])
+        faces += [ [vertex_map[vkey] for vkey in mesh.face_vertices(fkey)] for fkey in mesh.faces()]
 
     return vertices, faces
 
