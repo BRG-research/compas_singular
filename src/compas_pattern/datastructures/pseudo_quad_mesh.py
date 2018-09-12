@@ -128,6 +128,85 @@ class PseudoQuadMesh(Mesh):
 
         del self.face[fkey]
 
+    def edges(self, data=False):
+        """Iterate over the edges of the mesh.
+
+        Parameters
+        ----------
+        data : bool, optional
+            Return the edge data as well as the edge vertex keys.
+
+        Yields
+        ------
+        2-tuple
+            The next edge as a (u, v) tuple, if ``data`` is false.
+        3-tuple
+            The next edge as a (u, v, data) tuple, if ``data`` is true.
+
+        Note
+        ----
+        Mesh edges have no topological meaning. They are only used to store data.
+        Edges are not automatically created when vertices and faces are added to
+        the mesh. Instead, they are created when data is stored on them, or when
+        they are accessed using this method.
+
+        This method yields the directed edges of the mesh.
+        Unless edges were added explicitly using :meth:`add_edge` the order of
+        edges is *as they come out*. However, as long as the toplogy remains
+        unchanged, the order is consistent.
+
+        Example
+        -------
+        .. code-block:: python
+
+            import compas
+            from compas.datastructures import Mesh
+            from compas.plotters import MeshPlotter
+
+            mesh = Mesh.from_obj(compas.get('faces.obj'))
+
+            for index, (u, v, attr) in enumerate(mesh.edges(True)):
+                attr['index1'] = index
+
+            for index, (u, v, attr) in enumerate(mesh.edges(True)):
+                attr['index2'] = index
+
+            plotter = MeshPlotter(mesh)
+
+            text = {(u, v): '{}-{}'.format(a['index1'], a['index2']) for u, v, a in mesh.edges(True)}
+
+            plotter.draw_vertices()
+            plotter.draw_faces()
+            plotter.draw_edges(text=text)
+            plotter.show()
+
+        """
+        edges = set()
+
+        for u in self.halfedge:
+            for v in self.halfedge[u]:
+
+                if (u, v) in edges or (v, u) in edges:
+                    continue
+
+                edges.add((u, v))
+                edges.add((v, u))
+
+                if (u, v) not in self.edgedata:
+                    self.edgedata[u, v] = self.default_edge_attributes.copy()
+
+                    if u != v:
+                        if (v, u) in self.edgedata:
+                            self.edgedata[u, v].update(self.edgedata[v, u])
+                            del self.edgedata[v, u]
+
+                        self.edgedata[v, u] = self.edgedata[u, v]
+
+                if data:
+                    yield u, v, self.edgedata[u, v]
+                else:
+                    yield u, v
+
     def to_mesh_2(self):
         vertices = [self.vertex_coordinates(vkey) for vkey in self.vertices()]
         face_vertices = []
@@ -205,6 +284,18 @@ def pqm_from_mesh(mesh, poles):
 
     return vertices, new_face_vertices
 
+def is_face_pseudo_quad(mesh, fkey):
+
+    if fkey is None or len(mesh.face_vertices(fkey)) != 4:
+        return 'invalid'
+
+    face_vertices = mesh.face_vertices(fkey)
+    for vkey in face_vertices:
+        if face_vertices.count(vkey) > 1:
+            return True
+
+    return False
+
 def vertex_index(mesh, vkey):
     """Return the index of a vertex in a coarse quad mesh with potential poles stored in pseudo-quad faces.
 
@@ -228,20 +319,51 @@ def vertex_index(mesh, vkey):
 
     if not mesh.is_quadmesh():
         return None
+    if len(mesh.vertex_neighbors(vkey)) == 0:
+        return None
         
-    valency = float(len(mesh.vertex_neighbours(vkey)))
+    valency = float(len(mesh.vertex_neighbors(vkey)))
     boundary = mesh.is_vertex_on_boundary(vkey)
-    pole = True if vkey in mesh.vertex_neighbours(vkey) else False
+    if vkey in mesh.vertex_neighbors(vkey):
+        pole = True
+    else:
+        pole = False
+    #pole = True if vkey in mesh.vertex_neighbors(vkey) else False
+    partial_pole = False
+    #print valency, mesh.vertex_neighbors(vkey), boundary, pole, partial_pole
+    #return 0
+    # if pole:
+    #     vertex_faces = mesh.vertex_faces(vkey)
+    #     for fkey in vertex_faces:
+    #         if fkey is not None and not is_face_pseudo_quad(mesh, fkey):
+    #             partial_pole = True
+    #             break
+    #     if partial_pole:
+    #         pseudo_valency = sum([1 - is_face_pseudo_quad(mesh, fkey) for fkey in vertex_faces])
+    #         if boundary:
+    #             pseudo_valency += 1
 
     if pole:
-        if not boundary:
-            return 1.
+        if partial_pole:
+            if not boundary:
+                #print 'partial pole', 1. / 4. * (4. - pseudo_valency)
+                return 1. / 4. * (4. - pseudo_valency)
+            else:
+                #print 'boundary partial pole', 1. / 4. * (3. - pseudo_valency)
+                return 1. / 4. * (3. - pseudo_valency)
         else:
-            return 1. / 2.
+            if not boundary:
+                #print 'pole', 1.
+                return 1.
+            else:
+                #print 'boundary pole', 1. / 2.
+                return 1. / 2.
     else:
         if not boundary:
+            #print 'classic', 1. / 4. * (4. - valency)
             return 1. / 4. * (4. - valency)
         else:
+            #print 'boundary classic', 1. / 4. * (3. - valency)
             return 1. / 4. * (3. - valency)
 
 # ==============================================================================
