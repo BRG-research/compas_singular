@@ -28,9 +28,6 @@ mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
 
 editing(mesh)
 
-for fkey in mesh.faces():
-    print mesh.face_vertices(fkey)
-
 mesh = mesh.to_mesh()
 
 mesh_guid = draw_mesh(mesh)
