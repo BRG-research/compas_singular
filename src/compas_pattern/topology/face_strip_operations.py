@@ -449,14 +449,14 @@ def face_strip_insert(cls, mesh, vertex_path, pole_extremities, factor = .33):
             mesh.delete_vertex(v)
 
     # move duplicated superimposed vertices towards neighbours' centroid
+    moves = {}
     for vkey in [vkey for vkeys in duplicated_vertices.values() for vkey in vkeys]:
         #if mesh.is_vertex_on_boundary(vkey):
         #    continue
-        if len(mesh.vertex_neighbors(vkey)) == 0:
-            continue
-        centroids = [mesh.face_centroid(fkey) for fkey in mesh.vertex_faces(vkey)]
-        areas = [mesh.face_area(fkey) for fkey in mesh.vertex_faces(vkey)]
-        x, y, z = sum_vectors([scale_vector(centroid, area / sum(areas)) for centroid, area in zip(centroids, areas)])
+        xyz = scale_vector(sum_vectors([mesh.vertex_coordinates(nbr) for nbr in mesh.vertex_neighbors(vkey)]), 1. / len(mesh.vertex_neighbors(vkey)))
+        moves[vkey] = xyz
+    for vkey, xyz in moves.items():
+        x, y, z = xyz
         attr = mesh.vertex[vkey]
         attr['x'] += factor * (x - attr['x'])
         attr['y'] += factor * (y - attr['y'])
