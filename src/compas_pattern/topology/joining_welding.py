@@ -15,7 +15,7 @@ __all__ = [
     'join_meshes',
     'join_and_weld_meshes',
     'unweld_mesh_along_edge_path',
-    'explode_mesh',
+    'unjoin_mesh_parts',
 ]
 
 def weld_mesh(mesh, tolerance = '3f'):
@@ -33,38 +33,27 @@ def weld_mesh(mesh, tolerance = '3f'):
     -------
     vertices : list
         The vertices of the new mesh.
-    face_vertices : list
+    faces : list
         The faces of the new mesh.
 
     """
     
     vertices = []
-    face_vertices = []
     vertex_map = {}
-    count = 0
-
-    # store vertices from different geometric key only
+    index = 0
+    # store and map vertices with the same geometric keys to the same new index
     for vkey in mesh.vertices():
         xyz = mesh.vertex_coordinates(vkey)
         geom_key = geometric_key(xyz, tolerance)
         if geom_key not in vertex_map:
-            vertex_map[geom_key] = count
+            vertex_map[geom_key] = index
             vertices.append(xyz)
-            count += 1
+            index += 1
 
-    # update face vertices with index matching geometric key
-    for fkey in mesh.faces():
-            new_face_vertices = []
-            for vkey in mesh.face_vertices(fkey):
-                xyz = geometric_key(mesh.vertex_coordinates(vkey), tolerance)
-                new_face_vertices.append(vertex_map[xyz])
-            cleaned_face_vertices = []
-            # remove consecutive duplicates
-            for i, vkey in enumerate(new_face_vertices):
-                if vkey != new_face_vertices[i - 1]:
-                    cleaned_face_vertices.append(vkey)
+    # change indices in the face vertices
+    faces = [ [vertex_map[geometric_key(mesh.vertex_coordinates(vkey), tolerance)] for vkey in mesh.face_vertices(fkey)] for fkey in mesh.faces()]
 
-    return vertices, face_vertices
+    return vertices, faces
 
 def join_and_weld_meshes(meshes, tolerance = '3f'):
     """Join and and weld meshes.
@@ -81,41 +70,30 @@ def join_and_weld_meshes(meshes, tolerance = '3f'):
     -------
     vertices : list
         The vertices of the new mesh.
-    face_vertices : list
+    faces : list
         The faces of the new mesh.
 
     """
 
     vertices = []
-    face_vertices = []
     vertex_map = {}
-    count = 0
+    index = 0
+    faces = []
 
-    # store vertices from different geometric key only
+    # store and map vertices with the same geometric keys to the same new index
     for mesh in meshes:
         for vkey in mesh.vertices():
             xyz = mesh.vertex_coordinates(vkey)
             geom_key = geometric_key(xyz, tolerance)
             if geom_key not in vertex_map:
-                vertex_map[geom_key] = count
+                vertex_map[geom_key] = index
                 vertices.append(xyz)
-                count += 1
+                index += 1
 
-        # update face vertices with index matching geometric key
-        for fkey in mesh.faces():
-            new_face_vertices = []
-            for vkey in mesh.face_vertices(fkey):
-                xyz = geometric_key(mesh.vertex_coordinates(vkey), tolerance)
-                new_face_vertices.append(vertex_map[xyz])
-            cleaned_face_vertices = []
-            # remove consecutive duplicates
-            for i, vkey in enumerate(new_face_vertices):
-                if vkey != new_face_vertices[i - 1]:
-                    cleaned_face_vertices.append(vkey)
+        # change indices in the face vertices
+        faces += [ [vertex_map[geometric_key(mesh.vertex_coordinates(vkey), tolerance)] for vkey in mesh.face_vertices(fkey)] for fkey in mesh.faces()]
 
-            face_vertices.append(new_face_vertices)
-
-    return vertices, face_vertices
+    return vertices, faces
 
 def join_meshes(meshes):
     """Join meshes without welding.
@@ -129,26 +107,25 @@ def join_meshes(meshes):
     -------
     vertices : list
         The vertices of the new mesh.
-    face_vertices : list
+    faces : list
         The faces of the new mesh.
 
     """
 
     vertices = []
-    face_vertices = []
+    index = 0
+    faces = []
 
-    # procede per mesh
     for mesh in meshes:
-        # aggregate vertices
-        remap_vertices = {}
+        vertex_map = {}
         for vkey in mesh.vertices():
-            idx = len(vertices)
-            remap_vertices[vkey] = idx
+            vertex_map[vkey] = index
+            index += 1
             vertices.append(mesh.vertex_coordinates(vkey))
         for fkey in mesh.faces():
-            face_vertices.append([remap_vertices[vkey] for vkey in mesh.face_vertices(fkey)])
+            faces.append([vertex_map[vkey] for vkey in mesh.face_vertices(fkey)])
 
-    return vertices, face_vertices
+    return vertices, faces
 
 def unweld_mesh_along_edge_path(mesh, edge_path):
     """Unwelds a mesh along an edge path.
@@ -238,7 +215,7 @@ def unweld_mesh_along_edge_path(mesh, edge_path):
 
     return duplicates
 
-def explode_mesh(mesh, parts):
+def unjoin_mesh_parts(mesh, parts):
     """Explode the parts of a mesh.
 
     Parameters
@@ -252,23 +229,16 @@ def explode_mesh(mesh, parts):
     Returns
     -------
     meshes : list
-        The disconnected meshes.
+        The unjoined meshes.
 
     """
 
     meshes = []
     for part in parts:
-        used_vertices = []
-        for fkey in part:
-            for vkey in mesh.face_vertices(fkey):
-                if vkey not in used_vertices:
-                    used_vertices.append(vkey)
-        vertices = []
-        key_to_index = {}
-        for i, vkey in enumerate(used_vertices):
-            vertices.append(mesh.vertex_coordinates(vkey))
-            key_to_index[vkey] = i
-        faces = [[key_to_index[vkey] for vkey in mesh.face_vertices(fkey)] for fkey in part]
+        vertices_keys = list(set([vkey for fkey in part for vkey in mesh.face_vertices(fkey)]))
+        vertices = [mesh.vertex_coordinates(vkey) for vkey in vertices_keys]
+        key_to_index = {vkey: i for i, vkey in enumerate(vertices_keys)}
+        faces = [ [key_to_index[vkey] for vkey in mesh.face_vertices(fkey)] for fkey in part]
         meshes.append(Mesh.from_vertices_and_faces(vertices, faces))
 
     return meshes
