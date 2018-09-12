@@ -44,7 +44,6 @@ def mesh_copy_with_edge_attributes(mesh):
 
 	return copy_mesh
 
-
 def store_strip_as_edge_attribute(mesh):
 	"""Collect the n strips accross a (coarse) quad mesh and store them as edge attribute, from 0 to n-1.
 
@@ -112,7 +111,7 @@ def store_strip_as_edge_attribute(mesh):
 		old_strip = mesh.get_edge_attribute(edge, 'strip')
 		if old_strip is not None:
 			new_strip = strips.index(old_strip)
-		mesh.set_edge_attribute(edge, 'strip', new_strip)
+			mesh.set_edge_attribute(edge, 'strip', new_strip)
 
 	return len(strips)
 
