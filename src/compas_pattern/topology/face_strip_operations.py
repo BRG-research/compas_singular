@@ -65,9 +65,13 @@ def face_strip_collapse(cls, mesh, u0, v0):
     
     # delete faces in the face strip
     for u, v in edges_to_collapse:
+        print u, v
+        if u == v:
+            continue
         if v in mesh.halfedge[u]:
             fkey = mesh.halfedge[u][v]
-            if fkey is not None:
+            if fkey is not None and fkey in list(mesh.faces()):
+                print fkey
                 delete_face(mesh, fkey)
 
     edges_to_collapse = []
