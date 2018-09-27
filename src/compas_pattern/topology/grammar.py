@@ -16,7 +16,7 @@ from compas.geometry import subtract_vectors
 from compas.geometry import dot_vectors
 
 from compas_pattern.topology.joining_welding import unweld_mesh_along_edge_path
-from compas_pattern.topology.joining_welding import explode_mesh
+from compas_pattern.topology.joining_welding import unjoin_mesh_parts
 
 from compas_pattern.datastructures.mesh import mesh_disjointed_parts
 from compas_pattern.datastructures.mesh import mesh_euler
@@ -932,7 +932,7 @@ def close_handle_2(mesh, edge_path_1, edge_path_2):
 
     # explode
     parts = mesh_disjointed_parts(mesh)
-    meshes = explode_mesh(mesh, parts)
+    meshes = unjoin_mesh_parts(mesh, parts)
 
     # find parts with the topolog of a strip: two boundary components and an EUler characteristic of 0
     # if there are several, select the topologically smallest one (lowest number of faces)
