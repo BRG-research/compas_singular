@@ -443,25 +443,31 @@ def apply_rule(mesh, rule):
         artist = rhino_artist.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
 
-        vertex_path = []
         count = mesh.number_of_vertices() * 1.5
-        artist.draw_vertexlabels(text = {key: str(key) for key in mesh.vertices()})
+        artist.draw_vertexlabels(text = {key: str(key) for key in mesh.vertices_on_boundary()})
         artist.redraw()
+        vertex_path = [rhino_helper.mesh_select_vertex(mesh, message = 'vertex')]
+        artist.clear_layer()
+        count = mesh.number_of_vertices() * 1.5
         while count > 0:
-            count -= 1    
+            count -= 1
+            artist.draw_vertexlabels(text = {key: str(key) for key in mesh.vertex_neighbors(vertex_path[-1])})
+            artist.redraw()
             vkey = rhino_helper.mesh_select_vertex(mesh, message = 'vertex')
+            artist.clear_layer()
+            artist.redraw()
             if vkey is None:
-                artist.clear_layer()
-                artist.redraw()
                 break
             else:
                 vertex_path.append(vkey)
 
         rs.DeleteLayer('mesh_artist')
 
-        start_pole = rs.GetInteger(message='pole at the start?', number=0, minimum=0, maximum=1)
-        end_pole = rs.GetInteger(message='pole at the end?', number=0, minimum=0, maximum=1)
-
+        #start_pole = rs.GetInteger(message='pole at the start?', number=0, minimum=0, maximum=1)
+        #end_pole = rs.GetInteger(message='pole at the end?', number=0, minimum=0, maximum=1)
+        start_pole = 0
+        end_pole = 0
+        
         mesh = face_strip_insert(PseudoQuadMesh, mesh, vertex_path, pole_extremities = [start_pole, end_pole])
 
     elif rule == 'rotate_vertex':
