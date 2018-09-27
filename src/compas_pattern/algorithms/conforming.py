@@ -48,7 +48,7 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
 
     # collect pole locations
     poles = []
-    poles += [geometric_key(pt) for pt in feature_points]
+    poles += [geometric_key([float(x), float(y), float(z)]) for x, y, z in feature_points]
     for polyline in feature_polylines:
         poles += [geometric_key(polyline[0]), geometric_key(polyline[-1])]
 
