@@ -1,4 +1,5 @@
 from compas.datastructures.mesh import Mesh
+from compas_pattern.datastructures.quad_mesh import QuadMesh
 
 from compas.utilities import geometric_key
 
@@ -11,7 +12,7 @@ __all__ = [
 
 ]
 
-class PseudoQuadMesh(Mesh):
+class PseudoQuadMesh(QuadMesh):
 
     def __init__(self):
         super(PseudoQuadMesh, self).__init__()
