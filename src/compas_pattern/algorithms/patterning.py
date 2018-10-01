@@ -1,11 +1,6 @@
 from compas.datastructures.mesh import Mesh
 
-from compas_pattern.topology.pattern_operators import conway_dual
-from compas_pattern.topology.pattern_operators import conway_join
-from compas_pattern.topology.pattern_operators import conway_ambo
-from compas_pattern.topology.pattern_operators import conway_kis
-from compas_pattern.topology.pattern_operators import conway_needle
-from compas_pattern.topology.pattern_operators import conway_gyro
+from compas_pattern.topology.conway_operators import *
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
@@ -40,12 +35,19 @@ def patterning(mesh, operator):
 
 
     operators = {
-                'dual': conway_dual, 
-                'join': conway_join,
-                'ambo': conway_ambo,
-                'kis': conway_kis,
-                'needle': conway_needle,
-                'gyro': conway_gyro,
+        'conway_dual': conway_dual,
+        'conway_join': conway_join,
+        'conway_ambo': conway_ambo,
+        'conway_kis': conway_kis,
+        'conway_needle': conway_needle,
+        'conway_zip': conway_zip,
+        'conway_truncate': conway_truncate,
+        'conway_ortho': conway_ortho,
+        'conway_expand': conway_expand,
+        'conway_gyro': conway_gyro,
+        'conway_snub': conway_snub,
+        'conway_meta': conway_meta,
+        'conway_bevel': conway_bevel
                  }
 
     try:
