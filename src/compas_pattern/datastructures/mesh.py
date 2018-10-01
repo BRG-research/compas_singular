@@ -28,6 +28,13 @@ __all__ = [
     'mesh_disjointed_parts',
 ]
 
+def is_mesh_empty(mesh):
+
+    if mesh.number_of_vertices() == 0:
+        return True
+
+    return False
+
 def mesh_euler(mesh):
 
     V = len([vkey for vkey in mesh.vertices() if len(mesh.vertex_neighbours(vkey)) != 0])
