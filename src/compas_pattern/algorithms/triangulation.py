@@ -85,7 +85,7 @@ def triangulation(boundary, holes = [], polyline_features = [], point_features =
     edge_paths = []
     for polyline in polyline_features:
         edge_path = []
-        vertex_path = [vertex_map[geometric_key(point)] for point in polyline]
+        vertex_path = [vertex_map[geometric_key([float(x), float(y), float(z)])] for x, y, z in polyline]
         for i in range(len(vertex_path) - 1):
             if vertex_path[i + 1] in delaunay_mesh.halfedge[vertex_path[i]]:
                 edge_path.append([vertex_path[i], vertex_path[i + 1]])
