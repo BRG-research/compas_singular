@@ -41,7 +41,7 @@ def mesh_thickening(mesh, thickness = 1):
     new_positions = {}
     for vkey in offset_mesh.vertices():
         xyz0 = offset_mesh.vertex_coordinates(vkey)
-        if len(offset_mesh.vertex_neighbours(vkey)) == 0:
+        if len(offset_mesh.vertex_neighbors(vkey)) == 0:
             xyz1 = [0, 0, 1]
         else:
             xyz1 = offset_mesh.vertex_normal(vkey)
