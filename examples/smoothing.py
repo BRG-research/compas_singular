@@ -3,19 +3,24 @@ import math
 import rhinoscriptsyntax as rs
 
 import compas_rhino as rhino
+from compas_rhino.geometry import RhinoGeometry
 
 from compas.datastructures.mesh import Mesh
 
-from compas_pattern.topology.pattern_operators import conway_dual
-from compas_pattern.topology.pattern_operators import conway_join
-from compas_pattern.topology.pattern_operators import conway_ambo
-from compas_pattern.topology.pattern_operators import conway_kis
-from compas_pattern.topology.pattern_operators import conway_needle
-from compas_pattern.topology.pattern_operators import conway_gyro
+from compas_pattern.topology.conway_operators import conway_dual
+from compas_pattern.topology.conway_operators import conway_join
+from compas_pattern.topology.conway_operators import conway_ambo
+from compas_pattern.topology.conway_operators import conway_kis
+from compas_pattern.topology.conway_operators import conway_needle
+from compas_pattern.topology.conway_operators import conway_gyro
 
 from compas_pattern.datastructures.mesh import delete_face
 
 from compas_pattern.cad.rhino.utilities import draw_mesh
+
+import compas_rhino as rhino
+import compas_rhino.artists as rhino_artist
+import compas_rhino.helpers as rhino_helper
 
 def custom_constraints(mesh, surface):
     from compas_pattern.cad.rhino.utilities import surface_borders
@@ -28,7 +33,7 @@ def custom_constraints(mesh, surface):
     
     constraints = {}
     
-    artist = rhino.MeshArtist(mesh, layer='mesh_artist')
+    artist = rhino_artist.MeshArtist(mesh, layer='mesh_artist')
     artist.clear_layer()
     
     vertex_points = {rs.AddPoint(mesh.vertex_coordinates(vkey)): vkey for vkey in mesh.vertices()}
@@ -127,8 +132,10 @@ def start():
     from compas_pattern.algorithms.smoothing import define_constraints
     from compas_pattern.algorithms.smoothing import apply_constraints
     
-    dense_mesh = rs.GetObject('mesh to smooth', filter = 32)
-    dense_mesh = rhino.mesh_from_guid(Mesh, dense_mesh)
+    guid = rs.GetObject('get mesh')
+    dense_mesh = RhinoGeometry.from_guid(guid)
+    vertices, faces = dense_mesh.get_vertices_and_faces()
+    dense_mesh = Mesh.from_vertices_and_faces(vertices, faces)
     
     #lines = rs.GetObjects('lines', filter = 4)
     #edges = [[rs.CurveStartPoint(line), rs.CurveEndPoint(line)] for line in lines]
