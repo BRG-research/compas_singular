@@ -89,7 +89,7 @@ def decomposition(delaunay_mesh):
 
     # create polylines by converting paths of faces into series of reference points
     medial_branches = [[reference_points[fkey] for fkey in branch_path] for branch_path in branch_paths]
-    
+
     # GRAFTING
     for singularity in singularities:
         if singularities[singularity] == 3:
