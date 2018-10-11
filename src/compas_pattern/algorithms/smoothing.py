@@ -247,7 +247,7 @@ def automatic_constraints(mesh, surface_constraint, curve_constraints = [], poin
                 end_key = vkey
         # regular nodes
         path = [start_key]
-        for nbr in mesh.vertex_neighbours(start_key):
+        for nbr in mesh.vertex_neighbors(start_key):
             completed = False
             if mesh.is_vertex_on_boundary(nbr):
                 continue
@@ -264,7 +264,7 @@ def automatic_constraints(mesh, surface_constraint, curve_constraints = [], poin
                 if w == end_key:
                     completed = True
                     break
-                elif mesh.is_vertex_on_boundary(w) or len(mesh.vertex_neighbours(w)) != 4:
+                elif mesh.is_vertex_on_boundary(w) or len(mesh.vertex_neighbors(w)) != 4:
                     break
             if completed:
                 break
