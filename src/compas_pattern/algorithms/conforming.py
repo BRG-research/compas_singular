@@ -32,6 +32,7 @@ from compas.utilities import geometric_key
 #from compas_pattern.topology.consistency import poly_poly_1
 #from compas_pattern.topology.consistency import quad_mix_1
 
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -42,6 +43,255 @@ __all__ = [
     'conforming',
 ]
 
+def add_vertex_to_face(mesh, fkey, vkey, added_vkey):
+    """Add a vertex in the vertices of a face after an existing vertex.
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Face key.
+    vkey: int
+        Vertex key before the new vertex to insert.
+    added_vkey: int
+        Vertex key to insert after the existing vertex.
+    Returns
+    -------
+    face_vertices: list or None
+        New list of face vertices.
+        None if vkey) is not a vertex of the face.
+    Raises
+    ------
+    -
+    """
+
+    if vkey not in mesh.face_vertices(fkey):
+        return None
+
+    face_vertices = mesh.face_vertices(fkey)[:]
+    idx = face_vertices.index(vkey) + 1 - len(face_vertices)
+    face_vertices.insert(idx, added_vkey)
+    mesh.delete_face(fkey)
+    mesh.add_face(face_vertices, fkey = fkey)
+
+    return face_vertices
+
+def poly_poly_1(mesh, fkey, vkey):
+    """One N-gon to a quad and a N-1-gon with a new edge from a vertex to point on opposite edge.
+    
+    [*, a, b, c, d] -> [c, d, e, f] + [*, a, b, f]
+    [*, c, b, *] -> [*, c, f, b, *]
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    vkey: int
+        Key of one of the vertices of the new edge.
+    Returns
+    -------
+    f : int, None
+        The key of the new vertex of the new edge.
+        None if the vertex is not adjacent to the face.
+    Raises
+    ------
+    -
+    """
+
+    # check validity of rule
+    if vkey not in mesh.face_vertices(fkey):
+        return None
+
+    e = vkey
+    d = mesh.face_vertex_ancestor(fkey, e)
+    c = mesh.face_vertex_ancestor(fkey, d)
+    b = mesh.face_vertex_ancestor(fkey, c)
+    a = mesh.face_vertex_ancestor(fkey, b)
+    
+    face_vertices = mesh.face_vertices(fkey)[:]
+
+    # create new vertex
+    idx = face_vertices.index(e)
+    length_ea = 0
+    count = len(face_vertices)
+    while count > 0:
+        count -= 1
+        length_ea += mesh.edge_length(face_vertices[idx], face_vertices[idx + 1 - len(face_vertices)])
+        if face_vertices[idx + 1 - len(face_vertices)] == a:
+            break
+    length_ed = mesh.edge_length(e, d)
+    if length_ea + length_ed == 0:
+        t = .5
+    else:
+        t = length_ea / (length_ea + length_ed)
+    x, y, z = mesh.edge_point(b, c, t = t)
+    f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+
+    face_vertices.remove(c)
+    face_vertices.remove(d)
+    idx = face_vertices.index(e)
+    face_vertices.insert(idx, f)
+
+    # delete old face
+    mesh.delete_face(fkey)
+
+    # create new faces
+    # [*, a, b, c, d] -> [c, d, e, f] + [*, a, b, f]
+    mesh.add_face(face_vertices, fkey)
+    mesh.add_face([c, d, e, f])
+
+    # update adjacent face
+    # [*, c, b, *] -> [*, c, f, b, *]
+    if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
+        fkey_1 = mesh.halfedge[c][b]
+        add_vertex_to_face(mesh, fkey_1, c, f)
+
+    return f
+
+def quad_tri_1(mesh, fkey, vkey):
+    """One quad to two tri with new edge along diagonal.
+    
+    [a, b, c, d] -> [a, b, c] + [a, c, d]
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    vkey: int
+        Key of a vertex of quad face at one extremity of the new edge.
+    Returns
+    -------
+    c : int, None
+        The key of the second vertex of the new edge.
+        None if the quad face is not a quad or if the vertex is not adjacent to the face.
+    Raises
+    ------
+    -
+    """
+
+    # check validity of rule
+    if len(mesh.face_vertices(fkey)) != 4:
+        return None
+    if vkey not in mesh.face_vertices(fkey):
+        return None
+
+    # itemise vertices
+    a = vkey
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+    d = mesh.face_vertex_descendant(fkey, c)
+
+    # delete old face
+    mesh.delete_face(fkey)
+
+    # create new faces
+    mesh.add_face([a, b, c])
+    mesh.add_face([a, c, d])
+
+    return c
+
+def penta_quad_1(mesh, fkey, vkey):
+    """One penta to two quads with new edge from a vertex to the opposite edge midpoint.
+    
+    [a, b, c, d, e] -> [a, b, f, e] + [c, d, e, f]
+    [*, c, b, *] -> [*, c, f, b, *]
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    vkey: int
+        Key of the pre-existing vertex of the new edge.
+    Returns
+    -------
+    f : int, None
+        The key of the new vertex of the new edge.
+        None if the penta face is not a penta or if the vertex is not adjacent to the face.
+    Raises
+    ------
+    -
+    """
+
+    # check validity of rule
+    if len(mesh.face_vertices(fkey)) != 5:
+        return None
+    if vkey not in mesh.face_vertices(fkey):
+        return None
+
+    e = vkey
+    a = mesh.face_vertex_descendant(fkey, e)
+    b = mesh.face_vertex_descendant(fkey, a)
+    c = mesh.face_vertex_descendant(fkey, b)
+    d = mesh.face_vertex_descendant(fkey, c)
+
+    # create new vertex
+    x, y, z = mesh.edge_midpoint(b, c)
+    f = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+
+    # delete old face
+    mesh.delete_face(fkey)
+
+    # create new faces
+    # [a, b, c, d, e] -> [a, b, f, e] + [c, d, e, f]
+    mesh.add_face([a, b, f, e])
+    mesh.add_face([c, d, e, f])
+
+    # update adjacent face
+    # [*, c, b, *] -> [*, c, f, b, *]
+    if b in mesh.halfedge[c] and mesh.halfedge[c][b] is not None:
+        fkey_1 = mesh.halfedge[c][b]
+        add_vertex_to_face(mesh, fkey_1, c, f)
+
+    return f
+
+def hexa_quad_1(mesh, fkey, vkey):
+    """One hexa to two quads with new edge from a vertex to opposite vertex.
+    
+    [a, b, f, c, d, e] -> [a, b, f, e] + [c, d, e, f]
+    [*, c, b, *] -> [*, c, f, b, *]
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey: int
+        Key of quad face.
+    vkey: int
+        Key of one of the vertices of the new edge.
+    Returns
+    -------
+    f : int, None
+        The key of the other vertex of the new edge.
+        None if the hex face is not a penta or if the vertex is not adjacent to the face.
+    Raises
+    ------
+    -
+    """
+
+    # check validity of rule
+    if len(mesh.face_vertices(fkey)) != 6:
+        return None
+    if vkey not in mesh.face_vertices(fkey):
+        return None
+
+    e = vkey
+    a = mesh.face_vertex_descendant(fkey, e)
+    b = mesh.face_vertex_descendant(fkey, a)
+    f = mesh.face_vertex_descendant(fkey, b)
+    c = mesh.face_vertex_descendant(fkey, f)
+    d = mesh.face_vertex_descendant(fkey, c)
+
+    # delete old face
+    mesh.delete_face(fkey)
+
+    # create new faces
+    # [a, b, f, c, d, e] -> [a, b, f, e] + [c, d, e, f]
+    mesh.add_face([a, b, f, e])
+    mesh.add_face([c, d, e, f])
+
+    return f
 
 def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_polylines, edges_to_polyline, feature_points = [], feature_polylines = []):
     # convert tri faces [a, b, c] into quad faces [a, b, c, c]
@@ -50,7 +300,9 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
     poles = []
     poles += [geometric_key([float(x), float(y), float(z)]) for x, y, z in feature_points]
     for polyline in feature_polylines:
-        poles += [geometric_key(polyline[0]), geometric_key(polyline[-1])]
+        start = [float(i) for i in polyline[0]]
+        end = [float(i) for i in polyline[-1]]
+        poles += [geometric_key(start), geometric_key(end)]
 
     # modify tri faces into quad faces with a double vertex as pole point
     for fkey in patch_decomposition.faces():
@@ -249,6 +501,37 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
                     faces += [face_1, face_2, face_3, face_4]
                     break
 
+    
+    initial_vertices = list(patch_decomposition.vertices())
+
+
+        # propagate across curve features
+    if feature_polylines is not None:
+        # store vertex keys on the polyline feature using the map of geometric keys
+        feature_map = [geometric_key([float(x), float(y), float(z)]) for polyline in feature_polylines for x, y, z in polyline]
+        vertices_on_feature = [vkey for vkey in patch_decomposition.vertices() if geometric_key(patch_decomposition.vertex_coordinates(vkey)) in feature_map]
+
+        # dictionary mapping vertex geometric keys to vertex indices
+        vertex_map = {geometric_key(patch_decomposition.vertex_coordinates(vkey)): vkey for vkey in patch_decomposition.vertices()}
+
+        count = patch_decomposition.number_of_faces() * 100
+
+        while count > 0 and not patch_decomposition.is_quadmesh():
+            count -= 1
+            for fkey in patch_decomposition.faces():
+                face_vertices = patch_decomposition.face_vertices(fkey)
+                if len(face_vertices) > 4:
+                    regular_vertices = []
+                    for i in range(len(face_vertices)):
+                        a = face_vertices[i - 2]
+                        b = face_vertices[i - 1]
+                        c = face_vertices[i]
+                        if b in initial_vertices:
+                            if b not in vertices_on_feature or a not in vertices_on_feature or c not in vertices_on_feature:
+                                regular_vertices.append(b)
+                    face_propagation(patch_decomposition, fkey, regular_vertices)
+                    break
+
     return patch_decomposition
 
 
@@ -260,14 +543,14 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
     # propagate across curve features
     if feature_polylines is not None:
         # store vertex keys on the polyline feature using the map of geometric keys
-        feature_map = [geometric_key(vkey) for polyline in feature_polylines for vkey in polyline]
+        feature_map = [geometric_key([float(x), float(y), float(z)]) for polyline in feature_polylines for x, y, z in polyline]
         vertices_on_feature = [vkey for vkey in patch_decomposition.vertices() if geometric_key(patch_decomposition.vertex_coordinates(vkey)) in feature_map]
 
         # dictionary mapping vertex geometric keys to vertex indices
         vertex_map = {geometric_key(patch_decomposition.vertex_coordinates(vkey)): vkey for vkey in patch_decomposition.vertices()}
 
         # list of edges on curve features
-        polyline_keys = [[geometric_key(vkey) for vkey in polyline] for polyline in feature_polylines]
+        polyline_keys = [[geometric_key([float(x), float(y), float(z)]) for x, y, z in polyline] for polyline in feature_polylines]
         feature_edges = []
         for u, v in patch_decomposition.edges():
             u_key = geometric_key(patch_decomposition.vertex_coordinates(u))
@@ -316,10 +599,12 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
                             ukey = patch_decomposition.face_vertex_descendant(next_fkey, wkey)
                             if wkey in patch_decomposition.halfedge[ukey] and patch_decomposition.halfedge[ukey][wkey] is not None:
                                 next_fkey = patch_decomposition.halfedge[ukey][wkey]
+                                print next_fkey
                                 if len(patch_decomposition.face_vertices(next_fkey)) == 5:
                                     vkey = wkey
                                     old_neighbours = patch_decomposition.vertex_neighbors(vkey)
-                                    #wkey = penta_quad_1(patch_decomposition, next_fkey, wkey)
+                                    wkey = penta_quad_1(patch_decomposition, next_fkey, wkey)
+                                    print next_fkey
                                     original_vertices = patch_decomposition.face_vertices(next_fkey)
                                     original_vertices.remove(vkey)
                                     face_propagation(patch_decomposition, next_fkey, original_vertices)
@@ -347,7 +632,7 @@ def conforming(patch_decomposition, delaunay_mesh, medial_branches, boundary_pol
                                     face_vertices =  patch_decomposition.face_vertices(next_fkey)
                                     idx = face_vertices.index(vkey)
                                     wkey = face_vertices[idx - 3]
-                                    #wkey = hexa_quad_1(patch_decomposition, next_fkey, wkey)
+                                    wkey = hexa_quad_1(patch_decomposition, next_fkey, wkey)
                                     original_vertices = patch_decomposition.face_vertices(next_fkey)
                                     original_vertices.remove(vkey)
                                     original_vertices.remove(wkey)
