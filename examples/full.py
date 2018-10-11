@@ -1,3 +1,4 @@
+
 import rhinoscriptsyntax as rs
 import compas_rhino as rhino
 
@@ -97,7 +98,6 @@ def start():
         delaunay_mesh_guid = draw_mesh(delaunay_mesh_remapped)
         rs.ObjectLayer(delaunay_mesh_guid, layer = 'delaunay_mesh')
         rs.LayerVisible('delaunay_mesh', visible = True)
-        rs.EnableRedraw(False)
         
         # 3. decomposition
         medial_branches, boundary_polylines = decomposition(delaunay_mesh)
