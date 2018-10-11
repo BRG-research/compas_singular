@@ -114,7 +114,7 @@ def draw_mesh(mesh, layer = None):
 	if layer is not None:
 		rs.ObjectLayer(mesh_guid, layer)
 
-	return mesh
+	return mesh_guid
 
 def draw_graph(graph):
 	
