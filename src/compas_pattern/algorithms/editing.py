@@ -68,7 +68,7 @@ def editing(mesh):
     # first visualisation
     rs.EnableRedraw(False)
     copy_mesh = mesh.to_mesh()
-    edges = [rs.AddLine(copy_mesh.vertex_coordinates(u), copy_mesh.vertex_coordinates(v)) for u,v in copy_mesh.edges() if u != v and geometric_key(copy_mesh.vertex_coordinates(u)) != geometric_key(copy_mesh.vertex_coordinates(v))]
+    edges = [rs.AddLine(copy_mesh.vertex_coordinates(u), copy_mesh.vertex_coordinates(v)) for u,v in copy_mesh.edges() if u != v and geometric_key([float(xyz) for xyz in copy_mesh.vertex_coordinates(u)]) != geometric_key([float(xyz) for xyz in copy_mesh.vertex_coordinates(v)])]
     rs.ObjectLayer(edges, 'temp')
     rs.EnableRedraw(True)
         
@@ -123,7 +123,7 @@ def editing(mesh):
         rs.EnableRedraw(False)
         rs.DeleteObjects(edges)
         copy_mesh = mesh.to_mesh()
-        edges = [rs.AddLine(copy_mesh.vertex_coordinates(u), copy_mesh.vertex_coordinates(v)) for u,v in copy_mesh.edges() if u != v and geometric_key(copy_mesh.vertex_coordinates(u)) != geometric_key(copy_mesh.vertex_coordinates(v))]
+        edges = [rs.AddLine(copy_mesh.vertex_coordinates(u), copy_mesh.vertex_coordinates(v)) for u,v in copy_mesh.edges() if u != v and geometric_key([float(xyz) for xyz in copy_mesh.vertex_coordinates(u)]) != geometric_key([float(xyz) for xyz in copy_mesh.vertex_coordinates(v)])]
         rs.ObjectLayer(edges, 'temp')
         rs.EnableRedraw(True)
 
