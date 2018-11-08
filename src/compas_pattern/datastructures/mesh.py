@@ -322,6 +322,7 @@ class Mesh(Mesh):
 
 	def boundary_polyedges(self):
 		"""Collect the mesh boundaries as lists of vertices.
+		The polyedge is closed but the first and last item are not the same!
 
 		Parameters
 		----------
