@@ -12,13 +12,10 @@ except ImportError:
     if platform.python_implementation() == 'IronPython':
         raise
 
-from compas.datastructures.mesh import Mesh
+from compas_pattern.datastructures.mesh import Mesh
 
 from compas.utilities import geometric_key
 
-from compas_pattern.topology.polyline_extraction import mesh_boundaries
-
-from compas_pattern.cad.rhino.utilities import surface_borders
 from compas_pattern.cad.rhino.utilities import is_point_on_curve
 
 from compas_pattern.cad.rhino.utilities import draw_mesh
@@ -72,7 +69,7 @@ def automatic_constraints(mesh, surface_constraint, curve_constraints = [], poin
 
     constraints = {}
 
-    surface_boundaries = surface_borders(surface_constraint, border_type = 0)
+    surface_boundaries = RhinoSurface(surface_constraint).borders(type = 0)
 
     # set point constraints at point feature, curve feature extremities and boundary curve corners
     constrained_points = []
@@ -96,7 +93,16 @@ def automatic_constraints(mesh, surface_constraint, curve_constraints = [], poin
 
     # set boundary curve constraints
     split_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'point']
-    split_mesh_boundaries = mesh_boundaries(mesh, vertex_splits = split_vertices)
+    split_mesh_boundaries = []
+    for polyedge in mesh.polyedge_boundaries():
+            # split at singularities
+            sing_index = [polyedge.index(vkey) for vkey in polyedge if vkey == split_vertices]
+            
+            if len(sing_index) < 2:
+                split_mesh_boundaries.append(polyedge + polyedge[: 1])
+            
+            else:
+                split_mesh_boundaries += splits_closed_list(polyedge, sing_index)
 
     # constrain a mesh boundary to a surface boundary if the two extremities of the mesh boundary are on the surface boundary
     for mesh_bdry in split_mesh_boundaries:
@@ -434,7 +440,7 @@ def apply_constraints(k, args):
             u, v = rs.SurfaceClosestPoint(cstr_object, xyz)
             x, y, z = rs.EvaluateSurface(cstr_object, u, v)
             if not rs.IsPointOnSurface(cstr_object, [x, y, z]):
-                borders = surface_borders(cstr_object)
+                borders = RhinoSurface(surface_constraint).borders()
                 xyz0 = [x, y, z]
                 min_dist = -1
                 pt = None
