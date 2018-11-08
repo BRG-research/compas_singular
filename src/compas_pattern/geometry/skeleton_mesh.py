@@ -67,7 +67,7 @@ class SkeletonMesh(Skeleton):
 
 	def branches_boundary(self):
 		# branches along boundaries split by the corner vertices and the split vertices
-		boundaries = [polyedge + polyedge[0 :] for polyedge in self.boundary_polyedges()]
+		boundaries = self.boundary_polyedges()
 		splits = self.corner_vertices() + self.split_vertices()
 		split_boundaries = [split_boundary for boundary in boundaries for split_boundary in splits_closed_list(boundary, [boundary.index(split) for split in splits if split in boundary])]
 		return [[self.vertex_coordinates(vkey) for vkey in boundary] for boundary in split_boundaries]

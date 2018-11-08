@@ -36,7 +36,7 @@ def splits_closed_list(l, indices):
 	indices = list(sorted(indices))
 
 	if len(indices) == 0:
-		return [l]
+		return [l + l[:1]] 
 
 	if indices[0] != 0:
 		l = l[indices[0] :] + l[1 : indices[0] + 1]
@@ -55,5 +55,5 @@ if __name__ == '__main__':
 
     import compas
 
-    print splits_closed_list(range(20) + [0],[])
+    print splits_closed_list(range(20),[])
     #print splits_closed_list([1, 21, 7, 8, 13, 27, 35, 10, 6, 9, 25, 34, 28, 12, 2, 23, 18, 3, 29, 24], [1, 6, 11, 16])
