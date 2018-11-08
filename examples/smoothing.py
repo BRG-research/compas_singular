@@ -168,8 +168,8 @@ def start():
     
     rs.EnableRedraw(False)
     
-    #constraints, surface_boundaries = custom_constraints(smooth_mesh, surface_guid)
-    constraints, surface_boundaries = define_constraints(smooth_mesh, surface_guid)
+    constraints, surface_boundaries = custom_constraints(smooth_mesh, surface_guid)
+    #constraints, surface_boundaries = define_constraints(smooth_mesh, surface_guid)
     
     rs.EnableRedraw(False)
     fixed_vertices = [vkey for vkey, constraint in constraints.items() if constraint[0] == 'fixed']
