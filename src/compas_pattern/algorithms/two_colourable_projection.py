@@ -1,7 +1,7 @@
 import itertools
 import copy
 
-from compas.datastructures.mesh import Mesh
+from compas_pattern.datastructures.mesh import Mesh
 from compas_pattern.datastructures.mesh import mesh_euler
 
 from compas.datastructures.network import Network
@@ -19,12 +19,8 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
+	'graph_colourability',
 	'mesh_copy_with_edge_attributes',
-	'store_strip_as_edge_attribute',
-	'strips_to_edges_dict',
-	'strip_to_faces_dict',
-	'edges_to_strips_dict',
-	'faces_to_strips_dict',
 	'graph_from_strip_overlap',
 	'is_graph_two_colourable',
 	'graph_mutiple_vertex_deletion',
@@ -32,6 +28,23 @@ __all__ = [
 	'have_meshes_same_euler'
 	'two_colourable_projection',
 ]
+
+def graph_colourability(graph):
+	"""Compute vertex colourability of a graph.
+
+	Parameters
+	----------
+	graph : Network
+		A graph.
+
+	Returns
+	-------
+	int
+		Colourability.
+
+	"""
+
+	return max(list(vertex_coloring(graph.adjacency).values())) + 1
 
 def mesh_copy_with_edge_attributes(mesh):
 
@@ -43,139 +56,6 @@ def mesh_copy_with_edge_attributes(mesh):
 		copy_mesh.set_edge_attributes(edge, edge_attributes[edge])
 
 	return copy_mesh
-
-def store_strip_as_edge_attribute(mesh):
-	"""Collect the n strips accross a (coarse) quad mesh and store them as edge attribute, from 0 to n-1.
-
-	Parameters
-	----------
-	mesh : Mesh
-		A (coarse) quad mesh.
-
-	Returns
-	-------
-	strip_to_edges : dict
-		The edges in each strip: {strip_index: list of edges as tuples of vertices}.
-
-	"""
-
-	# add strip as edge attribute to store
-	mesh.update_default_edge_attributes(attr_dict = {'strip': None})
-
-	# loop over faces to group edges in strips
-	strips = 0
-	for fkey in mesh.faces():
-		a, b, c, d = mesh.face_vertices(fkey)
-		for u, v, w, x in [ [a, b, c, d], [b, c, d, a] ]:
- 
-			# exceptions if pseudo quad mesh with faces like [a, b, c, c]
-			if u == v:
-				if mesh.get_edge_attribute((w, x), 'strip') is None:
-					strips += 1
-					mesh.set_edge_attribute((w, x), 'strip', strips)
-			elif w == x:
-				if mesh.get_edge_attribute((u, v), 'strip') is None:
-					strips += 1
-					mesh.set_edge_attribute((u, v), 'strip', strips)
-
-			else:
-				if mesh.get_edge_attribute((u, v), 'strip') is not None and mesh.get_edge_attribute((w, x), 'strip') is not None:
-					# flip one
-					new_strip = mesh.get_edge_attribute((u, v), 'strip')
-					old_strip = mesh.get_edge_attribute((w, x), 'strip')
-					for edge in mesh.edges():
-						if mesh.get_edge_attribute(edge, 'strip') == old_strip:
-							mesh.set_edge_attribute(edge, 'strip', new_strip)
-
-				elif mesh.get_edge_attribute((u, v), 'strip') is None and mesh.get_edge_attribute((w, x), 'strip') is not None:
-					# add the other
-					strip = mesh.get_edge_attribute((w, x), 'strip')
-					mesh.set_edge_attribute((u, v), 'strip', strip)
-
-				elif mesh.get_edge_attribute((u, v), 'strip') is not None and mesh.get_edge_attribute((w, x), 'strip') is None:
-					# add the other
-					strip = mesh.get_edge_attribute((u, v), 'strip')
-					mesh.set_edge_attribute((w, x), 'strip', strip)
-
-				else:
-					# start new strip
-					strips += 1
-					mesh.set_edge_attribute((u, v), 'strip', strips)
-					mesh.set_edge_attribute((w, x), 'strip', strips)
-
-	# reorder strips
-	strips = list(set([mesh.get_edge_attribute(edge, 'strip') for edge in mesh.edges()]))
-	if None in strips:
-		strips.remove(None)
-	for edge in mesh.edges():
-		old_strip = mesh.get_edge_attribute(edge, 'strip')
-		if old_strip is not None:
-			new_strip = strips.index(old_strip)
-			mesh.set_edge_attribute(edge, 'strip', new_strip)
-
-	return len(strips)
-
-def strips_to_edges_dict(mesh):
-	# {strip: [(u,v)]}
-	# improvement: optional sorting
-	strips_to_edges = {}
-	for edge in mesh.edges():
-		strip = mesh.get_edge_attribute(edge, 'strip')
-		if strip in strips_to_edges:
-			strips_to_edges[strip].append(edge)
-		else:
-			strips_to_edges[strip] = [edge]
-	return strips_to_edges
-
-def strip_to_faces_dict(mesh):
-	# {strip: [fkey]}
-	# improvement: optional sorting
-
-	strip_to_faces = {}
-	faces = list(mesh.faces())
-
-	strips_to_edges = strips_to_edges_dict(mesh)
-
-	for strip, edges in strips_to_edges.items():
-		strip_to_faces[strip] = []
-		for fkey in faces:
-			a, b, c, d = mesh.face_vertices(fkey)
-			if (a, b) in edges or (b, a) in edges:
-				strip_to_faces[strip].append(fkey)
-			elif (b, c) in edges or (c, b) in edges:
-				strip_to_faces[strip].append(fkey)
-			elif (c, d) in edges or (d, c) in edges:
-				strip_to_faces[strip].append(fkey)
-			elif (d, a) in edges or (a, d) in edges:
-				strip_to_faces[strip].append(fkey)
-
-	return strip_to_faces
-
-def edges_to_strips_dict(mesh):
-	# {(u,v): strip}
-	edges_to_strips = {}
-	for edge in mesh.edges():
-		edges_to_strips[edge] = mesh.get_edge_attribute(edge, 'strip')
-
-	return edges_to_strips
-
-def faces_to_strips_dict(mesh):
-	# {fkey: [strip_1, strip_2]}
-
-	faces_to_strips = {}
-	for fkey in mesh.faces():
-		a, b, c, d = mesh.face_vertices(fkey)
-		if a != b:
-			strip_1 = mesh.get_edge_attribute((a, b), 'strip')
-		else:
-			strip_1 = mesh.get_edge_attribute((c, d), 'strip')
-		if b != c:
-			strip_2 = mesh.get_edge_attribute((b, c), 'strip')
-		else:
-			strip_2 = mesh.get_edge_attribute((d, a), 'strip')
-		faces_to_strips[fkey] = [strip_1, strip_2]
-
-	return faces_to_strips
 
 def graph_from_strip_overlap(mesh):
 	"""Create the strip overlap graph of a (coarse) quad mesh.
