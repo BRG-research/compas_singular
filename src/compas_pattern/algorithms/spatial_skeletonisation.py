@@ -1,4 +1,4 @@
-from compas.datastructures.mesh import Mesh
+from compas_pattern.datastructures.mesh import Mesh
 from scipy.spatial import Delaunay
 from compas.utilities import XFunc
 
