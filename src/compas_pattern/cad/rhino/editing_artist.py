@@ -10,10 +10,9 @@ import compas_rhino as rhino
 import compas_rhino.artists as rhino_artist
 import compas_rhino.helpers as rhino_helper
 
-from compas.datastructures.mesh import Mesh
+from compas_pattern.datastructures.mesh import Mesh
 
 from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
-from compas_pattern.topology.polyline_extraction import mesh_boundaries
 
 from compas_pattern.topology.grammar import face_pole
 from compas_pattern.topology.grammar import edge_pole
@@ -36,8 +35,6 @@ from compas_pattern.topology.grammar import singular_boundary_minus_1
 from compas_pattern.topology.grammar import add_handle
 from compas_pattern.topology.grammar import close_handle
 from compas_pattern.topology.grammar import close_handle_2
-
-from compas_pattern.topology.polyline_extraction import dual_edge_polylines
 
 from compas_pattern.topology.face_strip_operations import face_strip_collapse
 from compas_pattern.topology.face_strip_operations import face_strip_insert
@@ -131,7 +128,7 @@ def apply_rule(mesh, rule):
         artist = rhino_artist.MeshArtist(mesh, layer='mesh_artist')
         artist.clear_layer()
         
-        boundaries = mesh_boundaries(mesh)
+        boundaries = mesh.polyedge_boundaries()
         artist.draw_vertexlabels(text = {key: str(key) for key in [vkey for boundary in boundaries for vkey in boundary]})
         artist.redraw()
         vkey = rhino_helper.mesh_select_vertex(mesh, message = 'vertex on the opening to close')
@@ -408,29 +405,20 @@ def apply_rule(mesh, rule):
         singular_boundary_minus_1(mesh, fkey, vkey)
 
     elif rule == 'face_strip_collapse':
-        edge_groups, max_group = dual_edge_polylines(mesh)
-        
-        groups = {}
-        
-        for edge, group in edge_groups.items():
-            u, v = edge
-            if group in groups:
-                if (v, u) not in groups[group]:
-                    groups[group].append((u, v))
-            else:
-                groups[group] = [(u, v)]
+        nb_strip = mesh.collect_strip_edge_attribute()
+        strips_to_edges = mesh.strips_to_edges_dict()        
         
         rs.EnableRedraw(False)
         dots = {}
-        for group, edges in groups.items():
-            k = float(group) / float(max_group) * 255
+        for strip, edges in strips_to_edges.items():
+            k = float(strip) / float(nb_strip) * 255
             RGB = [k] * 3
-            rs.AddGroup(group)
+            rs.AddGroup(strip)
             for u, v in edges:
-                dot = rs.AddTextDot(group, mesh.edge_midpoint(u, v))
+                dot = rs.AddTextDot(strip, mesh.edge_midpoint(u, v))
                 dots[dot] = (u, v)
                 rs.ObjectColor(dot, RGB)
-                rs.AddObjectToGroup(dot, group)
+                rs.AddObjectToGroup(dot, strip)
         rs.EnableRedraw(True)
         
         dot = rs.GetObject('dual polyedge to collapse', filter = 8192)
@@ -498,7 +486,7 @@ def apply_rule(mesh, rule):
         face_vertices = [mesh.face_vertices(fkey) for fkey in fkeys]
 
         faces_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
-        faces_boundary_vertices = mesh_boundaries(faces_mesh)[0]
+        faces_boundary_vertices = faces_mesh.polyedge_boundaries()[0]
 
         artist.draw_vertexlabels(text = {key: str(key) for key in faces_boundary_vertices})
         artist.redraw()
