@@ -6,6 +6,9 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
+	'split_list',
+	'splits_list',
+	'splits_closed_list'
 ]
 
 def split_list(l, index):
