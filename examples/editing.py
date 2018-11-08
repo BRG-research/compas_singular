@@ -10,6 +10,7 @@ from compas_pattern.cad.rhino.utilities import draw_mesh
 
 from compas_pattern.algorithms.editing import editing
 
+import compas_rhino.artists as rhino_artist
 
 # mesh selection
 guid = rs.GetObject('get mesh')
