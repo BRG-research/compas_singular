@@ -1,6 +1,6 @@
 from compas_pattern.datastructures.mesh import Mesh
 
-from compas_pattern.geometry.join import join_lines_to_polylines
+from compas_pattern.geometry.join import join_polylines
 
 from compas.utilities import geometric_key
 
@@ -39,7 +39,7 @@ class Skeleton(Mesh):
         return [(self.face_circle(fkey)[0], self.face_circle(nbr)[0]) for fkey in self.faces() for nbr in self.face_neighbors(fkey) if fkey < nbr and geometric_key(self.face_circle(fkey)[0]) != geometric_key(self.face_circle(nbr)[0])]
 
     def branches(self):
-        return join_lines_to_polylines(self.lines())
+        return join_polylines(self.lines())
 
 # ==============================================================================
 # Main
