@@ -58,7 +58,7 @@ def delaunay(vertices, src = 'compas', cls=None):
 		faces = delaunay_from_points(vertices)
 	
 	elif src == 'numpy':
-		faces = XFunc('compas_pattern.algorithms.surface_skeleton.delaunay_from_points_numpy_xfunc')(vertices)
+		faces = XFunc('compas_pattern.topology.triangulation.delaunay_from_points_numpy_xfunc')(vertices)
 	
 	else:
 		return None
