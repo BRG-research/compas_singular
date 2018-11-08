@@ -1,13 +1,9 @@
-
 import rhinoscriptsyntax as rs
 import compas_rhino as rhino
 
-from compas_pattern.cad.rhino.utilities import surface_borders
-from compas_pattern.topology.polyline_extraction import mesh_boundaries
-
 from compas.geometry import bounding_box
 
-from compas.datastructures.mesh import Mesh
+from compas_pattern.datastructures.mesh import Mesh
 from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
 from compas_pattern.datastructures.pseudo_quad_mesh import pqm_from_mesh
 from compas_pattern.cad.rhino.utilities import draw_mesh
@@ -28,7 +24,7 @@ from compas_pattern.algorithms.remapping import remapping
 
 from compas_pattern.algorithms.editing import editing
 
-from compas_pattern.topology.thickening import mesh_thickening
+from compas_pattern.geometry.mesh_offset import mesh_thicken
 
 from compas_pattern.algorithms.densification import densification
 
@@ -126,7 +122,7 @@ def start():
     thickening = rs.GetString('thicken?', defaultString = 'False', strings = ['True', 'False'])
     if thickening == 'True':
         thickness = rs.GetReal(message = 'thickness', number = 1, minimum = .0001, maximum = 1000)
-        coarse_quad_mesh = mesh_thickening(coarse_quad_mesh, thickness = thickness)
+        coarse_quad_mesh = mesh_thicken(coarse_quad_mesh, thickness)
         #closed_mesh_guid = draw_mesh(closed_mesh.to_mesh())
         #rs.ObjectLayer(closed_mesh_guid, layer = 'edited_coarse_quad_mesh')
         #rs.LayerVisible('edited_coarse_quad_mesh', visible = True)
