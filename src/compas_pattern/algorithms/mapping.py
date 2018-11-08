@@ -10,7 +10,6 @@ from compas_rhino.geometry.surface import RhinoSurface
 
 import compas_rhino as rhino
 
-from compas_pattern.cad.rhino.utilities import surface_borders
 from compas_pattern.cad.rhino.utilities import curve_discretisation
 
 __author__     = ['Robin Oval']
@@ -49,26 +48,6 @@ def mapping(discretization_spacing, surface_guid, curve_features_guids = [], poi
     -
 
     """
-    
-    boundaries = surface_borders(surface_guid, border_type = 1)
-    boundary_polylines = [curve_discretisation(boundary, discretization_spacing) for boundary in boundaries]
-    uv_boundary_polylines = [[rs.SurfaceClosestPoint(surface_guid, vertex) for vertex in rs.PolylineVertices(boundary_polyline)] for boundary_polyline in boundary_polylines]
-    planar_boundary_polylines = [[[u, v, 0] for u, v in uv_boundary_polyline] for uv_boundary_polyline in uv_boundary_polylines]
-    planar_boundary_polyline = []
-    for polyline in planar_boundary_polylines:
-        planar_boundary_polyline += polyline[: -1]
-    planar_boundary_polyline.append(planar_boundary_polyline[0])
-    rs.DeleteObjects(boundaries)
-    rs.DeleteObjects(boundary_polylines)
-
-    holes = surface_borders(surface_guid, border_type = 2)
-    if len(holes) > 1:
-        holes = rs.JoinCurves(holes, delete_input = True)
-    hole_polylines = [curve_discretisation(hole, discretization_spacing) for hole in holes]
-    uv_hole_polylines = [[rs.SurfaceClosestPoint(surface_guid, vertex) for vertex in rs.PolylineVertices(hole_polyline)] for hole_polyline in hole_polylines]
-    planar_hole_polylines = [[[u, v, 0] for u, v in hole] for hole in uv_hole_polylines]
-    rs.DeleteObjects(holes)
-    rs.DeleteObjects(hole_polylines)
 
     polyline_features = [curve_discretisation(curve_features_guid, discretization_spacing) for curve_features_guid in curve_features_guids]
     uv_polyline_features = [[rs.SurfaceClosestPoint(surface_guid, vertex) for vertex in rs.PolylineVertices(polyline_feature)] for polyline_feature in polyline_features]
