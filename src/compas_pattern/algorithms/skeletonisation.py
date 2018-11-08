@@ -96,7 +96,7 @@ def surface_skeleton_decomposition_mesh(srf_guid, precision):
 	skeleton = planar_boundaries_to_delaunay(boundaries[0], boundaries[1 :], cls = SkeletonMesh)
 
 	# generation and remapping of the skeleton-based mesh from the Delaunay mesh of/on the surface
-	return mesh_to_surface(srf_guid, skeleton.decomposition_mesh())
+	return mesh_to_surface(srf_guid, skeleton.decomposition_mesh()), [polyline_to_surface(srf_guid, polyline) for polyline in skeleton.polylines]
 
 def surface_skeleton_decomposition_nurbs(srf_guid, precision):
 	"""Generate an untrimmed polysurface on a surface using its topological skeleton an its singularities.
