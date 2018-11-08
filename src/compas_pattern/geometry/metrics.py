@@ -2,7 +2,7 @@ from math import degrees
 from math import acos
 from math import pi
 
-from compas.datastructures.mesh import Mesh
+from compas_pattern.datastructures.mesh import Mesh
 
 from compas.geometry import length_vector
 from compas.geometry import dot_vectors
@@ -23,13 +23,13 @@ __all__ = [
 	'maximum',
 	'mean',
 	'standard_deviation',
-	'edge_lengths',
-	'face_areas',
-	'face_aspect_ratios',
-	'face_skewnesses',
-	'face_curvatures',
-	'vertex_curvatures',
-	'polyedge_curvatures',
+	'mesh_edge_lengths',
+	'mesh_face_areas',
+	'mesh_face_aspect_ratios',
+	'mesh_face_skewnesses',
+	'mesh_face_curvatures',
+	'mesh_vertex_curvatures',
+	'mesh_polyedge_curvatures',
 	'polyline_curvatures',
 ]
 
@@ -120,7 +120,7 @@ def standard_deviation(list):
 	return (sum([(i - m) ** 2 for i in list]) / float(len(list))) ** .5
 
 
-def edge_lengths(mesh):
+def mesh_edge_lengths(mesh):
 	"""Lengths of the mesh edges as dict edge: edge length.
 
 	Parameters
@@ -141,7 +141,7 @@ def edge_lengths(mesh):
 
 	return {(u, v): mesh.edge_length(u, v) for u, v  in mesh.edges()}
 
-def face_areas(mesh):
+def mesh_face_areas(mesh):
 	"""Areas of the mesh faces as dict face: face area.
 
 	Parameters
@@ -162,7 +162,7 @@ def face_areas(mesh):
 
 	return {fkey: mesh.face_area(fkey) for fkey in mesh.faces()}
 
-def face_aspect_ratios(mesh):
+def mesh_face_aspect_ratios(mesh):
 	"""Aspect ratios of the mesh faces as dict face: face aspect ratio.
 	Aspect ratio of a face = longuest edge / shortest edge.
 
@@ -192,7 +192,7 @@ def face_aspect_ratios(mesh):
 	return face_aspect_ratio_dict
 
 
-def face_skewnesses(mesh):
+def mesh_face_skewnesses(mesh):
 	"""Skewnesses of the mesh faces as dict face: face skewness.
 
 	https://en.wikipedia.org/wiki/Types_of_mesh
@@ -238,7 +238,7 @@ def face_skewnesses(mesh):
 
 	return face_skewness_dict
 
-def face_curvatures(mesh):
+def mesh_face_curvatures(mesh):
 	"""Curvatures of the mesh quad faces as dict face: face curvature.
 	Curvature of a face = distance between diagonals / mean diagonal length.
 
@@ -270,7 +270,7 @@ def face_curvatures(mesh):
 
 	return face_curvature_dict
 
-def vertex_curvatures(mesh):
+def mesh_vertex_curvatures(mesh):
 	"""Curvatures of the non-boundary mesh vertices as dict vertex: vertex curvature.
 	Curvature of a vertex = 2 * pi - sum angles between adajcent edges.
 
@@ -305,7 +305,7 @@ def vertex_curvatures(mesh):
 
 	return vertex_curvature_dict
 
-def polyedge_curvatures(mesh, polyedges):
+def mesh_polyedge_curvatures(mesh, polyedges):
 	"""Curvatures of the mesh vertices along polyedges as dict (vertices): (curvatures).
 
 
@@ -398,4 +398,4 @@ if __name__ == '__main__':
 	mesh = Mesh.from_vertices_and_faces(vertices, faces)
 
 	print face_skewnesses(mesh)
-	#print standard_deviation(face_skewnesses(mesh).values())
+	print standard_deviation(face_skewnesses(mesh).values())
