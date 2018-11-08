@@ -1,6 +1,6 @@
 import compas_rhino as rhino
 
-from compas.datastructures.mesh import Mesh
+from compas_pattern.datastructures.mesh import Mesh
 
 import math
 
