@@ -10,7 +10,7 @@ import compas_rhino as rhino
 import compas_rhino.artists as rhino_artist
 import compas_rhino.helpers as rhino_helper
 
-from compas.datastructures.mesh import Mesh
+from compas_pattern.datastructures.mesh import Mesh
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
@@ -18,7 +18,8 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
-	'select_mesh_polyedge'
+	'select_mesh_polyedge',
+	'select_mesh_strip'
 ]
 
 
@@ -46,7 +47,7 @@ def select_mesh_polyedge(mesh):
 	while count > 0:
 		count -= 1
 
-		# define candidate vertices ofr polyedge
+		# define candidate vertices for polyedge
 		if len(polyedge) == 0:
 			vkey_candidates = mesh.vertices()
 		else:
@@ -74,6 +75,9 @@ def select_mesh_polyedge(mesh):
 	rs.DeleteLayer('mesh_artist')
 
 	return polyedge
+
+def select_mesh_strip(mesh):
+	return 0
 
 # ==============================================================================
 # Main
