@@ -10,6 +10,9 @@ from compas.utilities import geometric_key
 
 import compas_rhino as rhino
 
+from compas.geometry import bounding_box
+from compas.geometry import distance_point_point
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -51,11 +54,6 @@ def is_point_on_curve(curve_guid, point_xyz):
 		return True
 	else:
 		return False
-
-def surface_borders(surface, border_type = 0):
-		border = rs.DuplicateSurfaceBorder(surface, border_type)
-		curves = rs.ExplodeCurves(border, delete_input = True)
-		return curves
 
 def surface_border_kinks(surface_guid):
 	kinks = []
@@ -116,12 +114,45 @@ def draw_mesh(mesh, layer = None):
 
 	return mesh_guid
 
-def draw_graph(graph):
-	
-	vertices = [rs.AddPoint(graph.vertex_coordinates(vkey)) for vkey in graph.vertices()]
-	edges = [rs.AddLine(graph.vertex_coordinates(ukey), graph.vertex_coordinates(vkey)) for ukey, vkey in graph.edges()]
-	
-	return edges, vertices
+def draw_graph(graph, group = None, key_to_colour = None):
+	"""Draw a graph in Rhino as grouped points and lines with optional node colouring.
+
+	Parameters
+	----------
+	graph : Network
+		A graph.
+	group : string
+		Optional name of the group.
+	key_to_colour : dict
+		An optional dictonary point node keys no RGB colours.
+
+	Returns
+	-------
+	group
+		The name of the drawn group.
+
+	"""
+
+	box = bounding_box([graph.vertex_coordinates(vkey) for vkey in graph.vertices()])
+
+	scale = distance_point_point(box[0], box[6])
+
+	colours = [[255,0,0], [0,0,255], [0,255,0], [255,255,0], [0,255,255], [255,0,255],[0,0,0]]
+
+	if key_to_colour is None:
+		key_to_colour = {key: -1 for key in graph.vertices()}
+	circles = []
+	for key in graph.vertices():
+		circle = rs.AddCircle(graph.vertex_coordinates(key), .01 * scale)
+		circles.append(circle)
+		colour = colours[key_to_colour[key]]
+		rs.ObjectColor(circle, colour)
+
+	lines = [rs.AddLine(graph.vertex_coordinates(u), graph.vertex_coordinates(v)) for u, v in graph.edges()]
+	group = rs.AddGroup(group)
+	rs.AddObjectsToGroup(circles + lines, group)
+
+	return group
 
 # ==============================================================================
 # Main
