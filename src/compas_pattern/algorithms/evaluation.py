@@ -13,12 +13,12 @@ from compas_pattern.geometry.metrics import maximum
 from compas_pattern.geometry.metrics import mean
 from compas_pattern.geometry.metrics import standard_deviation
 
-from compas_pattern.geometry.metrics import edge_lengths
-from compas_pattern.geometry.metrics import face_areas
-from compas_pattern.geometry.metrics import face_aspect_ratios
-from compas_pattern.geometry.metrics import face_skewnesses
-from compas_pattern.geometry.metrics import face_curvatures
-from compas_pattern.geometry.metrics import vertex_curvatures
+from compas_pattern.geometry.metrics import mesh_edge_lengths
+from compas_pattern.geometry.metrics import mesh_face_areas
+from compas_pattern.geometry.metrics import mesh_face_aspect_ratios
+from compas_pattern.geometry.metrics import mesh_face_skewnesses
+from compas_pattern.geometry.metrics import mesh_face_curvatures
+from compas_pattern.geometry.metrics import mesh_vertex_curvatures
 
 
 __author__     = ['Robin Oval']
@@ -51,9 +51,9 @@ def print_metrics(mesh):
 
 	"""
 	operators = {
-			'edge_lengths': edge_lengths, 
-			'face_curvatures': face_curvatures,
-			'face_skewnesses': face_skewnesses,
+			'mesh_edge_lengths': mesh_edge_lengths, 
+			'mesh_face_curvatures': mesh_face_curvatures,
+			'mesh_face_skewnesses': mesh_face_skewnesses,
 			'minimum': minimum,
 			'maximum': maximum,
 			'mean': mean,
