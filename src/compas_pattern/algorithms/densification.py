@@ -8,9 +8,7 @@ except ImportError:
 	if platform.python_implementation() == 'IronPython':
 		raise
 
-from compas.datastructures.mesh import Mesh
-
-from compas_pattern.topology.polyline_extraction import dual_edge_polylines
+from compas_pattern.datastructures.mesh import Mesh
 
 from compas.geometry.algorithms.interpolation import discrete_coons_patch
 
@@ -29,35 +27,8 @@ __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
 	'densification',
-	'densify_quad_mesh',
 ]
-
-def densify_quad_mesh(mesh):
-	"""Generate dense quad mesh from coarse quad mesh
-	based on strip density parameters already stored as edge attributes.
-
-	Parameters
-	----------
-	mesh : CoarseQuadMesh
-		A coarse quad mesh to densify.
-
-	Returns
-	-------
-	QuadMesh
-		A dense quad mesh.
-	"""
-
-	meshes = []
-
-	for fkey in mesh.faces():
-		ab, bc, cd, da = [[mesh.edge_point(u, v, float(i) / float(mesh.get_edge_attribute((u, v), 'density_parameter'))) for i in range(0, mesh.get_edge_attribute((u, v), 'density_parameter') + 1)] for u, v in mesh.face_halfedges(fkey)]
-		vertices, faces = discrete_coons_patch(ab, bc, list(reversed(cd)), list(reversed(da)))
-		meshes.append(QuadMesh.from_vertices_and_faces(vertices, faces))
-
-	vertices, face_vertices = join_and_weld_meshes(meshes)
 	
-	return QuadMesh.from_vertices_and_faces(vertices, face_vertices)
-
 def densification(mesh, target_length, custom = True):
 	"""Densifies a quad mesh based on a target length.
 	
@@ -85,7 +56,10 @@ def densification(mesh, target_length, custom = True):
 	if not mesh.is_quadmesh():
 		return None
 
-	edge_groups, max_group = dual_edge_polylines(mesh)
+	mesh.collect_strips()
+	max_group = mesh.number_of_strips()
+	edge_groups = [mesh.edge_strip(edge) for edge in mesh.edges()]
+	mesh.edges_to_strips_dict()
 
 	dual_polyedges = []
 	for i in range(max_group + 1):
@@ -178,8 +152,7 @@ def densification(mesh, target_length, custom = True):
 		face_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
 		meshes.append(face_mesh)
 
-	vertices, face_vertices = join_and_weld_meshes(meshes)
-	dense_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
+	dense_mesh = join_and_weld_meshes(meshes)
 
 	# remove pseudo quads: [a, b, c, c] -> [a, b, c]
 	for fkey in dense_mesh.faces():
@@ -217,7 +190,7 @@ if __name__ == '__main__':
 
 	mesh = CoarseQuadMesh.from_vertices_and_faces(vertices, faces)
 
-	mesh.collect_strip_edge_attribute()
+	mesh.collect_strips()
 	mesh.density_target_length(2)
 	dense_mesh = densify_quad_mesh(mesh)
 
