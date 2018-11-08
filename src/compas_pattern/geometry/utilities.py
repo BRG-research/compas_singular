@@ -3,6 +3,11 @@ from compas.geometry import add_vectors
 from compas.geometry import subtract_vectors
 from compas.geometry import scale_vector
 
+from compas.utilities import pairwise
+
+from compas.geometry import Line
+from compas.geometry import Polyline
+
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -10,45 +15,63 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
+	'weighted_centroid_points',
 	'line_point',
 	'polyline_point'
 ]
+
+def weighted_centroid_points(points, weights):
+	"""Compute the weighted centroid of a set of points.
+
+	Parameters
+	----------
+	points : list
+		A list of point coordinates.
+	weights : list
+		A list of weight floats.
+
+	Returns
+	-------
+	list
+		The coordinates of the weighted centroid.
+	"""
+ 
+	return scale_vector( 1. / sum(weights), add_vectors([scale_vector(weight, point) for weight, point in zip(weights, points)]))
+
 
 def line_point(line, t = .5):
 	"""Point on a lyline at a normalised parameter.
 
 	Parameters
 	----------
-	polyline: list
-	    The XYZ coordinates of the extremities of the line.
+	line: tuple
+		The XYZ coordinates of the extremities of the line.
 	t: float 
-	    The normalised parameter of the point on the polyline between 0 and 1.
+		The normalised parameter of the point on the polyline between 0 and 1.
 
 	Returns
 	-------
 	xyz: list, None
 		The point coordinates.
 		None if the parameter is not in [0,1]
-
-	Raises
-	------
-	-
-
 	"""
+
+	if t < 0 or t > 1:
+		return None
 
 	u, v = line
 	uv = subtract_vectors(v, u)
 	return add_vectors(u, scale_vector(uv, t))
 
-def polyline_point(polyline, t = .5, snap_to_point = False):
+def polyline_point(polyline, t = .5, snap = False):
 	"""Point on a polyline at a normalised parameter. If asked, the found position is snapped to the closest polyline node.
 
 	Parameters
 	----------
 	polyline: list
-	    The XYZ coordinates of the nodes of the polyline. The polyline can be closed.
+		The XYZ coordinates of the nodes of the polyline. The polyline can be closed.
 	t: float 
-	    The normalised parameter of the point on the polyline between 0 and 1.
+		The normalised parameter of the point on the polyline between 0 and 1.
 	snap_to_point: bool
 		If true, the closest node on the polyline is returned, if false, a point on a line.
 
@@ -64,30 +87,36 @@ def polyline_point(polyline, t = .5, snap_to_point = False):
 
 	"""
 
+	polyline = Polyline(polyline)
+
 	if t < 0 or t > 1:
 		return None
 
-	length = sum([distance_point_point(polyline[i], polyline[i + 1]) for i in range(len(polyline) - 1)])
-	target_length = t * length
+	points = polyline.points
+	polyline_length = polyline.length
 
-	current_length = 0
-	for i in range(len(polyline) - 1):
-		current_point = polyline[i]
-		next_point = polyline[i + 1]
-		next_length = current_length + distance_point_point(current_point, next_point)
-		if target_length >= current_length and target_length <= next_length:
-			rest_length = target_length - current_length
-			rest_t = rest_length / distance_point_point(current_point, next_point)
-			xyz = add_vectors(current_point, scale_vector(subtract_vectors(next_point, current_point), rest_t))
-			if snap_to_point:
-				if distance_point_point(xyz, current_point) < distance_point_point(xyz, next_point):
-					return current_point
+	x = 0
+	i = 0
+
+	while x <= t:
+
+		line = Line(points[i], points[i + 1])
+		line_length = line.length
+
+		dx = line_length / polyline_length
+
+		if x + dx >= t:
+
+			if snap:
+				if t - x < x + dx - t:
+					return line.start
 				else:
-					return next_point
-			else:
-				return xyz
-		else:
-			current_length = next_length
+					return line.end
+
+			return line.start + line.direction * ((t - x) * polyline_length / line_length * line.length)
+		
+		x += dx
+		i += 1
 
 # ==============================================================================
 # Main
@@ -95,8 +124,8 @@ def polyline_point(polyline, t = .5, snap_to_point = False):
 
 if __name__ == '__main__':
 
-    import compas
+	import compas
 
-    polyline = [[0.,0.,0.], [1.,0.,0.], [2.,0.,0.], [10.,0.,0.], [12.,0.,0.], [20.,0.,0.], [21.,0.,0.], [21.,5.,0.]]
+	polyline = [[0.,0.,0.], [1.,0.,0.], [2.,0.,0.], [10.,0.,0.], [12.,0.,0.], [20.,0.,0.], [21.,0.,0.], [21.,4.,0.]]
 
-    print polyline_point(polyline, t = .5, snap_to_point = False)
+	print polyline_point(polyline, t = .66, snap = True)
