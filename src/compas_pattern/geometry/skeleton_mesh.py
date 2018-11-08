@@ -6,8 +6,10 @@ from compas_pattern.geometry.skeleton import Skeleton
 from compas_pattern.datastructures.mesh import Mesh
 
 from compas_pattern.geometry.utilities import polyline_point
+from compas_pattern.geometry.join import join_polylines
 
 from compas.utilities import geometric_key
+from compas.utilities import pairwise
 from compas_pattern.utilities.lists import splits_closed_list
 
 __author__     = ['Robin Oval']
@@ -32,6 +34,7 @@ class SkeletonMesh(Skeleton):
 	def __init__(self):
 		super(SkeletonMesh, self).__init__()
 		self.mesh = None
+		self.polylines = None
 
 	# --------------------------------------------------------------------------
 	# key elements
@@ -64,63 +67,73 @@ class SkeletonMesh(Skeleton):
 
 	def branches_boundary(self):
 		# branches along boundaries split by the corner vertices and the split vertices
-		boundaries = self.boundary_polyedges()
+		boundaries = [polyedge + polyedge[0 :] for polyedge in self.boundary_polyedges()]
 		splits = self.corner_vertices() + self.split_vertices()
 		split_boundaries = [split_boundary for boundary in boundaries for split_boundary in splits_closed_list(boundary, [boundary.index(split) for split in splits if split in boundary])]
 		return [[self.vertex_coordinates(vkey) for vkey in boundary] for boundary in split_boundaries]
 
-	def branches_split(self):
+	def branches_splitting_collapsed_boundaries(self):
 		
-		face_splits = []
-		singular_faces = self.singular_faces()
+		new_branches = []
+
+		all_splits = set(list(self.corner_vertices()) + list(self.split_vertices()))
 
 		for polyedge in self.boundary_polyedges():
-			sorted_boundary_faces = list(set([fkey for vkey in reversed(polyedge) for fkey in self.vertex_faces(vkey, ordered = True)]))
-			singular_boundary_faces = [fkey for fkey in sorted_boundary_faces if fkey in singular_faces]
 
-			if len(singular_boundary_faces) < 3:
-				n = len(singular_boundary_faces)
+			splits = [vkey for vkey in polyedge if vkey in all_splits]
+			new_splits = []
 
-				if len(singular_boundary_faces) == 0:
-					face_splits += list(itemgetter(0, int(floor(n / 3)), int(floor(n * 2 / 3))), singular_boundary_faces)
-				
-				elif len(singular_boundary_faces) == 1:
-					i = sorted_boundary_faces.index(singular_boundary_faces[0])
-					face_splits += list(itemgetter(i - int(floor(n * 2 / 3)), i - int(floor(n / 3)), 0), singular_boundary_faces)
-				
-				else:
-					one, two = splits_closed_list(sorted_boundary_faces, [sorted_boundary_faces.index(fkey) for fkey in singular_boundary_faces])
-					split_half = one if len(one) > len(two) else two
-					face_splits.append(split_half[int(floor(len(split_half) / 2))])
+			if len(splits) == 0:
+				new_splits += [vkey for vkey in list(itemgetter(0, int(floor(len(polyedge) / 3)), int(floor(len(polyedge) * 2 / 3)))(polyedge))]
+			
+			elif len(splits) == 1:
+				i = polyedge.index(splits[0])
+				new_splits += list(itemgetter(i - int(floor(len(polyedge) * 2 / 3)), i - int(floor(len(polyedge) / 3)))(polyedge))
+			
+			elif len(splits) == 2:
+				one, two = splits_closed_list(polyedge, [polyedge.index(vkey) for vkey in splits])
+				half = one if len(one) > len(two) else two
+				new_splits.append(half[int(floor(len(half) / 2))])
 
-		branch_splits = []
-		for fkey in face_splits:
-			for edge in self.face_halfedges(fkey):
-				if not self.is_edge_on_boundary(*edge):
-					branch_splits += [(self.face_circle(fkey[0]), self.vertex_coordinates(vkey)) for vkey in edge]
-					break
-					
-		return branch_splits
+			for vkey in new_splits:
+				fkey = list(self.vertex_faces(vkey))[0]
+				for edge in self.face_halfedges(fkey):
+					if vkey in edge and not self.is_edge_on_boundary(*edge):
+						new_branches += [[self.face_circle(fkey)[0], self.vertex_coordinates(vkey_2)] for vkey_2 in edge]
+						all_splits.update(edge)
+						break
+
+		return new_branches
+
+	def branches_splitting_flipped_faces(self):
+		return 0
 
 	# --------------------------------------------------------------------------
 	# decomposition
 	# --------------------------------------------------------------------------
 	
 	def decomposition_polylines(self):
-		# polyline branches from skeleton-based decomposition into quad patches
-		return self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary()
+		# store all polyline branches from skeleton-based decomposition into quad patches
+		self.polylines =  join_polylines(self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary() + self.branches_splitting_collapsed_boundaries(), stops = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
+		return self.polylines
 
 	def decomposition_polyline(self, geom_key_1, geom_key_2):
-		# polyline branch from two extremity geoemtric keys
-		polylines = {(geometric_key(polyline[0]), geometric_key(polyline[-1])): polyline for polyline in self.decomposition_polylines()}
+		# polyline branch from two extremity geometric keys
+		polylines = {(geometric_key(polyline[0]), geometric_key(polyline[-1])): polyline for polyline in self.polylines}
 		return polylines.get((geom_key_1, geom_key_2), polylines.get((geom_key_2, geom_key_1)))
-
 
 	def decomposition_mesh(self):
 		# mesh from skeleton-based decomposition into quad patches
-		self.mesh =  Mesh.from_polylines(self.branches_boundary(), self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary())
+		polylines = self.decomposition_polylines()
+		boundary_keys = set([geometric_key(self.vertex_coordinates(vkey)) for vkey in self.vertices_on_boundary()])
+		boundary_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) in boundary_keys and geometric_key(polyline[1]) in boundary_keys ]
+		other_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) not in boundary_keys or geometric_key(polyline[1]) not in boundary_keys]
+		
+		self.mesh =  Mesh.from_polylines(boundary_polylines, other_polylines)
+		
 		self.solve_triangular_faces()
 		self.solve_flipped_faces()
+		
 		return self.mesh
 
 	def solve_triangular_faces(self):
@@ -131,9 +144,9 @@ class SkeletonMesh(Skeleton):
 			if len(mesh.face_vertices(fkey)) == 3:
 				
 				boundary_vertices = [vkey for vkey in mesh.face_vertices(fkey) if mesh.is_vertex_on_boundary(vkey)]
-				test = sum(mesh.is_vertex_on_boundary(vkey) for vkey in mesh.face_vertices(fkey))
+				case = sum(mesh.is_vertex_on_boundary(vkey) for vkey in mesh.face_vertices(fkey))
 
-				if test == 1:
+				if case == 1:
 					# convert triangular face to quad by duplicating the boundary vertex
 					# due to singular face vertices at the same location
 					u = boundary_vertices[0]
@@ -146,7 +159,7 @@ class SkeletonMesh(Skeleton):
 					# modify triangular face
 					mesh.insert_vertex_in_face(fkey, u, v)
 
-				elif test == 2:
+				elif case == 2:
 					# remove triangular face and merge the two boundary vertices
 					# due to singularities at the same location
 					polyline = self.decomposition_polyline(*map(lambda x: geometric_key(mesh.vertex_coordinates(x)), boundary_vertices))
@@ -161,9 +174,9 @@ class SkeletonMesh(Skeleton):
 						mesh.substitute_vertex_in_faces(old_vkey, new_vkey, mesh.vertex_faces(old_vkey))
 						mesh.delete_vertex(old_vkey)
 
-		def solve_flipped_faces(self):
+	def solve_flipped_faces(self):
 
-			mesh = self.mesh
+		mesh = self.mesh
 
 
 		return mesh
