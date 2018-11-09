@@ -1,4 +1,5 @@
 from math import floor
+from math import pi
 from operator import itemgetter
 
 from compas_pattern.geometry.skeleton import Skeleton
@@ -11,6 +12,10 @@ from compas_pattern.geometry.join import join_polylines
 from compas.utilities import geometric_key
 from compas.utilities import pairwise
 from compas_pattern.utilities.lists import splits_closed_list
+
+from compas.geometry import subtract_vectors
+from compas.geometry import angle_vectors
+
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -72,8 +77,40 @@ class SkeletonMesh(Skeleton):
 		split_boundaries = [split_boundary for boundary in boundaries for split_boundary in splits_closed_list(boundary, [boundary.index(split) for split in splits if split in boundary])]
 		return [[self.vertex_coordinates(vkey) for vkey in boundary] for boundary in split_boundaries]
 
-	def branches_splitting_collapsed_boundaries(self):
+	# --------------------------------------------------------------------------
+	# decomposition
+	# --------------------------------------------------------------------------
+	
+	def decomposition_polylines(self):
+		# store all polyline branches from skeleton-based decomposition into quad patches
+		self.polylines =  join_polylines(self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary() + self.branches_splitting_collapsed_boundaries(), stops = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
+		return self.polylines
+
+	def decomposition_polyline(self, geom_key_1, geom_key_2):
+		# polyline branch from two extremity geometric keys
+		polylines = {(geometric_key(polyline[0]), geometric_key(polyline[-1])): polyline for polyline in self.polylines}
+		return polylines.get((geom_key_1, geom_key_2), polylines.get((geom_key_2, geom_key_1)))
+
+	def decomposition_mesh(self):
+		# mesh from skeleton-based decomposition into quad patches
+		polylines = self.decomposition_polylines()
+		boundary_keys = set([geometric_key(self.vertex_coordinates(vkey)) for vkey in self.vertices_on_boundary()])
+		boundary_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) in boundary_keys and geometric_key(polyline[1]) in boundary_keys ]
+		other_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) not in boundary_keys or geometric_key(polyline[1]) not in boundary_keys]
 		
+		self.mesh =  Mesh.from_polylines(boundary_polylines, other_polylines)
+		
+		self.solve_triangular_faces()
+
+		return self.mesh
+
+	# --------------------------------------------------------------------------
+	# corrections
+	# --------------------------------------------------------------------------
+
+	def branches_splitting_collapsed_boundaries(self):
+		# add splits along boundaries that do not have three splits at least
+
 		new_branches = []
 
 		all_splits = set(list(self.corner_vertices()) + list(self.split_vertices()))
@@ -106,35 +143,12 @@ class SkeletonMesh(Skeleton):
 		return new_branches
 
 	def branches_splitting_flipped_faces(self):
+		for polyline in self.branches_singularity_to_singularity():
+			lines = [(u, v) for u, v in pairwise(polyline)]
+			angles = [angle_vectors(subtract_vectors(*uv), subtract_vectors(*vw)) for uv, vw in pairwise(lines)]
+			accumulate_angles = [sum(angles[:i]) for i in range(len(angles))]
+
 		return 0
-
-	# --------------------------------------------------------------------------
-	# decomposition
-	# --------------------------------------------------------------------------
-	
-	def decomposition_polylines(self):
-		# store all polyline branches from skeleton-based decomposition into quad patches
-		self.polylines =  join_polylines(self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary() + self.branches_splitting_collapsed_boundaries(), stops = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
-		return self.polylines
-
-	def decomposition_polyline(self, geom_key_1, geom_key_2):
-		# polyline branch from two extremity geometric keys
-		polylines = {(geometric_key(polyline[0]), geometric_key(polyline[-1])): polyline for polyline in self.polylines}
-		return polylines.get((geom_key_1, geom_key_2), polylines.get((geom_key_2, geom_key_1)))
-
-	def decomposition_mesh(self):
-		# mesh from skeleton-based decomposition into quad patches
-		polylines = self.decomposition_polylines()
-		boundary_keys = set([geometric_key(self.vertex_coordinates(vkey)) for vkey in self.vertices_on_boundary()])
-		boundary_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) in boundary_keys and geometric_key(polyline[1]) in boundary_keys ]
-		other_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) not in boundary_keys or geometric_key(polyline[1]) not in boundary_keys]
-		
-		self.mesh =  Mesh.from_polylines(boundary_polylines, other_polylines)
-		
-		self.solve_triangular_faces()
-		self.solve_flipped_faces()
-		
-		return self.mesh
 
 	def solve_triangular_faces(self):
 
@@ -173,13 +187,6 @@ class SkeletonMesh(Skeleton):
 					for old_vkey in boundary_vertices:
 						mesh.substitute_vertex_in_faces(old_vkey, new_vkey, mesh.vertex_faces(old_vkey))
 						mesh.delete_vertex(old_vkey)
-
-	def solve_flipped_faces(self):
-
-		mesh = self.mesh
-
-
-		return mesh
 
 # ==============================================================================
 # Main
