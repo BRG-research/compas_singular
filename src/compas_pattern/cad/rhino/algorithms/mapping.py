@@ -12,7 +12,9 @@ __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
 	'surface_to_planar_boundaries',
-	'mesh_to_surface'
+	'mesh_to_surface',
+	'line_to_surface',
+	'polyline_to_surface'
 ]
 
 def surface_to_planar_boundaries(srf_guid, precision):
