@@ -1,5 +1,5 @@
 from compas_pattern.datastructures.mesh import Mesh
-from compas_pattern.datastructures.quad_mesh import QuadMesh
+from compas_pattern.datastructures.mesh_quad import QuadMesh
 
 from compas.utilities import geometric_key
 

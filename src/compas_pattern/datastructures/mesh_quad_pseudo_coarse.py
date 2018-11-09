@@ -1,5 +1,5 @@
-from compas_pattern.datastructures.coarse_quad_mesh import CoarseQuadMesh
-from compas_pattern.datastructures.pseudo_quad_mesh import PseudoQuadMesh
+from compas_pattern.datastructures.mesh_quad_coarse import CoarseQuadMesh
+from compas_pattern.datastructures.mesh_quad_pseudo import PseudoQuadMesh
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
