@@ -24,7 +24,7 @@ __all__ = [
 
 
 def select_mesh_polyedge(mesh):
-	"""Select polyedge vertices via artist.
+	"""Select mesh polyedge.
 
 	Parameters
 	----------
@@ -35,6 +35,7 @@ def select_mesh_polyedge(mesh):
 	-------
 	polyedge : list
 		The list of polyedge vertices.
+
 	"""
 	
 	# add layer
@@ -54,8 +55,9 @@ def select_mesh_polyedge(mesh):
 			vkey_candidates = mesh.vertex_neighbors(polyedge[-1])
 		
 		# get vertex among candidates
-		artist.draw_vertexlabels(text = {key: str(key) for key in vkey_candidates if key not in polyedge[1:]})
+		artist.draw_vertexlabels(text = {key: str(key) for key in vkey_candidates})
 		artist.redraw()
+
 		vkey = rhino_helper.mesh_select_vertex(mesh, message = 'vertex')
 
 		artist.clear_layer()
@@ -67,17 +69,42 @@ def select_mesh_polyedge(mesh):
 
 		# add vertex to polyedge
 		polyedge.append(vkey)
-
-		# stop if polyedge is closed
-		if len(polyedge) != 1 and vkey == polyedge[0]:
-			break
 		
 	rs.DeleteLayer('mesh_artist')
 
 	return polyedge
 
 def select_mesh_strip(mesh):
-	return 0
+	"""Select quad mesh strip.
+
+	Parameters
+	----------
+	mesh : Mesh
+		The mesh.
+
+	Returns
+	-------
+	hashable
+		The strip key.
+
+	"""
+	
+	n = mesh.number_of_strips()
+
+	# different colors per strip
+	strip_to_color = {skey: [255 * float(i) / (n - 1)] * 3 for i, skey in enumerate(mesh.strips())}
+
+	# add strip polylines with colors and arrows
+	guids_to_strip = {rs.AddPolyline(mesh.strip_edge_polyline(skey)): skey for skey in mesh.strips()}
+	for guid, skey in guids_to_strip.items():
+		rs.ObjectColor(guid, strip_to_color[skey])
+		rs.CurveArrows(guid, arrow_style = 3)
+	
+	# return polyline strip
+ 	skey =  guids_to_strip[rs.GetObject('Get strip.', filter = 4)]
+ 	rs.DeleteObjects(guids_to_strip.keys())
+ 	return skey
+
 
 # ==============================================================================
 # Main

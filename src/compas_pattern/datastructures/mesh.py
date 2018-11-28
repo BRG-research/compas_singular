@@ -65,110 +65,6 @@ class Mesh(Mesh):
 	# global
 	# --------------------------------------------------------------------------
 
-	def is_mesh_empty(self):
-		"""Boolean whether the mesh is empty.
-
-		Parameters
-		----------
-
-		Returns
-		-------
-		bool
-			True if no vertices. False otherwise.
-		"""
-
-		if self.number_of_vertices() == 0:
-			return True
-
-		return False
-
-	def mesh_euler(self):
-		"""Calculate the Euler characterisic.
-
-		Parameters
-		----------
-
-		Returns
-		-------
-		int
-			The Euler chracteristic.
-		"""
-
-		V = len([vkey for vkey in self.vertices() if len(self.vertex_neighbours(vkey)) != 0])
-		E = self.number_of_edges()
-		F = self.number_of_faces()
-		
-		return V - E + F
-
-	def mesh_genus(self):
-		"""Calculate the genus.
-
-		Parameters
-		----------
-
-		Returns
-		-------
-		int
-			The genus.
-
-		 References
-		----------
-		.. [1] Wolfram MathWorld. *Genus*.
-			   Available at: http://mathworld.wolfram.com/Genus.html.
-
-		"""
-
-		X = self.mesh_euler()
-
-		# each boundary must be taken into account as if it was one face
-		B = len(self.boundary_polyedges())
-		
-		if mesh.is_orientable:
-			return (2 - (X + B)) / 2
-		else:
-			return 2 - (X + B)
-
-	def mesh_area(self):
-		"""Calculate the total mesh area.
-
-		Parameters
-		----------
-
-		Returns
-		-------
-		float
-			The area.
-		"""
-
-		return sum([self.face_area(fkey) for fkey in self.faces()])
-
-	def mesh_centroid(self):
-		"""Calculate the mesh centroid.
-
-		Parameters
-		----------
-
-		Returns
-		-------
-		list
-			The coordinates of the mesh centroid.
-		"""
-
-		return scale_vector(1. / self.mesh_area(), add_vectors([scale_vector(self.face_area(fkey), self.face_centroid(fkey)) for fkey in mesh.faces()]))
-
-	def mesh_normal(self):
-		"""Calculate the average mesh normal.
-
-		Parameters
-		----------
-
-		Returns
-		-------
-		list
-			The coordinates of the mesh normal.
-		"""
-
-		return scale_vector(1. / self.mesh_area(), add_vectors([scale_vector(self.face_area(fkey), self.face_normal(fkey)) for fkey in mesh.faces()]))
 
 	# --------------------------------------------------------------------------
 	# local
@@ -252,29 +148,6 @@ class Mesh(Mesh):
 
 		return circle_from_points(self.vertex_coordinates(a), self.vertex_coordinates(b), self.vertex_coordinates(c))
 
-	def edges_on_boundary(self, oriented = True):
-		"""Find the edges on the boundary.
-
-		Parameters
-		----------
-		oriented : bool
-			Boolean whether the boundary edges should point outwards.
-
-		Returns
-		-------
-		boundary_edges : list
-			The boundary edges.
-
-		"""
-
-		boundary_edges =  [(u, v) for u, v in self.edges() if self.is_edge_on_boundary(u, v)]
-		
-		if not oriented:
-			return boundary_edges
-
-		else:
-			return [(v, u) if self.halfedge[u][v] is not None else (u, v) for u, v in boundary_edges]
-
 	# --------------------------------------------------------------------------
 	# modifications
 	# --------------------------------------------------------------------------
@@ -319,40 +192,6 @@ class Mesh(Mesh):
 	# --------------------------------------------------------------------------
 	# advanced
 	# --------------------------------------------------------------------------
-
-	def boundary_polyedges(self):
-		"""Collect the mesh boundaries as lists of vertices.
-		The polyedge is closed but the first and last item are not the same!
-
-		Parameters
-		----------
-		mesh : Mesh
-			Mesh.
-
-		Returns
-		-------
-		boundaries : list
-			List of boundaries as lists of vertex keys.
-
-		"""
-
-		boundaries = []
-
-		# get all boundary edges pointing outwards
-		boundary_edges = {u: v for u, v in self.edges_on_boundary()}
-
-		# start new boundary
-		while len(boundary_edges) > 0:
-			boundary = list(boundary_edges.popitem())
-
-			# get consecuvite vertex until the boundary is closed
-			while boundary[0] != boundary[-1]:
-				boundary.append(boundary_edges[boundary[-1]])
-				boundary_edges.pop(boundary[-2])
-
-			boundaries.append(boundary[: -1])
-		
-		return boundaries
 
 def add_vertex_from_vertices(mesh, vertices, weights):
 	n = len(vertices)
