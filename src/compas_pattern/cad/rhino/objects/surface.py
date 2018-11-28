@@ -32,6 +32,9 @@ class RhinoSurface(RhinoSurface):
 	# mapping XYZ <--> UV
 	# --------------------------------------------------------------------------
 	
+	def project_point(self, xyz):
+		return rs.EvaluateSurface(self.guid, *rs.SurfaceClosestPoint(self.guid, xyz))
+	
 	def map_uv0(self, xyz):
 		return rs.SurfaceClosestPoint(self.guid, xyz) + (0.,)
 
