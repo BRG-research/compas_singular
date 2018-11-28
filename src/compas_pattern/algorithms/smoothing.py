@@ -20,6 +20,10 @@ from compas_pattern.cad.rhino.utilities import is_point_on_curve
 
 from compas_pattern.cad.rhino.utilities import draw_mesh
 
+from compas.geometry.algorithms.smoothing_cpp import smooth_centroid_cpp
+
+from compas_pattern.cad.rhino.objects.surface import RhinoSurface
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -32,6 +36,31 @@ __all__ = [
     'customed_constraints',
     'apply_constraints',
 ]
+
+def constrained_smoothing(mesh, srf_guid):
+
+    srf = RhinoSurface(srf_guid)
+
+    vertices = mesh.get_vertices_attributes(('x', 'y', 'z'))
+    adjacency = [mesh.vertex_neighbors(key) for key in mesh.vertices()]
+    fixed = [int(mesh.vertex_degree(key) == 2) for key in mesh.vertices_on_boundary()]
+
+    # problem with callback_args necessary and not in the soure function?
+    def callback(k, xyz):
+        print k
+        print xyz[1][0], xyz[1][1], xyz[1][2]
+        #srf = callback_args
+
+        for key, attr in mesh.vertices(True):
+            
+            #x, y, z = srf.project_point(list(xyz[key][0], xyz[key][1], xyz[key][2]))
+            attr['x'] = xyz[key][0]
+            attr['y'] = xyz[key][1]
+            attr['z'] = xyz[key][2]
+    
+    xyz = smooth_centroid_cpp(vertices, adjacency, fixed, callback = callback, callback_args = mesh)
+
+    return mesh
 
 def define_constraints(mesh, surface_constraint, curve_constraints = [], point_constraints = [], custom = True):
 
