@@ -1,9 +1,5 @@
+from compas.datastructures.network import Network
 from compas_pattern.datastructures.mesh import Mesh
-
-from compas.datastructures.mesh.operations.weld import mesh_unweld_vertices
-
-from compas.utilities import geometric_key
-from compas.utilities import pairwise
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
@@ -12,22 +8,23 @@ __email__      = 'oval@arch.ethz.ch'
 
 
 __all__ = [
-    'unweld_polyedge',
-    'unweld_mesh_along_edge_path',
-    'mesh_disjointed_parts',
+    'mesh_unweld_edges',
+    'mesh_disjointed_vertices',
+    'mesh_disjointed_faces',
     'mesh_explode',
-    'network_disjointed_parts',
+    'network_disjointed_vertices',
+    'network_disjointed_edges',
     'network_explode',
 ]
 
-def unweld_polyedge(mesh, polyedge):
-    """Unwelds a mesh along a polyedge.
+def mesh_unweld_edges(mesh, edges):
+    """Unwelds a mesh along edges.
 
     Parameters
     ----------
     mesh : Mesh
-    polyedge: list
-        List of vertex keys.
+    edges: list
+        List of edges as tuples of vertex keys.
 
     Returns
     -------
@@ -36,138 +33,37 @@ def unweld_polyedge(mesh, polyedge):
 
     """
 
-    # get sorted faces along the polyedge
-    faces_left = [mesh.halfedge[u][v] for u, v in pairwise(polyedge)]
-    faces_right = list(reversed([mesh.halfedge[v][u] for u, v in pairwise(polyedge)]))
+    # set of vertices in edges to unweld
+    vertices =  set([i for edge in edges for i in edge])
 
-    faces_start = mesh.vertex_faces(polyedge[0], ordered = True, include_none = True)
-    idx = faces_start.index(faces_right[-1])
-    faces_start = faces_start[idx :] + faces_start[: idx]
-    faces_start = faces_start[1 : -1]
+    # to store changes to do all at once 
+    vertex_changes = {}
 
-    faces_end = mesh.vertex_faces(polyedge[-1], ordered = True, include_none = True)
-    idx = faces_end.index(faces_left[-1])
-    faces_end = faces_end[idx :] + faces_end[: idx]
-    faces_end = faces_end[1 : -1]
+    for vkey in vertices:
 
-    faces = faces_start + faces_left + faces_end + faces_right
+        # maps between old mesh face index and new network vertex index
+        old_to_new = {nbr: i for i, nbr in enumerate(mesh.vertex_faces(vkey))}
+        new_to_old = {i: nbr for i, nbr in enumerate(mesh.vertex_faces(vkey))}
 
-    # unweld polyedge vertices in each face
-    for fkey in faces:
-        mesh_unweld_vertices(mesh, fkey, polyedge)
+        # get adjacency network of faces around the vertex excluding adjacency through the edges to unweld
+        network_vertices = [mesh.face_centroid(fkey) for fkey in mesh.vertex_faces(vkey)]
+        network_edges = ((old_to_new[mesh.halfedge[vkey][nbr]], old_to_new[mesh.halfedge[nbr][vkey]]) for nbr in mesh.vertex_neighbors(vkey) if not mesh.is_edge_on_boundary(vkey, nbr) and (vkey, nbr) not in edges and (nbr, vkey) not in edges)
+        network = Network.from_vertices_and_edges(network_vertices, network_edges)
 
-    olds = []
-    # weld back adjacent faces along polyedge
-    for fkey_1, fkey_2 in pairwise(faces + faces[: 1]):
-        if fkey_1 is not None and fkey_2 is not None:
-            vkey_pivot = mesh.face_adjacency_vertices(fkey_1, fkey_2)[0]
-            vkey_new = mesh.face_vertex_ancestor(fkey_1, vkey_pivot)
-            vkey_old = mesh.face_vertex_descendant(fkey_2, vkey_pivot)
-            olds.append(vkey_old)
-            face_vertices = [vkey_new if vkey == vkey_old else vkey for vkey in mesh.face_vertices(fkey_2)]
-            mesh.delete_face(fkey_2)
-            mesh.add_face(face_vertices, fkey_2)
+        # collect the disjointed parts around the vertex due to unwelding
+        parts = network_disjointed_vertices(network)
+        vertex_changes[vkey] = [[new_to_old[key] for key in part] for part in parts]
+        
+    for vkey, changes in vertex_changes.items():
+        for change in changes:
+            mesh.substitute_vertex_in_faces(vkey, mesh.add_vertex(attr_dict = mesh.vertex[vkey]), change)
 
-    mesh.cull_vertices()
-    print 'polyedge', polyedge
-    print 'olds', olds
-    # delete original polyedge vertices
-    for vkey in mesh.vertices():
-        print mesh.vertex_neighbors(vkey), mesh.vertex_faces(vkey)
-    
+        mesh.delete_vertex(vkey)
+
     return mesh
 
-def unweld_mesh_along_edge_path(mesh, edge_path):
-    """Unwelds a mesh along an edge path.
-
-    Parameters
-    ----------
-    mesh : Mesh
-    edge_path: list
-        Edge path for unwelding.
-
-    Returns
-    -------
-    mesh : Mesh
-        The unwelded mesh.
-
-    """
-    
-    duplicates = {}
-
-    # convert edge path in vertex path
-    vertex_path = [edge[0] for edge in edge_path]
-    # add last vertex of edge path only if not closed loop
-    if edge_path[0][0] != edge_path[-1][-1]:
-        vertex_path.append(edge_path[-1][-1])
-
-    # store changes to make in the faces along the vertex path in the following format {face to change = [old vertex, new vertex]}
-    to_change = {}
-
-    # iterate along path
-    for i, vkey in enumerate(vertex_path):
-        # vertices before and after current
-        last_vkey = vertex_path[i - 1]
-        next_vkey = vertex_path[i + 1 - len(vertex_path)]
-
-        # skip the extremities of the vertex path, except if the path is a loop or if vertex is on boundary
-        if (edge_path[0][0] == edge_path[-1][-1]) or (i != 0 and i != len(vertex_path) - 1) or mesh.is_vertex_on_boundary(vkey):
-            # duplicate vertex and its attributes
-            attr = mesh.vertex[vkey]
-            new_vkey = mesh.add_vertex(attr_dict = attr)
-            duplicates[vkey] = new_vkey
-            # split neighbours in two groups depending on the side of the path
-            vertex_nbrs = mesh.vertex_neighbors(vkey, True)
-            
-            # two exceptions on last_vkey or next_vkey if the vertex is on the boundary or a non-manifold vertex in case of the last vertex of a closed edge path
-            if edge_path[0][0] == edge_path[-1][-1] and i == len(vertex_path) - 1:
-                next_vkey = vertex_path[0]
-            if mesh.is_vertex_on_boundary(vkey):
-                for j in range(len(vertex_nbrs)):
-                    if mesh.is_vertex_on_boundary(vertex_nbrs[j - 1]) and mesh.is_vertex_on_boundary(vertex_nbrs[j]):
-                        before, after = vertex_nbrs[j - 1], vertex_nbrs[j]
-                if i == 0:
-                    last_vkey = before
-                elif i == len(vertex_path) - 1:
-                    next_vkey = after
-
-            idxa = vertex_nbrs.index(last_vkey)
-            idxb = vertex_nbrs.index(next_vkey)
-            if idxa < idxb:
-                half_nbrs = vertex_nbrs[idxa : idxb]
-            else:
-                half_nbrs = vertex_nbrs[idxa :] + vertex_nbrs[: idxb]
-            
-            # get faces corresponding to vertex neighbours
-            faces = [mesh.halfedge[nbr][vkey] for nbr in half_nbrs]
-            # store change per face with index of duplicate vertex
-            for fkey in faces:
-                if fkey in to_change:
-                    # add to other changes
-                    to_change[fkey] += [[vkey, new_vkey]]
-                else: 
-                    to_change[fkey] = [[vkey, new_vkey]]
-
-    # apply stored changes
-    for fkey, changes in to_change.items():
-        if fkey is None:
-            continue
-        face_vertices = mesh.face_vertices(fkey)[:]
-        for change in changes:
-            old_vertex, new_vertex = change
-            # replace in list of face vertices
-            idx = face_vertices.index(old_vertex)
-            face_vertices[idx] = new_vertex
-        # modify face by removing it and adding the new one
-        attr = mesh.facedata[fkey]
-        mesh.delete_face(fkey)
-        mesh.add_face(face_vertices, fkey, attr_dict = attr)
-
-    return duplicates
-
-
-def mesh_disjointed_parts(mesh):
-    """Get the disjointed parts in a mesh as lists of faces.
+def mesh_disjointed_vertices(mesh):
+    """Get the disjointed vertex groups in a mesh.
 
     Parameters
     ----------
@@ -177,33 +73,52 @@ def mesh_disjointed_parts(mesh):
     Returns
     -------
     parts : list
-        The list of disjointed parts as lists of face keys.
+        The list of disjointed vertex groups.
 
     """
 
     parts = []
-    faces = list(mesh.faces())
+    vertices = list(mesh.vertices())
 
-    while len(faces) > 0:
+    while len(vertices) > 0:
         # pop one face to start a part
-        part = [faces.pop()]
+        part = [vertices.pop()]
         next_neighbours = [part[-1]]
 
         # propagate to neighbours
         while len(next_neighbours) > 0:
 
-            for fkey in mesh.face_neighbors(next_neighbours.pop()):
+            for vkey in mesh.vertex_neighbors(next_neighbours.pop()):
                 
-                if fkey not in part:
-                    part.append(fkey)
-                    faces.remove(fkey)
+                if vkey not in part:
+                    part.append(vkey)
+                    vertices.remove(vkey)
                     
-                    if fkey not in next_neighbours:
-                        next_neighbours.append(fkey)
+                    if vkey not in next_neighbours:
+                        next_neighbours.append(vkey)
         
         parts.append(part)
 
     return parts
+
+def mesh_disjointed_faces(mesh):
+    """Get the disjointed face groups in a mesh.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+
+    Returns
+    -------
+    parts : list
+        The list of disjointed face groups.
+
+    """
+
+    parts = mesh_disjointed_vertices(mesh)
+
+    return [set([fkey for vkey in part for fkey in mesh.vertex_faces(vkey)]) for part in parts]
 
 def mesh_explode(mesh, cls=None):
     """Explode a mesh into its disjointed parts.
@@ -223,7 +138,7 @@ def mesh_explode(mesh, cls=None):
     if cls is None:
         cls = type(mesh)
 
-    parts = mesh_disjointed_parts(mesh)
+    parts = mesh_disjointed_faces(mesh)
 
     exploded_meshes = []
 
@@ -239,9 +154,8 @@ def mesh_explode(mesh, cls=None):
 
     return exploded_meshes
 
-
-def network_disjointed_parts(network):
-    """Get the disjointed parts in a network as lists of edges.
+def network_disjointed_vertices(network):
+    """Get the disjointed vertex groups in a network.
 
     Parameters
     ----------
@@ -251,33 +165,54 @@ def network_disjointed_parts(network):
     Returns
     -------
     parts : list
-        The list of disjointed parts as lists of edges.
+        The list of disjointed vertex groups.
 
     """
 
     parts = []
-    edges = list(network.edges())
+    vertices = list(network.vertices())
 
-    while len(edges) > 0:
+    while len(vertices) > 0:
         # pop one vertex to start a part
-        part = [edges.pop()]
+        part = [vertices.pop()]
         next_neighbours = [part[-1]]
 
         # propagate to neighbours
         while len(next_neighbours) > 0:
 
-            for u, v in network.edge_connected_edges(*next_neighbours.pop()):
+            for vkey in network.vertex_neighbors(next_neighbours.pop()):
 
-                if (u, v) not in part and (v, u) not in part:
-                    part.append((u, v))
-                    edges.remove((u, v))
+                if vkey not in part:
+                    part.append(vkey)
+                    vertices.remove(vkey)
 
-                    if (u, v) not in next_neighbours:
-                        next_neighbours.append((u, v))
+                    if vkey not in next_neighbours:
+                        next_neighbours.append(vkey)
         
         parts.append(part)
 
     return parts
+
+def network_disjointed_edges(network):
+    """Get the disjointed edge groups in a network.
+
+    Parameters
+    ----------
+    network : Network
+        A network.
+
+    Returns
+    -------
+    parts : list
+        The list of disjointed edge groups.
+
+    """
+
+
+    parts = network_disjointed_vertices(network)
+
+    return [[(u, v) for u in part for v in network.vertex_neighbors(u) if u < v] for part in parts]
+
 
 def network_explode(network, cls=None):
     """Explode a network into its disjointed parts.
@@ -297,7 +232,7 @@ def network_explode(network, cls=None):
     if cls is None:
         cls = type(network)
 
-    parts = network_disjointed_parts(network)
+    parts = network_disjointed_edges(network)
 
     exploded_networks = []
 
@@ -319,4 +254,5 @@ def network_explode(network, cls=None):
 
 if __name__ == '__main__':
 
-    pass
+    import compas
+
