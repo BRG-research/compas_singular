@@ -101,7 +101,9 @@ def select_mesh_strip(mesh):
 		rs.CurveArrows(guid, arrow_style = 3)
 	
 	# return polyline strip
+	rs.EnableRedraw(True)
  	skey =  guids_to_strip[rs.GetObject('Get strip.', filter = 4)]
+ 	rs.EnableRedraw(False)
  	rs.DeleteObjects(guids_to_strip.keys())
  	return skey
 
