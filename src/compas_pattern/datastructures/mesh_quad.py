@@ -379,7 +379,35 @@ class QuadMesh(Mesh):
 			The two strips of the face.
 		"""
 
-		return [self.edge_strip(u, v) for u, v in list(self.face_halfedges[fkey])[:2]]
+		return [self.edge_strip((u, v)) for u, v in list(self.face_halfedges(fkey))[:2]]
+
+	def substitute_vertex_in_strips(self, old_vkey, new_vkey):
+		"""Substitute a vertex by another one.
+
+		Parameters
+		----------
+		old_vkey : hashable
+			The old vertex key.
+		new_vkey : hashable
+			The new vertex key.
+
+		"""
+
+		self.strip = {skey: [tuple([new_vkey if vkey == old_vkey else vkey for vkey in list(edge)]) for edge in self.strip[skey]] for skey in self.strips()}
+
+	def delete_face_in_strips(self, fkey):
+		"""Delete face in strips.
+
+		Parameters
+		----------
+		old_vkey : hashable
+			The old vertex key.
+		new_vkey : hashable
+			The new vertex key.
+
+		"""
+
+		self.strip = {skey: [(u, v) for u, v in self.strip[skey] if self.halfedge[u][v] != fkey] for skey in self.strips()}
 
 	# --------------------------------------------------------------------------
 	# strip geometry
