@@ -1,18 +1,21 @@
 from compas_pattern.datastructures.mesh import Mesh
+from compas.datastructures.network import Network
 
-from compas_pattern.topology.joining_welding import weld_mesh
-
-from compas_pattern.topology.joining_welding import unweld_mesh_along_edge_path
+from compas_pattern.topology.joining_welding import mesh_unweld_edges
+from compas_pattern.topology.joining_welding import network_disconnected_vertices
 
 from compas.geometry.algorithms.smoothing import mesh_smooth_centroid
 
-from compas_pattern.topology.grammar import simple_split
-from compas_pattern.topology.global_propagation import mesh_propagation
+#from compas_pattern.topology.grammar_high_level import simple_split
+#from compas_pattern.topology.global_propagation import mesh_propagation
 
 from compas.geometry import scale_vector
 from compas.geometry import sum_vectors
+from compas.geometry import centroid_points
 
 from compas.geometry import offset_polyline
+
+from compas.utilities import pairwise
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -20,6 +23,11 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
+    'add_strip',
+    'delete_strip',
+    'split_strip',
+    'add_handle',
+    'delete_handle',
     'face_strip_collapse',
     'multiple_strip_collapse',
     'face_strip_subdivide',
@@ -42,16 +50,13 @@ def add_strip(mesh, polyedge):
 
     """
 
-    
-
-    
     strip_faces = []
     new_polyedge = []
     for i in range(len(polyedge) - 2):
         
         # unweld between two edges
         u, v, w = polyedge[i : i + 3]
-        v2 = unweld_mesh_along_edge_path(mesh, [(u,v), (v,w)])[v]
+        v2 = mesh_unweld_edges(mesh, [(u,v), (v,w)])[v]
         new_polyedge.append(v2)
 
         # remove last face from strip
@@ -72,116 +77,134 @@ def add_strip(mesh, polyedge):
             fixed_vertices.remove(vkey)
 
     if mesh.is_vertex_on_boundary(polyedge[0]):
-        unweld_mesh_along_edge_path(mesh, [(polyedge[0],polyedge[1])])
+        mesh_unweld_edges(mesh, [(polyedge[0],polyedge[1])])
         
     mesh_smooth_centroid(mesh, fixed = fixed_vertices, kmax = 5)
 
-    return 0
-
-
-def face_strip_collapse(cls, mesh, u0, v0):
-    """Collapse a face strip in a quad mesh.
+def delete_strip(mesh, skey):
+    """Delete a strip.
 
     Parameters
     ----------
-    mesh : Mesh
+    mesh : QuadMesh
         A quad mesh.
-    u0: int
-        Key of edge start vertex.
-    v0: int
-        Key of edge end vertex.
-
-    Returns
-    -------
-    mesh : mesh, None
-        The modified quad mesh.
-        None if mesh is not a quad mesh or if (u0,v0) is not an edge.
+    skey : hashable
+        A strip key.
 
     """
 
-    # checks
-    if not mesh.is_quadmesh():
-        return None
-    if v0 not in mesh.halfedge[u0] and u0 not in mesh.halfedge[v0]:
-        return None
+    old_boundary_vertices = list(mesh.vertices_on_boundary())
 
-    # get edges in the face strip
-    max_group = mesh.collect_strip_edge_attribute()
-    edge_groups = mesh.edges_to_strips_dict()
-    group_number = edge_groups[(u0, v0)]
-    edges_to_collapse = [edge for edge, group in edge_groups.items() if group == group_number]
-    
-    # delete faces in the face strip
-    for u, v in edges_to_collapse:
-        print u, v
-        if u == v:
-            continue
-        if v in mesh.halfedge[u]:
-            fkey = mesh.halfedge[u][v]
-            if fkey is not None and fkey in list(mesh.faces()):
-                print fkey
-                mesh.delete_face(fkey)
+    # get strip data
+    strip_edges = mesh.strip_edges(skey)
+    strip_faces = mesh.strip_faces(skey)
 
-    edges_to_collapse = []
-    for edge, group in edge_groups.items():
-        u, v = edge
-        if group == group_number and [v, u] not in edges_to_collapse:
-            edges_to_collapse.append([u, v])
 
-    to_cull = []
-    # merge vertices of collapsed edges
-    boundary_vertices = mesh.vertices_on_boundary()
-    vertex_conversion = {}
-    for u, v in edges_to_collapse:
-        # if only one edge vertex on boundary, set as new location
-        if u in boundary_vertices and v not in boundary_vertices:
-            x, y, z = mesh.vertex_coordinates(v)
-        elif v in boundary_vertices and u not in boundary_vertices:
-            x, y, z = mesh.vertex_coordinates(u)
-        # or to edge midpoint otherwise
-        else:
-            x, y, z = mesh.edge_midpoint(u, v)
-        w = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-        # update adjacent face vertices
-        for vkey in [u, v]:
-            attr = mesh.vertex[vkey]
-            attr['x'] = x
-            attr['y'] = y
-            attr['z'] = z
-            for fkey in mesh.vertex_faces(vkey):
-                face_vertices = mesh.face_vertices(fkey)[:]
-                idx = face_vertices.index(vkey)
-                face_vertices[idx] = w
-                mesh.delete_face(fkey)
-                mesh.add_face(face_vertices, fkey)
-        # store data for vertex change
-        vertex_conversion[u] = w
-        vertex_conversion[v] = w
+    # build network between vertices of the edges of the strip to delete to get the disconnect parts of vertices to merge
+    vertices = set([i for edge in strip_edges for i in edge])
+    # maps between old and new indices
+    old_to_new = {vkey: i for i, vkey in enumerate(vertices)}
+    new_to_old = {i: vkey for i, vkey in enumerate(vertices)}
+    # network
+    vertex_coordinates = [mesh.vertex_coordinates(vkey) for vkey in vertices]
+    edges = [(old_to_new[u], old_to_new[v]) for u, v in strip_edges]
+    network = Network.from_vertices_and_edges(vertex_coordinates, edges)
+    # disconnected parts
+    parts = network_disconnected_vertices(network)
 
-    for vkey in mesh.vertices():
-        if vkey not in vertex_conversion:
-            vertex_conversion[vkey] = vkey
-    # new_edge_groups
-    new_edge_groups = {}
-    for edge, group in edge_groups.items():
-        u0, v0 = edge
-        new_edge_groups[(vertex_conversion[u0], vertex_conversion[v0])] = group
+    # delete strip faces
+    for fkey in strip_faces:
+        mesh.delete_face_in_strips(fkey)
+    for fkey in strip_faces:
+        mesh.delete_face(fkey)
+
+    # merge strip edge vertices that are connected
+    for part in parts:
         
-    ## clean mesh
-    #vertices, face_vertices = weld_mesh(mesh)
-    #mesh = cls.from_vertices_and_faces(vertices, face_vertices)
-    
-    #mesh.cull_vertices()@
-    #vertices = list(mesh.vertices())
-    # print len(list(mesh.vertices()))
-    #for vkey in vertices:
-    #    if len(mesh.vertex_neighbours(vkey)) == 0:
-    #        print -1
-    #        del mesh.vertex[vkey]
+        # move back from network vertices to mesh vertices
+        vertices = [new_to_old[vkey] for vkey in part]
+        
+        # skip adding a vertex if all vertices of the part are disconnected
+        if any(mesh.is_vertex_connected(vkey) for vkey in vertices):
 
-    #print mesh 
-    # print list(mesh.vertices())
-    return new_edge_groups
+            # get position based on disconnected vertices that used to be on the boundary if any
+            if any(not mesh.is_vertex_connected(vkey) for vkey in vertices):
+                points = [mesh.vertex_coordinates(vkey) for vkey in vertices if not mesh.is_vertex_connected(vkey)]
+            # or based on old boundary vertices if any
+            elif any(vkey in old_boundary_vertices for vkey in vertices):
+                points = [mesh.vertex_coordinates(vkey) for vkey in vertices if vkey in old_boundary_vertices]
+            else:
+                points = [mesh.vertex_coordinates(vkey) for vkey in vertices]
+
+            # new vertex
+            x, y, z = centroid_points(points)
+            new_vkey = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
+            
+            # replace the old vertices
+            for old_vkey in vertices:
+                mesh.substitute_vertex_in_strips(old_vkey, new_vkey)
+                mesh.substitute_vertex_in_faces(old_vkey, new_vkey, mesh.vertex_faces(old_vkey))
+        
+        # delete the old vertices
+        for old_vkey in vertices:
+            mesh.delete_vertex(old_vkey)
+
+    del mesh.strip[skey]
+
+def split_strip(mesh, skey):
+    """Split a strip in two.
+
+    Parameters
+    ----------
+    mesh : QuadMesh
+        A quad mesh.
+    skey : hashable
+        A strip key.
+
+    """
+
+    strip_edges = mesh.strip_edges(skey)
+    strip_faces = mesh.strip_faces(skey)
+
+    # add new vertices for each strip edge
+    new_vertices = {edge: mesh.add_vertex(attr_dict = {i: xyz for i, xyz in zip(['x', 'y', 'z'], mesh.edge_midpoint(*edge))}) for edge in strip_edges}
+
+    # store changes and updates to make
+    change = {}
+    update = {}
+    for u, v in strip_edges:
+        if mesh.halfedge[u][v] is not None:
+            # get faces to change
+            fkey = mesh.halfedge[u][v]
+            w, x = mesh.face_opposite_edge(u, v)
+            y = new_vertices[(u, v)]
+            z = new_vertices[(x, w)]
+            change[fkey] = [[u, y, z, x], [y, v, w, z]]
+            # get transversal strip to update
+            strips = [skey_2 for skey_2 in mesh.face_strips(fkey) if skey_2 != skey]
+            # check in case self-crossing strip
+            if len(strips) != 0:
+                skey_2 = strips[0]
+                update[skey_2] = (v, w)
+
+    # replace old faces by new ones
+    for fkey, new_faces in change.items():
+        mesh.delete_face(fkey)
+        for new_face in new_faces:
+            mesh.add_face(new_face)
+
+    # update transversal strips
+    for skey_2, edge in update.items():
+        mesh.strip[skey_2] = mesh.collect_strip(*edge)
+    
+    # add strips
+    max_skey = list(mesh.strips())[-1]
+    strip_1 = [(edge_vkeys[0], new_vkey) for edge_vkeys, new_vkey in new_vertices.items()]
+    strip_2 = [(new_vkey, edge_vkeys[1]) for edge_vkeys, new_vkey in new_vertices.items()]
+    mesh.strip.update({max_skey + 1: strip_1, max_skey + 2: strip_2})
+    
+    # delete strip
+    del mesh.strip[skey]
 
 def multiple_strip_collapse(cls, mesh, edges_to_collapse):
     """Collapse a multiple strips in a quad mesh.
@@ -252,45 +275,6 @@ def multiple_strip_collapse(cls, mesh, edges_to_collapse):
             print '!!'
 
     return mesh
-
-def face_strip_subdivide(cls, mesh, u, v):
-    """Subdivide a face strip in a quad mesh.
-
-    Parameters
-    ----------
-    mesh : Mesh
-        A quad mesh.
-    u: int
-        Key of edge start vertex.
-    v: int
-        Key of edge end vertex.
-
-    Returns
-    -------
-    mesh : mesh, None
-        The modified quad mesh.
-        None if mesh is not a quad mesh or if (u,v) is not an edge.
-
-    """
-
-    # checks
-    if not mesh.is_quadmesh():
-        for fkey in mesh.faces():
-            face_vertices = mesh.face_vertices(fkey)
-        return None
-    if (v not in mesh.halfedge[u] or mesh.halfedge[u][v] is None) and (u not in mesh.halfedge[v] or mesh.halfedge[v][u] is None):
-        return None
-
-    if v in mesh.halfedge[u] and mesh.halfedge[u][v] is not None:
-        fkey = mesh.halfedge[u][v]
-    else:
-        fkey = mesh.halfedge[v][u]
-
-    regular_vertices = list(mesh.vertices())
-    simple_split(mesh, fkey, (u, v))
-    mesh_propagation(mesh, regular_vertices)
-
-    return 0
 
 def face_strips_merge(mesh, u, v):
     """Merge two parallel face strips in a quad mesh. The polyedge inbetween is composed of regular vertices only.
@@ -526,13 +510,13 @@ if __name__ == '__main__':
     import compas
     from compas.plotters import MeshPlotter
 
-    mesh = Mesh.from_obj(compas.get('quadmesh.obj'))
+    #mesh = Mesh.from_obj(compas.get('quadmesh.obj'))
 
-    add_strip(mesh, [26,22,69,67])
+    #add_strip(mesh, [26,22,69,67])
 
-    plotter = MeshPlotter(mesh)
-    plotter.draw_vertices(text='key')
-    plotter.draw_edges()
-    plotter.draw_faces()
-    plotter.show()
+    #plotter = MeshPlotter(mesh)
+    #plotter.draw_vertices(text='key')
+    #plotter.draw_edges()
+    #plotter.draw_faces()
+    #plotter.show()
 
