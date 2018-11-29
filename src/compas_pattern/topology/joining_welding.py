@@ -9,11 +9,11 @@ __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
     'mesh_unweld_edges',
-    'mesh_disjointed_vertices',
-    'mesh_disjointed_faces',
+    'mesh_disconnected_vertices',
+    'mesh_disconnected_faces',
     'mesh_explode',
-    'network_disjointed_vertices',
-    'network_disjointed_edges',
+    'network_disconnected_vertices',
+    'network_disconnected_edges',
     'network_explode',
 ]
 
@@ -25,11 +25,6 @@ def mesh_unweld_edges(mesh, edges):
     mesh : Mesh
     edges: list
         List of edges as tuples of vertex keys.
-
-    Returns
-    -------
-    mesh : Mesh
-        The unwelded mesh.
 
     """
 
@@ -50,20 +45,19 @@ def mesh_unweld_edges(mesh, edges):
         network_edges = ((old_to_new[mesh.halfedge[vkey][nbr]], old_to_new[mesh.halfedge[nbr][vkey]]) for nbr in mesh.vertex_neighbors(vkey) if not mesh.is_edge_on_boundary(vkey, nbr) and (vkey, nbr) not in edges and (nbr, vkey) not in edges)
         network = Network.from_vertices_and_edges(network_vertices, network_edges)
 
-        # collect the disjointed parts around the vertex due to unwelding
-        parts = network_disjointed_vertices(network)
-        vertex_changes[vkey] = [[new_to_old[key] for key in part] for part in parts]
+        # collect the disconnected parts around the vertex due to unwelding
+        vertex_changes[vkey] = [[new_to_old[key] for key in part] for part in network_disconnected_vertices(network)]
         
     for vkey, changes in vertex_changes.items():
+        # for each disconnected part replace the vertex by a new vertex in the faces of the part
         for change in changes:
             mesh.substitute_vertex_in_faces(vkey, mesh.add_vertex(attr_dict = mesh.vertex[vkey]), change)
 
+        # delete old vertices
         mesh.delete_vertex(vkey)
 
-    return mesh
-
-def mesh_disjointed_vertices(mesh):
-    """Get the disjointed vertex groups in a mesh.
+def mesh_disconnected_vertices(mesh):
+    """Get the disconnected vertex groups in a mesh.
 
     Parameters
     ----------
@@ -73,7 +67,7 @@ def mesh_disjointed_vertices(mesh):
     Returns
     -------
     parts : list
-        The list of disjointed vertex groups.
+        The list of disconnected vertex groups.
 
     """
 
@@ -101,8 +95,8 @@ def mesh_disjointed_vertices(mesh):
 
     return parts
 
-def mesh_disjointed_faces(mesh):
-    """Get the disjointed face groups in a mesh.
+def mesh_disconnected_faces(mesh):
+    """Get the disconnected face groups in a mesh.
 
     Parameters
     ----------
@@ -112,16 +106,16 @@ def mesh_disjointed_faces(mesh):
     Returns
     -------
     parts : list
-        The list of disjointed face groups.
+        The list of disconnected face groups.
 
     """
 
-    parts = mesh_disjointed_vertices(mesh)
+    parts = mesh_disconnected_vertices(mesh)
 
     return [set([fkey for vkey in part for fkey in mesh.vertex_faces(vkey)]) for part in parts]
 
 def mesh_explode(mesh, cls=None):
-    """Explode a mesh into its disjointed parts.
+    """Explode a mesh into its disconnected parts.
 
     Parameters
     ----------
@@ -138,7 +132,7 @@ def mesh_explode(mesh, cls=None):
     if cls is None:
         cls = type(mesh)
 
-    parts = mesh_disjointed_faces(mesh)
+    parts = mesh_disconnected_faces(mesh)
 
     exploded_meshes = []
 
@@ -154,8 +148,8 @@ def mesh_explode(mesh, cls=None):
 
     return exploded_meshes
 
-def network_disjointed_vertices(network):
-    """Get the disjointed vertex groups in a network.
+def network_disconnected_vertices(network):
+    """Get the disconnected vertex groups in a network.
 
     Parameters
     ----------
@@ -165,7 +159,7 @@ def network_disjointed_vertices(network):
     Returns
     -------
     parts : list
-        The list of disjointed vertex groups.
+        The list of disconnected vertex groups.
 
     """
 
@@ -193,8 +187,8 @@ def network_disjointed_vertices(network):
 
     return parts
 
-def network_disjointed_edges(network):
-    """Get the disjointed edge groups in a network.
+def network_disconnected_edges(network):
+    """Get the disconnected edge groups in a network.
 
     Parameters
     ----------
@@ -204,18 +198,18 @@ def network_disjointed_edges(network):
     Returns
     -------
     parts : list
-        The list of disjointed edge groups.
+        The list of disconnected edge groups.
 
     """
 
 
-    parts = network_disjointed_vertices(network)
+    parts = network_disconnected_vertices(network)
 
     return [[(u, v) for u in part for v in network.vertex_neighbors(u) if u < v] for part in parts]
 
 
 def network_explode(network, cls=None):
-    """Explode a network into its disjointed parts.
+    """Explode a network into its disconnected parts.
 
     Parameters
     ----------
@@ -232,7 +226,7 @@ def network_explode(network, cls=None):
     if cls is None:
         cls = type(network)
 
-    parts = network_disjointed_edges(network)
+    parts = network_disconnected_edges(network)
 
     exploded_networks = []
 
