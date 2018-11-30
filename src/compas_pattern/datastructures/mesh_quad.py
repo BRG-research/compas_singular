@@ -1,4 +1,7 @@
 from compas_pattern.datastructures.mesh import Mesh
+from compas_pattern.datastructures.network import Network
+
+from compas.geometry import centroid_points
 
 from compas.utilities import pairwise
 from compas.utilities import geometric_key
@@ -409,6 +412,21 @@ class QuadMesh(Mesh):
 
 		self.strip = {skey: [(u, v) for u, v in self.strip[skey] if self.halfedge[u][v] != fkey] for skey in self.strips()}
 
+	def strip_connectivity(self):
+		"""Compute the network showing the connecitivty of the strips: a network vertex is a quad mesh strip and a network edge is a quad mesh face.
+
+		Returns
+		-------
+		Network
+			A network encoding the connecitivity of the quad mesh strips.
+
+		"""
+
+		vertices = {skey: centroid_points(self.strip_edge_polyline(skey)) for skey in self.strips()}
+		edges = [tuple(self.face_strips(fkey)) for fkey in self.faces()]
+
+		return Network.from_vertices_and_edges(vertices, edges)
+
 	# --------------------------------------------------------------------------
 	# strip geometry
 	# --------------------------------------------------------------------------
@@ -477,5 +495,7 @@ if __name__ == '__main__':
 
 	for skey in mesh.strips():
 		print mesh.strip_face_polyline(skey)
+
+	mesh.strip_connectivity()
 
 
