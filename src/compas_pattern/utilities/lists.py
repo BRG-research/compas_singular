@@ -9,6 +9,7 @@ __all__ = [
 	'split_list',
 	'splits_list',
 	'splits_closed_list'
+	'is_sublist_in_list'
 ]
 
 def split_list(l, index):
@@ -46,6 +47,21 @@ def splits_closed_list(l, indices):
 		l = l[:] + [l[0]]
 	
 	return splits_list(l, indices)
+
+def is_sublist_in_list(small_list, big_list):
+
+	for i in small_list:
+		is_in = False
+		
+		for j in big_list:
+			if i == j:
+				is_in = True
+				break
+		
+		if not is_in:
+			return False
+
+	return True
 
 # ==============================================================================
 # Main
