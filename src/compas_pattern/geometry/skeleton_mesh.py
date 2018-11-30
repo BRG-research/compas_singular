@@ -4,7 +4,7 @@ from operator import itemgetter
 
 from compas_pattern.geometry.skeleton import Skeleton
 
-from compas_pattern.datastructures.mesh import Mesh
+from compas_pattern.datastructures.mesh_quad_coarse import CoarseQuadMesh
 
 from compas.geometry.objects.polyline import Polyline
 from compas_pattern.geometry.join import join_polylines
@@ -98,7 +98,7 @@ class SkeletonMesh(Skeleton):
 		boundary_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) in boundary_keys and geometric_key(polyline[1]) in boundary_keys ]
 		other_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) not in boundary_keys or geometric_key(polyline[1]) not in boundary_keys]
 		
-		self.mesh =  Mesh.from_polylines(boundary_polylines, other_polylines)
+		self.mesh = CoarseQuadMesh.from_polylines(boundary_polylines, other_polylines)
 		
 		self.solve_triangular_faces()
 
