@@ -21,6 +21,46 @@ class Mesh(Mesh):
 	def __init__(self):
 		super(Mesh, self).__init__()
 
+	@classmethod
+	def from_vertices_and_faces(cls, vertices, faces):
+		"""Construct a mesh object from a list of vertices and faces.
+
+		Parameters
+		----------
+		vertices : list, dict
+			A list of vertices, represented by their XYZ coordinates, or a dictionary of vertex keys pointing to their XYZ coordinates.
+		faces : list
+			A list of faces.
+			Each face is a list of indices referencing the list of vertex coordinates.
+
+		Returns
+		-------
+		Mesh
+			A mesh object.
+
+		Examples
+		--------
+		.. code-block:: python
+
+			import compas
+			from compas.datastructures import Mesh
+
+			vertices = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0]]
+			faces = [[0, 1, 2]]
+
+			mesh = Mesh.from_vertices_and_faces(vertices, faces)
+
+		"""
+		mesh = cls()
+		if type(vertices) == list:
+			for x, y, z in iter(vertices):
+				mesh.add_vertex(x=x, y=y, z=z)
+		if type(vertices) == dict:
+			for x, y, z in iter(vertices):
+				mesh.add_vertex(key = key, attr_dict = {i: j for i, j in zip(['x', 'y', 'z'], xyz)})
+		for face in iter(faces):
+			mesh.add_face(face)
+		return mesh
 
 	@classmethod
 	def from_polylines(cls, boundary_polylines, other_polylines):
