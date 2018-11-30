@@ -6,7 +6,7 @@ from compas_pattern.geometry.skeleton import Skeleton
 
 from compas_pattern.datastructures.mesh import Mesh
 
-from compas_pattern.geometry.utilities import polyline_point
+from compas.geometry.objects.polyline import Polyline
 from compas_pattern.geometry.join import join_polylines
 
 from compas.utilities import geometric_key
@@ -72,7 +72,7 @@ class SkeletonMesh(Skeleton):
 
 	def branches_boundary(self):
 		# branches along boundaries split by the corner vertices and the split vertices
-		boundaries = self.boundary_polyedges()
+		boundaries = self.boundaries()
 		splits = self.corner_vertices() + self.split_vertices()
 		split_boundaries = [split_boundary for boundary in boundaries for split_boundary in splits_closed_list(boundary, [boundary.index(split) for split in splits if split in boundary])]
 		return [[self.vertex_coordinates(vkey) for vkey in boundary] for boundary in split_boundaries]
@@ -115,7 +115,7 @@ class SkeletonMesh(Skeleton):
 
 		all_splits = set(list(self.corner_vertices()) + list(self.split_vertices()))
 
-		for polyedge in self.boundary_polyedges():
+		for polyedge in self.boundaries():
 
 			splits = [vkey for vkey in polyedge if vkey in all_splits]
 			new_splits = []
@@ -176,8 +176,8 @@ class SkeletonMesh(Skeleton):
 				elif case == 2:
 					# remove triangular face and merge the two boundary vertices
 					# due to singularities at the same location
-					polyline = self.decomposition_polyline(*map(lambda x: geometric_key(mesh.vertex_coordinates(x)), boundary_vertices))
-					point = polyline_point(polyline, t = .5, snap = True)
+					polyline = Polyline(self.decomposition_polyline(*map(lambda x: geometric_key(mesh.vertex_coordinates(x)), boundary_vertices)))
+					point = polyline.polyline_point(t = .5, snap = True)
 					new_vkey = mesh.add_vertex(attr_dict = {'x': point.x, 'y': point.y , 'z': point.z})
 					
 					# modify triangular face
