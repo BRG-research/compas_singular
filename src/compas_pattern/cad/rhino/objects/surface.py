@@ -11,6 +11,9 @@ try:
 except ImportError:
 	compas.raise_if_ironpython()
 
+from compas.geometry import distance_point_point
+
+from compas_rhino.geometry.curve import RhinoCurve
 from compas_rhino.geometry.surface import RhinoSurface
 
 
@@ -34,7 +37,13 @@ class RhinoSurface(RhinoSurface):
 	
 	def project_point(self, xyz):
 		return rs.EvaluateSurface(self.guid, *rs.SurfaceClosestPoint(self.guid, xyz))
-	
+
+	def project_point_on_boundaries(self, xyz):
+		borders = self.borders(type = 0)
+		proj_dist = {tuple(proj_xyz): distance_point_point(xyz, proj_xyz) for proj_xyz in [RhinoCurve(border).closest_point(xyz) for border in borders]}
+		rs.DeleteObjects(borders)
+		return min(proj_dist, key = proj_dist.get)
+
 	def map_uv0(self, xyz):
 		return rs.SurfaceClosestPoint(self.guid, xyz) + (0.,)
 
