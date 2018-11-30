@@ -21,6 +21,7 @@ from compas_pattern.cad.rhino.utilities import is_point_on_curve
 from compas_pattern.cad.rhino.utilities import draw_mesh
 
 from compas.geometry.algorithms.smoothing_cpp import smooth_centroid_cpp
+from compas.geometry.algorithms.smoothing import mesh_smooth_centroid
 
 from compas_pattern.cad.rhino.objects.surface import RhinoSurface
 
@@ -37,27 +38,27 @@ __all__ = [
     'apply_constraints',
 ]
 
-def constrained_smoothing(mesh, srf, kmax = 100):
+def constrained_smoothing(mesh, srf, kmax = 100, damping = 0.5):
 
-    vertices  = mesh.get_vertices_attributes(('x', 'y', 'z'))
-    adjacency = [mesh.vertex_neighbors(key) for key in mesh.vertices()]
-    fixed     = mesh.vertices_on_boundary()
+    fixed = [vkey for vkey in mesh.vertices_on_boundary() if mesh.vertex_valency(vkey) == 2]
 
-    def callback(k, xyz):
-        for key, attr in mesh.vertices(True):
+    def callback(k, args):
 
-            #if mesh.is_vertex_on_boundary(key):
-            #    x, y, z = xyz[key][0:3]
-            #    #x, y, z = srf.project_point_on_boundaries(xyz[key][0:3])
-            #    #print x, y, z
-            #else:
-            #x, y, z = srf.project_point(xyz[key][0:3])        
+        mesh, srf = args
 
+        for vkey, attr in mesh.vertices(True):
+            if mesh.is_vertex_on_boundary(vkey):
+                x, y, z = srf.project_point_on_boundaries(mesh.vertex_coordinates(vkey))
+            else:
+                x, y, z = srf.project_point(mesh.vertex_coordinates(vkey))
+    
             attr['x'] = x
             attr['y'] = y
             attr['z'] = z
 
-    smooth_centroid_cpp(vertices, adjacency, fixed, kmax=kmax, callback=callback)
+    callback_args = [mesh, srf]
+
+    mesh_smooth_centroid(mesh, fixed, kmax, damping, callback, callback_args)
 
 
 def define_constraints(mesh, surface_constraint, curve_constraints = [], point_constraints = [], custom = True):
