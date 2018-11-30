@@ -70,6 +70,22 @@ class Mesh(Mesh):
 	# local
 	# --------------------------------------------------------------------------
 
+	def vertex_valency(self, vkey):
+		"""Valency of a vertex, i.e. number of adjacent vertices.
+
+		Parameters
+		----------
+		vkey : hashable
+			The vertex key.
+
+		Returns
+		-------
+		int
+			The valency.
+		"""
+
+		return len(self.vertex_neighbors(vkey))
+
 	def delete_face(self, fkey):
 		"""Delete a face from the mesh object.
 
