@@ -37,30 +37,28 @@ __all__ = [
     'apply_constraints',
 ]
 
-def constrained_smoothing(mesh, srf_guid):
+def constrained_smoothing(mesh, srf, kmax = 100):
 
-    srf = RhinoSurface(srf_guid)
-
-    vertices = mesh.get_vertices_attributes(('x', 'y', 'z'))
+    vertices  = mesh.get_vertices_attributes(('x', 'y', 'z'))
     adjacency = [mesh.vertex_neighbors(key) for key in mesh.vertices()]
-    fixed = [int(mesh.vertex_degree(key) == 2) for key in mesh.vertices_on_boundary()]
+    fixed     = mesh.vertices_on_boundary()
 
-    # problem with callback_args necessary and not in the soure function?
     def callback(k, xyz):
-        print k
-        print xyz[1][0], xyz[1][1], xyz[1][2]
-        #srf = callback_args
-
         for key, attr in mesh.vertices(True):
-            
-            #x, y, z = srf.project_point(list(xyz[key][0], xyz[key][1], xyz[key][2]))
-            attr['x'] = xyz[key][0]
-            attr['y'] = xyz[key][1]
-            attr['z'] = xyz[key][2]
-    
-    xyz = smooth_centroid_cpp(vertices, adjacency, fixed, callback = callback, callback_args = mesh)
 
-    return mesh
+            #if mesh.is_vertex_on_boundary(key):
+            #    x, y, z = xyz[key][0:3]
+            #    #x, y, z = srf.project_point_on_boundaries(xyz[key][0:3])
+            #    #print x, y, z
+            #else:
+            #x, y, z = srf.project_point(xyz[key][0:3])        
+
+            attr['x'] = x
+            attr['y'] = y
+            attr['z'] = z
+
+    smooth_centroid_cpp(vertices, adjacency, fixed, kmax=kmax, callback=callback)
+
 
 def define_constraints(mesh, surface_constraint, curve_constraints = [], point_constraints = [], custom = True):
 
