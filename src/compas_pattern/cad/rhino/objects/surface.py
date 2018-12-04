@@ -12,6 +12,7 @@ except ImportError:
 	compas.raise_if_ironpython()
 
 from compas.geometry import distance_point_point
+from compas.geometry import angle_vectors
 
 from compas_rhino.geometry.curve import RhinoCurve
 from compas_rhino.geometry.surface import RhinoSurface
@@ -35,10 +36,10 @@ class RhinoSurface(RhinoSurface):
 	# mapping XYZ <--> UV
 	# --------------------------------------------------------------------------
 	
-	def project_point(self, xyz):
+	def closest_point(self, xyz):
 		return rs.EvaluateSurface(self.guid, *rs.SurfaceClosestPoint(self.guid, xyz))
 
-	def project_point_on_boundaries(self, xyz):
+	def closest_point_on_boundaries(self, xyz):
 		borders = self.borders(type = 0)
 		proj_dist = {tuple(proj_xyz): distance_point_point(xyz, proj_xyz) for proj_xyz in [RhinoCurve(border).closest_point(xyz) for border in borders]}
 		rs.DeleteObjects(borders)
@@ -64,6 +65,25 @@ class RhinoSurface(RhinoSurface):
 		vertices, faces = mesh.to_vertices_and_faces()
 		vertices = [self.remap_xyz_point(uv0[:2]) for uv0 in vertices]
 		return cls.from_vertices_and_faces(vertices, faces)
+
+	def kinks(self):
+
+		kinks = []
+		borders = self.borders(type = 0)
+		
+		for border in borders:
+			border = RhinoCurve(border)
+			extremities = map(lambda x: rs.EvaluateSurface(border.guid, rs.CurveParameter(border.guid, x)), [0., 1.])
+		
+			if rs.IsCurveClosed(border.guid):
+				start_tgt, end_tgt = border.tangents(extremities)
+				if not angle_vectors(start_tgt, end_tgt) == 0:
+					kinks += extremities 
+		
+			else:
+				kinks += extemities
+
+		return list(set(kinks))
 
 # ==============================================================================
 # Main
