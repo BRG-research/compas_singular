@@ -93,6 +93,42 @@ def delete_strip(mesh, skey):
 
     """
 
+    if skey not in list(mesh.strips()):
+        return 0
+
+
+    # edges_to_collapse = [edge for edge, strip in edges_to_strips.items() if strip in strips_to_collapse]
+
+    # # refine boundaries to avoid collapse
+    # to_subdivide = []
+    # for boundary in mesh_boundaries(mesh):
+    #     boundary_edges = [(boundary[i], boundary[i + 1]) for i in range(len(boundary) - 1)]
+    #     boundary_edges_to_collapse = [edge for edge in edges_to_collapse if edge in boundary_edges or edge[::-1] in boundary_edges]
+    #     if len(boundary_edges) - len(boundary_edges_to_collapse) < 3:
+    #         for edge in boundary_edges:
+    #             if edge not in boundary_edges_to_collapse and edge[::-1] not in boundary_edges_to_collapse:
+    #                 if edge not in to_subdivide and edge[::-1] not in to_subdivide:
+    #                     to_subdivide.append(edge)
+    # # refine pole points to avoid collapse
+    # poles = {u: [] for u, v in mesh.edges() if u == v}
+    # for u, v in edges_to_collapse:
+    #     for pole in poles:
+    #         if pole in mesh.halfedge[u] and pole in mesh.halfedge[v]:
+    #             poles[pole].append((u, v))
+    # for pole, pole_edges_to_collapse in poles.items():
+    #     vertex_faces = list(set(mesh.vertex_faces(pole)))
+    #     if not mesh.is_vertex_on_boundary(pole):
+    #         if len(vertex_faces) - len(pole_edges_to_collapse) < 3:
+    #             for fkey in vertex_faces:
+    #                 face_vertices = copy.copy(mesh.face_vertices(fkey))
+    #                 face_vertices.remove(pole)
+    #                 face_vertices.remove(pole)
+    #                 u, v = face_vertices
+    #                 if (u, v) not in pole_edges_to_collapse and (v, u) not in pole_edges_to_collapse:
+    #                     if (u, v) not in to_subdivide and (v, u) not in to_subdivide:
+    #                         to_subdivide.append((u, v))
+
+
     old_boundary_vertices = list(mesh.vertices_on_boundary())
 
     # get strip data
@@ -161,7 +197,15 @@ def split_strip(mesh, skey):
     skey : hashable
         A strip key.
 
+    Returns
+    -------
+    max_skey + 1, max_skey + 2 : tuple
+        The indices of the new strips.
+
     """
+
+    if skey not in list(mesh.strips()):
+        return 0
 
     strip_edges = mesh.strip_edges(skey)
     strip_faces = mesh.strip_faces(skey)
@@ -199,308 +243,179 @@ def split_strip(mesh, skey):
     
     # add strips
     max_skey = list(mesh.strips())[-1]
-    strip_1 = [(edge_vkeys[0], new_vkey) for edge_vkeys, new_vkey in new_vertices.items()]
-    strip_2 = [(new_vkey, edge_vkeys[1]) for edge_vkeys, new_vkey in new_vertices.items()]
-    mesh.strip.update({max_skey + 1: strip_1, max_skey + 2: strip_2})
+    uv, w = new_vertices.items()[0]
+    mesh.strip[max_skey + 1] = mesh.collect_strip(uv[0], w)
+    mesh.strip[max_skey + 2] = mesh.collect_strip(w, uv[1])
     
     # delete strip
     del mesh.strip[skey]
 
-def multiple_strip_collapse(cls, mesh, edges_to_collapse):
-    """Collapse a multiple strips in a quad mesh.
+    return max_skey + 1, max_skey + 2
 
-    Parameters
-    ----------
-    mesh : Mesh
-        A quad mesh.
-    edges: list
-        List of edges as tuples (u, v).
+def clear_faces(mesh, fkeys, vkeys):
+    # groups of fkeys must be a topological disc
+    # vkeys must be four vertices part of the fkeys boundary
 
-    Returns
-    -------
-    mesh : mesh, None
-        The modified quad mesh.
-        None if mesh is not a quad mesh or if edges are invalid or ifcollapses all edges of a boundary.
+    vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
+    face_vertices = [mesh.face_vertices(fkey) for fkey in fkeys]
 
-    """
+    faces_mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, face_vertices)
+    faces_boundary_vertices = mesh.polyedge_boundaries()[0]
+    faces_boundary_vertices = list(reversed(faces_boundary_vertices[:-1]))
 
-    max_group = mesh.collect_strip_edge_attribute()
-    edge_groups = mesh.edges_to_strips_dict()
-    boundaries = mesh.polyedge_boundaries()
+    for fkey in fkeys:
+        mesh.delete_face(fkey)
 
-    # remove edges with redundant strips
-    strips_to_collapse = {}
-    for u, v in edges_to_collapse:
-        group = edge_groups[(u, v)]
-        if group not in strips_to_collapse:
-            strips_to_collapse[group] = [(u, v)]
-        else:
-            strips_to_collapse[group].append((u, v))
-    edges_to_collapse = [edges[0] for group, edges in strips_to_collapse.items()]
+    # orientation? reverse boundary vertices?
+    fkey = mesh.add_face(faces_boundary_vertices)
 
-    # all edges which will be collapsed
-    all_edges_to_collapse = [edge for edge, group in edge_groups.items() if group in strips_to_collapse.keys()]
+    new_fkeys = face_propagation(mesh, fkey, vkeys)
 
-    # subdivide boundaries if would be collapsed
-    for boundary in boundaries:
-        boundary_edges = [(boundary[i], boundary[i + 1]) for i in range(len(boundary) - 1)]
-        to_collapse = [edge for edge in all_edges_to_collapse if edge in boundary_edges or edge[::-1] in boundary_edges]
-        delta = len(boundary) - len(to_collapse)
-        # need one remaining edge
-        if delta < 1:
-            return None
-        count = 10
-        while delta < 3 and count > 0:
-            count -= 1
-            for edge in boundary_edges:
-                # missing: if edges in same strip?
-                if edge not in to_collapse and edge[::-1] not in to_collapse:
-                    u, v = edge
-                    face_strip_subdivide(cls, mesh, u, v)
-                    delta += 1
+    return new_fkeys
 
-    # collapse all strips
-    for strip in strips_to_collapse:
-        modified = False
-        for edge, group in edge_groups.items():
-            if group == strip:
-                u, v = edge
-                # update edge groups
-                edge_groups = face_strip_collapse(cls, mesh, u, v)
-                modified = True
-                if edge_groups is None:
-                    print '!'
+def add_handle(mesh, fkey_1, fkey_2):
+    # add a handle between two faces by first adding openings
+    # add from two openings directly?
+
+    # check orientation: is the normal of face i pointing towards face j?
+    v_12 = subtract_vectors(mesh.face_centroid(fkey_2), mesh.face_centroid(fkey_1))
+    orientation_1 = dot_vectors(v_12, mesh.face_normal(fkey_1))
+    v_21 = subtract_vectors(mesh.face_centroid(fkey_1), mesh.face_centroid(fkey_2))
+    orientation_2 = dot_vectors(v_21, mesh.face_normal(fkey_2))
+    # if both orientations are not the same, stop
+    if orientation_1 * orientation_2 < 0:
+        return None
+
+    vertices = [vkey for vkey in mesh.vertices()]
+
+    # add firtst opening
+    faces_1 = add_opening(mesh, fkey_1)
+    # find newly added vertices
+    vertices_1 = [vkey for vkey in mesh.vertices() if vkey not in vertices]
+
+    # add second opening
+    faces_2 = add_opening(mesh, fkey_2)
+    # find newly added vertices
+    vertices_2 = [vkey for vkey in mesh.vertices() if vkey not in vertices and vkey not in vertices_1]
+
+    # sort the vertices along the new boundary components
+    # first one
+    sorted_vertices_1 = [vertices_1.pop()]
+    count = 4
+    while len(vertices_1) > 0 and count > 0:
+        count -= 1
+        for vkey in vertices_1:
+            if vkey in mesh.halfedge[sorted_vertices_1[-1]] and mesh.halfedge[sorted_vertices_1[-1]][vkey] is not None:
+                sorted_vertices_1.append(vkey)
+                vertices_1.remove(vkey)
                 break
-        if not modified:
-            print '!!'
 
-    return mesh
+    # second one
+    sorted_vertices_2 = [vertices_2.pop()]
+    count = 4
+    while len(vertices_2) > 0 and count > 0:
+        count -= 1
+        for vkey in vertices_2:
+            if vkey in mesh.halfedge[sorted_vertices_2[-1]] and mesh.halfedge[sorted_vertices_2[-1]][vkey] is not None:
+                sorted_vertices_2.append(vkey)
+                vertices_2.remove(vkey)
+                break        
 
-def face_strips_merge(mesh, u, v):
-    """Merge two parallel face strips in a quad mesh. The polyedge inbetween is composed of regular vertices only.
+    # match the facing boundary vertices so as to reduce the total distance
+    min_dist = -1
+    sorted_vertices = []
+    for i in range(4):
+        a, b, c, d = sorted_vertices_1
+        e, f, g, h = [sorted_vertices_2[j - i] for j in range(4)]
+        d1 = distance_point_point(mesh.vertex_coordinates(a), mesh.vertex_coordinates(e))
+        d2 = distance_point_point(mesh.vertex_coordinates(b), mesh.vertex_coordinates(h))
+        d3 = distance_point_point(mesh.vertex_coordinates(c), mesh.vertex_coordinates(g))
+        d4 = distance_point_point(mesh.vertex_coordinates(d), mesh.vertex_coordinates(f))
+        dist = d1 + d2 + d3 + d4
+        if min_dist < 0 or dist < min_dist:
+            min_dist = dist
+            sorted_vertices = [a, b, c, d, e, f, g, h]
 
-    Parameters
-    ----------
-    mesh : Mesh
-        A quad mesh.
-    u: int
-        Start vertex key of an edge of the polyedge.
-    v: int
-        End vertex key of an edge of the polyedge.
+    # add the new faces that close the holes as a handle
+    a, b, c, d, e, f, g, h = sorted_vertices
+    fkey_1 = mesh.add_face([a, d, f, e])
+    fkey_2 = mesh.add_face([d, c, g, f])
+    fkey_3 = mesh.add_face([c, b, h, g])
+    fkey_4 = mesh.add_face([b, a, e, h])
 
-    Returns
-    -------
-    mesh : mesh, None
-        The modified quad mesh.
-        None if mesh is not a quad mesh or if (u, v) is on boundary or if (u,v) is not on a polyedge with only regular vertices.
+    return faces_1 + faces_2 + (fkey_1, fkey_2, fkey_3, fkey_4)
+    
+def close_handle(mesh, fkeys):
+    # remove handle and close openings
+    # fkeys: closed face strip
 
-    """
+    if fkeys[0] == fkeys[-1]:
+        del fkeys[-1]
 
-    # check
-    if not mesh.is_quadmesh():
-        return None
-    if mesh.is_edge_on_boundary(u, v):
-        return None
+    vertices = []
+    key_to_index = {}
+    for i, vkey in enumerate(mesh.vertices()):
+        vertices.append(mesh.vertex_coordinates(vkey))
+        key_to_index[vkey] = i
+    faces = [[key_to_index[vkey] for vkey in mesh.face_vertices(fkey)] for fkey in fkeys]
+    strip_mesh = Mesh.from_vertices_and_faces(vertices, faces)
+    
+    boundaries = strip_mesh.polyedge_boundaries(strip_mesh)
 
-    # get polyedge
-    polylines = mesh.collect_quad_polyedges()
-    for polyline in polylines:
-        for i in range(len(polyline) - 1):
-            if (u == polyline[i] and v == polyline[i + 1]) or (v == polyline[i] and u == polyline[i + 1]):
-                polyedge = polyline
+    for fkey in fkeys:
+        mesh.delete_face(fkey)
+    new_fkeys = []
+    for bdry in boundaries:
+        new_fkeys += close_opening(mesh, list(reversed(bdry)))
 
-    # check
-    for vkey in polyedge:
-        if (mesh.is_vertex_on_boundary(vkey) and len(mesh.vertex_neighbors(vkey)) != 3) or (not mesh.is_vertex_on_boundary(vkey) and len(mesh.vertex_neighbors(vkey)) != 4): 
-            return None
+    return new_fkeys
 
+def close_handle_2(mesh, edge_path_1, edge_path_2):
+    # two closed edge paths
 
-    # store faces of new face strip
-    faces = []
+    # unweld
+    unweld_mesh_along_edge_path(mesh, edge_path_1)
+    unweld_mesh_along_edge_path(mesh, edge_path_2)
 
-    for i in range(len(polyedge) - 1):
+    # explode
+    parts = mesh_disjointed_parts(mesh)
+    meshes = unjoin_mesh_parts(mesh, parts)
+
+    # find parts with the topolog of a strip: two boundary components and an EUler characteristic of 0
+    # if there are several, select the topologically smallest one (lowest number of faces)
+    index = -1
+    size = -1
+    for i, submesh in enumerate(meshes):
+        B = len(mesh.polyedge_boundaries())
+        X = submesh.mesh_euler()
+        if B == 2 and X == 0:
+            n = submesh.number_of_faces()
+            if index < 0 or n < size:
+                index = i
+                size = n
+
+    # collect the boundaries of the strip, oriented towards the outside of the strip
+    vertices = []
+    key_to_index = {}
+    for i, vkey in enumerate(mesh.vertices()):
+        vertices.append(mesh.vertex_coordinates(vkey))
+        key_to_index[vkey] = i
+    faces = [[key_to_index[vkey] for vkey in mesh.face_vertices(fkey)] for fkey in parts[index]]
+    strip_mesh = Mesh.from_vertices_and_faces(vertices, faces)
+    
+    boundaries = strip_mesh.polyedge_boundaries()
+
+    # remove faces of the selected band
+    for fkey in parts[index]:
+        mesh.delete_face(fkey)
+
+    # close the two boundaries
+    new_fkeys = []
+    for bdry in boundaries:
+        new_fkeys += close_opening(mesh, list(reversed(bdry)))
         
-        # per edge
-        u, v = polyedge[i], polyedge[i + 1]
-        
-        # get adajcent faces
-        fkey_1 = mesh.halfedge[u][v]
-        fkey_2 = mesh.halfedge[v][u]
-
-        # collect vertices of new face
-        a = mesh.face_vertex_descendant(fkey_1, v)
-        b = mesh.face_vertex_descendant(fkey_1, a)
-        c = mesh.face_vertex_descendant(fkey_2, u)
-        d = mesh.face_vertex_descendant(fkey_2, c)
-
-        # delete old faces
-        mesh.delete_face(fkey_1)
-        mesh.delete_face(fkey_2)
-
-        # add new face
-        fkey = mesh.add_face([a, b, c, d])
-        faces.append(fkey)
-
-    return faces
-
-def face_strip_insert_2(mesh, vertex_path, factor = .33):
-
-    # check if vertex_path is a loop
-    if vertex_path[0] == vertex_path[-1]:
-        loop = True
-    else:
-        loop = False
-
-    edge_path = [[vertex_path[i], vertex_path[i + 1]] for i in range(len(vertex_path) - 1)]
-    if loop:
-        del edge_path[-1]
-
-    # duplicate the vertices along the edge_path by unwelding the mesh
-    duplicates = unweld_mesh_along_edge_path(mesh, edge_path)
-
-    duplicate_list = [i for uv in duplicates for i in uv]
-
-    # move the duplicated vertices towards the centroid of the adjacent faces
-    for uv in duplicates:
-        for vkey in uv:
-            # if was on boundary before unwelding, move along boundary edge
-            on_boundary = False
-            for nbr in mesh.vertex_neighbors(vkey):
-                if mesh.is_edge_on_boundary(vkey, nbr) and nbr not in duplicate_list:
-                    x, y, z = mesh.edge_point(vkey, nbr, factor)
-                    on_boundary = True
-            if not on_boundary:
-                centroids = [mesh.face_centroid(fkey) for fkey in mesh.vertex_faces(vkey)]
-                areas = [mesh.face_area(fkey) for fkey in mesh.vertex_faces(vkey)]
-                #if len(centroids) != 0:
-                x, y, z = sum_vectors([scale_vector(centroid, area / sum(areas)) for centroid, area in zip(centroids, areas)])
-                attr = mesh.vertex[vkey]
-                # factor related to the width of the new face strip compared to the adjacent ones
-                attr['x'] += factor * (x - attr['x'])
-                attr['y'] += factor * (y - attr['y'])
-                attr['z'] += factor * (z - attr['z'])
-
-    # add new face strip
-    for i in range(len(duplicates) - 1):
-        a = duplicates[i][1]
-        b = duplicates[i][0]
-        c = duplicates[i + 1][0]
-        d = duplicates[i + 1][1]
-        mesh.add_face([a, b, c, d])
-    # close if loop
-    if loop:
-        a = duplicates[-1][1]
-        b = duplicates[i-1][0]
-        c = duplicates[0][0]
-        d = duplicates[0][1]
-        mesh.add_face([a, b, c, d])
-
-
-    return 0
-
-def face_strip_insert(mesh, vertex_path, pole_extremities, factor = .33):
-
-    # duplicate twice vertices on vertex path
-    duplicated_vertices = {}
-    for vkey in vertex_path:
-        # if closed vertex path, end already included
-        if vkey in duplicated_vertices:
-            continue
-        x, y, z = mesh.vertex_coordinates(vkey)
-        vkey_1 = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-        vkey_2 = mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-        duplicated_vertices[vkey] = [vkey_1, vkey_2]
-
-    new_faces = []
-
-    # move along edge path
-    for i in range(0, len(vertex_path) - 1):
-        
-        u = vertex_path[i]
-        v = vertex_path[i + 1]
-
-        if v in mesh.halfedge[u]:
-            fkey_left = mesh.halfedge[u][v]
-        else:
-            fkey_left = None
-        if u in mesh.halfedge[v]:
-            fkey_right = mesh.halfedge[v][u]
-        else:
-            fkey_right = None
-
-        # update faces adjacent to vertex path
-        if fkey_left is not None:
-            face_vertices = [duplicated_vertices[vkey][0] if vkey in duplicated_vertices else vkey for vkey in mesh.face_vertices(fkey_left)]
-            mesh.delete_face(fkey_left)
-            mesh.add_face(face_vertices, fkey_left)
-        if fkey_right is not None:
-            face_vertices = [duplicated_vertices[vkey][1] if vkey in duplicated_vertices else vkey for vkey in mesh.face_vertices(fkey_right)]
-            mesh.delete_face(fkey_right)
-            mesh.add_face(face_vertices, fkey_right)
-        
-        # add strip
-        face_vertices = [duplicated_vertices[u][1], duplicated_vertices[v][1], duplicated_vertices[v][0], duplicated_vertices[u][0]]
-        new_faces.append(mesh.add_face(face_vertices))
-
-    # delete old vertices
-    # remove end if closed vertex path
-    if vertex_path[0] == vertex_path[-1]:
-        culled_verted_vertex_path = vertex_path[:-1]
-    else:
-        culled_verted_vertex_path = vertex_path
-    for vkey in culled_verted_vertex_path:
-        if len(mesh.vertex_faces(vkey)) > 0:
-            faces = [mesh.halfedge[vkey][a] for a in mesh.vertex_neighbors(vkey) if mesh.halfedge[vkey][a] is not None]
-            count = len(faces) * 2
-            while len(faces) > 0 and count > 0:
-                for fkey in faces:
-                    for fkey_2 in [fkey_3 for vkey_2 in mesh.face_vertices(fkey) for fkey_3 in mesh.vertex_faces(vkey_2)]:
-                        if duplicated_vertices[vkey][0] in mesh.face_vertices(fkey_2):
-                            duplicate = duplicated_vertices[vkey][0]
-                            face_vertices = [duplicate if key == vkey else key for key in mesh.face_vertices(fkey)]
-                            mesh.delete_face(fkey)
-                            mesh.add_face(face_vertices, fkey)
-                            faces.remove(fkey)
-                            break
-                        if duplicated_vertices[vkey][1] in mesh.face_vertices(fkey_2):
-                            duplicate = duplicated_vertices[vkey][1]
-                            face_vertices = [duplicate if key == vkey else key for key in mesh.face_vertices(fkey)]
-                            mesh.delete_face(fkey)
-                            mesh.add_face(face_vertices, fkey)
-                            faces.remove(fkey)
-                            break
-                    if fkey not in faces:
-                        break
-        mesh.delete_vertex(vkey)
-
-    # transform pole extemities
-    for vkey, is_pole in zip([vertex_path[0], vertex_path[-1]], pole_extremities):
-        if is_pole:
-            u, v = duplicated_vertices[vkey]
-            for fkey in mesh.vertex_faces(v):
-                if fkey is not None:
-                    new_face_vertices = [u if vkey_2 == v else vkey_2 for vkey_2 in mesh.face_vertices(fkey)]
-                    mesh.delete_face(fkey)
-                    mesh.add_face(new_face_vertices, fkey)
-            duplicated_vertices[vkey].remove(v)
-            mesh.delete_vertex(v)
-
-    # move duplicated superimposed vertices towards neighbours' centroid
-    moves = {}
-    for vkey in [vkey for vkeys in duplicated_vertices.values() for vkey in vkeys]:
-        #if mesh.is_vertex_on_boundary(vkey):
-        #    continue
-        xyz = scale_vector(sum_vectors([mesh.vertex_coordinates(nbr) for nbr in mesh.vertex_neighbors(vkey)]), 1. / len(mesh.vertex_neighbors(vkey)))
-        moves[vkey] = xyz
-    for vkey, xyz in moves.items():
-        x, y, z = xyz
-        attr = mesh.vertex[vkey]
-        attr['x'] += factor * (x - attr['x'])
-        attr['y'] += factor * (y - attr['y'])
-        attr['z'] += factor * (z - attr['z'])
-
-    return new_faces
-
+    return new_fkeys
+    
 # ==============================================================================
 # Main
 # ==============================================================================
