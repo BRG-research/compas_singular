@@ -16,41 +16,6 @@ __all__ = [
 	'two_colourable_projection',
 ]
 
-def mesh_multiple_strip_collapse(cls, mesh, strips_to_collapse):
-
-
-	edges_to_collapse = [edge for edge, strip in edges_to_strips.items() if strip in strips_to_collapse]
-
-	# refine boundaries to avoid collapse
-	to_subdivide = []
-	for boundary in mesh_boundaries(mesh):
-		boundary_edges = [(boundary[i], boundary[i + 1]) for i in range(len(boundary) - 1)]
-		boundary_edges_to_collapse = [edge for edge in edges_to_collapse if edge in boundary_edges or edge[::-1] in boundary_edges]
-		if len(boundary_edges) - len(boundary_edges_to_collapse) < 3:
-			for edge in boundary_edges:
-				if edge not in boundary_edges_to_collapse and edge[::-1] not in boundary_edges_to_collapse:
-					if edge not in to_subdivide and edge[::-1] not in to_subdivide:
-						to_subdivide.append(edge)
-	# refine pole points to avoid collapse
-	poles = {u: [] for u, v in mesh.edges() if u == v}
-	for u, v in edges_to_collapse:
-		for pole in poles:
-			if pole in mesh.halfedge[u] and pole in mesh.halfedge[v]:
-				poles[pole].append((u, v))
-	for pole, pole_edges_to_collapse in poles.items():
-		vertex_faces = list(set(mesh.vertex_faces(pole)))
-		if not mesh.is_vertex_on_boundary(pole):
-			if len(vertex_faces) - len(pole_edges_to_collapse) < 3:
-				for fkey in vertex_faces:
-					face_vertices = copy.copy(mesh.face_vertices(fkey))
-					face_vertices.remove(pole)
-					face_vertices.remove(pole)
-					u, v = face_vertices
-					if (u, v) not in pole_edges_to_collapse and (v, u) not in pole_edges_to_collapse:
-						if (u, v) not in to_subdivide and (v, u) not in to_subdivide:
-							to_subdivide.append((u, v))
-
-
 def two_colourable_projection(mesh, kmax = 1):
 	"""Projection of a coarse quad mesh to the closest two-colourable sub-spaces.
 
