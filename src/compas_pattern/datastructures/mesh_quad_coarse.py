@@ -26,6 +26,44 @@ class CoarseQuadMesh(QuadMesh):
 		self.quadmesh = QuadMesh()
 
 	# --------------------------------------------------------------------------
+	# constructors
+	# --------------------------------------------------------------------------
+
+	@classmethod
+	def from_quad_mesh(cls, quad_mesh):
+		"""Build coarse quad mesh from quad mesh with density data.
+
+		Parameters
+		----------
+		quad_mesh : QuadMesh
+			A quad mesh.
+
+		Returns
+		----------
+		coarse_quad_mesh : CoarseQuadMesh
+			A coarse quad mesh with density data.
+
+		"""
+
+		singularity_polyedges = quad_mesh.singularity_polyedges()
+
+		density = {(geometric_key(quad_mesh.vertex_coordinates(polyedge[0])), geometric_key(quad_mesh.vertex_coordinates(polyedge[-1]))): len(polyedge) - 1 for polyedge in singularity_polyedges}
+
+		outer_polylines = [[quad_mesh.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in singularity_polyedges if quad_mesh.is_vertex_on_boundary(polyedge[1])]
+		inner_polylines = [[quad_mesh.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in singularity_polyedges if not quad_mesh.is_vertex_on_boundary(polyedge[1])]
+
+		coarse_quad_mesh = cls.from_polylines(outer_polylines, inner_polylines)
+		coarse_quad_mesh.init_strip_density()
+
+		for skey in coarse_quad_mesh.strips():
+			u, v = list(map(lambda x: geometric_key(coarse_quad_mesh.vertex_coordinates(x)), coarse_quad_mesh.strip_edges(skey)[0]))
+			coarse_quad_mesh.set_strip_density(skey, density.get((u, v), density.get((v, u), None)))
+		
+		coarse_quad_mesh.densification()
+
+		return coarse_quad_mesh
+
+	# --------------------------------------------------------------------------
 	# density getters
 	# --------------------------------------------------------------------------
 
@@ -81,7 +119,7 @@ class CoarseQuadMesh(QuadMesh):
 		Parameters
 		----------
 		skey : hashable
-			A srip key.
+			A strip key.
 		d : int
 			A density parameter.
 
@@ -102,7 +140,24 @@ class CoarseQuadMesh(QuadMesh):
 		for skey in self.strips():
 			self.set_strip_density(skey, d)
 
-	def set_strip_density_target(self, t):
+	def set_strip_density_target(self, skey, t):
+		"""Set the strip densities based on a target length and the average length of the strip edges.
+
+		Parameters
+		----------
+		skey : hashable
+			A strip key.
+		t : float
+			A target length.
+
+		Returns
+		-------
+
+		"""
+
+		self.set_strip_density(skey, int(math.ceil(sum([self.edge_length(u, v) for u, v in self.strip_edges(skey)]) / len(list(self.strip_edges(skey))) / t)))
+
+	def set_strips_density_target(self, t):
 		"""Set the strip densities based on a target length and the average length of the strip edges.
 
 		Parameters
@@ -158,7 +213,7 @@ if __name__ == '__main__':
 	mesh.init_strip_density()
 	print mesh.number_of_strips()
 	
-	mesh.set_strip_density_target(1)
+	mesh.set_strips_density_target(1)
 
 	mesh.get_strip_densities()
 	for edge in mesh.edges():
