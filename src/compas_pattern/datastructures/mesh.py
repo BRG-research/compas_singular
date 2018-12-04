@@ -1,6 +1,8 @@
 from compas.datastructures.mesh import Mesh
 
 from compas.geometry import circle_from_points
+from compas.geometry import angle_points
+from compas.geometry import bestfit_plane
 
 from compas.topology import mesh_unify_cycles
 
@@ -153,6 +155,7 @@ class Mesh(Mesh):
 			plotter.show()
 
 		"""
+
 		for u, v in self.face_halfedges(fkey):
 			self.halfedge[u][v] = None
 			# additionnal check u in self.halfedge[v]
@@ -175,6 +178,7 @@ class Mesh(Mesh):
 		-------
 		list
 			The vertices separating face 1 from face 2.
+
 		"""
 
 		return [vkey for vkey in self.face_vertices(f1) if vkey in self.face_vertices(f2)]
@@ -192,6 +196,7 @@ class Mesh(Mesh):
 		list, None
 			The centre coordinates, the radius value and the normal vector of the circle.
 			None if the face is not a triangle
+
 		"""
 
 		face_vertices = self.face_vertices(fkey)
@@ -203,6 +208,100 @@ class Mesh(Mesh):
 		a, b, c = face_vertices
 
 		return circle_from_points(self.vertex_coordinates(a), self.vertex_coordinates(b), self.vertex_coordinates(c))
+
+	def face_aspect_ratio(self, fkey):
+		"""Face aspect ratio as the ratio between the lengths of the maximum and minimum face edges.
+
+		Parameters
+		----------
+		fkey : Key
+			The face key.
+
+		Returns
+		-------
+		float
+			The aspect ratio.
+		  
+		 References
+	    ----------
+	    .. [1] Wikipedia. *Types of mesh*.
+	           Available at: https://en.wikipedia.org/wiki/Types_of_mesh.
+
+		"""
+
+		face_edge_lengths = [self.edge_length(u, v) for u, v in self.face_halfedges(fkey)]
+		return max(face_edge_lengths) / min(face_edge_lengths)
+
+	def face_skewnesses(self, fkey):
+		"""Face skewness as the maximum absolute angular deviation from the ideal polygon angle.
+
+		Parameters
+		----------
+		fkey : Key
+			The face key.
+
+		Returns
+		-------
+		float
+			The skewness.
+		  
+		 References
+	    ----------
+	    .. [1] Wikipedia. *Types of mesh*.
+	           Available at: https://en.wikipedia.org/wiki/Types_of_mesh.
+
+		"""
+
+		ideal_angle = 180 * (1 - 2 / float(len(self.face_vertices(fkey))))
+		
+		angles = []
+		
+		for v in self.face_vertices(fkey):
+			u = self.face_vertex_ancestor(fkey, v)
+			w = self.face_vertex_descendant(fkey, v)
+			angles.append(angle_points(self.vertex_coordinates(u), self.vertex_coordinates(v), self.vertex_coordinates(w), deg = True))
+		
+		return max((max(angles) - ideal_angle) / (180 - ideal_angle), (ideal_angle - min(angles)) / ideal_angle)
+
+	def face_curvature(self, fkey):
+		"""Dimensionless face curvature as the maximum face vertex deviation from the best-fit plane of the face vertices divided by the average lengths of the face vertices to the face centroid.
+
+		Parameters
+		----------
+		fkey : Key
+			The face key.
+
+		Returns
+		-------
+		float
+			The dimensionless curvature.
+
+		"""
+
+		plane = bestfit_plane([self.vertex_coordinates(vkey) for vkey in self.vertices()])
+
+		max_deviation = max([distance_point_plane(self.vertex_coordinates(vkey), plane) for vkey in self.vertices()])
+
+		average_distances = avrg([distance_point_point(self.vertex_coordinates(vkey), self.face_centroid(fkey)) for vkey in self.vertices()])
+
+		return max_deviation / average_distances
+
+	def mesh_vertex_curvatures(self, vkey):
+		"""Dimensionless vertex curvature.
+
+		Parameters
+		----------
+		fkey : Key
+			The face key.
+
+		Returns
+		-------
+		float
+			The dimensionless curvature.
+
+		"""
+
+		return 2 * pi - sum([angle_points(mesh.vertex_coordinates(u), mesh.vertex_coordinates(vkey), mesh.vertex_coordinates(v)) for u, v in pairwise(self.vertex_neighbours(vkey, ordered = True))])
 
 	# --------------------------------------------------------------------------
 	# modifications
@@ -244,110 +343,6 @@ class Mesh(Mesh):
 		face_vertices.insert(face_vertices.index(vkey_0), vkey)
 		self.delete_face(fkey)
 		self.add_face(face_vertices, fkey)
-
-	# --------------------------------------------------------------------------
-	# advanced
-	# --------------------------------------------------------------------------
-
-def add_vertex_from_vertices(mesh, vertices, weights):
-	n = len(vertices)
-	if len(weights) != n:
-		weights = [1] * n
-	x, y, z = 0, 0, 0
-	for i, vkey in enumerate(vertices):
-		xyz = mesh.vertex_coordinates(vkey)
-		x += xyz[0] * weights[i]
-		y += xyz[1] * weights[i]
-		z += xyz[2] * weights[i]
-	sum_weights = sum(weights)
-	x /= sum_weights
-	y /= sum_weights
-	z /= sum_weights
-
-	return mesh.add_vertex(attr_dict = {'x': x, 'y': y, 'z': z})
-
-def insert_vertices_in_halfedge(mesh, u, v, vertices):
-	if v in mesh.halfedge[u] and mesh.halfedge[u][v] is not None:
-		fkey = mesh.halfedge[u][v]
-		return insert_vertices_in_face(mesh, fkey, u, vertices)
-	else:
-		return 0
-
-
-def insert_vertex_in_face(mesh, fkey, vkey, added_vkey):
-	"""Insert a vertex in the vertices of a face after a vertex.
-
-	Parameters
-	----------
-	mesh : Mesh
-		A mesh.
-	fkey: int
-		Face key.
-	vkey: int
-		Vertex key to insert.
-	added_vkey: int
-		Vertex key to insert after the existing vertex.
-
-	Returns
-	-------
-	face_vertices: list or None
-		New list of face vertices.
-		None if vkey is not a vertex of the face.
-
-	Raises
-	------
-	-
-
-	"""
-
-	if vkey not in mesh.face_vertices(fkey):
-		return None
-
-	face_vertices = mesh.face_vertices(fkey)[:]
-	idx = face_vertices.index(vkey) + 1 - len(face_vertices)
-	face_vertices.insert(idx, added_vkey)
-	mesh.delete_face(fkey)
-	mesh.add_face(face_vertices, fkey = fkey)
-
-	return face_vertices
-
-def insert_vertices_in_face(mesh, fkey, vkey, added_vkeys):
-	"""Insert vertices in the vertices of a face after a vertex.
-
-	Parameters
-	----------
-	mesh : Mesh
-		A mesh.
-	fkey: int
-		Face key.
-	vkeys: int
-		Vertex key to insert.
-	added_vkey: list
-		List of vertex keys to insert after the existing vertex.
-
-	Returns
-	-------
-	face_vertices: list or None
-		New list of face vertices.
-		None if vkey is not a vertex of the face.
-
-	Raises
-	------
-	-
-
-	"""
-
-	if vkey not in mesh.face_vertices(fkey):
-		return None
-
-	face_vertices = mesh.face_vertices(fkey)[:]
-	for added_vkey in reversed(added_vkeys):
-		idx = face_vertices.index(vkey) + 1 - len(face_vertices)
-		face_vertices.insert(idx, added_vkey)
-	mesh.delete_face(fkey)
-	mesh.add_face(face_vertices, fkey = fkey)
-
-	return face_vertices
 
 # ==============================================================================
 # Main
