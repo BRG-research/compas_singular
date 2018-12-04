@@ -5,7 +5,7 @@ from compas.geometry import centroid_points
 
 from compas.utilities import pairwise
 from compas.utilities import geometric_key
-from compas_pattern.utilities.lists import splits_list
+from compas_pattern.utilities.lists import list_split
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -99,7 +99,7 @@ class QuadMesh(Mesh):
 	# --------------------------------------------------------------------------
 
 	def is_vertex_singular(self, vkey):
-		"""Output whether a vertex is quad mesh singularity..
+		"""Output whether a vertex is quad mesh singularity.
 
 		Parameters
 		----------
@@ -118,6 +118,26 @@ class QuadMesh(Mesh):
 
 		else:
 			return False
+
+	def vertex_index(self, vkey):
+		"""Compute vertex index.
+
+		Parameters
+		----------
+		vkey : int
+			The vertex key.
+
+		Returns
+		-------
+		int
+			Vertex index.
+
+		"""
+
+		regular_valency = 4 if not self.is_vertex_on_boundary(vkey) else 3
+
+		return (regular_valency - self.vertex_valency(vkey)) / 4
+
 
 	def polyedge(self, u0, v0):
 		"""Returns all the edges in the polyedge of the input edge.
@@ -202,15 +222,15 @@ class QuadMesh(Mesh):
 
 		"""
 
-		# keep only polyedges connected to singularities or along the boundary
+		# keep only polyedges connected to singularities or along the boundary		
 		polyedges = [polyedge for polyedge in self.polyedges() if self.is_vertex_singular(polyedge[0]) or self.is_vertex_singular(polyedge[-1]) or self.is_edge_on_boundary(polyedge[0], polyedge[1])]									
-		
+
 		# get intersections between polyedges for split
-		vertices = [vkey for polyedge in polyedges for vkey in polyedge]
-		split_vertices = [vkey for vkey in vertices if vertices.count(vkey) > 1]
+		vertices = [vkey for polyedge in polyedges for vkey in set(polyedge)]
+		split_vertices = [vkey for vkey in self.vertices() if vertices.count(vkey) > 1]
 		
 		# split singularity polyedges
-		return [split_polyedge for polyedge in polyedges for split_polyedge in splits_list(polyedge, [polyedge.index(vkey) for vkey in split_vertices if vkey in polyedge])]
+		return [split_polyedge for polyedge in polyedges for split_polyedge in list_split(polyedge, [polyedge.index(vkey) for vkey in split_vertices if vkey in polyedge])]
 
 	# --------------------------------------------------------------------------
 	# strip topology
@@ -248,6 +268,9 @@ class QuadMesh(Mesh):
 			The list of the edges in strip.
 		"""
 
+		if self.halfedge[u0][v0] is None:
+			u0, v0 = v0, u0
+			
 		edges = [(u0, v0)]
 
 		count = self.number_of_edges()
