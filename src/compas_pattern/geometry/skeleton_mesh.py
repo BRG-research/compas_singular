@@ -11,7 +11,7 @@ from compas_pattern.geometry.join import join_polylines
 
 from compas.utilities import geometric_key
 from compas.utilities import pairwise
-from compas_pattern.utilities.lists import splits_closed_list
+from compas_pattern.utilities.lists import list_split
 
 from compas.geometry import subtract_vectors
 from compas.geometry import angle_vectors
@@ -72,9 +72,9 @@ class SkeletonMesh(Skeleton):
 
 	def branches_boundary(self):
 		# branches along boundaries split by the corner vertices and the split vertices
-		boundaries = self.boundaries()
+		boundaries = [bdry + bdry[0 :] for bdry in self.boundaries()]
 		splits = self.corner_vertices() + self.split_vertices()
-		split_boundaries = [split_boundary for boundary in boundaries for split_boundary in splits_closed_list(boundary, [boundary.index(split) for split in splits if split in boundary])]
+		split_boundaries = [split_boundary for boundary in boundaries for split_boundary in list_split(boundary, [boundary.index(split) for split in splits if split in boundary])]
 		return [[self.vertex_coordinates(vkey) for vkey in boundary] for boundary in split_boundaries]
 
 	# --------------------------------------------------------------------------
@@ -115,7 +115,7 @@ class SkeletonMesh(Skeleton):
 
 		all_splits = set(list(self.corner_vertices()) + list(self.split_vertices()))
 
-		for polyedge in self.boundaries():
+		for polyedge in [bdry + bdry[0 :] for bdry in self.boundaries()]:
 
 			splits = [vkey for vkey in polyedge if vkey in all_splits]
 			new_splits = []
@@ -128,7 +128,7 @@ class SkeletonMesh(Skeleton):
 				new_splits += list(itemgetter(i - int(floor(len(polyedge) * 2 / 3)), i - int(floor(len(polyedge) / 3)))(polyedge))
 			
 			elif len(splits) == 2:
-				one, two = splits_closed_list(polyedge, [polyedge.index(vkey) for vkey in splits])
+				one, two = list_split(polyedge, [polyedge.index(vkey) for vkey in splits])
 				half = one if len(one) > len(two) else two
 				new_splits.append(half[int(floor(len(half) / 2))])
 
