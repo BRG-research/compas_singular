@@ -12,6 +12,9 @@ import compas_rhino.helpers as rhino_helper
 
 from compas_pattern.datastructures.mesh import Mesh
 
+from compas.geometry import Polyline
+from compas.geometry import scale_vector
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -74,13 +77,15 @@ def select_mesh_polyedge(mesh):
 
 	return polyedge
 
-def select_mesh_strip(mesh):
+def select_mesh_strip(mesh, show_density = False):
 	"""Select quad mesh strip.
 
 	Parameters
 	----------
 	mesh : Mesh
 		The mesh.
+	show_density : bool
+		Optional argument to show strip density parameter. False by default.
 
 	Returns
 	-------
@@ -92,19 +97,32 @@ def select_mesh_strip(mesh):
 	n = mesh.number_of_strips()
 
 	# different colors per strip
-	strip_to_color = {skey: [255 * float(i) / (n - 1)] * 3 for i, skey in enumerate(mesh.strips())}
+	strip_to_color = {skey: scale_vector([float(i), 0, n - 1 - float(i)], 255 / (n - 1)) for i, skey in enumerate(mesh.strips())}
+
+	rs.EnableRedraw(False)
 
 	# add strip polylines with colors and arrows
 	guids_to_strip = {rs.AddPolyline(mesh.strip_edge_polyline(skey)): skey for skey in mesh.strips()}
 	for guid, skey in guids_to_strip.items():
 		rs.ObjectColor(guid, strip_to_color[skey])
 		rs.CurveArrows(guid, arrow_style = 3)
-	
+
+	# show strip density parameters
+	if show_density:
+		guids_to_dot = {guid: rs.AddTextDot(mesh.get_strip_density(skey), Polyline(mesh.strip_edge_polyline(skey)).point(t = .5)) for guid, skey in guids_to_strip.items()}
+		for guid, dot in guids_to_dot.items():
+			rs.ObjectColor(dot, rs.ObjectColor(guid))
+
 	# return polyline strip
 	rs.EnableRedraw(True)
- 	skey =  guids_to_strip[rs.GetObject('Get strip.', filter = 4)]
+ 	skey = guids_to_strip.get(rs.GetObject('Get strip.', filter = 4), None)
  	rs.EnableRedraw(False)
+
+ 	# delete objects
  	rs.DeleteObjects(guids_to_strip.keys())
+ 	if show_density:
+ 		rs.DeleteObjects(guids_to_dot.values())
+ 	
  	return skey
 
 # ==============================================================================
