@@ -6,47 +6,41 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
-	'split_list',
-	'splits_list',
-	'splits_closed_list'
+	'list_split',
 	'is_sublist_in_list'
 ]
 
-def split_list(l, index):
 
-	if index == 0 or index == len(l) - 1:
-		return [l]
+def list_split(l, indices):
 
-	return l[: index + 1], l[index :]
+	n = len(l)
 
-
-def splits_list(l, indices):
-
-	indices = [0] + list(sorted(indices))
-	ls = [l]
-
-	for index_1, index_2 in pairwise(indices):	
-		new_ls =  split_list(ls[-1], index_2 - index_1)
-		del ls[-1]
-		ls += new_ls
-
-	return ls
-
-def splits_closed_list(l, indices):
-	
-	indices = list(sorted(indices))
-
-	if len(indices) == 0:
-		return [l + l[:1]] 
-
-	if indices[0] != 0:
-		l = l[indices[0] :] + l[1 : indices[0] + 1]
-		indices = [idx - indices[0] for idx in indices]
-	
+	if l[0] == l[-1]:
+		closed = True
+		if n - 1 in indices:
+			indices.remove(n - 1)
+			if 0 not in indices:
+				indices.append(0)
 	else:
-		l = l[:] + [l[0]]
-	
-	return splits_list(l, indices)
+		closed = False
+
+	indices = list(sorted(set(indices)))
+
+	split_lists = []
+	current_list = []
+	for index, item in enumerate(l):
+		current_list.append(item)
+		if (index in indices and index != 0) or index == n -1:
+			split_lists.append(current_list)
+			current_list = [item]
+
+	if closed:
+		if 0 not in indices:
+			start = split_lists.pop(0)[1 :]
+			split_lists[-1] += start
+
+	return split_lists
+
 
 def is_sublist_in_list(small_list, big_list):
 
@@ -71,5 +65,5 @@ if __name__ == '__main__':
 
     import compas
 
-    print splits_closed_list(range(20),[])
-    #print splits_closed_list([1, 21, 7, 8, 13, 27, 35, 10, 6, 9, 25, 34, 28, 12, 2, 23, 18, 3, 29, 24], [1, 6, 11, 16])
+    print list_split(range(20)+[0],[0,8,9,12,13])
+    
