@@ -1,5 +1,3 @@
-from compas.utilities import pairwise
-
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
