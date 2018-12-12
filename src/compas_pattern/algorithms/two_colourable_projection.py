@@ -3,9 +3,11 @@ import itertools
 from compas_pattern.datastructures.mesh_quad import QuadMesh
 
 from compas_pattern.topology.colorability import is_network_two_colourable
-from compas_pattern.topology.grammar import delete_strip
+from compas_pattern.topology.grammar import  strips_to_split_to_preserve_boundaries_before_deleting_strips
+from compas_pattern.topology.grammar import split_strip
+from compas_pattern.topology.grammar import delete_strips
 
-from compas_pattern.utilities.lists import is_sublist_in_list
+from compas_pattern.utilities.lists import are_items_in_list
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -26,8 +28,8 @@ def two_colourable_projection(mesh, kmax = 1):
 
 	Returns
 	-------
-	two_col_meshes : dict
-		The closest two-colourable meshes per distance: {k: two_col_meshes_k}.
+	results : dict
+		The combination pointing to the its result. If the combination is valid, the result is a tuple of the the two-colourable mesh, the two-colourable network, and the network vertex colors.
 
 	References
 	----------
@@ -54,10 +56,13 @@ def two_colourable_projection(mesh, kmax = 1):
 
 			# check results from potential previous sub-combinations
 			for previous_combination in results:
-				if is_sublist_in_list(combination, previous_combination):
+				if are_items_in_list(previous_combination, combination):
 					# if a sub-combination yielded an invalid topology do not pursue
-					if result == 'invalid topology':
+					if results[previous_combination] == 'invalid topology':
 						results[combination] = 'already invalid topology'
+						break
+					elif type(results[previous_combination]) == tuple:
+						results[combination] = 'already two-colourable'
 						break
 			if combination in results:
 				continue
@@ -65,8 +70,10 @@ def two_colourable_projection(mesh, kmax = 1):
 			# delete strips in mesh and check validity
 			copy_mesh = mesh.copy()
 			copy_mesh.collect_strips()
-			for skey in combination:
-				delete_strip(copy_mesh, skey)
+			to_split = strips_to_split_to_preserve_boundaries_before_deleting_strips(copy_mesh, combination)
+ 			for skey, n in to_split.items():
+ 				split_strip(copy_mesh, skey)
+ 			delete_strips(copy_mesh, combination)
 			topological_validity = copy_mesh.is_manifold() and copy_mesh.euler() == mesh.euler()
 			if not topological_validity:
 				results[combination] = 'invalid topology'
@@ -80,7 +87,7 @@ def two_colourable_projection(mesh, kmax = 1):
 				if not two_colourability:
 					results[combination] = 'not two-colourable'
 				else:
-					results[combination] = [copy_mesh, copy_network, two_colourability]
+					results[combination] = (copy_mesh, copy_network, two_colourability)
 
 	return results
 
@@ -102,6 +109,6 @@ if __name__ == '__main__':
 	mesh = QuadMesh.from_vertices_and_faces(vertices, faces)
 	
 	mesh.collect_strips()
-	two_colourable_projection(mesh, kmax = 2)
+	print two_colourable_projection(mesh, kmax = 2)
 
 
