@@ -1,6 +1,6 @@
 from compas_pattern.datastructures.mesh import Mesh
 
-from compas_pattern.geometry.join import join_polylines
+from compas.topology import join_lines
 
 from compas.utilities import geometric_key
 
@@ -30,16 +30,52 @@ class Skeleton(Mesh):
         super(Skeleton, self).__init__()
 
     def singular_faces(self):
+        """Get the indices of the singular faces in the Delaunay mesh, i.e. the ones with three neighbours.
+
+        Returns
+        -------
+        list
+            List of face keys.
+
+        """
+
         return [fkey for fkey in self.faces() if len(self.face_neighbors(fkey)) == 3]
 
     def singular_points(self):
+        """Get the XYZ-coordinates of the singular points of the topological skeleton, i.e. the face circumcentre of the singular faces.
+
+        Returns
+        -------
+        list
+            List of point XYZ-coordinates.
+
+        """
+
         return [self.face_circle(fkey)[0] for fkey in self.singular_faces()]
         
     def lines(self):
+       """Get the lines forming the topological skeleton, i.e. the lines connecting the circumcentres of adjacent faces.
+
+        Returns
+        -------
+        list
+            List of lines as tuples of pairs XYZ-coordinates.
+
+        """
+
         return [(self.face_circle(fkey)[0], self.face_circle(nbr)[0]) for fkey in self.faces() for nbr in self.face_neighbors(fkey) if fkey < nbr and geometric_key(self.face_circle(fkey)[0]) != geometric_key(self.face_circle(nbr)[0])]
 
     def branches(self):
-        return join_polylines(self.lines())
+       """Get the branch polylines of the topological skeleton as polylines connecting singular points.
+
+        Returns
+        -------
+        list
+            List of polylines as tuples of XYZ-coordinates.
+
+        """
+
+        return join_lines(self.lines())
 
 # ==============================================================================
 # Main
