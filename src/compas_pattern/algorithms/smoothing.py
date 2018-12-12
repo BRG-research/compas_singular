@@ -28,6 +28,22 @@ __all__ = [
 ]
 
 def constrained_smoothing(mesh, kmax = 100, damping = 0.5, constraints = {}, algorithm = 'centroid'):
+    """Constrained smoothing of a mesh. Constraints can be points, curves or surfaces.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh to smooth.
+    kmax : int
+        Number of iterations for smoothing. Default value 100.
+    damping : float
+        Damping value for smoothing between 0 and 1. Default value 0.5.
+    constraints : dict
+        Dictionary of constraints as vertex keys pointing to Rhino objects (points, curves or surfaces). Emplty by default.
+    algorithm : string
+        Type of smoothing algorithm to apply (classic centroid or area-based). Classic centroid by default.
+
+    """
 
     def callback(k, args):
 
@@ -55,6 +71,22 @@ def constrained_smoothing(mesh, kmax = 100, damping = 0.5, constraints = {}, alg
     func[algorithm](mesh, kmax = kmax, damping = damping, callback = callback, callback_args = [mesh, constraints])
 
 def surface_constrained_smoothing(mesh, srf, kmax = 100, damping = 0.5, algorithm = 'centroid'):
+    """Specific surface constrained smoothing of a mesh. Constraints are automatically applied based on the surface, its boundary and its corners.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh to smooth.
+    srf : RhinoSurface
+        A RhinoSurface on which to constrain the mesh.
+    kmax : int
+        Number of iterations for smoothing. Default value 100.
+    damping : float
+        Damping value for smoothing between 0 and 1. Default value 0.5.
+    algorithm : string
+        Type of smoothing algorithm to apply (classic centroid or area-based). Classic centroid by default.
+
+    """
 
     fixed = [vkey for vkey in mesh.vertices_on_boundary() if mesh.vertex_valency(vkey) == 2]
 
