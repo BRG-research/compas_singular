@@ -98,6 +98,17 @@ class QuadMesh(Mesh):
 	# singularities
 	# --------------------------------------------------------------------------
 
+	def singularities(self):
+		"""Returns all the singularity indices in the quad mesh.
+
+		Returns
+		-------
+		list
+			The list of vertex indices that are quad mesh singularities.
+
+		"""
+		return [vkey for vkey in self.vertices() if self.is_vertex_singular(vkey)]
+
 	def is_vertex_singular(self, vkey):
 		"""Output whether a vertex is quad mesh singularity.
 
@@ -113,7 +124,7 @@ class QuadMesh(Mesh):
 
 		"""
 
-		if (self.is_vertex_on_boundary(vkey) and len(self.vertex_neighbors(vkey)) != 3) or (not self.is_vertex_on_boundary(vkey) and len(self.vertex_neighbors(vkey)) != 4):
+		if (self.is_vertex_on_boundary(vkey) and self.vertex_valency(vkey) != 3) or (not self.is_vertex_on_boundary(vkey) and self.vertex_valency(vkey) != 4):
 			return True
 
 		else:
