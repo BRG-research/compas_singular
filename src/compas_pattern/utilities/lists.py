@@ -1,17 +1,28 @@
-from compas.utilities import pairwise
-
-__author__     = ['Robin Oval']
-__copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
-__license__    = 'MIT License'
-__email__      = 'oval@arch.ethz.ch'
-
 __all__ = [
 	'list_split',
-	'is_sublist_in_list'
+	'are_items_in_list'
 ]
 
 
 def list_split(l, indices):
+	"""Split list at given indices.
+	Closed lists have the same first and last elements.
+	If the list is closed, splitting wraps around if the first or last index is not in the indices to split.
+
+
+	Parameters
+	----------
+	l : list
+		A list.
+	indices : list
+		A list of indices to split.
+
+	Returns
+	-------
+	split_lists : list
+		Nest lists from splitting the list at the given indices.
+
+	"""
 
 	n = len(l)
 
@@ -42,20 +53,28 @@ def list_split(l, indices):
 	return split_lists
 
 
-def is_sublist_in_list(small_list, big_list):
+def are_items_in_list(items, l):
+	"""Check if items are in a list.
 
-	for i in small_list:
-		is_in = False
-		
-		for j in big_list:
-			if i == j:
-				is_in = True
-				break
-		
-		if not is_in:
+	Parameters
+	----------
+	items : list
+		A list of items (order does not matter).
+	l : list
+		A list.
+
+	Returns
+	-------
+	bool
+		True if all items are in the list. False otherwise.
+
+	"""
+
+	for i in items:
+		if i not in l:
 			return False
-
 	return True
+
 
 # ==============================================================================
 # Main
