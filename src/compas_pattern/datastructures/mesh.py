@@ -31,9 +31,8 @@ class Mesh(Mesh):
 		----------
 		vertices : list, dict
 			A list of vertices, represented by their XYZ coordinates, or a dictionary of vertex keys pointing to their XYZ coordinates.
-		faces : list
-			A list of faces.
-			Each face is a list of indices referencing the list of vertex coordinates.
+		faces : list, dict
+			A list of faces, represented by a list of indices referencing the list of vertex coordinates, or a dictionary of face keys pointing to a list of indices referencing the list of vertex coordinates.
 
 		Returns
 		-------
@@ -54,14 +53,21 @@ class Mesh(Mesh):
 
 		"""
 		mesh = cls()
+
 		if type(vertices) == list:
 			for x, y, z in iter(vertices):
 				mesh.add_vertex(x=x, y=y, z=z)
-		if type(vertices) == dict:
-			for x, y, z in iter(vertices):
+		elif type(vertices) == dict:
+			for key, xyz in vertices.items():
 				mesh.add_vertex(key = key, attr_dict = {i: j for i, j in zip(['x', 'y', 'z'], xyz)})
-		for face in iter(faces):
-			mesh.add_face(face)
+		
+		if type(faces) == list:
+			for face in iter(faces):
+				mesh.add_face(face)
+		elif type(faces) == dict:
+			for fkey, vertices in faces.items():
+				mesh.add_face(vertices, fkey)
+
 		return mesh
 
 	@classmethod
