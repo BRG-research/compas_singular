@@ -1,7 +1,7 @@
 from compas_pattern.cad.rhino.objects.surface import RhinoSurface
 from compas_pattern.cad.rhino.objects.curve import RhinoCurve
 
-from compas_pattern.geometry.join import join_polylines
+from compas.topology import join_lines
 
 from compas.utilities import pairwise
 
@@ -53,7 +53,7 @@ def surface_to_planar_boundaries(srf_guid, precision):
 			border.delete()
 		mapped_borders.append(mapped_border)
 
-	outer_boundaries, inner_boundaries = [join_polylines([(u, v) for border in mapped_borders[i] for u, v in pairwise(border)]) for i in [0, 1]]
+	outer_boundaries, inner_boundaries = [join_lines([(u, v) for border in mapped_borders[i] for u, v in pairwise(border)]) for i in [0, 1]]
 	return outer_boundaries[: 1] + inner_boundaries
 
 def mesh_to_surface(srf_guid, mesh):
