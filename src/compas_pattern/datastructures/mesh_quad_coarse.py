@@ -1,13 +1,20 @@
 import math
 
+from compas_pattern.datastructures.network import Network
 from compas_pattern.datastructures.mesh import Mesh
 from compas_pattern.datastructures.mesh_quad import QuadMesh
 
 from compas.utilities import geometric_key
 
 from compas.datastructures.mesh.operations.weld import meshes_join_and_weld
+from compas_pattern.topology.joining_welding import mesh_unweld_edges
+from compas.datastructures.mesh.operations import mesh_weld
 
 from compas.geometry.algorithms.interpolation import discrete_coons_patch
+
+from compas.topology import connected_components
+
+from compas.utilities import pairwise
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -22,8 +29,21 @@ class CoarseQuadMesh(QuadMesh):
 
 	def __init__(self):
 		super(CoarseQuadMesh, self).__init__()
-		self.stripdata = {}
-		self.quadmesh = QuadMesh()
+		
+		for vkey in self.vertices():
+			self.vertex[vkey]['child'] = None
+		
+		for fkey in self.faces():
+			self.facedata[fkey]['child'] = None
+
+		self.update_default_edge_attributes()
+		for edge in self.edges():
+			self.edgedata[edge]['child'] = None
+		
+		self.strip_data = {}
+		
+		self.quad_mesh = QuadMesh()
+
 
 	# --------------------------------------------------------------------------
 	# constructors
@@ -45,21 +65,47 @@ class CoarseQuadMesh(QuadMesh):
 
 		"""
 
-		singularity_polyedges = quad_mesh.singularity_polyedges()
+		# vertex data
+		vertices = {vkey: quad_mesh.vertex_coordinates(vkey) for vkey in quad_mesh.vertices()}
+		coarse_vertices_children = {vkey: vkey for polyedge in quad_mesh.singularity_polyedges() for vkey in [polyedge[0], polyedge[-1]]}
+		coarse_vertices = {vkey: quad_mesh.vertex_coordinates(vkey) for vkey in coarse_vertices_children}
 
-		density = {(geometric_key(quad_mesh.vertex_coordinates(polyedge[0])), geometric_key(quad_mesh.vertex_coordinates(polyedge[-1]))): len(polyedge) - 1 for polyedge in singularity_polyedges}
+		# edge data
+		coarse_edges_children = {(polyedge[0], polyedge[-1]): polyedge for polyedge in quad_mesh.singularity_polyedges()}		
+		singularity_edges = [(x, y) for polyedge in quad_mesh.singularity_polyedges() for u, v in pairwise(polyedge) for x, y in [(u, v), (v, u)]]
 
-		outer_polylines = [[quad_mesh.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in singularity_polyedges if quad_mesh.is_vertex_on_boundary(polyedge[1])]
-		inner_polylines = [[quad_mesh.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in singularity_polyedges if not quad_mesh.is_vertex_on_boundary(polyedge[1])]
+		# face data
+		faces = {fkey: quad_mesh.face_vertices(fkey) for fkey in quad_mesh.faces()}
+		network_vertices = {fkey: quad_mesh.face_centroid(fkey) for fkey in quad_mesh.faces()}
+		network_edges = {(f1, f2) for f1 in quad_mesh.faces() for f2 in quad_mesh.face_neighbors(f1) if f1 < f2 and quad_mesh.face_adjacency_halfedge(f1, f2) not in singularity_edges}
+		network = Network.from_vertices_and_edges(network_vertices, network_edges)
+		coarse_faces_children = {}
+		for i, connected_faces in enumerate(connected_components(network.adjacency)):
+			mesh = Mesh.from_vertices_and_faces(vertices, [faces[face] for face in connected_faces])
+			coarse_faces_children[i] = [vkey for vkey in reversed(mesh.boundaries()[0]) if mesh.vertex_valency(vkey) == 2]
 
-		coarse_quad_mesh = cls.from_polylines(outer_polylines, inner_polylines)
-		coarse_quad_mesh.init_strip_density()
-
-		for skey in coarse_quad_mesh.strips():
-			u, v = list(map(lambda x: geometric_key(coarse_quad_mesh.vertex_coordinates(x)), coarse_quad_mesh.strip_edges(skey)[0]))
-			coarse_quad_mesh.set_strip_density(skey, density.get((u, v), density.get((v, u), None)))
+		# coarse quad mesh
+		coarse_quad_mesh = cls.from_vertices_and_faces(coarse_vertices, coarse_faces_children)
 		
-		coarse_quad_mesh.densification()
+		# store child data
+		for key, value in coarse_vertices_children.items():
+			coarse_quad_mesh.vertex[key]['child'] = value
+
+		for key, value in coarse_faces_children.items():
+			coarse_quad_mesh.facedata[key]['child'] = value
+
+		coarse_quad_mesh.update_default_edge_attributes()
+		for key, value in coarse_edges_children.items():
+			coarse_quad_mesh.edgedata[key]['child'] = value
+
+		# strp density data
+		coarse_quad_mesh.init_strip_density()
+		for skey in coarse_quad_mesh.strips():
+			u, v = coarse_quad_mesh.strip_edges(skey)[0]
+			d = len(coarse_edges_children.get((u, v), coarse_edges_children.get((v, u), None)))
+			coarse_quad_mesh.set_strip_density(skey, d)
+
+		coarse_quad_mesh.quad_mesh = quad_mesh
 
 		return coarse_quad_mesh
 
@@ -81,7 +127,7 @@ class CoarseQuadMesh(QuadMesh):
 			The strip density.
 
 		"""
-		return self.stripdata['density'][skey]
+		return self.strip_data['density'][skey]
 
 	def get_strip_densities(self):
 		"""Get the density of a strip.
@@ -92,7 +138,7 @@ class CoarseQuadMesh(QuadMesh):
 			The dictionary of the strip densities.
 
 		"""
-		return self.stripdata['density']
+		return self.strip_data['density']
 
 	# --------------------------------------------------------------------------
 	# density setters
@@ -111,7 +157,7 @@ class CoarseQuadMesh(QuadMesh):
 		"""
 
 		self.collect_strips()
-		self.stripdata.update({'density': {skey: 1 for skey in self.strips()}})
+		self.strip_data.update({'density': {skey: 1 for skey in self.strips()}})
 
 	def set_strip_density(self, skey, d):
 		"""Set the densty of one strip.
@@ -125,7 +171,7 @@ class CoarseQuadMesh(QuadMesh):
 
 		"""
 
-		self.stripdata['density'][skey] = d
+		self.strip_data['density'][skey] = d
 
 	def set_strips_density(self, d):
 		"""Set the same density to all strips.
@@ -177,6 +223,45 @@ class CoarseQuadMesh(QuadMesh):
 	# densification
 	# --------------------------------------------------------------------------
 
+	def densification_2(self):
+		"""Generate a denser quad mesh from the coarse quad mesh and its strip densities.
+	
+		WIP!
+		
+		Returns
+		-------
+		QuadMesh
+			A denser quad mesh.
+
+		"""
+
+		quad_mesh = self.quad_mesh
+
+		new_edge_children = {}
+		n = max(new_vertices) + 1
+
+		for edge in self.edges():
+			d =  self.get_strip_density(self.edge_strip(edge))
+			old_polyline = Polyline([quad_mesh.vertex_coordinates(vkey) for vkey in self.edgedata[edge]['child']])
+			new_polyline = [old_polyline.point(float(i) / float(d)) for i in range(0, d + 1)]
+
+			new_vertices.update({n + 1 + i: point for i, point in enumerate(new_polyline[1 : -1])})
+			n += len(new_polyline) - 2
+
+			# while keeping vertex child data, add edge vertices and store edge child data
+
+		for fkey in self.faces():
+
+			child_faces = self.facedata['child'][fkey]
+
+			ab, bc, cd, da = [new_edge_children[edge] for edge in self.halfedges(fkey)]
+
+
+			# apply coons patch, add only new non-boundary vertices and store face edge child data
+
+		
+
+
 	def densification(self):
 		"""Generate a denser quad mesh from the coarse quad mesh and its strip densities.
 
@@ -186,6 +271,7 @@ class CoarseQuadMesh(QuadMesh):
 			A denser quad mesh.
 
 		"""
+
 		meshes = []
 
 		for fkey in self.faces():
@@ -194,9 +280,11 @@ class CoarseQuadMesh(QuadMesh):
 			meshes.append(QuadMesh.from_vertices_and_faces(vertices, faces))
 
 
-		self.quadmesh = meshes_join_and_weld(meshes)
+		self.quad_mesh = meshes_join_and_weld(meshes)
 
-		return self.quadmesh
+		return self.quad_mesh
+
+
 # ==============================================================================
 # Main
 # ==============================================================================
@@ -220,5 +308,9 @@ if __name__ == '__main__':
 		pass
 		#print mesh.get_strip_density(mesh.edge_strip(edge))
 	mesh.densification()
-	quadmesh = mesh.quadmesh
-	print quadmesh.number_of_faces()
+	quad_mesh = mesh.quad_mesh
+	print quad_mesh.number_of_faces()
+
+	coarse_quad_mesh = CoarseQuadMesh.from_quad_mesh(quad_mesh)
+	print coarse_quad_mesh.vertex_coordinates(coarse_quad_mesh.get_any_vertex())
+	print coarse_quad_mesh.vertex
