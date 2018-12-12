@@ -22,7 +22,8 @@ __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
 	'select_mesh_polyedge',
-	'select_mesh_strip'
+	'select_mesh_strip',
+	'select_mesh_strips'
 ]
 
 
@@ -124,6 +125,36 @@ def select_mesh_strip(mesh, show_density = False):
  		rs.DeleteObjects(guids_to_dot.values())
  	
  	return skey
+
+def select_mesh_strips(mesh, show_density = False):
+	"""Select quad mesh strips.
+
+	Parameters
+	----------
+	mesh : Mesh
+		The mesh.
+	show_density : bool
+		Optional argument to show strip density parameter. False by default.
+
+	Returns
+	-------
+	hashable
+		The strip key.
+
+	"""
+
+	strips = list(mesh.strips())
+	skeys = []
+
+	while True:
+		
+		skey = select_mesh_strip(mesh, show_density = show_density)
+
+		if skey is None:
+			return skeys
+
+		if skey in strips:
+			skeys.append(skey)
 
 # ==============================================================================
 # Main
