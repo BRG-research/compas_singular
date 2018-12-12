@@ -21,10 +21,6 @@ def avrg(list):
 	float
 		The mean value.
 
-	Raises
-	------
-	-
-
 	"""
 
 	return sum(list) / float(len(list))
@@ -41,10 +37,6 @@ def st_dev(list):
 	-------
 	float
 		The standard deviation value.
-
-	Raises
-	------
-	-
 
 	"""
 
