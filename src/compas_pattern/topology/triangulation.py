@@ -33,7 +33,7 @@ def delaunay_from_points_numpy_xfunc(vertices):
 	return delaunay_from_points_numpy(vertices)
 
 def delaunay(vertices, src = 'compas', cls=None):
-	"""Group the Delaunay functios from compas, numpy.
+	"""Group the Delaunay functions from compas, numpy.
 
 	Parameters
 	----------
