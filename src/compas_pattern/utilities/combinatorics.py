@@ -8,6 +8,21 @@ __all__ = [
 ]
 
 def binomial_coefficient(n, k):
+	"""Binomial coefficient (n k), i.e. the number of possible combinations to select k elements among n ones.
+
+	Parameters
+	----------
+	n : int
+		Number of elements.
+	k : int
+		Number of selected elements.
+
+	Returns
+	-------
+	x : int
+		The number of possible combinations.
+
+	"""
 
 	k = min(k, n - k)
 	x = 1
