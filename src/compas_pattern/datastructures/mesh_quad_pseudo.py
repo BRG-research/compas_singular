@@ -13,6 +13,9 @@ __all__ = [
 ]
 
 class PseudoQuadMesh(QuadMesh):
+    """ WIP!
+
+    """
 
     def __init__(self):
         super(PseudoQuadMesh, self).__init__()
