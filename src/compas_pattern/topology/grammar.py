@@ -9,6 +9,7 @@ from compas_pattern.topology.joining_welding import network_disconnected_vertice
 from compas.geometry.algorithms.smoothing import mesh_smooth_centroid
 
 from compas.geometry import centroid_points
+from compas.geometry import distance_point_point
 
 from compas.utilities import pairwise
 
@@ -22,7 +23,9 @@ __all__ = [
     'strips_to_split_to_preserve_boundaries_before_deleting_strips',
     'delete_strip',
     'delete_strips',
-    'split_strip'
+    'split_strip',
+    'add_opening',
+    'add_handle'
 ]
 
 def add_strip(mesh, polyedge):
@@ -299,77 +302,63 @@ def split_strip(mesh, skey):
 
 #     return new_fkeys
 
-# def add_handle(mesh, fkey_1, fkey_2):
-#     # add a handle between two faces by first adding openings
-#     # add from two openings directly?
+def add_opening(mesh, fkey):
+    """Add an opening to a mesh face.
 
-#     # check orientation: is the normal of face i pointing towards face j?
-#     v_12 = subtract_vectors(mesh.face_centroid(fkey_2), mesh.face_centroid(fkey_1))
-#     orientation_1 = dot_vectors(v_12, mesh.face_normal(fkey_1))
-#     v_21 = subtract_vectors(mesh.face_centroid(fkey_1), mesh.face_centroid(fkey_2))
-#     orientation_2 = dot_vectors(v_21, mesh.face_normal(fkey_2))
-#     # if both orientations are not the same, stop
-#     if orientation_1 * orientation_2 < 0:
-#         return None
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    fkey : hashable
+        A face key.
 
-#     vertices = [vkey for vkey in mesh.vertices()]
+    Returns
+    -------
+    list
+        List of new vertex keys around the opening oriented towards the outside.
 
-#     # add firtst opening
-#     faces_1 = add_opening(mesh, fkey_1)
-#     # find newly added vertices
-#     vertices_1 = [vkey for vkey in mesh.vertices() if vkey not in vertices]
+    """
 
-#     # add second opening
-#     faces_2 = add_opening(mesh, fkey_2)
-#     # find newly added vertices
-#     vertices_2 = [vkey for vkey in mesh.vertices() if vkey not in vertices and vkey not in vertices_1]
+    initial_vertices = mesh.face_vertices(fkey)
 
-#     # sort the vertices along the new boundary components
-#     # first one
-#     sorted_vertices_1 = [vertices_1.pop()]
-#     count = 4
-#     while len(vertices_1) > 0 and count > 0:
-#         count -= 1
-#         for vkey in vertices_1:
-#             if vkey in mesh.halfedge[sorted_vertices_1[-1]] and mesh.halfedge[sorted_vertices_1[-1]][vkey] is not None:
-#                 sorted_vertices_1.append(vkey)
-#                 vertices_1.remove(vkey)
-#                 break
+    new_vertices = [mesh.add_vertex(attr_dict = {i: xyz for i, xyz in zip(['x', 'y', 'z'], centroid_points([mesh.face_centroid(fkey), mesh.vertex_coordinates(vkey)]))}) for vkey in initial_vertices]
 
-#     # second one
-#     sorted_vertices_2 = [vertices_2.pop()]
-#     count = 4
-#     while len(vertices_2) > 0 and count > 0:
-#         count -= 1
-#         for vkey in vertices_2:
-#             if vkey in mesh.halfedge[sorted_vertices_2[-1]] and mesh.halfedge[sorted_vertices_2[-1]][vkey] is not None:
-#                 sorted_vertices_2.append(vkey)
-#                 vertices_2.remove(vkey)
-#                 break        
+    mesh.delete_face(fkey)
 
-#     # match the facing boundary vertices so as to reduce the total distance
-#     min_dist = -1
-#     sorted_vertices = []
-#     for i in range(4):
-#         a, b, c, d = sorted_vertices_1
-#         e, f, g, h = [sorted_vertices_2[j - i] for j in range(4)]
-#         d1 = distance_point_point(mesh.vertex_coordinates(a), mesh.vertex_coordinates(e))
-#         d2 = distance_point_point(mesh.vertex_coordinates(b), mesh.vertex_coordinates(h))
-#         d3 = distance_point_point(mesh.vertex_coordinates(c), mesh.vertex_coordinates(g))
-#         d4 = distance_point_point(mesh.vertex_coordinates(d), mesh.vertex_coordinates(f))
-#         dist = d1 + d2 + d3 + d4
-#         if min_dist < 0 or dist < min_dist:
-#             min_dist = dist
-#             sorted_vertices = [a, b, c, d, e, f, g, h]
+    new_faces = [mesh.add_face([initial_vertices[i - 1], initial_vertices[i], new_vertices[i], new_vertices[i - 1]]) for i in range(len(initial_vertices))]
 
-#     # add the new faces that close the holes as a handle
-#     a, b, c, d, e, f, g, h = sorted_vertices
-#     fkey_1 = mesh.add_face([a, d, f, e])
-#     fkey_2 = mesh.add_face([d, c, g, f])
-#     fkey_3 = mesh.add_face([c, b, h, g])
-#     fkey_4 = mesh.add_face([b, a, e, h])
+    return new_vertices
 
-#     return faces_1 + faces_2 + (fkey_1, fkey_2, fkey_3, fkey_4)
+def add_handle(mesh, fkey_1, fkey_2):
+    """Add a handle between two quad mesh faces.
+
+    Parameters
+    ----------
+    mesh : QuadMesh
+        A quad mesh.
+    fkey_1 : hashable
+        A face key.
+    fkey_2 : hashable
+        A face key.
+
+    Returns
+    -------
+    list
+        List of new face keys around the opening
+
+    """
+
+    # add two openings
+    new_vertices_1 = add_opening(mesh, fkey_1)
+    new_vertices_2 = add_opening(mesh, fkey_2)
+
+    # get offset between new openings as to minimise the twist of the handle
+    offset_distance = {k: sum([distance_point_point(mesh.vertex_coordinates(new_vertices_1[(i - 1) % 4]), mesh.vertex_coordinates(new_vertices_2[(- i - k) % 4])) for i in range(4)]) for k in range(4)}
+    k = min(offset_distance, key = offset_distance.get)
+    
+    # add handle
+    return [mesh.add_face([new_vertices_1[(i - 1) % 4], new_vertices_1[i], new_vertices_2[(- i - 1 - k) % 4], new_vertices_2[(- i - k) % 4]]) for i in range(4)]
+
     
 # def close_handle(mesh, fkeys):
 #     # remove handle and close openings
@@ -451,8 +440,8 @@ if __name__ == '__main__':
     import compas
     from compas.plotters import MeshPlotter
 
-    #mesh = Mesh.from_obj(compas.get('quadmesh.obj'))
-
+    mesh = Mesh.from_obj(compas.get('quadmesh.obj'))
+    
     #add_strip(mesh, [26,22,69,67])
 
     #plotter = MeshPlotter(mesh)
