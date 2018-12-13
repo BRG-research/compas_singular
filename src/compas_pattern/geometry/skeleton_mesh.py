@@ -48,38 +48,38 @@ class SkeletonMesh(Skeleton):
 	# --------------------------------------------------------------------------
 	
 	def corner_faces(self):
-        """Get the indices of the corner faces in the Delaunay mesh, i.e. the ones with one neighbour.
+		"""Get the indices of the corner faces in the Delaunay mesh, i.e. the ones with one neighbour.
 
-        Returns
-        -------
-        list
-            List of face keys.
+		Returns
+		-------
+		list
+			List of face keys.
 
-        """
+		"""
 
 		return [fkey for fkey in self.faces() if len(self.face_neighbors(fkey)) == 1]
 
 	def corner_vertices(self):
-        """Get the indices of the corner vertices of the topological skeleton, i.e. the two-valent boundary vertices in the Delaunay mesh.
+		"""Get the indices of the corner vertices of the topological skeleton, i.e. the two-valent boundary vertices in the Delaunay mesh.
 
-        Returns
-        -------
-        list
-            List of vertex keys.
+		Returns
+		-------
+		list
+			List of vertex keys.
 
-        """
+		"""
 
 		return [vkey for vkey in self.vertices_on_boundary() if len(self.vertex_neighbors(vkey)) == 2]
 
 	def split_vertices(self):
-        """Get the indices of the boundary split vertices, i.e. the vertices of the singular faces.
+		"""Get the indices of the boundary split vertices, i.e. the vertices of the singular faces.
 
-        Returns
-        -------
-        list
-            List of vertex keys.
+		Returns
+		-------
+		list
+			List of vertex keys.
 
-        """
+		"""
 
 		return [vkey for fkey in self.singular_faces() for vkey in self.face_vertices(fkey)]
 
@@ -88,39 +88,39 @@ class SkeletonMesh(Skeleton):
 	# --------------------------------------------------------------------------
 
 	def branches_singularity_to_singularity(self):
-        """Get the branch polylines of the topological skeleton between singularities only, not corners.
+		"""Get the branch polylines of the topological skeleton between singularities only, not corners.
 
-        Returns
-        -------
-        list
-            List of polylines as list of point XYZ-coordinates.
+		Returns
+		-------
+		list
+			List of polylines as list of point XYZ-coordinates.
 
-        """
+		"""
 
 		map_corners = [geometric_key(self.face_circle(corner)[0]) for corner in self.corner_faces()]
 		return [branch for branch in self.branches() if geometric_key(branch[0]) not in map_corners and geometric_key(branch[-1]) not in map_corners]
 
 	def branches_singularity_to_boundary(self):
-        """Get new branch polylines between singularities and boundaries, at the location fo the split vertices. Not part of the topological skeleton.
+		"""Get new branch polylines between singularities and boundaries, at the location fo the split vertices. Not part of the topological skeleton.
 
-        Returns
-        -------
-        list
-            List of polylines as list of point XYZ-coordinates.
+		Returns
+		-------
+		list
+			List of polylines as list of point XYZ-coordinates.
 
-        """
+		"""
 
 		return [[self.face_circle(fkey)[0], self.vertex_coordinates(vkey)] for fkey in self.singular_faces() for vkey in self.face_vertices(fkey)]
 
 	def branches_boundary(self):
-        """Get new branch polylines from the Delaunay mesh boundaries split at the corner and plit vertices. Not part of the topological skeleton.
+		"""Get new branch polylines from the Delaunay mesh boundaries split at the corner and plit vertices. Not part of the topological skeleton.
 
-        Returns
-        -------
-        list
-            List of polylines as list of point XYZ-coordinates.
+		Returns
+		-------
+		list
+			List of polylines as list of point XYZ-coordinates.
 
-        """
+		"""
 
 		boundaries = [bdry + bdry[0 :] for bdry in self.boundaries()]
 		splits = self.corner_vertices() + self.split_vertices()
@@ -132,49 +132,49 @@ class SkeletonMesh(Skeleton):
 	# --------------------------------------------------------------------------
 	
 	def decomposition_polylines(self):
-        """Get all the branch polylines to form a decomposition of the Delaunay mesh.
-        These branches include the ones between singularities, between singularities and boundaries and along boundaries.
+		"""Get all the branch polylines to form a decomposition of the Delaunay mesh.
+		These branches include the ones between singularities, between singularities and boundaries and along boundaries.
 		Additional branches for some fixes: the ones to further split boundaries that only have two splits.
 
-        Returns
-        -------
-        list
-            List of polylines as list of point XYZ-coordinates.
+		Returns
+		-------
+		list
+			List of polylines as list of point XYZ-coordinates.
 
-        """
+		"""
 
 		self.polylines =  join_lines([(u, v) for polyline in self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary() + self.branches_splitting_collapsed_boundaries() for u, v in pairwise(polyline)], splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
 		return self.polylines
 
 	def decomposition_polyline(self, geom_key_1, geom_key_2):
-        """Retrieve the decomposition polyline with extremities corresponding to two geoemtric keys.
+		"""Retrieve the decomposition polyline with extremities corresponding to two geoemtric keys.
 
-        Parameters
-        ----------
-        geom_key_1 : float
-            Geometric key of one extremity.
-        geom_key_2 : float
-            Geometric key of the other extremity.
+		Parameters
+		----------
+		geom_key_1 : float
+			Geometric key of one extremity.
+		geom_key_2 : float
+			Geometric key of the other extremity.
 
-        Returns
-        -------
+		Returns
+		-------
 		list, None
 			A polyline as a list of point XYZ-coordinates if a polyline corresponds to the geometric keys, None otherwise.
-        """
+		"""
 
 		polylines = {(geometric_key(polyline[0]), geometric_key(polyline[-1])): polyline for polyline in self.polylines}
 		return polylines.get((geom_key_1, geom_key_2), polylines.get((geom_key_2, geom_key_1), None))
 
 	def decomposition_mesh(self):
-        """Return a quad mesh based on the decomposition polylines.
-        Some fixes are added to convert the mesh formed by the decomposition polylines into a (coarse) quad mesh.
+		"""Return a quad mesh based on the decomposition polylines.
+		Some fixes are added to convert the mesh formed by the decomposition polylines into a (coarse) quad mesh.
 
-        Returns
-        -------
+		Returns
+		-------
 		mesh
 			A coarse quad mesh based on the topological skeleton from a Delaunay mesh.
 
-        """
+		"""
 
 		polylines = self.decomposition_polylines()
 		boundary_keys = set([geometric_key(self.vertex_coordinates(vkey)) for vkey in self.vertices_on_boundary()])
@@ -192,14 +192,14 @@ class SkeletonMesh(Skeleton):
 	# --------------------------------------------------------------------------
 
 	def branches_splitting_collapsed_boundaries(self):
-        """Add new branches to fix the problem of boundaries with less than three splits that would be collapsed in the decomposition mesh.
+		"""Add new branches to fix the problem of boundaries with less than three splits that would be collapsed in the decomposition mesh.
 
-        Returns
-        -------
+		Returns
+		-------
 		new_branches : list
 			List of polylines as list of point XYZ-coordinates.
 			
-        """
+		"""
 
 		new_branches = []
 
@@ -233,14 +233,14 @@ class SkeletonMesh(Skeleton):
 		return new_branches
 
 	def branches_splitting_flipped_faces(self):
-        """Add new branches to fix the problem of polyline patches that would form flipped faces in the decomposition mesh.
+		"""Add new branches to fix the problem of polyline patches that would form flipped faces in the decomposition mesh.
 
-        Returns
-        -------
+		Returns
+		-------
 		new_branches : list
 			List of polylines as list of point XYZ-coordinates.
 			
-        """
+		"""
 
 		# for polyline in self.branches_singularity_to_singularity():
 		# 	lines = [(u, v) for u, v in pairwise(polyline)]
@@ -250,9 +250,9 @@ class SkeletonMesh(Skeleton):
 		return 0
 
 	def solve_triangular_faces(self):
-        """Modify the decomposition mesh from polylines to make it a quad mesh by converting the degenerated quad faces that appear as triangular faces.
+		"""Modify the decomposition mesh from polylines to make it a quad mesh by converting the degenerated quad faces that appear as triangular faces.
 			
-        """
+		"""
 
 		mesh = self.mesh
 
