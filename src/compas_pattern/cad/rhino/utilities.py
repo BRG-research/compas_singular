@@ -22,13 +22,15 @@ __all__ = [
 	'draw_graph',
 ]
 
-def draw_mesh(mesh):
+def draw_mesh(mesh, group = True):
 	"""Draw a graph in Rhino 5 as a mesh or grouped lines if at least face has 5 edges or more.
 
 	Parameters
 	----------
 	mesh : Mesh
 		A mesh.
+	group : bool
+		Group edges if polygonal mesh. Default is True.
 
 	Returns
 	-------
@@ -47,7 +49,8 @@ def draw_mesh(mesh):
 			rs.EnableRedraw(False)
 			edges =  [rs.AddLine(mesh.vertex_coordinates(u), mesh.vertex_coordinates(v)) for u, v in mesh.edges() if mesh.vertex_coordinates(u) != mesh.vertex_coordinates(v)]
 			rs.EnableRedraw(True)
-			rs.AddObjectsToGroup(edges, rs.AddGroup())
+			if group:
+				rs.AddObjectsToGroup(edges, rs.AddGroup())
 			return edges
 	
 	# return mesh
