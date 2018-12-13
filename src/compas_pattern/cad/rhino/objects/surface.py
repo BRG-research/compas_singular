@@ -182,15 +182,15 @@ class RhinoSurface(RhinoSurface):
 		
 		for border in borders:
 			border = RhinoCurve(border)
-			extremities = map(lambda x: rs.EvaluateSurface(border.guid, rs.CurveParameter(border.guid, x)), [0., 1.])
+			extremities = map(lambda x: rs.EvaluateCurve(border.guid, rs.CurveParameter(border.guid, x)), [0., 1.])
 		
 			if rs.IsCurveClosed(border.guid):
 				start_tgt, end_tgt = border.tangents(extremities)
-				if not angle_vectors(start_tgt, end_tgt) == 0:
+				if not angle_vectors(start_tgt[1], end_tgt[1]) == 0:
 					kinks += extremities 
 		
 			else:
-				kinks += extemities
+				kinks += extremities
 
 		return list(set(kinks))
 
