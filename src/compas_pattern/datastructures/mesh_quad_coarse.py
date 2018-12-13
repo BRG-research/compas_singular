@@ -43,6 +43,7 @@ class CoarseQuadMesh(QuadMesh):
 		self.strip_data = {}
 		
 		self.quad_mesh = QuadMesh()
+		self.polygonal_mesh = Mesh()
 
 
 	# --------------------------------------------------------------------------
@@ -106,7 +107,8 @@ class CoarseQuadMesh(QuadMesh):
 			coarse_quad_mesh.set_strip_density(skey, d)
 
 		coarse_quad_mesh.quad_mesh = quad_mesh
-
+		coarse_quad_mesh.polygonal_mesh = quad_mesh.copy()
+		
 		return coarse_quad_mesh
 
 	# --------------------------------------------------------------------------
