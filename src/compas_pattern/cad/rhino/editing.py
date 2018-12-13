@@ -9,7 +9,7 @@ try:
 	import rhinoscriptsyntax as rs
 
 except ImportError:
-	    compas.raise_if_ironpython()
+		compas.raise_if_ironpython()
 
 from compas_pattern.datastructures.mesh_quad_coarse import CoarseQuadMesh
 from compas_pattern.datastructures.mesh_quad import QuadMesh
@@ -41,6 +41,7 @@ from compas_pattern.cad.rhino.objects.surface import RhinoCurve
 from compas_pattern.cad.rhino.objects.surface import RhinoSurface
 from compas_rhino.geometry import RhinoMesh
 
+from compas.geometry import distance_point_point
 from compas.geometry import centroid_points
 from compas.geometry import closest_point_in_cloud
 
@@ -57,6 +58,7 @@ __all__ = [
 	'editing_symmetry',
 	'editing_geometry_smoothing',
 	'automated_smoothing_constraints',
+	'automated_smoothing_surface_constraints',
 	'customized_smoothing_constraints',
 	'display_smoothing_constraints',
 	'evaluate_pattern'
@@ -81,27 +83,29 @@ def explore_pattern():
 			rs.DeleteObject(guid)
 
 		if edit is None or edit == 'exit':
-			return draw_mesh(coarse_quad_mesh.quad_mesh)
+			return draw_mesh(coarse_quad_mesh.polygonal_mesh)
 
 		if edit == 'topology':
 			editing_topology(coarse_quad_mesh)
 			coarse_quad_mesh.densification()
+			coarse_quad_mesh.polygonal_mesh = coarse_quad_mesh.quad_mesh.copy()
 
 		elif edit == 'density':
 			editing_density(coarse_quad_mesh)
+			coarse_quad_mesh.polygonal_mesh = coarse_quad_mesh.quad_mesh.copy()
 
 		elif edit == 'symmetry':
-			coarse_quad_mesh.quad_mesh = editing_symmetry(coarse_quad_mesh)
+			editing_symmetry(coarse_quad_mesh)
 
 		elif edit == 'geometry':
 			editing_geometry_smoothing(coarse_quad_mesh)
 
-		guid = draw_mesh(coarse_quad_mesh.quad_mesh)
+		guid = draw_mesh(coarse_quad_mesh.polygonal_mesh)
 		rs.EnableRedraw(True)
 		rs.EnableRedraw(False)
 
 		if edit == 'evaluate':
-			evaluate_pattern(coarse_quad_mesh.quad_mesh)
+			evaluate_pattern(coarse_quad_mesh.polygonal_mesh)
 
 def editing_topology(coarse_quad_mesh):
 	"""Edit the topology of a pattern, i.e. its singularities, via its strips.
@@ -132,24 +136,24 @@ def editing_topology(coarse_quad_mesh):
 		if operation == 'add':
 			skey = add_strip(coarse_quad_mesh, select_mesh_polyedge(coarse_quad_mesh))
 			coarse_quad_mesh.set_strip_density(skey, 1)
- 		
- 		elif operation == 'delete':
- 			skeys = set(select_mesh_strips(coarse_quad_mesh))
- 			to_split = strips_to_split_to_preserve_boundaries_before_deleting_strips(coarse_quad_mesh, skeys)
- 			for skey, n in to_split.items():
- 				skey_1, skey_2 = split_strip(coarse_quad_mesh, skey)
-	 			d = int(math.ceil(float(coarse_quad_mesh.get_strip_density(skey)) / 2.))
-	 			coarse_quad_mesh.set_strip_density(skey_1, d)
-	 			coarse_quad_mesh.set_strip_density(skey_2, d)
- 			delete_strips(coarse_quad_mesh, skeys)
+		
+		elif operation == 'delete':
+			skeys = set(select_mesh_strips(coarse_quad_mesh))
+			to_split = strips_to_split_to_preserve_boundaries_before_deleting_strips(coarse_quad_mesh, skeys)
+			for skey, n in to_split.items():
+				skey_1, skey_2 = split_strip(coarse_quad_mesh, skey)
+				d = int(math.ceil(float(coarse_quad_mesh.get_strip_density(skey)) / 2.))
+				coarse_quad_mesh.set_strip_density(skey_1, d)
+				coarse_quad_mesh.set_strip_density(skey_2, d)
+			delete_strips(coarse_quad_mesh, skeys)
 
- 		elif operation == 'split':
- 			skey = select_mesh_strip(coarse_quad_mesh)
- 			skey_1, skey_2 = split_strip(coarse_quad_mesh, skey)
- 			# update data
- 			d = int(math.ceil(float(coarse_quad_mesh.get_strip_density(skey)) / 2.))
- 			coarse_quad_mesh.set_strip_density(skey_1, d)
- 			coarse_quad_mesh.set_strip_density(skey_2, d)
+		elif operation == 'split':
+			skey = select_mesh_strip(coarse_quad_mesh)
+			skey_1, skey_2 = split_strip(coarse_quad_mesh, skey)
+			# update data
+			d = int(math.ceil(float(coarse_quad_mesh.get_strip_density(skey)) / 2.))
+			coarse_quad_mesh.set_strip_density(skey_1, d)
+			coarse_quad_mesh.set_strip_density(skey_2, d)
 		
 		# delete drawing
 		rs.DeleteObject(guid)
@@ -176,7 +180,7 @@ def editing_density(coarse_quad_mesh):
 
 		# stop if asked
 		if operation is None or operation == 'exit':
-			rs.DeleteObject(guid)
+			rs.DeleteObjects(guid)
 			break
 			
 		# get operation parameters
@@ -205,7 +209,7 @@ def editing_density(coarse_quad_mesh):
 		coarse_quad_mesh.densification()
 
 		# delete drawing
-		rs.DeleteObject(guid)
+		rs.DeleteObjects(guid)
 
 def editing_symmetry(coarse_quad_mesh):
 	"""Edit the symmetry of a pattern via Conway operators.
@@ -217,9 +221,8 @@ def editing_symmetry(coarse_quad_mesh):
 
 	"""
 
-	mesh = coarse_quad_mesh.quad_mesh
-
 	conway_operators = {
+		'conway_seed',
 		'conway_dual',
 		'conway_join',
 		'conway_ambo',
@@ -240,7 +243,7 @@ def editing_symmetry(coarse_quad_mesh):
 	while True:
 
 		rs.EnableRedraw(False)
-		guid = draw_mesh(mesh)
+		guid = draw_mesh(coarse_quad_mesh.polygonal_mesh)
 		rs.EnableRedraw(True)
 
 		operator = rs.GetString('edit symmetry?', strings = conway.keys() + ['exit'])
@@ -250,10 +253,13 @@ def editing_symmetry(coarse_quad_mesh):
 				rs.DeleteObjects(guid)
 			else:
 				rs.DeleteObject(guid)
-			return mesh
+			return coarse_quad_mesh.polygonal_mesh
 
-		if operator in conway and conway[operator] in globals() and str(conway[operator])[: 6] == 'conway':
-			mesh = globals()[conway[operator]](mesh)
+		elif operator == 'seed':
+			coarse_quad_mesh.polygonal_mesh = coarse_quad_mesh.quad_mesh.copy()
+
+		elif operator in conway and conway[operator] in globals() and str(conway[operator])[: 6] == 'conway':
+			coarse_quad_mesh.polygonal_mesh = globals()[conway[operator]](coarse_quad_mesh.polygonal_mesh)
 
 		if type(guid) == list:
 			rs.DeleteObjects(guid)
@@ -270,7 +276,11 @@ def editing_geometry_smoothing(coarse_quad_mesh):
 
 	"""
 
-	mesh = coarse_quad_mesh.quad_mesh
+	mesh_to_smooth = rs.GetString('mesh to smooth?', strings = ['polygonal_mesh', 'quad_mesh'])
+	if mesh_to_smooth == 'polygonal_mesh':
+		mesh = coarse_quad_mesh.polygonal_mesh
+	elif mesh_to_smooth == 'quad_mesh':
+		mesh = coarse_quad_mesh.quad_mesh
 
 	settings = {'iterations': 50, 'damping': .5, 'constraints': {}}
 
@@ -282,7 +292,7 @@ def editing_geometry_smoothing(coarse_quad_mesh):
 		guid = draw_mesh(mesh)
 		rs.EnableRedraw(True)
 
-		operation = rs.GetString('edit smoothing settings?', strings = ['mesh', 'smooth', 'iterations', 'damping', 'constraints', 'exit'])
+		operation = rs.GetString('edit smoothing settings?', strings = ['smooth', 'iterations', 'damping', 'constraints', 'exit'])
 
 		if operation is None or operation == 'exit':
 			if type(guid) == list:
@@ -290,13 +300,6 @@ def editing_geometry_smoothing(coarse_quad_mesh):
 			else:
 				rs.DeleteObject(guid)
 			break
-
-		elif operation == 'mesh':
-			new_mesh = rs.GetString('mesh to smooth?', strings = ['pattern', 'quad_mesh'])
-			if new_mesh == 'pattern':
-				mesh = coarse_quad_mesh.quad_mesh
-			elif new_mesh == 'quad_mesh':
-				mesh = coarse_quad_mesh.quad_mesh
 
 		elif operation == 'iterations':
 			settings[operation] = rs.GetInteger('iterations', number = settings[operation], minimum = 0)
@@ -306,10 +309,7 @@ def editing_geometry_smoothing(coarse_quad_mesh):
 
 		elif operation == 'constraints':
 			if rs.GetString('apply automated constraints?', strings = ['Yes', 'No']) == 'Yes':
-				points = rs.GetObjects('point constraints', filter = 1)
-				curves = rs.GetObjects('curve constraints', filter = 4)
-				surface = rs.GetObject('surface constraints', filter = 8)
-				settings[operation] = automated_smoothing_constraints(mesh, points, curves, surface)
+				settings[operation] = automated_smoothing_surface_constraints(mesh, RhinoSurface(rs.GetObject('surface constraints', filter = 8)))
 			settings[operation] = customized_smoothing_constraints(mesh, settings[operation])
 
 		elif operation == 'smooth':
@@ -319,6 +319,43 @@ def editing_geometry_smoothing(coarse_quad_mesh):
 			rs.DeleteObjects(guid)
 		else:
 			rs.DeleteObject(guid)
+
+def automated_smoothing_surface_constraints(mesh, surface):
+	"""Apply automatically surface-related constraints to the vertices of a mesh to smooth: kinks, boundaries and surface.
+
+	Parameters
+	----------
+	mesh : Mesh
+		The mesh to apply the constraints to for smoothing.
+	surface : RhinoSurface
+		A RhinoSurface object on which to constrain mesh vertices.
+
+	Returns
+	-------
+	constraints : dict
+		A dictionary of mesh constraints for smoothing as vertex keys pointing to point, curve or surface objects.
+
+	"""
+
+	constraints = {}
+
+	points = [rs.AddPoint(point) for point in surface.kinks()]
+	curves = surface.borders(type = 0)
+
+	constraints.update({vkey: surface.guid for vkey in mesh.vertices()})
+
+	for vkey in mesh.vertices_on_boundary():
+		xyz = mesh.vertex_coordinates(vkey)
+		projections = {curve: distance_point_point(xyz, RhinoCurve(curve).closest_point(xyz)) for curve in curves}
+		constraints.update({vkey: min(projections, key = projections.get)})
+
+	key_to_index = {i: vkey for i, vkey in enumerate(mesh.vertices())}
+	vertex_coordinates = tuple(mesh.vertex_coordinates(vkey) for vkey in mesh.vertices())
+	constraints.update({key_to_index[closest_point_in_cloud(rs.PointCoordinates(point), vertex_coordinates)[2]]: point for point in points})
+	#vertex_coordinates = {vkey: mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()}
+	#constraints.update({key_to_index[closest_point_in_cloud(rs.PointCoordinates(point), vertex_coordinates)[2]]: point for point in points})
+	
+	return constraints
 
 def automated_smoothing_constraints(mesh, points = None, curves = None, surface = None):
 	"""Apply automatically point, curve and surface constraints to the vertices of a mesh to smooth.
@@ -330,7 +367,7 @@ def automated_smoothing_constraints(mesh, points = None, curves = None, surface 
 	points : list
 		List of XYZ coordinates on which to constrain mesh vertices. Default is None.
 	curves : list
-		List of RhinoCUrve objects on which to constrain mesh vertices. Default is None.
+		List of RhinoCurve objects on which to constrain mesh vertices. Default is None.
 	surface : RhinoSurface
 		A RhinoSurface object on which to constrain mesh vertices. Default is None.
 
@@ -342,10 +379,13 @@ def automated_smoothing_constraints(mesh, points = None, curves = None, surface 
 	"""
 
 	constraints = {}
+	constrained_vertices = {}
 
 	vertices = list(mesh.vertices())
 	vertex_coordinates = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
-	constrained_vertices = {vertices[closest_point_in_cloud(rs.PointCoordinates(point), vertex_coordinates)[2]]: point for point in points}
+	
+	if points is not None:
+		constrained_vertices.update({vertices[closest_point_in_cloud(rs.PointCoordinates(point), vertex_coordinates)[2]]: point for point in points})
 	
 	if surface is not None:
 		constraints.update({vkey: surface for vkey in mesh.vertices()})
@@ -424,7 +464,7 @@ def display_smoothing_constraints(mesh, constraints):
 		Guid of Rhino points coloured according to the type of constraint applied.
 
 	"""
-
+	
 	color = {vkey: (255, 0, 0) if vkey in constraints and rs.ObjectType(constraints[vkey]) == 1
 				  else (0, 255, 0) if vkey in constraints and rs.ObjectType(constraints[vkey]) == 4
 				  else (0, 0, 255) if vkey in constraints and rs.ObjectType(constraints[vkey]) == 8
