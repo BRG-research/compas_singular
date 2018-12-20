@@ -85,17 +85,17 @@ def draw_graph(graph, key_to_colour = {}):
 	# all black if not color specified
 	key_to_colour.update({key: [0, 0, 0] for key in graph.vertices() if key not in key_to_colour})
 	
-	circles = []
+	spheres = []
 	for key in graph.vertices():
-		circle = rs.AddCircle(graph.vertex_coordinates(key), .01 * scale)
-		rs.ObjectColor(circle, key_to_colour[key])
-		circles.append(circle)
+		sphere = rs.AddSphere(graph.vertex_coordinates(key), .005 * scale)
+		rs.ObjectColor(sphere, key_to_colour[key])
+		spheres.append(sphere)
 
 	lines = [rs.AddLine(graph.vertex_coordinates(u), graph.vertex_coordinates(v)) for u, v in graph.edges()]
 	
 	# group
 	group = rs.AddGroup()
-	rs.AddObjectsToGroup(circles + lines, group)
+	rs.AddObjectsToGroup(spheres + lines, group)
 
 	rs.EnableRedraw(True)
 
