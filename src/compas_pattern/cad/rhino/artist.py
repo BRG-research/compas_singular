@@ -15,6 +15,8 @@ from compas_pattern.datastructures.mesh import Mesh
 from compas.geometry import Polyline
 from compas.geometry import scale_vector
 
+from compas_pattern.topology.grammar import add_handle
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -23,9 +25,10 @@ __email__      = 'oval@arch.ethz.ch'
 __all__ = [
 	'select_mesh_polyedge',
 	'select_mesh_strip',
-	'select_mesh_strips'
+	'select_mesh_strips',
+	'add_handle_artist',
+	'add_handles_artist'
 ]
-
 
 def select_mesh_polyedge(mesh):
 	"""Select mesh polyedge.
@@ -155,6 +158,65 @@ def select_mesh_strips(mesh, show_density = False):
 
 		if skey in strips:
 			skeys.append(skey)
+
+def add_handle_artist(mesh):
+	"""Select two mesh faces and add handle.
+
+	Parameters
+	----------
+	mesh : Mesh
+		The mesh.
+
+	Returns
+	-------
+	fkeys
+		The new face keys from the handle.
+
+	"""
+
+	artist = rhino_artist.MeshArtist(mesh, layer='mesh_artist')
+	artist.clear_layer()
+
+	artist.draw_facelabels()
+	artist.redraw()
+	fkey_1 = rhino_helper.mesh_select_face(mesh, message = 'fkey_1')
+	fkey_2 = rhino_helper.mesh_select_face(mesh, message = 'fkey_2')
+
+	if fkey_1 is not None and fkey_2 is not None:
+		fkeys = add_handle(mesh, fkey_1, fkey_2)
+	else:
+		fkeys = []
+
+	artist.clear()
+	rs.DeleteLayer('mesh_artist')
+
+	return fkeys
+
+def add_handles_artist(mesh):
+	"""Select multiple paris of mesh faces and add handles.
+
+	Parameters
+	----------
+	mesh : Mesh
+		The mesh.
+
+	Returns
+	-------
+	fkeys
+		The new face keys from the handles.
+
+	"""
+
+	all_fkeys = []
+
+	while True:
+		fkeys = add_handle_artist(mesh)
+		if fkeys == []:
+			break
+		else:
+			all_fkeys += fkeys
+
+	return all_fkeys
 
 # ==============================================================================
 # Main
