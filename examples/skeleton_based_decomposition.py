@@ -10,8 +10,8 @@ from compas_pattern.algorithms.smoothing import surface_constrained_smoothing
 
 from compas_pattern.cad.rhino.utilities import draw_mesh
 
-precision = .2
-density = .5
+precision = .5
+density = 3
 
 srf = RhinoSurface.from_selection()
 
