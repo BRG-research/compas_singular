@@ -3,6 +3,8 @@ from compas_pattern.datastructures.network import Network
 
 from compas.geometry import centroid_points
 
+from compas_pattern.topology.colorability import is_network_two_colourable
+
 from compas.utilities import pairwise
 from compas.utilities import geometric_key
 from compas_pattern.utilities.lists import list_split
@@ -461,6 +463,27 @@ class QuadMesh(Mesh):
 
 		return Network.from_vertices_and_edges(vertices, edges)
 
+	def sort_two_colourable_strips(self):
+		"""If the strip are two colourable without overlaps, dispatch them in two lists, one per colour.
+
+		Returns
+		-------
+		red_strips, blue_strips : tuple, None
+			A tuple of two lists of strips that do not overlap each other. None if the strips are not two-colourable.
+
+		"""
+
+		strip_connectivity = self.strip_connectivity()
+		key_to_colour = is_network_two_colourable(strip_connectivity)
+
+		if key_to_colour is None:
+			return None
+
+		else:
+			red_strips = [key for key, colour in key_to_colour.items() if colour == 0]
+			blue_strips = [key for key, colour in key_to_colour.items() if colour == 1]
+			return red_strips, blue_strips
+
 	# --------------------------------------------------------------------------
 	# strip geometry
 	# --------------------------------------------------------------------------
@@ -510,6 +533,32 @@ class QuadMesh(Mesh):
 		
 		else:
 			return polyline
+
+	def strip_contour_polylines(self, skey):
+		"""Return the two contour polylines of a strip.
+
+		Parameters
+		----------
+		skey : hashable
+			A strip key.
+			
+		Returns
+		-------
+		tuple
+			The pair of polylines contouring the strip.
+
+		"""
+
+		strip_edges = self.strip_edges(skey)
+
+		starts = [edge[0] for edge in strip_edges]
+		ends = [edge[1] for edge in strip_edges]
+
+		if self.is_strip_closed(skey):
+			starts += starts[:1]
+			ends += ends[:1]
+
+		return ([self.vertex_coordinates(vkey) for vkey in starts], [self.vertex_coordinates(vkey) for vkey in ends])	
 
 # ==============================================================================
 # Main
