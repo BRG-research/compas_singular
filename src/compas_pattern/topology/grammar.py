@@ -1,6 +1,7 @@
 from compas_pattern.datastructures.mesh import Mesh
 from compas_pattern.datastructures.network import Network
 
+from compas.datastructures.mesh.operations import mesh_unweld_vertices
 from compas_pattern.topology.joining_welding import mesh_unweld_edges
 
 from compas.topology import connected_components
@@ -31,8 +32,6 @@ __all__ = [
 def add_strip(mesh, polyedge):
     """Add a strip along a mesh polyedge.
 
-    WIP!
-
     Parameters
     ----------
     mesh : Mesh
@@ -45,46 +44,55 @@ def add_strip(mesh, polyedge):
 
     """
 
-    return 0
-
-    # vertex_changes = mesh_unweld_edges(mesh, [(u, v) for u, v in pairwise(polyedge)])
-    # new_vertices = [vkey for vkeys in vertex_changes.values() for vkey in vkeys]
-
-    # components = connected_components(mesh.adjacency)
+    update = {mesh.edge_strip(edge): i for i, edge in enumerate(pairwise(polyedge))}
 
 
+    left_faces = [mesh.halfedge[u][v] for u, v in pairwise(polyedge)]
+    right_faces = [mesh.halfedge[v][u] for u, v in pairwise(polyedge)]
 
-
-    # strip_faces = []
-    # new_polyedge = []
-    # for i in range(len(polyedge) - 2):
+    left_polyedge = []
+    right_polyedge = []
+    for i, vkey in enumerate(polyedge):
         
-    #     # unweld between two edges
-    #     u, v, w = polyedge[i : i + 3]
-    #     v2 = mesh_unweld_edges(mesh, [(u,v), (v,w)])[v]
-    #     new_polyedge.append(v2)
-
-    #     # remove last face from strip
-    #     if i == 0:
-    #         strip_faces += [mesh.add_face([v, u, v2]), mesh.add_face([v, w, w])]
-
-    #     elif i == len(polyedge) - 2:
-    #         mesh.delete_face(strip_faces[-1])
-    #         strip_faces += [mesh.add_face([v, u, u2, v2]), mesh.add_face([v, w, w])]
-
-    #     else:
-    #         mesh.delete_face(strip_faces[-1])
-    #         u2 = new_polyedge[-2]
-    #         strip_faces += [mesh.add_face([v, u, u2, v2]), mesh.add_face([v, v2, w])]
-
-    # fixed_vertices = list(mesh.vertices())
-    # for vkey in list(set(polyedge + new_polyedge)):
-    #         fixed_vertices.remove(vkey)
-
-    # if mesh.is_vertex_on_boundary(polyedge[0]):
-    #     mesh_unweld_edges(mesh, [(polyedge[0],polyedge[1])])
+        vkey_left = mesh.add_vertex(attr_dict = mesh.vertex[vkey])
+        left_polyedge.append(vkey_left)
+        if i == 0:
+            mesh.substitute_vertex_in_faces(vkey, vkey_left, [left_faces[0]])
+        if i == len(polyedge) - 1:
+            mesh.substitute_vertex_in_faces(vkey, vkey_left, [left_faces[len(polyedge) - 2]])
+        else:
+            mesh.substitute_vertex_in_faces(vkey, vkey_left, left_faces[i - 1: i + 1])
         
-    # mesh_smooth_centroid(mesh, fixed = fixed_vertices, kmax = 5)
+        vkey_right = mesh.add_vertex(attr_dict = mesh.vertex[vkey])
+        right_polyedge.append(vkey_right)
+        if i == 0:
+            mesh.substitute_vertex_in_faces(vkey, vkey_right, [right_faces[0]])
+        if i == len(polyedge) - 1:
+            mesh.substitute_vertex_in_faces(vkey, vkey_right, [right_faces[len(polyedge) - 2]])
+        else:
+            mesh.substitute_vertex_in_faces(vkey, vkey_right, right_faces[i - 1: i + 1])
+
+    # add strip faces
+    for i in range(len(polyedge) - 1):
+        mesh.add_face([right_polyedge[i], right_polyedge[i + 1], left_polyedge[i + 1], left_polyedge[i]])
+
+    # delete old vertices
+    for vkey in polyedge:
+        mesh.delete_vertex(vkey)
+
+    # geometrical processing: smooth to widen the strip
+    fixed = [vkey for vkey in mesh.vertices() if vkey not in left_polyedge and vkey not in right_polyedge]
+    mesh_smooth_centroid(mesh, fixed, kmax = 3)
+
+    # update trasnverse strip data
+    for skey, i in update.items():
+        mesh.strip[skey] = mesh.collect_strip(*list(pairwise(left_polyedge))[i])
+
+    # add new strip data
+    max_skey = list(mesh.strips())[-1]
+    mesh.strip[max_skey + 1] = mesh.collect_strip(left_polyedge[0], right_polyedge[0])
+
+    return max_skey + 1
 
 def strips_to_split_to_preserve_boundaries_before_deleting_strips(mesh, skeys):
     """Computes strips to split to preserve boundaries before deleting strips.
@@ -329,7 +337,7 @@ def add_opening(mesh, fkey):
 
     return new_vertices
 
-def add_handle(mesh, fkey_1, fkey_2):
+def add_handle(mesh, fkey_1, fkey_2, extremity = False):
     """Add a handle between two quad mesh faces.
 
     Parameters
@@ -340,6 +348,8 @@ def add_handle(mesh, fkey_1, fkey_2):
         A face key.
     fkey_2 : hashable
         A face key.
+    extremity : bool
+        Add rings of faces at the extremitites. Default is False.
 
     Returns
     -------
@@ -348,9 +358,15 @@ def add_handle(mesh, fkey_1, fkey_2):
 
     """
 
-    # add two openings
-    new_vertices_1 = add_opening(mesh, fkey_1)
-    new_vertices_2 = add_opening(mesh, fkey_2)
+    if extremity:
+        # add two openings
+        new_vertices_1 = add_opening(mesh, fkey_1)
+        new_vertices_2 = add_opening(mesh, fkey_2)
+    else:
+        new_vertices_1 = list(reversed(mesh.face_vertices(fkey_1)))
+        new_vertices_2 = list(reversed(mesh.face_vertices(fkey_2)))
+        mesh.delete_face(fkey_1)
+        mesh.delete_face(fkey_2)
 
     # get offset between new openings as to minimise the twist of the handle
     offset_distance = {k: sum([distance_point_point(mesh.vertex_coordinates(new_vertices_1[(i - 1) % 4]), mesh.vertex_coordinates(new_vertices_2[(- i - k) % 4])) for i in range(4)]) for k in range(4)}
@@ -359,7 +375,10 @@ def add_handle(mesh, fkey_1, fkey_2):
     # add handle
     return [mesh.add_face([new_vertices_1[(i - 1) % 4], new_vertices_1[i], new_vertices_2[(- i - 1 - k) % 4], new_vertices_2[(- i - k) % 4]]) for i in range(4)]
 
-    
+
+# def close_opening(mesh, polyedge):
+#     return 0
+
 # def close_handle(mesh, fkeys):
 #     # remove handle and close openings
 #     # fkeys: closed face strip
@@ -440,13 +459,16 @@ if __name__ == '__main__':
     import compas
     from compas.plotters import MeshPlotter
 
-    mesh = Mesh.from_obj(compas.get('quadmesh.obj'))
-    
-    #add_strip(mesh, [26,22,69,67])
+    from compas_pattern.datastructures.mesh_quad import QuadMesh
 
-    #plotter = MeshPlotter(mesh)
-    #plotter.draw_vertices(text='key')
-    #plotter.draw_edges()
-    #plotter.draw_faces()
-    #plotter.show()
+    mesh = QuadMesh.from_obj(compas.get('quadmesh.obj'))
+    mesh.collect_strips()
+
+    # add_strip(mesh, [26,22,69,67])
+
+    # plotter = MeshPlotter(mesh)
+    # plotter.draw_vertices(text='key')
+    # plotter.draw_edges()
+    # plotter.draw_faces()
+    # plotter.show()
 

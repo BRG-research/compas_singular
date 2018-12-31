@@ -8,6 +8,6 @@ guid = rs.GetObject('get quad mesh')
 
 mesh = QuadMesh.from_vertices_and_faces(*RhinoMesh.from_guid(guid).get_vertices_and_faces())
 
-add_handles_artist(mesh)
+add_handles_artist(mesh, extremity = True)
 
 draw_mesh(mesh)
