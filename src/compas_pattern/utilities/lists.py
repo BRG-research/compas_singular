@@ -52,6 +52,18 @@ def list_split(l, indices):
 
 	return split_lists
 
+def sublist_from_to_items_in_closed_list(l, from_item, to_item):
+	if from_item == to_item:
+		return [from_item]
+	if l[0] != l[-1]:
+		l.append(l[0])
+	from_idx = l.index(from_item)
+	to_idx = l.index(to_item)
+	sublists = list_split(l, [from_idx, to_idx])
+
+	for sublist in sublists:
+		if sublist[0] == from_item:
+			return sublist
 
 def are_items_in_list(items, l):
 	"""Check if items are in a list.
@@ -85,4 +97,6 @@ if __name__ == '__main__':
     import compas
 
     print list_split(range(20)+[0],[0,8,9,12,13])
+
+    print sublist_from_to_items_in_closed_list(range(20), 13, 13)
     

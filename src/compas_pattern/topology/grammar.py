@@ -14,6 +14,8 @@ from compas.geometry import distance_point_point
 
 from compas.utilities import pairwise
 
+from compas_pattern.utilities.lists import sublist_from_to_items_in_closed_list
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -44,46 +46,59 @@ def add_strip(mesh, polyedge):
 
     """
 
-    update = {mesh.edge_strip(edge): i for i, edge in enumerate(pairwise(polyedge))}
+    closed = polyedge[0] == polyedge[-1]
 
+    update = {mesh.edge_strip(edge): i for i, edge in enumerate(pairwise(polyedge))}
 
     left_faces = [mesh.halfedge[u][v] for u, v in pairwise(polyedge)]
     right_faces = [mesh.halfedge[v][u] for u, v in pairwise(polyedge)]
+    
+    if closed:
+        left_faces = [left_faces[-1]] + left_faces + [left_faces[0]]
+        right_faces = [right_faces[-1]] + right_faces +  [right_faces[0]]
+    else:
+        left_faces = [None] + left_faces + [None]
+        right_faces = [None] + right_faces + [None]
 
-    left_polyedge = []
-    right_polyedge = []
+    print left_faces, right_faces
+
+    if closed:
+        polyedge.pop()
+
+    left_polyedge = [mesh.add_vertex(attr_dict = mesh.vertex[vkey]) for vkey in polyedge]
+    right_polyedge = [mesh.add_vertex(attr_dict = mesh.vertex[vkey]) for vkey in polyedge]
+
+    to_substitute = {vkey: [] for vkey in polyedge}
+
     for i, vkey in enumerate(polyedge):
-        
-        vkey_left = mesh.add_vertex(attr_dict = mesh.vertex[vkey])
-        left_polyedge.append(vkey_left)
-        if i == 0:
-            mesh.substitute_vertex_in_faces(vkey, vkey_left, [left_faces[0]])
-        if i == len(polyedge) - 1:
-            mesh.substitute_vertex_in_faces(vkey, vkey_left, [left_faces[len(polyedge) - 2]])
-        else:
-            mesh.substitute_vertex_in_faces(vkey, vkey_left, left_faces[i - 1: i + 1])
-        
-        vkey_right = mesh.add_vertex(attr_dict = mesh.vertex[vkey])
-        right_polyedge.append(vkey_right)
-        if i == 0:
-            mesh.substitute_vertex_in_faces(vkey, vkey_right, [right_faces[0]])
-        if i == len(polyedge) - 1:
-            mesh.substitute_vertex_in_faces(vkey, vkey_right, [right_faces[len(polyedge) - 2]])
-        else:
-            mesh.substitute_vertex_in_faces(vkey, vkey_right, right_faces[i - 1: i + 1])
+        vertex_faces = mesh.vertex_faces(vkey, ordered = True, include_none = True)
 
-    # add strip faces
-    for i in range(len(polyedge) - 1):
-        mesh.add_face([right_polyedge[i], right_polyedge[i + 1], left_polyedge[i + 1], left_polyedge[i]])
+        faces = sublist_from_to_items_in_closed_list(vertex_faces, left_faces[i], left_faces[i + 1])
+        to_substitute[vkey].append((left_polyedge[i], faces))
+
+        faces = sublist_from_to_items_in_closed_list(vertex_faces, right_faces[i + 1], right_faces[i])
+        to_substitute[vkey].append((right_polyedge[i], faces))
+
+    for key, substitutions in to_substitute.items():
+        for substitution in substitutions:
+            new_key, faces = substitution
+            print key, new_key, faces
+            mesh.substitute_vertex_in_faces(key, new_key, [face for face in faces if face is not None])
 
     # delete old vertices
     for vkey in polyedge:
         mesh.delete_vertex(vkey)
 
+    # add strip faces
+    if closed:
+        polyedge.append(polyedge[0])
+    for i in range(len(polyedge) - 1):
+        mesh.add_face([right_polyedge[i], right_polyedge[(i + 1) % len(right_polyedge)], left_polyedge[(i + 1) % len(left_polyedge)], left_polyedge[i]])
+
     # geometrical processing: smooth to widen the strip
     fixed = [vkey for vkey in mesh.vertices() if vkey not in left_polyedge and vkey not in right_polyedge]
     mesh_smooth_centroid(mesh, fixed, kmax = 3)
-
+    return 0
     # update trasnverse strip data
     for skey, i in update.items():
         mesh.strip[skey] = mesh.collect_strip(*list(pairwise(left_polyedge))[i])
