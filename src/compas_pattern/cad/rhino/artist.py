@@ -159,13 +159,15 @@ def select_mesh_strips(mesh, show_density = False):
 		if skey in strips:
 			skeys.append(skey)
 
-def add_handle_artist(mesh):
+def add_handle_artist(mesh, extremity = False):
 	"""Select two mesh faces and add handle.
 
 	Parameters
 	----------
 	mesh : Mesh
 		The mesh.
+    extremity : bool
+        Add rings of faces at the extremitites. Default is False.
 
 	Returns
 	-------
@@ -180,10 +182,13 @@ def add_handle_artist(mesh):
 	artist.draw_facelabels()
 	artist.redraw()
 	fkey_1 = rhino_helper.mesh_select_face(mesh, message = 'fkey_1')
-	fkey_2 = rhino_helper.mesh_select_face(mesh, message = 'fkey_2')
+	if fkey_1 is not None:
+		fkey_2 = rhino_helper.mesh_select_face(mesh, message = 'fkey_2')
+		if fkey_2 is not None:
+			fkeys = add_handle(mesh, fkey_1, fkey_2, extremity)
 
-	if fkey_1 is not None and fkey_2 is not None:
-		fkeys = add_handle(mesh, fkey_1, fkey_2)
+		else:
+			fkeys = []
 	else:
 		fkeys = []
 
@@ -192,13 +197,15 @@ def add_handle_artist(mesh):
 
 	return fkeys
 
-def add_handles_artist(mesh):
+def add_handles_artist(mesh, extremity = False):
 	"""Select multiple paris of mesh faces and add handles.
 
 	Parameters
 	----------
 	mesh : Mesh
 		The mesh.
+    extremity : bool
+        Add rings of faces at the extremitites. Default is False.
 
 	Returns
 	-------
@@ -210,7 +217,7 @@ def add_handles_artist(mesh):
 	all_fkeys = []
 
 	while True:
-		fkeys = add_handle_artist(mesh)
+		fkeys = add_handle_artist(mesh, extremity)
 		if fkeys == []:
 			break
 		else:
