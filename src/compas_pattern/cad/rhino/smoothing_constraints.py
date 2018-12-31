@@ -90,13 +90,13 @@ def automated_smoothing_constraints(mesh, points = None, curves = None, surface 
 	vertices = list(mesh.vertices())
 	vertex_coordinates = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
 	
-	if points is not None:
+	if points is not None and len(points) != 0:
 		constrained_vertices.update({vertices[closest_point_in_cloud(rs.PointCoordinates(point), vertex_coordinates)[2]]: point for point in points})
 	
 	if surface is not None:
 		constraints.update({vkey: surface for vkey in mesh.vertices()})
 	
-	if curves is not None:
+	if curves is not None and len(curves) != 0:
 		boundaries = [split_boundary for boundary in mesh.boundaries() for split_boundary in list_split(boundary, [boundary.index(vkey) for vkey in constrained_vertices.keys() if vkey in boundary])]
 		boundary_midpoints = [Polyline([mesh.vertex_coordinates(vkey) for vkey in boundary]).point(t = .5) for boundary in boundaries]
 		curve_midpoints = [rs.EvaluateCurve(curve, rs.CurveParameter(curve, .5)) for curve in curves]
