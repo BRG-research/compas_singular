@@ -15,9 +15,11 @@ from compas_pattern.utilities.lists import list_split
 
 from compas.geometry import subtract_vectors
 from compas.geometry import angle_vectors
+from compas.geometry import angle_vectors_signed
 
 from compas.utilities import pairwise
-
+from compas.utilities import window
+from compas.utilities import geometric_key
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -143,7 +145,7 @@ class SkeletonMesh(Skeleton):
 
 		"""
 
-		self.polylines =  join_lines([(u, v) for polyline in self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary() + self.branches_splitting_collapsed_boundaries() for u, v in pairwise(polyline)], splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
+		self.polylines =  join_lines([(u, v) for polyline in self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary() + self.branches_splitting_collapsed_boundaries() + self.branches_splitting_flipped_faces() + self.branches_splitting_boundary_kinks() for u, v in pairwise(polyline)], splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
 		return self.polylines
 
 	def decomposition_polyline(self, geom_key_1, geom_key_2):
@@ -242,12 +244,54 @@ class SkeletonMesh(Skeleton):
 			
 		"""
 
-		# for polyline in self.branches_singularity_to_singularity():
-		# 	lines = [(u, v) for u, v in pairwise(polyline)]
-		# 	angles = [angle_vectors(subtract_vectors(*uv), subtract_vectors(*vw)) for uv, vw in pairwise(lines)]
-		# 	accumulate_angles = [sum(angles[:i]) for i in range(len(angles))]
+		new_branches = []
+		centre_to_fkey = {geometric_key(self.face_circle(fkey)[0]): fkey for fkey in self.faces()}
+		
+		# compute total rotation of polyline
+		for polyline in self.branches_singularity_to_singularity():
+			angles = [angle_vectors_signed(subtract_vectors(v, u), subtract_vectors(w, v), [0., 0., 1.]) for u, v, w in window(polyline, n = 3)]
+			# subdivide once per .5 * pi in rotation
+			if abs(sum(angles)) > .5 * pi:
+				# the step between subdivision points in polylines (+ 2 for the extremities, which will be discarded)
+				step = int(floor(len(polyline) / (floor(abs(sum(angles)) / (.5 * pi)) + 2)))
+				# add new branches from corresponding face in Delaunay mesh
+				for point in polyline[:: step][1:-1]:
+					fkey = centre_to_fkey[geometric_key(point)]
+					for edge in self.face_halfedges(fkey):
+						if not self.is_edge_on_boundary(*edge):
+							new_branches += [[self.face_circle(fkey)[0], self.vertex_coordinates(vkey)] for vkey in edge]
+							break
 
-		return 0
+		return new_branches
+
+	def branches_splitting_boundary_kinks(self):
+		"""Add new branches to fix the problem of boundary kinks not marked by the skeleton
+		Due to a low density that did not spot the change of curvature at the kink.
+		Does not modify the singularites on the contrarty to increasing the density.
+
+		Returns
+		-------
+		new_branches : list
+			List of polylines as list of point XYZ-coordinates.
+			
+		"""
+
+		new_branches = []
+
+		singular_faces = set(self.singular_faces())
+		for boundary in self.boundaries():
+			for u, v, w in window(boundary, n = 3):
+				u_xyz, v_xyz, w_xyz = [self.vertex_coordinates(vkey) for vkey in [u, v, w]]
+				if angle_vectors(subtract_vectors(v_xyz, u_xyz), subtract_vectors(w_xyz, v_xyz)) > pi / 10:
+					# check if not already marked via an adjacent singular face
+					if all([fkey not in singular_faces for fkey in self.vertex_faces(v)]):
+						fkey = list(self.vertex_faces(v))[0]
+						for edge in self.face_halfedges(fkey):
+							if v in edge and not self.is_edge_on_boundary(*edge):
+								new_branches += [[self.face_circle(fkey)[0], self.vertex_coordinates(vkey)] for vkey in edge]
+								break
+
+		return new_branches
 
 	def solve_triangular_faces(self):
 		"""Modify the decomposition mesh from polylines to make it a quad mesh by converting the degenerated quad faces that appear as triangular faces.
@@ -279,7 +323,7 @@ class SkeletonMesh(Skeleton):
 					# remove triangular face and merge the two boundary vertices
 					# due to singularities at the same location
 					polyline = Polyline(self.decomposition_polyline(*map(lambda x: geometric_key(mesh.vertex_coordinates(x)), boundary_vertices)))
-					point = polyline.polyline_point(t = .5, snap = True)
+					point = polyline.point(t = .5, snap = True)
 					new_vkey = mesh.add_vertex(attr_dict = {'x': point.x, 'y': point.y , 'z': point.z})
 					
 					# modify triangular face
