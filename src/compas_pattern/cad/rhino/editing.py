@@ -25,17 +25,24 @@ from compas_pattern.topology.grammar import strips_to_split_to_preserve_boundari
 
 from compas.topology import *
 
+from compas_pattern.algorithms.skeletonisation import surface_skeleton_decomposition_mesh
 from compas_pattern.algorithms.smoothing import constrained_smoothing
 
 from compas_rhino.helpers import mesh_draw_edges
 from compas_rhino.helpers import mesh_select_edges
 from compas_pattern.cad.rhino.utilities import draw_mesh
 
+from compas.geometry import Polyline
+
+from compas_rhino.geometry import RhinoPoint
+from compas_pattern.cad.rhino.objects.curve import RhinoCurve
 from compas_pattern.cad.rhino.objects.surface import RhinoSurface
 from compas_rhino.geometry import RhinoMesh
 
 from compas_pattern.cad.rhino.smoothing_constraints import automated_smoothing_surface_constraints
+from compas_pattern.cad.rhino.smoothing_constraints import automated_smoothing_constraints
 from compas_pattern.cad.rhino.smoothing_constraints import customized_smoothing_constraints
+from compas_pattern.cad.rhino.smoothing_constraints import display_smoothing_constraints
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -57,10 +64,26 @@ def explore_pattern():
 
 	"""
 
-	guid = rs.GetObject('get quad mesh')
-
-	coarse_quad_mesh = CoarseQuadMesh.from_quad_mesh(QuadMesh.from_vertices_and_faces(*RhinoMesh.from_guid(guid).get_vertices_and_faces()))
-
+	pattern_from = rs.GetString('pattern from?', strings = ['coarse_quad_mesh', 'quad_mesh', 'surface'])
+	
+	if pattern_from == 'coarse_quad_mesh':
+		guid = rs.GetObject('get coarse quad mesh', filter = 32)
+		coarse_quad_mesh = CoarseQuadMesh.from_vertices_and_faces(*RhinoMesh.from_guid(guid).get_vertices_and_faces())
+		coarse_quad_mesh.init_strip_density()
+		coarse_quad_mesh.quad_mesh = coarse_quad_mesh.copy()
+		coarse_quad_mesh.polygonal_mesh = coarse_quad_mesh.copy()
+	elif pattern_from == 'quad_mesh':
+		guid = rs.GetObject('get quad mesh', filter = 32)
+		coarse_quad_mesh = CoarseQuadMesh.from_quad_mesh(QuadMesh.from_vertices_and_faces(*RhinoMesh.from_guid(guid).get_vertices_and_faces()))
+	elif pattern_from == 'surface':
+		guid = rs.GetObject('get surface', filter = 8)
+		coarse_quad_mesh = surface_skeleton_decomposition_mesh(guid, rs.GetReal('precision', number = 1.))
+		coarse_quad_mesh.init_strip_density()
+		coarse_quad_mesh.quad_mesh = coarse_quad_mesh.copy()
+		coarse_quad_mesh.polygonal_mesh = coarse_quad_mesh.copy()
+	else:
+		return 0
+	
 	while True:
 
 		edit = rs.GetString('edit pattern?', strings = ['topology', 'density', 'symmetry', 'geometry', 'evaluate', 'exit'])
@@ -272,9 +295,7 @@ def editing_geometry_smoothing(coarse_quad_mesh):
 
 	settings = {'iterations': 50, 'damping': .5, 'constraints': {}}
 
-	count = 100
-	while count:
-		count -= 1
+	while True:
 
 		rs.EnableRedraw(False)
 		guid = draw_mesh(mesh)
@@ -296,10 +317,33 @@ def editing_geometry_smoothing(coarse_quad_mesh):
 			settings[operation] = rs.GetReal('damping', number = settings[operation], minimum = 0., maximum = 1.)
 
 		elif operation == 'constraints':
-			if rs.GetString('apply automated constraints?', strings = ['Yes', 'No']) == 'Yes':
-				settings[operation] = automated_smoothing_surface_constraints(mesh, RhinoSurface(rs.GetObject('surface constraints', filter = 8)))
-			settings[operation] = customized_smoothing_constraints(mesh, settings[operation])
-
+			count = 100
+			while count:
+				count -= 1
+				guids = display_smoothing_constraints(mesh, settings[operation])
+				constraint_type = rs.GetString('type of constraints?', strings = ['surface', 'automated', 'customised', 'reset', 'exit'])
+				rs.DeleteObjects(guids)
+				if constraint_type == 'surface':
+					settings[operation] = automated_smoothing_surface_constraints(mesh, RhinoSurface(rs.GetObject('surface constraints', filter = 8)))
+				elif constraint_type == 'automated':
+					object_constraints = rs.GetObjects('object constraints')
+					point_constraints = [obj for obj in object_constraints if rs.ObjectType(obj) == 1]
+					curve_constraints = [RhinoCurve(obj) for obj in object_constraints if rs.ObjectType(obj) == 4]
+					surface_constraint = [RhinoSurface(obj) for obj in object_constraints if rs.ObjectType(obj) == 8]
+					if len(surface_constraint) > 1:
+						print 'More than one surface constraint! Only the first one is taken into account.'
+					if len(surface_constraint) == 0:
+						surface_constraint = None
+					else:
+						surface_constraint = surface_constraint[0]
+					settings[operation] = automated_smoothing_constraints(mesh, point_constraints, curve_constraints, surface_constraint)
+				elif constraint_type == 'customised':
+					settings[operation] = customized_smoothing_constraints(mesh, settings[operation])
+				elif constraint_type == 'reset':
+					settings[operation] = {}
+				else:
+					break
+				
 		elif operation == 'smooth':
 			constrained_smoothing(mesh, kmax = settings['iterations'], damping = settings['damping'], constraints = settings['constraints'], algorithm = 'area')
 
