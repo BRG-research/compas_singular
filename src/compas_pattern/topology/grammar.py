@@ -60,8 +60,6 @@ def add_strip(mesh, polyedge):
         left_faces = [None] + left_faces + [None]
         right_faces = [None] + right_faces + [None]
 
-    print left_faces, right_faces
-
     if closed:
         polyedge.pop()
 
@@ -82,7 +80,6 @@ def add_strip(mesh, polyedge):
     for key, substitutions in to_substitute.items():
         for substitution in substitutions:
             new_key, faces = substitution
-            print key, new_key, faces
             mesh.substitute_vertex_in_faces(key, new_key, [face for face in faces if face is not None])
 
     # delete old vertices
@@ -92,14 +89,16 @@ def add_strip(mesh, polyedge):
     # add strip faces
     if closed:
         polyedge.append(polyedge[0])
+        left_polyedge.append(left_polyedge[0])
+        right_polyedge.append(right_polyedge[0])
     for i in range(len(polyedge) - 1):
-        mesh.add_face([right_polyedge[i], right_polyedge[(i + 1) % len(right_polyedge)], left_polyedge[(i + 1) % len(left_polyedge)], left_polyedge[i]])
+        mesh.add_face([right_polyedge[i], right_polyedge[i + 1], left_polyedge[i + 1], left_polyedge[i]])
 
     # geometrical processing: smooth to widen the strip
     fixed = [vkey for vkey in mesh.vertices() if vkey not in left_polyedge and vkey not in right_polyedge]
     mesh_smooth_centroid(mesh, fixed, kmax = 3)
-    return 0
-    # update trasnverse strip data
+    
+    # update transverse strip data
     for skey, i in update.items():
         mesh.strip[skey] = mesh.collect_strip(*list(pairwise(left_polyedge))[i])
 
