@@ -219,7 +219,7 @@ class CoarseQuadMesh(QuadMesh):
 	# densification
 	# --------------------------------------------------------------------------
 
-	def densification_2(self):
+	def geometrical_densification(self):
 		"""Generate a denser quad mesh from the coarse quad mesh and its strip densities.
 	
 		WIP!
