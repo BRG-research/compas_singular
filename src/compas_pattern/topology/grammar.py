@@ -23,13 +23,41 @@ __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
     'add_strip',
+    'add_strips',
     'strips_to_split_to_preserve_boundaries_before_deleting_strips',
     'delete_strip',
     'delete_strips',
     'split_strip',
+    'split_strips',
     'add_opening',
     'add_handle'
 ]
+
+def edit_strips(mesh, polyedges_to_add = [], strips_to_delete = []):
+    """Add and delete strips.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    polyedges_to_add : list
+        A list of polyedges to add strips.
+    strips_to_delete : list
+        A list of strip keys to delete.
+
+    Returns
+    -------
+    new_skeys : list
+        The key of the new strips.
+    """
+
+    new_skeys = add_strips(mesh, polyedges_to_add)
+
+    strips_to_split = strips_to_split_to_preserve_boundaries_before_deleting_strips(mesh, strips_to_delete)
+    split_strips(mesh, strips_to_split.keys())
+    delete_strips(mesh, strips_to_delete)
+
+    return new_skeys
 
 def add_strip(mesh, polyedge):
     """Add a strip along a mesh polyedge.
@@ -43,16 +71,23 @@ def add_strip(mesh, polyedge):
 
     Returns
     -------
+    max_skey + 1, left_polyedge, right_polyedge : tuple
+        The key of the new strip, the new strip vertices on the left, the new strip vertices on the right.
 
     """
 
+    # close or open status
     closed = polyedge[0] == polyedge[-1]
 
+    # store transversal strips to update later
     update = {mesh.edge_strip(edge): i for i, edge in enumerate(pairwise(polyedge))}
+    transverse_strips = set(update.keys())
 
+    # list faces on the left and right of the polyedge
     left_faces = [mesh.halfedge[u][v] for u, v in pairwise(polyedge)]
     right_faces = [mesh.halfedge[v][u] for u, v in pairwise(polyedge)]
     
+    # add extremities for looping on data
     if closed:
         left_faces = [left_faces[-1]] + left_faces + [left_faces[0]]
         right_faces = [right_faces[-1]] + right_faces +  [right_faces[0]]
@@ -60,23 +95,37 @@ def add_strip(mesh, polyedge):
         left_faces = [None] + left_faces + [None]
         right_faces = [None] + right_faces + [None]
 
+    # remove duplicat extremity
     if closed:
         polyedge.pop()
 
+    # duplicate polyedge
     left_polyedge = [mesh.add_vertex(attr_dict = mesh.vertex[vkey]) for vkey in polyedge]
     right_polyedge = [mesh.add_vertex(attr_dict = mesh.vertex[vkey]) for vkey in polyedge]
 
+    # store changes to apply all at once later
     to_substitute = {vkey: [] for vkey in polyedge}
 
+    all_left_faces = []
+    all_right_faces = []
+    # collect all faces to update along polyedge with corresponding new vertex
     for i, vkey in enumerate(polyedge):
         vertex_faces = mesh.vertex_faces(vkey, ordered = True, include_none = True)
-
+        # on the left
         faces = sublist_from_to_items_in_closed_list(vertex_faces, left_faces[i], left_faces[i + 1])
+        all_left_faces += faces
         to_substitute[vkey].append((left_polyedge[i], faces))
-
+        # on the right
         faces = sublist_from_to_items_in_closed_list(vertex_faces, right_faces[i + 1], right_faces[i])
+        all_right_faces += faces
         to_substitute[vkey].append((right_polyedge[i], faces))
 
+    all_left_faces = list(set(all_left_faces))
+    all_right_faces = list(set(all_right_faces))
+    left_strips = list(set([skey for fkey in all_left_faces if fkey is not None for skey in mesh.face_strips(fkey) if skey not in transverse_strips]))
+    right_strips = list(set([skey for fkey in all_right_faces if fkey is not None for skey in mesh.face_strips(fkey) if skey not in transverse_strips]))
+
+    # apply changes
     for key, substitutions in to_substitute.items():
         for substitution in substitutions:
             new_key, faces = substitution
@@ -106,7 +155,74 @@ def add_strip(mesh, polyedge):
     max_skey = list(mesh.strips())[-1]
     mesh.strip[max_skey + 1] = mesh.collect_strip(left_polyedge[0], right_polyedge[0])
 
-    return max_skey + 1
+    # update adjacent strips
+    for i in range(len(polyedge)):
+        old, left, right = polyedge[i], left_polyedge[i], right_polyedge[i]
+        mesh.substitute_vertex_in_strips(old, left, left_strips)
+        mesh.substitute_vertex_in_strips(old, right, right_strips)
+
+    return max_skey + 1, left_polyedge, right_polyedge
+
+def add_strips(mesh, polyedges):
+    """Add strips along mesh polyedges.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    polyedges : list
+        List of polyedges as lists of vertex keys forming path.
+
+    Returns
+    -------
+    new_skeys : list
+        The list of new strip keys.
+
+    """
+
+
+    new_skeys = []
+    
+    while len(polyedges) > 0:
+    
+        added_polyedge = polyedges.pop()
+        new_skey, left_polyedge, right_polyedge = add_strip(mesh, added_polyedge)
+        new_skeys.append(new_skey)
+    
+        # update polyedges
+        new_polyedges = []
+        for update_polyedge in polyedges:
+        
+            closed = update_polyedge[0] == update_polyedge[-1]
+            if closed:
+                update_polyedge.pop()
+        
+            new_polyedge = []
+            for vkey in update_polyedge:
+        
+                if vkey not in added_polyedge:
+                    new_polyedge.append(vkey)
+        
+                else:
+                    idx = added_polyedge.index(vkey)
+                    left_vkey = left_polyedge[idx]
+                    right_vkey = right_polyedge[idx]
+                    # find order
+                    if left_vkey in mesh.halfedge[new_polyedge[-1]]:
+                        new_polyedge += [left_vkey, right_vkey]
+                    elif right_vkey in mesh.halfedge[new_polyedge[-1]]:
+                        new_polyedge += [right_vkey, left_vkey]
+                    else:
+                        print 'missing vertices when updating polyedges to add'
+                        new_polyedge.append(None)
+            if closed:
+                new_polyedge.append(new_polyedge[0])
+
+            new_polyedges.append(new_polyedge)
+        
+        polyedges = new_polyedges
+
+    return new_skeys
 
 def strips_to_split_to_preserve_boundaries_before_deleting_strips(mesh, skeys):
     """Computes strips to split to preserve boundaries before deleting strips.
@@ -302,6 +418,21 @@ def split_strip(mesh, skey):
     del mesh.strip[skey]
 
     return max_skey + 1, max_skey + 2
+
+def split_strips(mesh, skeys):
+    """Split strips.
+
+    Parameters
+    ----------
+    mesh : QuadMesh
+        A quad mesh.
+    skey : set
+        Strip keys.
+
+    """
+
+    for skey in skeys:
+        split_strip(mesh, skey)
 
 # def clear_faces(mesh, fkeys, vkeys):
 #     # groups of fkeys must be a topological disc
