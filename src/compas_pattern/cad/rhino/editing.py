@@ -11,6 +11,10 @@ try:
 except ImportError:
 		compas.raise_if_ironpython()
 
+import compas_rhino.artists as rhino_artist
+import compas_rhino.helpers as rhino_helper
+from compas_pattern.cad.rhino.utilities import mesh_move_vertices
+
 from compas_pattern.datastructures.mesh_quad_coarse import CoarseQuadMesh
 from compas_pattern.datastructures.mesh_quad import QuadMesh
 
@@ -55,6 +59,8 @@ __all__ = [
 	'editing_topology',
 	'editing_density'
 	'editing_symmetry',
+	'editing_geometry',
+	'editing_geometry_moving',
 	'editing_geometry_smoothing',
 	'evaluate_pattern'
 ]
@@ -81,9 +87,11 @@ def explore_pattern():
 		coarse_quad_mesh.init_strip_density()
 		coarse_quad_mesh.quad_mesh = coarse_quad_mesh.copy()
 		coarse_quad_mesh.polygonal_mesh = coarse_quad_mesh.copy()
+		guid = draw_mesh(coarse_quad_mesh)
 	else:
 		return 0
 	
+
 	while True:
 
 		edit = rs.GetString('edit pattern?', strings = ['topology', 'density', 'symmetry', 'geometry', 'evaluate', 'exit'])
@@ -109,7 +117,7 @@ def explore_pattern():
 			editing_symmetry(coarse_quad_mesh)
 
 		elif edit == 'geometry':
-			editing_geometry_smoothing(coarse_quad_mesh)
+			editing_geometry(coarse_quad_mesh)
 
 		guid = draw_mesh(coarse_quad_mesh.polygonal_mesh)
 		rs.EnableRedraw(True)
@@ -145,7 +153,7 @@ def editing_topology(coarse_quad_mesh):
 
 		# apply operation
 		if operation == 'add':
-			skey = add_strip(coarse_quad_mesh, select_mesh_polyedge(coarse_quad_mesh))
+			skey = add_strip(coarse_quad_mesh, select_mesh_polyedge(coarse_quad_mesh))[0]
 			coarse_quad_mesh.set_strip_density(skey, 1)
 		
 		elif operation == 'delete':
@@ -277,6 +285,58 @@ def editing_symmetry(coarse_quad_mesh):
 		else:
 			rs.DeleteObject(guid)
 
+def editing_geometry(coarse_quad_mesh):
+
+	geom_operation  = rs.GetString('geometrical modification?', strings = ['moving', 'smoothing'])
+
+	if geom_operation == 'moving':
+		editing_geometry_moving(coarse_quad_mesh)
+	elif geom_operation == 'smoothing':
+		editing_geometry_smoothing(coarse_quad_mesh)
+
+def editing_geometry_moving(coarse_quad_mesh):
+	"""Edit the geometry of a pattern with moving.
+
+	Parameters
+	----------
+	coarse_quad_mesh : CoarseQuadMesh
+		The pattern to edit.
+
+	"""
+
+	mesh_to_modify = rs.GetString('mesh to modify?', strings = ['coarse_quad_mesh', 'quad_mesh'])
+	if mesh_to_modify == 'coarse_quad_mesh':
+		mesh = coarse_quad_mesh
+	elif mesh_to_modify == 'quad_mesh':
+		mesh = coarse_quad_mesh.quad_mesh
+	else:
+		return 0
+
+	while True:
+
+		rs.EnableRedraw(False)
+		guid = draw_mesh(mesh)
+		rs.EnableRedraw(True)
+
+		artist = rhino_artist.MeshArtist(mesh, layer='mesh_artist')
+		artist.clear_layer()
+		artist.draw_vertexlabels(text = {key: str(key) for key in mesh.vertices()})
+		artist.redraw()
+		vkeys = rhino_helper.mesh_select_vertices(mesh, message = 'vertices to move')
+		artist.clear_layer()
+		artist.redraw()
+		rs.DeleteLayer('mesh_artist')
+
+		if vkeys == []:
+			rs.DeleteObject(guid)
+			break
+
+		mesh_move_vertices(mesh, vkeys)
+		rs.DeleteObject(guid)
+
+	if mesh_to_modify == 'quad_mesh':
+		coarse_quad_mesh.polygonal_mesh = coarse_quad_mesh.quad_mesh.copy()
+
 def editing_geometry_smoothing(coarse_quad_mesh):
 	"""Edit the geometry of a pattern with smoothing.
 
@@ -328,8 +388,8 @@ def editing_geometry_smoothing(coarse_quad_mesh):
 				elif constraint_type == 'automated':
 					object_constraints = rs.GetObjects('object constraints')
 					point_constraints = [obj for obj in object_constraints if rs.ObjectType(obj) == 1]
-					curve_constraints = [RhinoCurve(obj) for obj in object_constraints if rs.ObjectType(obj) == 4]
-					surface_constraint = [RhinoSurface(obj) for obj in object_constraints if rs.ObjectType(obj) == 8]
+					curve_constraints = [obj for obj in object_constraints if rs.ObjectType(obj) == 4]
+					surface_constraint = [obj for obj in object_constraints if rs.ObjectType(obj) == 8]
 					if len(surface_constraint) > 1:
 						print 'More than one surface constraint! Only the first one is taken into account.'
 					if len(surface_constraint) == 0:
@@ -351,6 +411,9 @@ def editing_geometry_smoothing(coarse_quad_mesh):
 			rs.DeleteObjects(guid)
 		else:
 			rs.DeleteObject(guid)
+
+	if mesh_to_smooth == 'quad_mesh':
+		coarse_quad_mesh.polygonal_mesh = coarse_quad_mesh.quad_mesh.copy()
 
 def evaluate_pattern(mesh):
 	"""Evaluate the properties of a mesh.
