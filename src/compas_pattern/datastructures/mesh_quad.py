@@ -245,6 +245,17 @@ class QuadMesh(Mesh):
 		# split singularity polyedges
 		return [split_polyedge for polyedge in polyedges for split_polyedge in list_split(polyedge, [polyedge.index(vkey) for vkey in split_vertices if vkey in polyedge])]
 
+	def singularity_polylines(self):
+		"""Return the polylines connected to singularities.
+
+		Returns
+		-------
+		list
+			The polylines connected to singularities.
+
+		"""
+		return [[self.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in self.singularity_polyedges()]
+
 	# --------------------------------------------------------------------------
 	# strip topology
 	# --------------------------------------------------------------------------
@@ -420,7 +431,7 @@ class QuadMesh(Mesh):
 
 		return [self.edge_strip((u, v)) for u, v in list(self.face_halfedges(fkey))[:2]]
 
-	def substitute_vertex_in_strips(self, old_vkey, new_vkey):
+	def substitute_vertex_in_strips(self, old_vkey, new_vkey, strips = None):
 		"""Substitute a vertex by another one.
 
 		Parameters
@@ -429,10 +440,14 @@ class QuadMesh(Mesh):
 			The old vertex key.
 		new_vkey : hashable
 			The new vertex key.
+		strips : list
+			List of specific strip keys. Per default None, i.e. all.
 
 		"""
 
-		self.strip = {skey: [tuple([new_vkey if vkey == old_vkey else vkey for vkey in list(edge)]) for edge in self.strip[skey]] for skey in self.strips()}
+		if strips is None:
+			strips = list(self.strips())
+		self.strip.update({skey: [tuple([new_vkey if vkey == old_vkey else vkey for vkey in list(edge)]) for edge in self.strip[skey]] for skey in strips})
 
 	def delete_face_in_strips(self, fkey):
 		"""Delete face in strips.
