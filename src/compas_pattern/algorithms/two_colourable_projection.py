@@ -4,7 +4,7 @@ from compas_pattern.datastructures.mesh_quad import QuadMesh
 
 from compas_pattern.topology.colorability import is_network_two_colourable
 from compas_pattern.topology.grammar import  strips_to_split_to_preserve_boundaries_before_deleting_strips
-from compas_pattern.topology.grammar import split_strip
+from compas_pattern.topology.grammar import split_strips
 from compas_pattern.topology.grammar import delete_strips
 
 from compas_pattern.utilities.lists import are_items_in_list
@@ -71,8 +71,7 @@ def two_colourable_projection(mesh, kmax = 1):
 			copy_mesh = mesh.copy()
 			copy_mesh.collect_strips()
 			to_split = strips_to_split_to_preserve_boundaries_before_deleting_strips(copy_mesh, combination)
- 			for skey, n in to_split.items():
- 				split_strip(copy_mesh, skey)
+ 			split_strips(copy_mesh, to_split.keys())
  			delete_strips(copy_mesh, combination)
 			topological_validity = copy_mesh.is_manifold() and copy_mesh.euler() == mesh.euler()
 			if not topological_validity:
