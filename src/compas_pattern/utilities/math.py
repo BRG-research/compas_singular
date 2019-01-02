@@ -4,7 +4,7 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
-	'mean',
+	'avrg',
 	'standard_deviation'
 ]
 
