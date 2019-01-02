@@ -238,7 +238,7 @@ class Mesh(Mesh):
 		face_edge_lengths = [self.edge_length(u, v) for u, v in self.face_halfedges(fkey)]
 		return max(face_edge_lengths) / min(face_edge_lengths)
 
-	def face_skewnesses(self, fkey):
+	def face_skewness(self, fkey):
 		"""Face skewness as the maximum absolute angular deviation from the ideal polygon angle.
 
 		Parameters
