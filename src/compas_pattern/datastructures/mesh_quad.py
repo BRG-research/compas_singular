@@ -1,3 +1,6 @@
+from math import floor
+from operator import itemgetter
+
 from compas_pattern.datastructures.mesh import Mesh
 from compas_pattern.datastructures.network import Network
 
@@ -255,6 +258,53 @@ class QuadMesh(Mesh):
 
 		"""
 		return [[self.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in self.singularity_polyedges()]
+
+	def singularity_polyedge_decomposition(self):
+		"""Returns a quad patch decomposition of the mesh based on the singularity polyedges, including boundaries and additionnal splits on the boundaries.
+
+		Returns
+		-------
+		list
+			The polyedges forming the decomposition.
+
+		"""
+		polyedges = [polyedge for polyedge in self.polyedges() if (self.is_vertex_singular(polyedge[0]) or self.is_vertex_singular(polyedge[-1])) and not self.is_edge_on_boundary(polyedge[0], polyedge[1])]									
+
+		# split boundaries
+		all_splits = self.singularities()
+		for boundary in self.boundaries():
+			splits = [vkey for vkey in boundary if vkey in all_splits]
+			new_splits = []
+
+			if len(splits) == 0:
+				new_splits += [vkey for vkey in list(itemgetter(0, int(floor(len(boundary) / 3)), int(floor(len(boundary) * 2 / 3)))(boundary))]
+				
+			elif len(splits) == 1:
+				i = boundary.index(splits[0])
+				new_splits += list(itemgetter(i - int(floor(len(boundary) * 2 / 3)), i - int(floor(len(boundary) / 3)))(boundary))
+			
+			elif len(splits) == 2:
+				one, two = list_split(boundary, [boundary.index(vkey) for vkey in splits])
+				half = one if len(one) > len(two) else two
+				new_splits.append(half[int(floor(len(half) / 2))])	
+
+			for vkey in new_splits:
+				for nbr in self.vertex_neighbors(vkey):
+					if not self.is_edge_on_boundary(vkey, nbr):
+						new_polyedge = self.polyedge(vkey, nbr)
+						polyedges.append(new_polyedge)
+						all_splits = list(set(all_splits + new_polyedge))
+						break
+
+		# add boundaries
+		polyedges += [polyedge for polyedge in self.polyedges() if self.is_edge_on_boundary(polyedge[0], polyedge[1])]
+
+		# get intersections between polyedges for split
+		vertices = [vkey for polyedge in polyedges for vkey in set(polyedge)]
+		split_vertices = [vkey for vkey in self.vertices() if vertices.count(vkey) > 1]
+		
+		# split singularity polyedges
+		return [split_polyedge for polyedge in polyedges for split_polyedge in list_split(polyedge, [polyedge.index(vkey) for vkey in split_vertices if vkey in polyedge])]
 
 	# --------------------------------------------------------------------------
 	# strip topology
