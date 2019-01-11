@@ -3,6 +3,9 @@ from compas.topology.triangulation import delaunay_from_points_numpy
 from compas.utilities import XFunc
 
 from compas.geometry import is_point_in_polygon_xy
+from compas.geometry import length_vector
+from compas.geometry import subtract_vectors
+from compas.geometry import cross_vectors
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -93,6 +96,14 @@ def planar_boundaries_to_delaunay(outer_boundary, inner_boundaries, src = 'numpy
 	vertices = [pt for boundary in [outer_boundary] + inner_boundaries for pt in boundary]
 	delaunay_mesh = delaunay(vertices, src = src, cls = cls)
 	
+	# delete false faces with aligned vertices
+	for fkey in list(delaunay_mesh.faces()):
+		a, b, c = [delaunay_mesh.vertex_coordinates(vkey) for vkey in delaunay_mesh.face_vertices(fkey)]
+		ab = subtract_vectors(b, a)
+		ac = subtract_vectors(c, a)
+		if length_vector(cross_vectors(ab, ac)) == 0:
+			delaunay_mesh.delete_face(fkey)
+
 	# delete faces outisde the borders
 	for fkey in list(delaunay_mesh.faces()):
 		centre = delaunay_mesh.face_circle(fkey)[0]
