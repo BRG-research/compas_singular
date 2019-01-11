@@ -1,4 +1,5 @@
 from math import floor
+from math import ceil
 from math import pi
 from operator import itemgetter
 
@@ -13,9 +14,12 @@ from compas.utilities import geometric_key
 from compas.utilities import pairwise
 from compas_pattern.utilities.lists import list_split
 
+from compas.geometry import length_vector
+from compas.geometry import length_vector_xy
 from compas.geometry import subtract_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
+from compas.geometry import cross_vectors
 
 from compas.utilities import pairwise
 from compas.utilities import window
@@ -44,6 +48,9 @@ class SkeletonMesh(Skeleton):
 		super(SkeletonMesh, self).__init__()
 		self.mesh = None
 		self.polylines = None
+
+		self.relative_kink_angle_limit = pi / 6.
+		self.flip_angle_limit = pi / 2.
 
 	# --------------------------------------------------------------------------
 	# key elements
@@ -145,7 +152,7 @@ class SkeletonMesh(Skeleton):
 
 		"""
 
-		self.polylines =  join_lines([(u, v) for polyline in self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary() + self.branches_splitting_collapsed_boundaries() + self.branches_splitting_flipped_faces() + self.branches_splitting_boundary_kinks() for u, v in pairwise(polyline)], splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
+		self.polylines =  join_lines([(u, v) for polyline in self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary() + self.branches_splitting_flipped_faces() + self.branches_splitting_boundary_kinks() for u, v in pairwise(polyline)], splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
 		return self.polylines
 
 	def decomposition_polyline(self, geom_key_1, geom_key_2):
@@ -250,12 +257,23 @@ class SkeletonMesh(Skeleton):
 		# compute total rotation of polyline
 		for polyline in self.branches_singularity_to_singularity():
 			angles = [angle_vectors_signed(subtract_vectors(v, u), subtract_vectors(w, v), [0., 0., 1.]) for u, v, w in window(polyline, n = 3)]
-			# subdivide once per .5 * pi in rotation
-			if abs(sum(angles)) > .5 * pi:
+			# subdivide once per angle limit in rotation
+			if abs(sum(angles)) > self.flip_angle_limit:
 				# the step between subdivision points in polylines (+ 2 for the extremities, which will be discarded)
-				step = int(floor(len(polyline) / (floor(abs(sum(angles)) / (.5 * pi)) + 2)))
+				alone = len(self.singular_faces()) == 0
+				n = (floor(abs(sum(angles)) / self.flip_angle_limit) + 1)
+				step = int(floor(len(polyline) / n))
 				# add new branches from corresponding face in Delaunay mesh
-				for point in polyline[:: step][1:-1]:
+				seams = polyline[:: step]
+				if polyline[-1] != seams[-1]:
+					if len(seams) == n + 1:
+						del seams[-1]
+					seams.append(polyline[-1])
+				if alone:
+					seams = seams[0:-1]
+				else:
+					seams = seams[1:-1]
+				for point in seams:
 					fkey = centre_to_fkey[geometric_key(point)]
 					for edge in self.face_halfedges(fkey):
 						if not self.is_edge_on_boundary(*edge):
@@ -280,14 +298,23 @@ class SkeletonMesh(Skeleton):
 
 		singular_faces = set(self.singular_faces())
 		for boundary in self.boundaries():
-			for u, v, w in window(boundary, n = 3):
-				u_xyz, v_xyz, w_xyz = [self.vertex_coordinates(vkey) for vkey in [u, v, w]]
-				if angle_vectors(subtract_vectors(v_xyz, u_xyz), subtract_vectors(w_xyz, v_xyz)) > pi / 10:
+			angles = {(u, v, w): angle_vectors(subtract_vectors(self.vertex_coordinates(v), self.vertex_coordinates(u)), subtract_vectors(self.vertex_coordinates(w), self.vertex_coordinates(v))) for u, v, w in window(boundary + boundary[: 2], n = 3)}
+			for u, v, w, x, y in list(window(boundary + boundary[: 4], n = 5)):
+				
+				# check if not a corner
+				if self.vertex_valency(w) == 2:
+					continue
+				
+				angle = angles[(v, w, x)]
+				adjacent_angles = (angles[(u, v, w)] + angles[(w, x, y)]) / 2
+
+				if angle  - adjacent_angles > self.relative_kink_angle_limit:
 					# check if not already marked via an adjacent singular face
-					if all([fkey not in singular_faces for fkey in self.vertex_faces(v)]):
-						fkey = list(self.vertex_faces(v))[0]
+					if all([fkey not in singular_faces for fkey in self.vertex_faces(w)]):
+						fkeys = list(self.vertex_faces(w, ordered = True))
+						fkey = fkeys[int(floor(len(fkeys) / 2))]
 						for edge in self.face_halfedges(fkey):
-							if v in edge and not self.is_edge_on_boundary(*edge):
+							if w in edge and not self.is_edge_on_boundary(*edge):
 								new_branches += [[self.face_circle(fkey)[0], self.vertex_coordinates(vkey)] for vkey in edge]
 								break
 
