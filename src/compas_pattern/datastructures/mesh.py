@@ -1,6 +1,7 @@
 from compas.datastructures.mesh import Mesh
 
 from compas.geometry import circle_from_points
+from compas.geometry import circle_from_points_xy
 from compas.geometry import angle_points
 from compas.geometry import bestfit_plane
 
@@ -214,6 +215,32 @@ class Mesh(Mesh):
 		a, b, c = face_vertices
 
 		return circle_from_points(self.vertex_coordinates(a), self.vertex_coordinates(b), self.vertex_coordinates(c))
+
+	def face_circle_xy(self, fkey):
+		"""Get data on circumcentre of triangular face.
+
+		Parameters
+		----------
+		fkey : Key
+			The face key.
+
+		Returns
+		-------
+		list, None
+			The centre coordinates, the radius value and the normal vector of the circle.
+			None if the face is not a triangle
+
+		"""
+
+		face_vertices = self.face_vertices(fkey)
+
+		# return None if not a triangle (possible improvement with best-fit circle)
+		if len(face_vertices) != 3:
+			return None
+		
+		a, b, c = face_vertices
+
+		return circle_from_points_xy(self.vertex_coordinates(a), self.vertex_coordinates(b), self.vertex_coordinates(c))
 
 	def face_aspect_ratio(self, fkey):
 		"""Face aspect ratio as the ratio between the lengths of the maximum and minimum face edges.
