@@ -102,6 +102,7 @@ def explore_pattern():
 			rs.DeleteObject(guid)
 
 		if edit is None or edit == 'exit':
+			rs.EnableRedraw(False)
 			return draw_mesh(coarse_quad_mesh.polygonal_mesh)
 
 		if edit == 'topology':
@@ -119,10 +120,10 @@ def explore_pattern():
 		elif edit == 'geometry':
 			editing_geometry(coarse_quad_mesh)
 
+		rs.EnableRedraw(False)
 		guid = draw_mesh(coarse_quad_mesh.polygonal_mesh)
 		rs.EnableRedraw(True)
-		rs.EnableRedraw(False)
-
+		
 		if edit == 'evaluate':
 			evaluate_pattern(coarse_quad_mesh.polygonal_mesh)
 
@@ -139,10 +140,10 @@ def editing_topology(coarse_quad_mesh):
 	while True:
 
 		# update drawing
+		rs.EnableRedraw(False)
 		guid = draw_mesh(coarse_quad_mesh)
 		rs.EnableRedraw(True)
-		rs.EnableRedraw(False)
-
+		
 		# choose operation
 		operation = rs.GetString('edit strip topology?', strings = ['add', 'delete', 'split', 'exit'])
 		
@@ -190,9 +191,9 @@ def editing_density(coarse_quad_mesh):
 	while True:
 
 		# update drawing
+		rs.EnableRedraw(False)
 		guid = draw_mesh(coarse_quad_mesh.quad_mesh)
 		rs.EnableRedraw(True)
-		rs.EnableRedraw(False)
 
 		# choose operation
 		operation = rs.GetString('edit strip density?', strings = ['local_value', 'global_value', 'local_target', 'global_target', 'exit'])
