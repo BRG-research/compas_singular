@@ -167,7 +167,7 @@ class RhinoSurface(RhinoSurface):
 		vertices = [self.remap_xyz_point(uv0[:2]) for uv0 in vertices]
 		return cls.from_vertices_and_faces(vertices, faces)
 
-	def kinks(self):
+	def kinks(self, threshold=1e-3):
 		"""Return the XYZ coordinates of kinks, i.e. tangency discontinuities, along the surface's boundaries.
 
 		Returns
@@ -186,7 +186,7 @@ class RhinoSurface(RhinoSurface):
 		
 			if rs.IsCurveClosed(border.guid):
 				start_tgt, end_tgt = border.tangents(extremities)
-				if not angle_vectors(start_tgt[1], end_tgt[1]) == 0:
+				if angle_vectors(start_tgt[1], end_tgt[1]) > threshold:
 					kinks += extremities 
 		
 			else:
