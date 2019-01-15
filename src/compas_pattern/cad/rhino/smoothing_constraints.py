@@ -57,8 +57,8 @@ def automated_smoothing_surface_constraints(mesh, surface):
 		projections = {curve: distance_point_point(xyz, RhinoCurve(curve).closest_point(xyz)) for curve in curves}
 		constraints.update({vkey: min(projections, key = projections.get)})
 
-	key_to_index = {i: vkey for i, vkey in enumerate(mesh.vertices())}
-	vertex_coordinates = tuple(mesh.vertex_coordinates(vkey) for vkey in mesh.vertices())
+	key_to_index = {i: vkey for i, vkey in enumerate(mesh.vertices_on_boundary())}
+	vertex_coordinates = tuple(mesh.vertex_coordinates(vkey) for vkey in mesh.vertices_on_boundary())
 	constraints.update({key_to_index[closest_point_in_cloud(rs.PointCoordinates(point), vertex_coordinates)[2]]: point for point in points})
 	
 	return constraints
