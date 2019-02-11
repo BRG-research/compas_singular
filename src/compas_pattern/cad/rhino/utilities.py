@@ -61,7 +61,6 @@ def draw_mesh(mesh, group = True):
 				rs.AddObjectsToGroup(edges, rs.AddGroup())
 			return edges
 	
-	# return mesh
 	vertices, faces = mesh.to_vertices_and_faces()
 	mesh = rhino.utilities.drawing.xdraw_mesh(vertices, faces, None, None)
 
