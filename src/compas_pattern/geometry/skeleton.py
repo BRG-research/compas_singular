@@ -1,6 +1,7 @@
 from compas_pattern.datastructures.mesh import Mesh
+from compas.datastructures import Network
 
-from compas.topology import join_lines
+from compas.datastructures.network.operations import network_polylines
 
 from compas.utilities import geometric_key
 
@@ -75,7 +76,7 @@ class Skeleton(Mesh):
 
 		"""
 
-		return join_lines(self.lines())
+		return network_polylines(Network.from_lines(self.lines()))
 
 # ==============================================================================
 # Main
