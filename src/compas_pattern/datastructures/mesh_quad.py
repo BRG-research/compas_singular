@@ -6,7 +6,7 @@ from compas_pattern.datastructures.network import Network
 
 from compas.geometry import centroid_points
 
-from compas_pattern.topology.colorability import is_network_two_colourable
+from compas_pattern.topology.colorability import is_network_two_colorable
 
 from compas.utilities import pairwise
 from compas.utilities import geometric_key
@@ -539,7 +539,7 @@ class QuadMesh(Mesh):
 		"""
 
 		strip_connectivity = self.strip_connectivity()
-		key_to_colour = is_network_two_colourable(strip_connectivity)
+		key_to_colour = is_network_two_colorable(strip_connectivity)
 
 		if key_to_colour is None:
 			return None
