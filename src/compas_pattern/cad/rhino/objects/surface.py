@@ -186,7 +186,7 @@ class RhinoSurface(RhinoSurface):
 		
 			if rs.IsCurveClosed(border.guid):
 				start_tgt, end_tgt = border.tangents(extremities)
-				if angle_vectors(start_tgt[1], end_tgt[1]) > threshold:
+				if angle_vectors(start_tgt, end_tgt) > threshold:
 					kinks += extremities 
 		
 			else:
