@@ -1,6 +1,9 @@
 from compas.datastructures.network import Network
 from compas_pattern.datastructures.mesh import Mesh
 
+from compas.utilities import geometric_key
+from compas.utilities import pairwise
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
