@@ -7,10 +7,11 @@ from compas_pattern.topology.joining_welding import mesh_unweld_edges
 from compas.topology import connected_components
 from compas_pattern.topology.joining_welding import network_disconnected_vertices
 
-from compas.geometry.algorithms.smoothing import mesh_smooth_centroid
+from compas.datastructures.mesh import mesh_smooth_centroid
 
 from compas.geometry import centroid_points
 from compas.geometry import distance_point_point
+from compas.geometry.transformations.transformations import project_point_line
 
 from compas.utilities import pairwise
 
@@ -59,7 +60,7 @@ def edit_strips(mesh, polyedges_to_add = [], strips_to_delete = []):
 
     return new_skeys
 
-def add_strip(mesh, polyedge):
+def add_strip(mesh, polyedge, kmax = 3, damping = 0.5):
     """Add a strip along a mesh polyedge.
 
     Parameters
@@ -68,6 +69,10 @@ def add_strip(mesh, polyedge):
         A mesh.
     polyedge : list
         List of vertex keys forming path.
+    kmax : int
+        Number of iterations for strip smoothing. Default value is 3.
+    damping : float
+        Damping value for strip smoothing. Default value is 0.5.
 
     Returns
     -------
@@ -145,7 +150,23 @@ def add_strip(mesh, polyedge):
 
     # geometrical processing: smooth to widen the strip
     fixed = [vkey for vkey in mesh.vertices() if vkey not in left_polyedge and vkey not in right_polyedge]
-    mesh_smooth_centroid(mesh, fixed, kmax = 3)
+    # old_coordinates = {vkey: mesh.vertex_coordinates(vkey)}
+    # def callback(k, args):
+
+    #     mesh, fixed, old_coordinates = args
+    #     fixed = set(fixed)
+    #     for vkey in mesh.vertices_on_boundary():
+    #         if vkey not in fixed:
+    #             adj_bound_vkeys = [nbr for nbr in mesh.vertex_neighbors(vkey) if mesh.is_vertex_on_boundary(nbr)]
+    #             adj_bound_vkeys_fixed = [nbr for nbr in adj_bound_vkeys if nbr in fixed]
+    #             if len(adj_bound_vkeys_fixed) == 1:
+
+    #                 xyz = project_point_on_line(adj_bound_vkeys_fixed[0], (mesh.vertex_coordinates(vkey), mesh.vertex_coordinates(adj_bound_vkeys_fixed[0])))[0]
+    #             elif len(adj_bound_vkeys_fixed) == 2
+    #                 xyz = old_coordinates[vkey]
+
+
+    mesh_smooth_centroid(mesh, fixed, kmax = kmax, damping = damping)
     
     # update transverse strip data
     for skey, i in update.items():
