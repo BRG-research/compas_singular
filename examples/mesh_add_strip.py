@@ -36,17 +36,29 @@ guid = rs.GetObject('get quad mesh')
 mesh = CoarseQuadMesh.from_vertices_and_faces(*RhinoMesh.from_guid(guid).get_vertices_and_faces())
 mesh.init_strip_density()
 
+#mesh_2 = mesh.copy()
+#for vkey in mesh_2.vertices():
+#    rs.AddTextDot(vkey, mesh_2.vertex_coordinates(vkey))
 
-skey = add_strip(mesh, select_mesh_polyedge(mesh))
-draw_mesh(mesh)
-mesh.set_strips_density_target(.5)
-mesh.densification()
-draw_mesh(mesh.quad_mesh)
+#skey = add_strip(mesh, select_mesh_polyedge(mesh))
+#draw_mesh(mesh)
+#mesh.set_strips_density_target(.5)
+#mesh.densification()
+#draw_mesh(mesh.quad_mesh)
 
 #polyedge_1 = select_mesh_polyedge(mesh)
 #polyedge_2 = select_mesh_polyedge(mesh)
-#skey = add_strips(mesh, [polyedge_1, polyedge_2])
-#draw_mesh(mesh)
+#polyedge_3 = select_mesh_polyedge(mesh)
+
+polyedge_1 = select_mesh_polyedge(mesh)
+for i in range(1, 11):
+    mesh_2 = mesh.copy()
+    mesh_2.collect_strips()
+    d = i / 10. * (0.15 - 0.0)
+    skey = add_strip(mesh_2, polyedge_1, damping = d)
+    #skey = add_strips(mesh, [polyedge_1, polyedge_2, polyedge_3])
+    guid = draw_mesh(mesh_2)
+    rs.MoveObject(guid, [i * 15.0, 0.0, 0.0])
 
 
 
