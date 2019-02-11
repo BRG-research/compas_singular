@@ -1,5 +1,5 @@
-from compas.topology import delaunay_from_points
-from compas.topology.triangulation import delaunay_from_points_numpy
+from compas.geometry import delaunay_from_points
+from compas.geometry import delaunay_from_points_numpy
 from compas.utilities import XFunc
 
 from compas.geometry import is_point_in_polygon_xy
