@@ -3,12 +3,14 @@ from math import ceil
 from math import pi
 from operator import itemgetter
 
+from compas.datastructures import Network
+
 from compas_pattern.geometry.skeleton import Skeleton
 
 from compas_pattern.datastructures.mesh_quad_coarse import CoarseQuadMesh
 
-from compas.geometry.objects.polyline import Polyline
-from compas.topology import join_lines
+from compas.geometry import Polyline
+from compas.datastructures.network.operations import network_polylines
 
 from compas.utilities import geometric_key
 from compas.utilities import pairwise
@@ -49,7 +51,7 @@ class SkeletonMesh(Skeleton):
 		self.mesh = None
 		self.polylines = None
 
-		self.relative_kink_angle_limit = pi / 6.
+		self.relative_kink_angle_limit = pi / 8.
 		self.flip_angle_limit = pi / 2.
 
 	# --------------------------------------------------------------------------
@@ -151,8 +153,8 @@ class SkeletonMesh(Skeleton):
 			List of polylines as list of point XYZ-coordinates.
 
 		"""
-
-		self.polylines =  join_lines([(u, v) for polyline in self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary() + self.branches_splitting_flipped_faces() + self.branches_splitting_boundary_kinks() for u, v in pairwise(polyline)], splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
+		a = self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary() + self.branches_splitting_flipped_faces() + self.branches_splitting_boundary_kinks() 
+		self.polylines =  network_polylines(Network.from_lines([(u, v) for polyline in a for u, v in pairwise(polyline)]), splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
 		return self.polylines
 
 	def decomposition_polyline(self, geom_key_1, geom_key_2):
@@ -185,15 +187,13 @@ class SkeletonMesh(Skeleton):
 
 		"""
 
+
 		polylines = self.decomposition_polylines()
 		boundary_keys = set([geometric_key(self.vertex_coordinates(vkey)) for vkey in self.vertices_on_boundary()])
 		boundary_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) in boundary_keys and geometric_key(polyline[1]) in boundary_keys ]
 		other_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) not in boundary_keys or geometric_key(polyline[1]) not in boundary_keys]
-		
 		self.mesh = CoarseQuadMesh.from_polylines(boundary_polylines, other_polylines)
-		
 		self.solve_triangular_faces()
-
 		return self.mesh
 
 	# --------------------------------------------------------------------------
@@ -261,7 +261,7 @@ class SkeletonMesh(Skeleton):
 			if abs(sum(angles)) > self.flip_angle_limit:
 				# the step between subdivision points in polylines (+ 2 for the extremities, which will be discarded)
 				alone = len(self.singular_faces()) == 0
-				n = (floor(abs(sum(angles)) / self.flip_angle_limit) + 1)
+				n = floor(abs(sum(angles)) / self.flip_angle_limit) + 1
 				step = int(floor(len(polyline) / n))
 				# add new branches from corresponding face in Delaunay mesh
 				seams = polyline[:: step]
@@ -308,7 +308,7 @@ class SkeletonMesh(Skeleton):
 				angle = angles[(v, w, x)]
 				adjacent_angles = (angles[(u, v, w)] + angles[(w, x, y)]) / 2
 
-				if angle  - adjacent_angles > self.relative_kink_angle_limit:
+				if angle - adjacent_angles > self.relative_kink_angle_limit:
 					# check if not already marked via an adjacent singular face
 					if all([fkey not in singular_faces for fkey in self.vertex_faces(w)]):
 						fkeys = list(self.vertex_faces(w, ordered = True))
