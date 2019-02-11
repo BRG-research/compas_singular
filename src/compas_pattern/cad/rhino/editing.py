@@ -1,7 +1,7 @@
 import math
 
-from compas_pattern.utilities.math import avrg
-from compas_pattern.utilities.math import st_dev
+from compas.utilities.statistics import average
+from compas.utilities.statistics  import standard_deviation
 
 import compas
 
@@ -462,9 +462,9 @@ def evaluate_pattern(mesh):
 					elif aspect == 'max':
 						print max(edge_lengths)
 					elif aspect == 'average':
-						print avrg(edge_lengths)
+						print average(edge_lengths)
 					elif aspect == 'standard_deviation':
-						print st_dev(edge_lengths)
+						print standard_deviation(edge_lengths)
 				
 # ==============================================================================
 # Main
