@@ -1,8 +1,14 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+
 from math import degrees
 from math import acos
 from math import pi
 
 from compas_pattern.datastructures.mesh import Mesh
+
+from compas.geometry import Polyline
 
 from compas.geometry import length_vector
 from compas.geometry import dot_vectors
@@ -27,19 +33,20 @@ class Polyline(Polyline):
 	def __init__(self, guid):
 		super(Polyline, self).__init__(points) 
 
-	def curvature(self):
+	def vertex_curvature(self, i):
 		"""Discrete polyline curvature.
 
 
 		Parameters
 		----------
-		polyline: list
-			A list of points
+		i: int
+			Vertex index.
 
 		Returns
 		-------
-		polyline_curvatures_list: list
-			List of curvatures per vertex per polyline []curvature].
+		curvature: float, None
+			Curvature at the vertex.
+			None if index out of range
 
 		Raises
 		------
@@ -47,28 +54,25 @@ class Polyline(Polyline):
 
 		 References
 	    ----------
-	    .. [1] Lionel Du Peloux. Modeling of bending-torsion couplings in active-bending structures. Application to the design of elastic gridshells. PhD thesis, Université Paris Est, École des Ponts ParisTech. 2017.
+	    .. [1] Lionel Du Peloux. Modeling of bending-torsion couplings in active-bending structures. Application to the design of elastic gridshells. PhD thesis, Universite Paris Est, Ecole des Ponts ParisTech. 2017.
 	           Available at: https://tel.archives-ouvertes.fr/tel-01757782/document.
 
 		"""
 
-		points = self.points
-		curvatures = []
+		n = len(self.points)
 
-		for i in range(len(points)):
-		
-			if i == 0 or i == len(points) - 1:
-				curvatures.append(0)
-		
-			else:
-				a, b, c = points[i - 1 : i + 2]
-				ab = subtract_vectors(b, a)
-				bc = subtract_vectors(c, b)
-				ac = subtract_vectors(c, a)
+		if i < 0 or i > n - 1:
+			return None
 
-				curvatures.append(2 * length_vector(cross_vectors(ab, bc)) / (length_vector(ac) * length_vector(ab) * length_vector(bc)))
+		if i == 0 or i == n - 1:
+			return 0.0
 
-		return curvatures
+		a, b, c = points[i - 1 : i + 2]
+		ab = subtract_vectors(b, a)
+		bc = subtract_vectors(c, b)
+		ac = subtract_vectors(c, a)
+
+		return 2 * length_vector(cross_vectors(ab, bc)) / (length_vector(ac) * length_vector(ab) * length_vector(bc))
 
 # ==============================================================================
 # Main
@@ -77,3 +81,9 @@ class Polyline(Polyline):
 if __name__ == '__main__':
 
 	import compas
+
+	points = [[0.0, 0.0, 0.0], [1.0, 5.0, 0.0], [2.0, 0.0, 0.0], [3.0, 0.0, 0.0], [4.0, 0.0, 0.0]]
+	polyline = Polyline(points)
+
+	for i in range(len(points)):
+		print(polyline.vertex_curvature(i))
