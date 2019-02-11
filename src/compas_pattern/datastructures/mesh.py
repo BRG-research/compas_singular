@@ -5,8 +5,6 @@ from compas.geometry import circle_from_points_xy
 from compas.geometry import angle_points
 from compas.geometry import bestfit_plane
 
-from compas.topology import mesh_unify_cycles
-
 from compas.utilities import geometric_key
 from compas.utilities import pairwise
 
@@ -241,100 +239,6 @@ class Mesh(Mesh):
 		a, b, c = face_vertices
 
 		return circle_from_points_xy(self.vertex_coordinates(a), self.vertex_coordinates(b), self.vertex_coordinates(c))
-
-	def face_aspect_ratio(self, fkey):
-		"""Face aspect ratio as the ratio between the lengths of the maximum and minimum face edges.
-
-		Parameters
-		----------
-		fkey : Key
-			The face key.
-
-		Returns
-		-------
-		float
-			The aspect ratio.
-		  
-		 References
-	    ----------
-	    .. [1] Wikipedia. *Types of mesh*.
-	           Available at: https://en.wikipedia.org/wiki/Types_of_mesh.
-
-		"""
-
-		face_edge_lengths = [self.edge_length(u, v) for u, v in self.face_halfedges(fkey)]
-		return max(face_edge_lengths) / min(face_edge_lengths)
-
-	def face_skewness(self, fkey):
-		"""Face skewness as the maximum absolute angular deviation from the ideal polygon angle.
-
-		Parameters
-		----------
-		fkey : Key
-			The face key.
-
-		Returns
-		-------
-		float
-			The skewness.
-		  
-		 References
-	    ----------
-	    .. [1] Wikipedia. *Types of mesh*.
-	           Available at: https://en.wikipedia.org/wiki/Types_of_mesh.
-
-		"""
-
-		ideal_angle = 180 * (1 - 2 / float(len(self.face_vertices(fkey))))
-		
-		angles = []
-		
-		for v in self.face_vertices(fkey):
-			u = self.face_vertex_ancestor(fkey, v)
-			w = self.face_vertex_descendant(fkey, v)
-			angles.append(angle_points(self.vertex_coordinates(u), self.vertex_coordinates(v), self.vertex_coordinates(w), deg = True))
-		
-		return max((max(angles) - ideal_angle) / (180 - ideal_angle), (ideal_angle - min(angles)) / ideal_angle)
-
-	def face_curvature(self, fkey):
-		"""Dimensionless face curvature as the maximum face vertex deviation from the best-fit plane of the face vertices divided by the average lengths of the face vertices to the face centroid.
-
-		Parameters
-		----------
-		fkey : Key
-			The face key.
-
-		Returns
-		-------
-		float
-			The dimensionless curvature.
-
-		"""
-
-		plane = bestfit_plane([self.vertex_coordinates(vkey) for vkey in self.vertices()])
-
-		max_deviation = max([distance_point_plane(self.vertex_coordinates(vkey), plane) for vkey in self.vertices()])
-
-		average_distances = avrg([distance_point_point(self.vertex_coordinates(vkey), self.face_centroid(fkey)) for vkey in self.vertices()])
-
-		return max_deviation / average_distances
-
-	def mesh_vertex_curvatures(self, vkey):
-		"""Dimensionless vertex curvature.
-
-		Parameters
-		----------
-		fkey : Key
-			The face key.
-
-		Returns
-		-------
-		float
-			The dimensionless curvature.
-
-		"""
-
-		return 2 * pi - sum([angle_points(mesh.vertex_coordinates(u), mesh.vertex_coordinates(vkey), mesh.vertex_coordinates(v)) for u, v in pairwise(self.vertex_neighbours(vkey, ordered = True))])
 
 	# --------------------------------------------------------------------------
 	# modifications
