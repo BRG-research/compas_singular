@@ -12,8 +12,8 @@ from compas.geometry import add_vectors
 from compas.geometry import distance_point_point
 from compas.geometry import centroid_points
 
-from compas.datastructures.mesh.operations import meshes_join_and_weld
-from compas.datastructures.mesh.operations import mesh_weld
+from compas.datastructures import meshes_join_and_weld
+from compas.datastructures import mesh_weld
 
 from compas.topology import trimesh_subdivide_loop
 
