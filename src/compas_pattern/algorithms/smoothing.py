@@ -6,11 +6,9 @@ except ImportError:
     if platform.python_implementation() == 'IronPython':
         raise
 
-from compas.geometry.algorithms.smoothing_cpp import smooth_centroid_cpp
-
-from compas.geometry.algorithms.smoothing import mesh_smooth_centroid
-from compas.geometry.algorithms.smoothing import mesh_smooth_area
-from compas.geometry.algorithms.smoothing import mesh_smooth_centerofmass
+from compas.datastructures import mesh_smooth_centroid
+from compas.datastructures import mesh_smooth_area
+from compas.datastructures import mesh_smooth_centerofmass
 
 from compas_rhino.geometry import RhinoPoint
 from compas_pattern.cad.rhino.objects.curve import RhinoCurve
