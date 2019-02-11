@@ -65,7 +65,7 @@ def surface_skeleton(srf_guid, precision):
 	skeleton = planar_boundaries_to_delaunay(boundaries[0], boundaries[1 :], cls = Skeleton)
 
 	# generation and remapping of the topological skeleton from the Delaunay mesh of/on the surface
-	return [polyline_to_surface(srf_guid, polyline) for polyline in skeleton.branches()]
+	return mesh_to_surface(srf_guid, skeleton), [polyline_to_surface(srf_guid, polyline) for polyline in skeleton.branches()]
 	
 def surface_skeleton_decomposition_mesh(srf_guid, precision):
 	"""Generate a coarse quad mesh of a surface using its topological skeleton an its singularities.
