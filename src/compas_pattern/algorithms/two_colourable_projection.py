@@ -2,7 +2,7 @@ import itertools
 
 from compas_pattern.datastructures.mesh_quad import QuadMesh
 
-from compas_pattern.topology.colorability import is_network_two_colourable
+from compas_pattern.topology.colorability import is_network_two_colorable
 from compas_pattern.topology.grammar import  strips_to_split_to_preserve_boundaries_before_deleting_strips
 from compas_pattern.topology.grammar import split_strips
 from compas_pattern.topology.grammar import delete_strips
@@ -39,7 +39,7 @@ def two_colourable_projection(mesh, kmax = 1):
 
 	# result for input mesh
 	strip_network = mesh.strip_connectivity()
-	results = {(): is_network_two_colourable(strip_network)}
+	results = {(): is_network_two_colorable(strip_network)}
 
 	# guarantee valid kmax
 	n = mesh.number_of_strips()
@@ -82,7 +82,7 @@ def two_colourable_projection(mesh, kmax = 1):
 				copy_network = strip_network.copy()
 				for vkey in combination:
 					copy_network.delete_vertex(vkey)
-				two_colourability = is_network_two_colourable(copy_network)
+				two_colourability = is_network_two_colorable(copy_network)
 				if not two_colourability:
 					results[combination] = 'not two-colourable'
 				else:
