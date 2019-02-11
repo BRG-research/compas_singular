@@ -31,8 +31,8 @@ def adjacent_topologies_delete(quad_mesh, k):
 
 	Returns
 	-------
-	adjacent_topologies : dict
-		The dictionary of adjacent topologies with distances k pointing to the tuples of (coarse) quad meshes and combinations of strips deleted.
+	adjacent_topologies : list
+		The list of adjacent topologies with tuples of (coarse) quad meshes and combinations of strips deleted.
 
 	"""
 
