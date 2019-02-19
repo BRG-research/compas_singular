@@ -1,6 +1,7 @@
 __all__ = [
 	'list_split',
-	'are_items_in_list'
+	'are_items_in_list',
+	'sublist_from_to_items_in_closed_list'
 ]
 
 
