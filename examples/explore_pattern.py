@@ -1,3 +1,3 @@
-from compas_pattern.cad.rhino.editing import explore_pattern
+from compas_pattern.cad.rhino.tool import singular
 
-explore_pattern()
+singular()
