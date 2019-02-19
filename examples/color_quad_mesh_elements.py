@@ -33,7 +33,7 @@ for guid in guids:
 #        guid = rs.AddPolyline([mesh.vertex_coordinates(vkey) for vkey in mesh.face_vertices(key) + mesh.face_vertices(key)[:1]])
 #        rs.ObjectColor(guid, colors[color])
 #        rs.MoveObject(guid, [2 * dx, 0, 0])
-    
+#    
     rs.EnableRedraw(False)
     # strips
     key_to_color = mesh_strip_n_coloring(mesh)
@@ -41,10 +41,10 @@ for guid in guids:
         guid = rs.AddPolyline(mesh.strip_edge_polyline(key))
         rs.CurveArrows(guid, 3)
         rs.ObjectColor(guid, colors[color])
-        rs.MoveObject(guid, [3 * dx, 0, 0])
+        #rs.MoveObject(guid, [3 * dx, 0, 0])
 #        for contour in mesh.strip_contour_polylines(key):
 #            guid = rs.AddPolyline(contour)
 #            rs.ObjectColor(guid, colors[color])
 #            rs.MoveObject(guid, [4 * dx, 0, 0])
 #    guid = draw_mesh(mesh)
-    rs.MoveObject(guid, [3 * dx, 0, 0])
+#    rs.MoveObject(guid, [3 * dx, 0, 0])
