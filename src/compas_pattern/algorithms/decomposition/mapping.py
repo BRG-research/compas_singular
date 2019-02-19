@@ -62,7 +62,7 @@ def surface_discrete_mapping(srf_guid, precision, crv_guids = [], pt_guids = [])
 				points.append(points[0])
 			
 			mapped_border.append(points)
-			delete_object(border.guid)
+			rs.DeleteObject(border.guid)
 		mapped_borders.append(mapped_border)
 
 	outer_boundaries, inner_boundaries = [network_polylines(Network.from_lines([(u, v) for border in mapped_borders[i] for u, v in pairwise(border)])) for i in [0, 1]]
