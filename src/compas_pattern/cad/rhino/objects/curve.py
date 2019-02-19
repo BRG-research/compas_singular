@@ -39,13 +39,6 @@ class RhinoCurve(RhinoCurve):
 		"""
 		return rs.CurveLength(self.guid)
 
-	def delete(self):
-		"""Delete the curve object.
-
-		"""
-
-		rs.DeleteObject(self.guid)
-
 	def is_closed(self):
 		"""Assess if the curve is closed.
 
