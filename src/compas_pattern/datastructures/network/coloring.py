@@ -36,7 +36,7 @@ def is_network_two_colorable(network):
 	# store color status of network vertices (-1 means no color)
 	key_to_color = {vkey: -1 for vkey in network.vertices()}
 	
-	# start from any vertex and color it
+	# start from any vertex, color it and propagate to neighbors
 	key_0 = network.get_any_vertex()
 	sources = [key_0]
 	key_to_color[key_0] = 0
@@ -47,18 +47,20 @@ def is_network_two_colorable(network):
 	while count > 0 and sources:
 		count -= 1
 		key = sources.pop()
+		nbr_colors = {key_to_color[nbr] for nbr in network.vertex_neighbors(key)}
 
-		for nbr in network.vertex_neighbors(key):
-			# if already colored and with the same color as the neighbour, return False
-			# FALSE!!!!!!!!!!!!!!!
-			if key_to_color[nbr] != -1 and key_to_color[key] == key_to_color[nbr]:
-				return None
-			# if not colored, color the opposite color of the neighbour and add to sources for propagation
-			elif key_to_color[nbr] == -1:
-				key_to_color[nbr] = 1 - key_to_color[key]
-				sources.append(nbr)
+		# if two colors already exist in the neighbors, the network is not two-colourable
+		if 0 in nbr_colors and 1 in nbr_colors:
+			return None
+		# otherwise, color with an available color
+		else:
+			if 0 not in nbr_colors:
+				key_to_color[key] = 0
+			elif 1 not in nbr_colors:
+				key_to_color[key] = 1
+			# add uncolored neighbors to sources
+			sources += [nbr for nbr in network.vertex_neighbors(key) if key_to_color[nbr] == -1]
 
-	# if completed, return True
 	return key_to_color
 
 
@@ -69,3 +71,27 @@ def is_network_two_colorable(network):
 if __name__ == '__main__':
 
 	import compas
+	from compas_pattern.datastructures.network.network import Network
+
+	vertices = [
+		[0, 0, 0],
+		[1, 0, 0],
+		[2, 0, 0],
+		[2, 1, 0],
+		[1, 1, 0],
+		[0, 1, 0],
+	]
+
+	edges = [
+		(0, 1),
+		(1, 2),
+		(2, 3),
+		(3, 4),
+		(4, 5),
+		(5, 0),
+		(0, 3),
+		(2, 5)
+	]
+
+	network = Network.from_vertices_and_edges(vertices, edges)
+	print is_network_two_colorable(network)
