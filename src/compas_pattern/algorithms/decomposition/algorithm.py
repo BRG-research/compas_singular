@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-def surface_decomposition(srf_guid, precision, output_delaunay = False, output_skeleton = True, output_mesh = True, output_polysurface = False):
+def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output_delaunay=False, output_skeleton=True, output_mesh=True, output_polysurface=False):
 	"""Generate the topological skeleton/medial axis of a surface based on a Delaunay triangulation, after mapping and before remapping.
 
 	Parameters
@@ -24,6 +24,10 @@ def surface_decomposition(srf_guid, precision, output_delaunay = False, output_s
 		A Rhino surface guid.
 	precision : float
 		A discretisation precision.
+	crv_guids : list
+		A list of Rhino curve guids.
+	pt_guids : list
+		A list of Rhino points guids.
 	output_delaunay : bool
 		Output the Delaunay or not.
 		Default is False.
@@ -56,30 +60,30 @@ def surface_decomposition(srf_guid, precision, output_delaunay = False, output_s
 	"""
 
 	# mapping NURBS surface to planar polyline borders
-	outer_boundary, inner_boundaries, polyline_features, point_features = surface_discrete_mapping(srf_guid, precision)
+	outer_boundary, inner_boundaries, polyline_features, point_features = surface_discrete_mapping(srf_guid, precision, crv_guids, pt_guids)
 
 	# Delaunay triangulation of the palnar polyline borders
-	skeleton = boundary_triangulation(outer_boundary, inner_boundaries, polyline_features, point_features, cls = Decomposition)
+	decomposition = boundary_triangulation(outer_boundary, inner_boundaries, polyline_features, point_features, cls=Decomposition)
 
 	outputs = []
 
 	# output remapped Delaunay mesh
 	if output_delaunay:
-		outputs.append(RhinoSurface(srf_guid).remap_xyz_mesh(skeleton))
+		outputs.append(RhinoSurface(srf_guid).remap_xyz_mesh(decomposition))
 
 	# output remapped topological skeleton/medial axis
 	if output_skeleton:
-		outputs.append([RhinoSurface(srf_guid).remap_xyz_polyline(polyline) for polyline in skeleton.branches()])
+		outputs.append([RhinoSurface(srf_guid).remap_xyz_polyline(polyline) for polyline in decomposition.branches()])
 
 	# output decomposition coarse quad mesh
 	if output_mesh:
-		outputs.append(RhinoSurface(srf_guid).remap_xyz_mesh(skeleton.decomposition_mesh()))
+		outputs.append(RhinoSurface(srf_guid).remap_xyz_mesh(decomposition.decomposition_mesh()))
 
 	# output decomposition surface
 	if output_polysurface:
-		mesh = skeleton.decomposition_mesh()
-		nurbs_curves = {(geometric_key(polyline[i]), geometric_key(polyline[-i -1])): rs.AddInterpCrvOnSrfUV(srf_guid, [pt[:2] for pt in polyline]) for polyline in skeleton.decomposition_polylines() for i in [0, -1]}
-		outputs.append(rs.JoinSurfaces([rs.AddEdgeSrf([nurbs_curves[(geometric_key(mesh.vertex_coordinates(u)), geometric_key(mesh.vertex_coordinates(v)))] for u, v in mesh.face_halfedges(fkey)]) for fkey in mesh.faces()], delete_input = True))
+		mesh = decomposition.decomposition_mesh()
+		nurbs_curves = {(geometric_key(polyline[i]), geometric_key(polyline[-i -1])): rs.AddInterpCrvOnSrfUV(srf_guid, [pt[:2] for pt in polyline]) for polyline in decomposition.decomposition_polylines() for i in [0, -1]}
+		outputs.append(rs.JoinSurfaces([rs.AddEdgeSrf([nurbs_curves[(geometric_key(mesh.vertex_coordinates(u)), geometric_key(mesh.vertex_coordinates(v)))] for u, v in mesh.face_halfedges(fkey)]) for fkey in mesh.faces()], delete_input=True))
 		rs.DeleteObjects(list(nurbs_curves.values()))
 
 	return outputs
