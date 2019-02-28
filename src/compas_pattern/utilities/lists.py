@@ -88,6 +88,26 @@ def are_items_in_list(items, l):
 			return False
 	return True
 
+def common_items(l1, l2):
+	"""Return common items in two lists.
+
+	Parameters
+	----------
+	l1 : list
+		A list.
+	l2 : list
+		A list.
+
+	Returns
+	-------
+	list
+		The common items.
+
+	"""
+
+	return [item for item in l1 if item in l2]
+
+
 # ==============================================================================
 # Main
 # ==============================================================================
