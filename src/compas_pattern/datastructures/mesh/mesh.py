@@ -74,41 +74,41 @@ class Mesh(Mesh):
 	# --------------------------------------------------------------------------
 
 
-	def delete_face(self, fkey):
-		"""Delete a face from the mesh object.
+	# def delete_face(self, fkey):
+	# 	"""Delete a face from the mesh object.
 
-		Parameters
-		----------
-		fkey : hashable
-			The identifier of the face.
+	# 	Parameters
+	# 	----------
+	# 	fkey : hashable
+	# 		The identifier of the face.
 
-		Examples
-		--------
-		.. plot::
-			:include-source:
+	# 	Examples
+	# 	--------
+	# 	.. plot::
+	# 		:include-source:
 
-			import compas
-			from compas.datastructures import Mesh
-			from compas.plotters import MeshPlotter
+	# 		import compas
+	# 		from compas.datastructures import Mesh
+	# 		from compas.plotters import MeshPlotter
 
-			mesh = Mesh.from_obj(compas.get('faces.obj'))
+	# 		mesh = Mesh.from_obj(compas.get('faces.obj'))
 
-			mesh.delete_face(12)
+	# 		mesh.delete_face(12)
 
-			plotter = MeshPlotter(mesh)
-			plotter.draw_vertices()
-			plotter.draw_faces()
-			plotter.show()
+	# 		plotter = MeshPlotter(mesh)
+	# 		plotter.draw_vertices()
+	# 		plotter.draw_faces()
+	# 		plotter.show()
 
-		"""
+	# 	"""
 
-		for u, v in self.face_halfedges(fkey):
-			self.halfedge[u][v] = None
-			# additionnal check u in self.halfedge[v]
-			if u in self.halfedge[v] and self.halfedge[v][u] is None:
-				del self.halfedge[u][v]
-				del self.halfedge[v][u]
-		del self.face[fkey]
+	# 	for u, v in self.face_halfedges(fkey):
+	# 		self.halfedge[u][v] = None
+	# 		# additionnal check u in self.halfedge[v]
+	# 		if u in self.halfedge[v] and self.halfedge[v][u] is None:
+	# 			del self.halfedge[u][v]
+	# 			del self.halfedge[v][u]
+	# 	del self.face[fkey]
 
 	def face_circle(self, fkey):
 		"""Get data on circumcentre of triangular face.
@@ -136,140 +136,80 @@ class Mesh(Mesh):
 
 		return circle_from_points(self.vertex_coordinates(a), self.vertex_coordinates(b), self.vertex_coordinates(c))
 
-	def face_circle_xy(self, fkey):
-		"""Get data on circumcentre of triangular face.
+	def is_vertex_kink(self, vkey, threshold_angle):
+		"""Return whether there is a kink at a boundary vertex according to a threshold angle.
 
 		Parameters
 		----------
-		fkey : Key
-			The face key.
+		vkey : Key
+			The boundary vertex key.
+		threshold_angle : float
+			Threshold angle in rad.
 
 		Returns
 		-------
-		list, None
-			The centre coordinates, the radius value and the normal vector of the circle.
-			None if the face is not a triangle
+		bool
+			True if the boundary angle is a kink, i.e. is larger than the threshold angle. False otherwise.
+
+		"""	
+
+		# check if verte xis on boundary
+		if not self.is_vertex_on_boundary(vkey):
+			return False
+
+		# get the two adjacent boundary vertices (exactly two for manifold meshes)
+		ukey, wkey = [nbr for nbr in self.vertex_neighbors(vkey) if self.is_vertex_on_boundary(nbr)]
+		# compare boundary angle with threshold angle
+		return angle_points(self.vertex_coordinates(ukey), self.vertex_coordinates(vkey), self.vertex_coordinates(wkey)) > threshold_angle
+
+	def kinks(self, threshold_angle):
+		"""Return the boundary vertices with kinks.
+
+		Parameters
+		----------
+		threshold_angle : float
+			Threshold angle in rad.
+
+		Returns
+		-------
+		list
+			The list of the boundary vertices at kink angles higher than the threshold value.
 
 		"""
 
-		face_vertices = self.face_vertices(fkey)
-
-		# return None if not a triangle (possible improvement with best-fit circle)
-		if len(face_vertices) != 3:
-			return None
-		
-		a, b, c = face_vertices
-
-		return circle_from_points_xy(self.vertex_coordinates(a), self.vertex_coordinates(b), self.vertex_coordinates(c))
+		return [vkey for vkey in self.vertices_on_boundary() if self.is_vertex_kink(vkey, threshold_angle)]
 
 	# --------------------------------------------------------------------------
 	# modifications
 	# --------------------------------------------------------------------------
 
-	def substitute_vertex_in_faces(self, old_vkey, new_vkey, fkeys):
-		"""Substitute a vertex by another one in a given set of faces.
 
-		Parameters
-		----------
-		old_vkey : hashable
-			The old vertex key.
-		new_vkey : hashable
-			The new vertex key.
-		fkeys : list
-			List of face keys to modify
+def mesh_insert_vertex_on_edge(mesh, u, v, vkey=None):
+	"""Insert an existing vertex on an edge.
 
-		"""
+	Parameters
+	----------
+	u: hashable
+		The first edge vertex.
+	v: hashable
+		The second edge vertex.
+	vkey: hashable, optional
+		The vertex key to insert.
+		Default is add a new vertex at mid-edge.
 
-		for fkey in fkeys:
-			face_vertices = [new_vkey if key == old_vkey else key for key in self.face_vertices(fkey)]
-			self.delete_face(fkey)
-			self.add_face(face_vertices, fkey)
+	"""
 
-	def insert_vertex_in_face(self, fkey, vkey_0, vkey):
-		"""Insert a vertex in a face before a given vertex.
+	# add new vertex if there is none
+	if vkey is None:
+		mesh.add_vertex(attr_dict = {attr: xyz for attr, xyz in zip(['x', 'y', 'z'], mesh.edge_midpoint(u, v))})
 
-		Parameters
-		----------
-		fkey: hashable
-			The face key.
-		vkey_0: hashable
-			The existing vertex key.
-		vkey: hashable
-			The vertex key to insert.
-
-		"""
-		face_vertices = self.face_vertices(fkey)[:]
-		face_vertices.insert(face_vertices.index(vkey_0), vkey)
-		self.delete_face(fkey)
-		self.add_face(face_vertices, fkey)
-
-	def open_boundary_polyedges_no_duplicates(self, fmax=None):
-		"""All open polyedges from a boundary vertex to another one, without duplicate vertices.
-		Optional maximum on the length (number of faces) of the added strip. 
-
-		Parameters
-		----------
-		fmax : int, optional
-			An optional maximum length (number of faces) on the length of the added strip.
-			Default is None.
-	
-		Returns
-		-------
-		polyedges : list
-			List of polyedges as tuples of vertices
-
-		"""
-
-		if fmax is None:
-			fmax = self.number_of_vertices()
-
-		polyedges = []
-
-		for f in range(2, fmax + 1):
-			for permutation in itertools.permutations(self.vertices(), f):
-				if self.is_vertex_on_boundary(permutation[0]) and self.is_vertex_on_boundary(permutation[-1]):
-					if all([v in self.halfedge[u] for u, v in pairwise(permutation)]):
-						# avoid reversed polyedges
-						if permutation[::-1] not in polyedges:
-							polyedges.append(permutation)
-
-		return polyedges
-
-
-	def closed_polyedges_no_duplicates(self, fmax=None):
-		"""All closed polyedges, without duplicate vertices.
-		Optional maximum on the length (number of faces) of the added strip. 
-
-		Parameters
-		----------
-		fmax : int, optional
-			An optional maximum length (number of faces) on the length of the added strip.
-			Default is None.
-
-		Returns
-		-------
-		polyedges : list
-			List of polyedges as tuples of vertices
-
-		"""
-
-		if fmax is None:
-			fmax = self.number_of_vertices()
-
-		polyedges = []
-
-		for f in range(3, fmax + 1):
-			for permutation in itertools.permutations(self.vertices(), f):
-				if all([v in self.halfedge[u] for u, v in pairwise(permutation + permutation[: 1])]):
-					# avoid redundant polyedges
-					for i in range(f):
-						offset_permutation = permutation[i :] + permutation[: i]
-						if offset_permutation in polyedges or offset_permutation[::-1] in polyedges:
-							break
-						if i == f -1:
-							polyedges.append(permutation)
-
-		return polyedges
+	# insert vertex
+	for fkey, halfedge in zip(mesh.edge_faces(u, v), [(u, v), (v, u)]):
+		if fkey is not None:
+			face_vertices = mesh.face_vertices(fkey)[:]
+			face_vertices.insert(face_vertices.index(halfedge[-1]), vkey)
+			mesh.delete_face(fkey)
+			mesh.add_face(face_vertices, fkey)
 
 
 def mesh_substitute_vertex_in_faces(mesh, old_vkey, new_vkey, fkeys=None):
@@ -298,6 +238,40 @@ def mesh_substitute_vertex_in_faces(mesh, old_vkey, new_vkey, fkeys=None):
 		mesh.delete_face(fkey)
 		mesh.add_face(face_vertices, fkey)
 
+def mesh_move_vertex(mesh, vector, vkey):
+	"""Move a mesh vertex by a vector.
+
+	Parameters
+	----------
+	mesh : Mesh
+		A mesh.
+	vkey : hashable
+		A vrtex key.
+	vector : list
+		An XYZ vector.
+
+	"""
+
+	mesh.vertex[vkey]['x'] += vector[0]
+	mesh.vertex[vkey]['y'] += vector[1]
+	mesh.vertex[vkey]['z'] += vector[2]
+
+	return mesh.vertex_coordinates(vkey)
+
+def mesh_move(mesh, vector):
+	"""Move a mesh by a vector.
+
+	Parameters
+	----------
+	mesh : Mesh
+		A mesh.
+	vector : list
+		An XYZ vector.
+
+	"""
+
+	for vkey in mesh.vertices():
+		mesh_move_vertex(mesh, vector, vkey)
 
 # ==============================================================================
 # Main
