@@ -8,9 +8,16 @@ from compas_pattern.algorithms.decomposition.skeletonisation import Skeleton
 
 from compas_pattern.datastructures.mesh_quad_coarse.mesh_quad_coarse import CoarseQuadMesh
 
+from compas_pattern.datastructures.mesh.mesh import mesh_insert_vertex_on_edge
+from compas_pattern.datastructures.mesh.mesh import mesh_substitute_vertex_in_faces
+
 from compas_pattern.datastructures.network.network import Network
 from compas.datastructures.network.operations import network_polylines
 from compas.geometry import Polyline
+
+from compas.datastructures import mesh_weld
+from compas_pattern.datastructures.mesh.unweld import mesh_unweld_edges
+from compas_pattern.algorithms.decomposition.propagation import quadrangulate_mesh
 
 from compas.geometry import length_vector
 from compas.geometry import length_vector_xy
@@ -191,6 +198,7 @@ class Decomposition(Skeleton):
 		other_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) not in boundary_keys or geometric_key(polyline[1]) not in boundary_keys]
 		self.mesh = CoarseQuadMesh.from_polylines(boundary_polylines, other_polylines)
 		self.solve_triangular_faces()
+		self.quadrangulate_polygonal_faces()
 		return self.mesh
 
 	# --------------------------------------------------------------------------
@@ -335,13 +343,13 @@ class Decomposition(Skeleton):
 					# due to singular face vertices at the same location
 					u = boundary_vertices[0]
 					v = mesh.add_vertex(attr_dict = {attr: xyz for attr, xyz in zip(['x', 'y', 'z'], mesh.vertex_coordinates(u))})
-					
+
 					# modify adjacent faces
 					vertex_faces = mesh.vertex_faces(u, ordered = True)
-					mesh.substitute_vertex_in_faces(u, v, vertex_faces[: vertex_faces.index(fkey)])
+					mesh_substitute_vertex_in_faces(mesh, u, v, vertex_faces[: vertex_faces.index(fkey)])
 
 					# modify triangular face
-					mesh.insert_vertex_in_face(fkey, u, v)
+					mesh_insert_vertex_on_edge(mesh, u, mesh.face_vertex_ancestor(fkey, u), v)
 
 				elif case == 2:
 					# remove triangular face and merge the two boundary vertices
@@ -355,8 +363,36 @@ class Decomposition(Skeleton):
 					
 					# modify adjacent faces
 					for old_vkey in boundary_vertices:
-						mesh.substitute_vertex_in_faces(old_vkey, new_vkey, mesh.vertex_faces(old_vkey))
+						mesh_substitute_vertex_in_faces(mesh, old_vkey, new_vkey, mesh.vertex_faces(old_vkey))
 						mesh.delete_vertex(old_vkey)
+
+	def quadrangulate_polygonal_faces(self):
+		# WIP
+		mesh = self.mesh
+
+		delaunay_vertex_map = tuple(geometric_key(self.vertex_coordinates(vkey)) for vkey in self.vertices())
+		#newly added vertices in mesh that were not in the Delaunay are missing...
+
+		edges_to_unweld = [edge for edge in mesh.edges() if sum([geometric_key(mesh.vertex_coordinates(i)) in delaunay_vertex_map for i in edge]) == 2]
+		mesh_unweld_edges(mesh, edges_to_unweld)
+
+		candidate_map = {geometric_key(mesh.vertex_coordinates(vkey)): [] for vkey in mesh.vertices()}
+		for vkey in mesh.vertices_on_boundary():
+			candidate_map[geometric_key(mesh.vertex_coordinates(vkey))].append(mesh.vertex_degree(vkey))
+
+		for geom_key, valencies in candidate_map.items():
+			print list(set(valencies))
+		source_map = tuple([geom_key for geom_key, valencies in candidate_map.items() if len(list(set(valencies))) > 1])
+		print source_map
+		self.mesh = mesh_weld(mesh)
+		mesh = self.mesh
+		print 'nb vertices', len(list(mesh.vertices()))
+
+		sources = [vkey for vkey in mesh.vertices() if geometric_key(mesh.vertex_coordinates(vkey)) in source_map]
+		print sources
+		# problem: sources are not the same for all quads
+		quadrangulate_mesh(mesh, sources)
+
 
 # ==============================================================================
 # Main
