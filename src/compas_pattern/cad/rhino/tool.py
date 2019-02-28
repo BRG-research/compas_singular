@@ -30,8 +30,6 @@ from compas_pattern.algorithms.relaxation.constraints import display_smoothing_c
 import compas_rhino.artists as rhino_artist
 import compas_rhino.helpers as rhino_helper
 
-from compas_pattern.cad.rhino.artist import mesh_move_vertices
-
 from compas_pattern.cad.rhino.artist import select_mesh_strip
 from compas_pattern.cad.rhino.artist import select_mesh_strips
 from compas_pattern.cad.rhino.artist import select_mesh_polyedge
@@ -331,7 +329,7 @@ def editing_geometry_moving(coarse_quad_mesh):
 			rs.DeleteObject(guid)
 			break
 
-		mesh_move_vertices(mesh, vkeys)
+		rhino_helper.mesh_move_vertices(mesh, vkeys)
 		rs.DeleteObject(guid)
 
 	if mesh_to_modify == 'quad_mesh':
