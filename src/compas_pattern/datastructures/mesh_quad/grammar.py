@@ -1,7 +1,13 @@
+from math import pi
+
 from compas_pattern.datastructures.mesh.mesh import Mesh
 from compas_pattern.datastructures.network.network import Network
 
+from compas_pattern.datastructures.mesh.mesh import mesh_substitute_vertex_in_faces
+
 from compas.datastructures import mesh_unweld_vertices
+
+from compas.topology import shortest_path
 
 from compas.topology import connected_components
 from compas.datastructures import network_disconnected_vertices
@@ -34,14 +40,14 @@ __all__ = [
     'add_handle'
 ]
 
-def edit_strips(mesh, polyedges_to_add = [], strips_to_delete = []):
+def edit_strips(mesh, strips_to_add = [], strips_to_delete = []):
     """Add and delete strips.
 
     Parameters
     ----------
     mesh : Mesh
         A mesh.
-    polyedges_to_add : list
+    strips_to_add : list
         A list of polyedges to add strips.
     strips_to_delete : list
         A list of strip keys to delete.
@@ -52,7 +58,7 @@ def edit_strips(mesh, polyedges_to_add = [], strips_to_delete = []):
         The key of the new strips.
     """
 
-    add_strips(mesh, polyedges_to_add)
+    new_skeys = add_strips(mesh, strips_to_add)
     delete_strips_safe(mesh, strips_to_delete)
 
     return new_skeys
@@ -77,6 +83,8 @@ def add_strip(mesh, polyedge, kmax = 3, damping = 0.5):
         The key of the new strip, the new strip vertices on the left, the new strip vertices on the right.
 
     """
+
+    kinks = mesh.kinks(pi / 12)
 
     # close or open status
     closed = polyedge[0] == polyedge[-1]
@@ -131,7 +139,7 @@ def add_strip(mesh, polyedge, kmax = 3, damping = 0.5):
     for key, substitutions in to_substitute.items():
         for substitution in substitutions:
             new_key, faces = substitution
-            mesh.substitute_vertex_in_faces(key, new_key, [face for face in faces if face is not None])
+            mesh_substitute_vertex_in_faces(mesh, key, new_key, [face for face in faces if face is not None])
 
     # delete old vertices
     for vkey in polyedge:
@@ -144,9 +152,92 @@ def add_strip(mesh, polyedge, kmax = 3, damping = 0.5):
         right_polyedge.append(right_polyedge[0])
     for i in range(len(polyedge) - 1):
         mesh.add_face([right_polyedge[i], right_polyedge[i + 1], left_polyedge[i + 1], left_polyedge[i]])
+    
+    # update transverse strip data
+    for skey, i in update.items():
+        mesh.strip[skey] = mesh.collect_strip(*list(pairwise(left_polyedge))[i])
 
-    # geometrical processing: smooth to widen the strip
-    fixed = [vkey for vkey in mesh.vertices() if vkey not in left_polyedge and vkey not in right_polyedge]
+    # add new strip data
+    max_skey = list(mesh.strips())[-1]
+    mesh.strip[max_skey + 1] = mesh.collect_strip(left_polyedge[0], right_polyedge[0])
+
+    # update adjacent strips
+    for i in range(len(polyedge)):
+        old, left, right = polyedge[i], left_polyedge[i], right_polyedge[i]
+        mesh.substitute_vertex_in_strips(old, left, left_strips)
+        mesh.substitute_vertex_in_strips(old, right, right_strips)
+
+    # geometrical processing: smooth to widen the strip with constraints at kinks and along boundaries
+    fixed = [vkey for vkey in kinks if vkey not in polyedge]
+
+    # vkey_start, vkey_end = polyedge[0], polyedge[-1]
+    # kink_extremities = [vkey for vkey in [polyedge[0], polyedge[-1]] if vkey in kinks]
+    
+    # if len(kink_extremities) == 2:
+    #     print '2 kink extremities'
+    #     pass
+    
+    # elif len(kink_extremities) == 1:
+    #     print '1 kink extremity'
+
+    #     if vkey_start == kink_extremities[0]:
+    #         left_vkey, right_vkey = left_polyedge[0], right_polyedge[0]
+    #         adjacent_left_vkey, adjacent_right_vkey = left_polyedge[1], right_polyedge[1]
+    #     elif vkey_end == kink_extremities[0]:
+    #         left_vkey, right_vkey = left_polyedge[-1], right_polyedge[-1]
+    #         adjacent_left_vkey, adjacent_right_vkey = left_polyedge[-2], right_polyedge[-2]
+
+    #     new_boundary_vertex = [new_vkey for new_vkey in [left_vkey, right_vkey] if mesh.is_vertex_on_boundary(new_vkey)]
+    #     if len(new_boundary_vertex) == 1:
+    #         print '1 new vertex on boundary'
+    #         fixed += new_boundary_vertex
+    #     elif len(new_boundary_vertex) == 2:
+    #         print '2 new vertices on boundary'
+
+    #         new_skey_1, new_skey_2, new_vertices = split_strip(mesh, mesh.edge_strip(new_boundary_vertex))
+    #         for vkey in [new_vertices[0], new_vertices[-1]]:
+    #             nbrs = mesh.vertex_neighbors(vkey)
+    #             if left_vkey in nbrs and right_vkey in nbrs:
+    #                 fixed.append(vkey)
+    #                 break
+    #     else:
+    #         print 'pbm !!'
+
+    # else:
+    #     print '!'
+
+    # for u, v in [(0, 1), (-1, -2)]:
+    #     ukey, ukey_left, ukey_right = polyedge[u], left_polyedge[u], right_polyedge[u]
+    #     vkey, vkey_left, vkey_right = polyedge[v], left_polyedge[v], right_polyedge[v]
+    #     if u in kinks:
+    #         if not mesh.is_vertex_on_boundary(vkey_left) and mesh.is_vertex_on_boundary(vkey_right):
+    #             pass
+    #         else:
+
+
+    for i, vkey in zip([0, -1], [polyedge[0], polyedge[-1]]):
+        vkey_left = left_polyedge[i]
+        vkey_right = right_polyedge[i]
+        if mesh.vertex_degree(vkey_left) != 2 and mesh.vertex_degree(vkey_right) != 2:
+            pass
+        elif mesh.vertex_degree(vkey_left) != 2:
+            fixed.append(vkey_left)
+        elif mesh.vertex_degree(vkey_right) != 2:
+            fixed.append(vkey_right)
+
+    for i, vkey in enumerate(polyedge):
+        if i == 0 or i == len(polyedge) - 1:
+            continue
+        if vkey in kinks:
+            if mesh.is_vertex_on_boundary(left_polyedge[i]):
+                fixed.append(left_polyedge[i])
+            elif mesh.is_vertex_on_boundary(right_polyedge[i]):
+                fixed.append(right_polyedge[i])
+
+
+    #fixed = [vkey for vkey in mesh.vertices() if vkey not in left_polyedge and vkey not in right_polyedge]
+    
+
     # old_coordinates = {vkey: mesh.vertex_coordinates(vkey)}
     # def callback(k, args):
 
@@ -164,22 +255,61 @@ def add_strip(mesh, polyedge, kmax = 3, damping = 0.5):
 
 
     mesh_smooth_centroid(mesh, fixed, kmax = kmax, damping = damping)
-    
-    # update transverse strip data
-    for skey, i in update.items():
-        mesh.strip[skey] = mesh.collect_strip(*list(pairwise(left_polyedge))[i])
-
-    # add new strip data
-    max_skey = list(mesh.strips())[-1]
-    mesh.strip[max_skey + 1] = mesh.collect_strip(left_polyedge[0], right_polyedge[0])
-
-    # update adjacent strips
-    for i in range(len(polyedge)):
-        old, left, right = polyedge[i], left_polyedge[i], right_polyedge[i]
-        mesh.substitute_vertex_in_strips(old, left, left_strips)
-        mesh.substitute_vertex_in_strips(old, right, right_strips)
 
     return max_skey + 1, left_polyedge, right_polyedge
+
+
+def add_strips_2(mesh, polyedges):
+    """Add strips along mesh polyedges.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        A mesh.
+    polyedges : list
+        List of polyedges as lists of vertex keys forming path.
+
+    Returns
+    -------
+    new_skeys : list
+        The list of new strip keys.
+
+    """
+
+
+    new_skeys = []
+    
+    while len(polyedges) > 0:
+    
+        added_polyedge = polyedges.pop()
+        new_skey, left_polyedge, right_polyedge = add_strip(mesh, added_polyedge)
+        new_skeys.append(new_skey)
+    
+        # update polyedges
+        new_polyedges = []
+        for update_polyedge in polyedges:
+        
+            closed = update_polyedge[0] == update_polyedge[-1]
+            if closed:
+                update_polyedge.pop()
+        
+            new_polyedge = [vkey if vkey in added_polyedge else None for vkey in update_polyedge]
+            
+
+            #shortest_path(adjacency, root, goal)
+        
+                
+
+
+            if closed:
+                new_polyedge.append(new_polyedge[0])
+
+            new_polyedges.append(new_polyedge)
+        
+        polyedges = new_polyedges
+
+    return new_skeys
+
 
 def add_strips(mesh, polyedges):
     """Add strips along mesh polyedges.
@@ -225,8 +355,13 @@ def add_strips(mesh, polyedges):
                     idx = added_polyedge.index(vkey)
                     left_vkey = left_polyedge[idx]
                     right_vkey = right_polyedge[idx]
-                    # find order
-                    if left_vkey in mesh.halfedge[new_polyedge[-1]]:
+                    # if only one of the new vertice is sufficient to continue polyedge
+                    if left_vkey in mesh.halfedge[new_polyedge[-1]] and left_vkey in mesh.halfedge[update_polyedge[0]]:
+                        new_polyedge.append(left_vkey)
+                    elif right_vkey in mesh.halfedge[new_polyedge[-1]] and right_vkey in mesh.halfedge[update_polyedge[0]]:
+                        new_polyedge.append(right_vkey)
+                    # if both new vertice are necessary to continue polyedge
+                    elif left_vkey in mesh.halfedge[new_polyedge[-1]]:
                         new_polyedge += [left_vkey, right_vkey]
                     elif right_vkey in mesh.halfedge[new_polyedge[-1]]:
                         new_polyedge += [right_vkey, left_vkey]
@@ -349,7 +484,7 @@ def delete_strip(mesh, skey):
             # replace the old vertices
             for old_vkey in vertices:
                 mesh.substitute_vertex_in_strips(old_vkey, new_vkey)
-                mesh.substitute_vertex_in_faces(old_vkey, new_vkey, mesh.vertex_faces(old_vkey))
+                mesh_substitute_vertex_in_faces(mesh, old_vkey, new_vkey, mesh.vertex_faces(old_vkey))
         
         # delete the old vertices
         for old_vkey in vertices:
@@ -371,7 +506,7 @@ def delete_strip_safe(mesh, skey):
 
     to_split = strips_to_split_to_preserve_boundaries_before_deleting_strips(mesh, [skey])
     split_strips(mesh, to_split.keys())
-    delete_strips(mesh, combination)
+    delete_strip(mesh, skey)
 
 def delete_strips(mesh, skeys):
     """Delete strips.
@@ -402,7 +537,7 @@ def delete_strips_safe(mesh, skeys):
 
     to_split = strips_to_split_to_preserve_boundaries_before_deleting_strips(mesh, skeys)
     split_strips(mesh, to_split.keys())
-    delete_strips(mesh, combination)
+    delete_strips(mesh, skeys)
 
 
 def split_strip(mesh, skey):
@@ -468,7 +603,7 @@ def split_strip(mesh, skey):
     # delete strip
     del mesh.strip[skey]
 
-    return max_skey + 1, max_skey + 2
+    return max_skey + 1, max_skey + 2, new_vertices.values()
 
 def split_strips(mesh, skeys):
     """Split strips.
