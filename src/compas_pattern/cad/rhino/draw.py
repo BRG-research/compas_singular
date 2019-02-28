@@ -18,6 +18,8 @@ from compas.geometry import distance_point_point
 from compas.geometry import subtract_vectors
 from compas.geometry import centroid_points
 
+from compas_pattern.geometry.analytical import archimedean_spiral_evaluate
+
 from compas_rhino.modifiers import VertexModifier
 
 __author__     = ['Robin Oval']
@@ -28,9 +30,7 @@ __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
 	'draw_mesh',
-	'draw_graph',
-	'arrange_in_circle',
-	'arrange_in_spiral'
+	'draw_graph'
 ]
 
 
@@ -105,106 +105,6 @@ def draw_graph(graph, key_to_colour = {}):
 	rs.AddObjectsToGroup(spheres + lines, group)
 
 	return group
-
-
-def arrange_in_circle(guids, centre = None, radius = None):
-	"""Arrange Rhino objects along a circle.
-
-	Parameters
-	----------
-	guids : list
-		The list of Rhino objects to arrange.
-	centre : list
-		The XYZ-coordinates of the centre of the circle. If None, the centroid of the Rhino objects.
-	radius : float
-		The radius of the circle. If None, a radius is computed based on the max bounding box of the Rhino objects.
-
-	Returns
-	-------
-	guid_xyz : dict
-		A dictionary of object guids pointing to new location centre.
-
-	"""
-
-	n = len(guids)
-
-	guid_boxes = {guid: rs.BoundingBox(guid) for guid in guids}
-	guid_xyz0 = {guid: centroid_points([point for point in guid_boxes[guid]]) for guid in guids}
-	if centre is None:
-		centre = centroid_points(guid_xyz0.values())
-
-
-	if radius is None:
-		scales = []
-		for guid in guids:
-			box = guid_boxes[guid]
-			dx = distance_point_point(box[0], box[1])
-			dy = distance_point_point(box[0], box[3])
-			scales.append((dx**2 + dy**2)**.5)
-		scale = max(scales)
-		radius = n * scale / (2 * pi)
-
-	guid_xyz = {}
-
-	for i, guid in enumerate(guids):
-		xyz0 = guid_xyz0[guid]
-		xyz = [centre[0] + radius * cos(2 * pi * float(i) / n), centre[1] + radius * sin(2 * pi * float(i) / n), centre[2]]
-		rs.MoveObject(guid, subtract_vectors(xyz, xyz0))
-		guid_xyz[guid] = xyz
-
-	return guid_xyz
-
-
-def arrange_in_spiral(guids, centre = None):
-	"""Arrange Rhino objects along a spiral.
-
-	Parameters
-	----------
-	guids : list
-		The list of Rhino objects to arrange.
-	centre : list
-		The XYZ-coordinates of the centre of the circle. If None, the centroid of the Rhino objects.
-
-	Returns
-	-------
-	guid_xyz : dict
-		A dictionary of object guids pointing to new location centre.
-
-	"""
-
-	n = len(guids)
-
-	guid_boxes = {guid: rs.BoundingBox(guid) for guid in guids}
-	guid_xyz0 = {guid: centroid_points([point for point in guid_boxes[guid]]) for guid in guids}
-	if centre is None:
-		centre = centroid_points(guid_xyz0.values())
-
-	scales = []
-	for guid in guids:
-		box = guid_boxes[guid]
-		dx = distance_point_point(box[0], box[1])
-		dy = distance_point_point(box[0], box[3])
-		scales.append((dx**2 + dy**2)**.5)
-	D = max(scales)
-
-
-	a = 0
-	b = 1.1 * D / (2 * pi)
-
-	t_start = 0
-	t_end = (2 * n * D / b + t_start ** 2) ** .5
-	ts = [float(t) / (n - 1) * (t_end - tstart) for t in range(n)]
-	points_xy = [archimedean_spiral_evaluate(t, a, b) for t in ts]
-
-	guid_xyz = {}
-
-	for i, guid in enumerate(guids):
-		xyz0 = guid_xyz0[guid]
-		xyz = [centre[0] + radius * cos(2 * pi * float(i) / n), centre[1] + radius * sin(2 * pi * float(i) / n), centre[2]]
-		rs.MoveObject(guid, subtract_vectors(xyz, xyz0))
-		guid_xyz[guid] = xyz
-
-	return guid_xyz
 
 
 # ==============================================================================
