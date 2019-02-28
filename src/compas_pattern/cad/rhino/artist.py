@@ -25,31 +25,12 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
-	'mesh_move_vertices',
 	'select_mesh_polyedge',
 	'select_mesh_strip',
 	'select_mesh_strips',
 	'add_handle_artist',
 	'add_handles_artist'
 ]
-
-def mesh_move_vertices(mesh, keys):
-    """Move on vertices of the mesh.
-
-    Parameters
-    ----------
-    mesh : compas.datastructures.Mesh
-        A mesh object.
-    keys : list
-        The vertices to move.
-    constraint : Rhino.Geometry (None)
-        A Rhino geometry object to constrain the movement to.
-        By default the movement is unconstrained.
-    allow_off : bool (False)
-        Allow the vertex to move off the constraint.
-
-    """
-    return VertexModifier.move_vertices(mesh, keys)
 
 def select_mesh_polyedge(mesh):
 	"""Select mesh polyedge.
