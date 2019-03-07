@@ -17,7 +17,7 @@ from compas_pattern.datastructures.mesh.mesh import Mesh
 from compas.geometry import Polyline
 from compas.geometry import scale_vector
 
-from compas_pattern.datastructures.mesh_quad.grammar import add_handle
+from compas_pattern.datastructures.mesh_quad.grammar_shape import add_handle
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
