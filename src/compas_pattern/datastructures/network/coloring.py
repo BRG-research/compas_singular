@@ -26,11 +26,6 @@ def is_network_two_colorable(network):
 		A dictionary with vertex keys pointing to colors, if two-colorable.
 		None if not two-colorable.
 
-	References
-	----------
-	.. [1] GeeksforGeeks. *Bipartite graph*.
-		   Available at: https://www.geeksforgeeks.org/bipartite-graph/.
-
 	"""
 
 	# store color status of network vertices (-1 means no color)
