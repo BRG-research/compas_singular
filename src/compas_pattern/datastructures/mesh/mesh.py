@@ -152,13 +152,13 @@ class Mesh(Mesh):
 			True if the boundary angle is a kink, i.e. is larger than the threshold angle. False otherwise.
 
 		"""	
-
-		# check if verte xis on boundary
+		
+		# check if vertex is on boundary
 		if not self.is_vertex_on_boundary(vkey):
 			return False
 
 		# get the two adjacent boundary vertices (exactly two for manifold meshes)
-		ukey, wkey = [nbr for nbr in self.vertex_neighbors(vkey) if self.is_vertex_on_boundary(nbr)]
+		ukey, wkey = [nbr for nbr in self.vertex_neighbors(vkey) if self.is_edge_on_boundary(vkey, nbr)]
 		# compare boundary angle with threshold angle
 		return angle_points(self.vertex_coordinates(ukey), self.vertex_coordinates(vkey), self.vertex_coordinates(wkey)) > threshold_angle
 
@@ -282,7 +282,3 @@ if __name__ == '__main__':
 	import compas
 
 	mesh = Mesh.from_obj(compas.get('faces.obj'))
-
-	#print len(mesh.open_boundary_polyedges_no_duplicates(fmax=4))
-	print len(mesh.closed_polyedges_no_duplicates(fmax=4))
-
