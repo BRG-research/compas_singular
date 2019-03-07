@@ -599,6 +599,32 @@ class QuadMesh(Mesh):
 		else:
 			return polyline
 
+	def strip_contour_polyedges(self, skey):
+		"""Return the two contour polyedges of a strip.
+
+		Parameters
+		----------
+		skey : hashable
+			A strip key.
+			
+		Returns
+		-------
+		tuple
+			The pair of polyedges contouring the strip.
+
+		"""
+
+		strip_edges = self.strip_edges(skey)
+
+		starts = [edge[0] for edge in strip_edges]
+		ends = [edge[1] for edge in strip_edges]
+
+		if self.is_strip_closed(skey):
+			starts += starts[:1]
+			ends += ends[:1]
+
+		return (starts, ends)	
+
 	def strip_contour_polylines(self, skey):
 		"""Return the two contour polylines of a strip.
 
@@ -614,15 +640,7 @@ class QuadMesh(Mesh):
 
 		"""
 
-		strip_edges = self.strip_edges(skey)
-
-		starts = [edge[0] for edge in strip_edges]
-		ends = [edge[1] for edge in strip_edges]
-
-		if self.is_strip_closed(skey):
-			starts += starts[:1]
-			ends += ends[:1]
-
+		starts, ends = self.strip_contour_polyedges(skey)
 		return ([self.vertex_coordinates(vkey) for vkey in starts], [self.vertex_coordinates(vkey) for vkey in ends])	
 
 # ==============================================================================
