@@ -205,7 +205,7 @@ class CoarseQuadMesh(QuadMesh):
 
 		self.set_strip_density(skey, int(math.ceil(sum([self.edge_length(u, v) for u, v in self.strip_edges(skey)]) / len(list(self.strip_edges(skey))) / t)))
 
-	def set_strips_density_target(self, t):
+	def set_strips_density_target(self, t, skeys=None):
 		"""Set the strip densities based on a target length and the average length of the strip edges.
 
 		Parameters

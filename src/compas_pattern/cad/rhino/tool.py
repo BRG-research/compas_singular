@@ -177,7 +177,7 @@ def editing_topology(coarse_quad_mesh):
                 for skey_0, skeys in skey_to_skeys.items():
                     d = int(
                         ceil(float(coarse_quad_mesh.get_strip_density(skey_0)) / 2.))
-                    coarse_quad_mesh.set_strip_density(skey, d)
+                    coarse_quad_mesh.set_strips_density(d, skeys)
 
         elif operation == 'split':
             skey = select_mesh_strip(coarse_quad_mesh)
