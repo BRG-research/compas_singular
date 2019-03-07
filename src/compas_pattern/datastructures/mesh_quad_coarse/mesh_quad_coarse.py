@@ -171,17 +171,21 @@ class CoarseQuadMesh(QuadMesh):
 
 		self.strip_data['density'][skey] = d
 
-	def set_strips_density(self, d):
+	def set_strips_density(self, d, skeys=None):
 		"""Set the same density to all strips.
 
 		Parameters
 		----------
 		d : int
 			A density parameter.
+		skeys : list, None
+			The keys of strips to set density. If is None, all strips are considered.
 		
 		"""
 
-		for skey in self.strips():
+		if skeys is None:
+			skeys = self.strips()
+		for skey in skeys:
 			self.set_strip_density(skey, d)
 
 	def set_strip_density_target(self, skey, t):
@@ -208,13 +212,17 @@ class CoarseQuadMesh(QuadMesh):
 		----------
 		t : float
 			A target length.
-
+		skeys : list, None
+			The keys of strips to set density. If is None, all strips are considered.
+			
 		Returns
 		-------
 
 		"""
 
-		for skey in self.strips():
+		if skeys is None:
+			skeys = self.strips()
+		for skey in skeys:
 			self.set_strip_density(skey, int(math.ceil(sum([self.edge_length(u, v) for u, v in self.strip_edges(skey)]) / len(list(self.strip_edges(skey))) / t)))
 
 	# --------------------------------------------------------------------------
