@@ -1,6 +1,8 @@
 from math import exp
 from math import cos
 from math import sin
+from math import atan
+from math import pi
 
 __all__ = [
 	'circle_evaluate',
@@ -33,6 +35,47 @@ def circle_evaluate(t, r, z=0):
 
 	"""
 	return (r * cos(t), r * sin(t), z)
+
+def circle_closest_point(xyz, r, xyz0=[0, 0, 0]):
+	"""Get projection from a xyz point on a circle with normal z, radius r and centre xyz0.
+
+	Parameters
+	----------
+	xyz : list
+		Point coordinates.
+	r : float
+		Circle radius.
+	xyz0 : float, optional
+		Optional circle centre coordinates. Default value is [0, 0, 0].
+	
+	Returns
+	-------
+	list
+		Projected point.
+	"""
+
+	x, y, z = xyz
+
+	x0, y0, z0 = xyz0
+	
+	x -= x0
+	y -= y0
+	z -= z0
+
+	if x == 0 and y == 0:
+		t = 0
+		
+	elif x == 0:
+		if y > 0:
+			t = pi / 2
+		elif y < 0:
+			t = -pi / 2
+	else:
+		t = atan(y / x)
+		if x < 0:
+			t += pi
+	
+	return (r * cos(t) + x0, r * sin(t) + y0, z0)
 
 def ellipse_evaluate(t, r, z=0):
 	"""Evalutes an ellipse at a parameter.
