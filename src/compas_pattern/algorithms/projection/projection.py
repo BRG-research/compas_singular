@@ -2,7 +2,7 @@ import itertools
 
 from compas_pattern.datastructures.mesh_quad.mesh_quad import QuadMesh
 
-from compas_pattern.datastructures.mesh_quad.grammar import delete_strips_safe
+from compas_pattern.datastructures.mesh_quad.grammar_pattern import delete_strips
 
 from compas_pattern.datastructures.network.coloring import is_network_two_colorable
 
@@ -70,7 +70,7 @@ def two_colourable_projection(mesh, kmax = 1):
 			# delete strips in mesh and check validity
 			copy_mesh = mesh.copy()
 			copy_mesh.collect_strips()
-			delete_strips_safe(copy_mesh, combination)
+			delete_strips(copy_mesh, combination, preserve_boundaries=True)
 			topological_validity = copy_mesh.is_manifold() and copy_mesh.euler() == mesh.euler()
 			if not topological_validity:
 				results[combination] = 'invalid topology'
