@@ -69,15 +69,19 @@ def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output
 
 	# output remapped Delaunay mesh
 	if output_delaunay:
-		outputs.append(RhinoSurface(srf_guid).remap_xyz_mesh(decomposition))
+		outputs.append(RhinoSurface(srf_guid).mesh_uv_to_xyz(decomposition))
 
 	# output remapped topological skeleton/medial axis
 	if output_skeleton:
-		outputs.append([RhinoSurface(srf_guid).remap_xyz_polyline(polyline) for polyline in decomposition.branches()])
+		outputs.append([RhinoSurface(srf_guid).polyline_uv_to_xyz(polyline) for polyline in decomposition.branches()])
 
 	# output decomposition coarse quad mesh
 	if output_mesh:
-		outputs.append(RhinoSurface(srf_guid).remap_xyz_mesh(decomposition.decomposition_mesh()))
+		mesh = decomposition.decomposition_mesh(point_features)
+		attr = mesh.face_pole
+		remapped_mesh = RhinoSurface(srf_guid).mesh_uv_to_xyz(mesh)
+		remapped_mesh.face_pole = attr
+		outputs.append(remapped_mesh)
 
 	# output decomposition surface
 	if output_polysurface:
