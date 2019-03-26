@@ -23,33 +23,12 @@ __all__ = [
 	'RhinoCurve'
 ]
 
+
 class RhinoCurve(RhinoCurve):
 
 	def __init__(self, guid):
 		super(RhinoCurve, self).__init__(guid) 
 
-	def length(self):
-		"""Return the length of the curve.
-
-		Returns
-		-------
-		float
-			The curve's length.
-
-		"""
-		return rs.CurveLength(self.guid)
-
-	def is_closed(self):
-		"""Assess if the curve is closed.
-
-		Returns
-		-------
-		bool
-			True if the curve is closed. False otherwise.
-
-		"""
-
-		return rs.IsCurveClosed(self.guid)
 
 # ==============================================================================
 # Main
