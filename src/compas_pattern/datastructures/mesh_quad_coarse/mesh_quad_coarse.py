@@ -1,4 +1,5 @@
-import math
+from math import floor
+from math import ceil
 
 from compas_pattern.datastructures.network.network import Network
 from compas_pattern.datastructures.mesh.mesh import Mesh
@@ -198,12 +199,9 @@ class CoarseQuadMesh(QuadMesh):
 		t : float
 			A target length.
 
-		Returns
-		-------
-
 		"""
 
-		self.set_strip_density(skey, int(math.ceil(sum([self.edge_length(u, v) for u, v in self.strip_edges(skey)]) / len(list(self.strip_edges(skey))) / t)))
+		self.set_strip_density(skey, int(ceil(sum([self.edge_length(u, v) for u, v in self.strip_edges(skey)]) / len(list(self.strip_edges(skey))) / t)))
 
 	def set_strips_density_target(self, t, skeys=None):
 		"""Set the strip densities based on a target length and the average length of the strip edges.
@@ -214,16 +212,30 @@ class CoarseQuadMesh(QuadMesh):
 			A target length.
 		skeys : list, None
 			The keys of strips to set density. If is None, all strips are considered.
-			
-		Returns
-		-------
 
 		"""
 
 		if skeys is None:
 			skeys = self.strips()
 		for skey in skeys:
-			self.set_strip_density(skey, int(math.ceil(sum([self.edge_length(u, v) for u, v in self.strip_edges(skey)]) / len(list(self.strip_edges(skey))) / t)))
+			self.set_strip_density(skey, int(ceil(sum([self.edge_length(u, v) for u, v in self.strip_edges(skey)]) / len(list(self.strip_edges(skey))) / t)))
+
+	def set_strips_density_equal_face_target(self, nb_faces):
+		"""Set equal strip densities based on a target number of faces.
+
+		Parameters
+		----------
+		nb_faces : int
+			The target number of faces.
+
+		"""
+
+		n = (nb_faces / self.number_of_faces()) ** .5
+		if ceil(n) - n > n - floor(n):
+			n = int(floor(n))
+		else:
+			n = int(ceil(n))
+		self.set_strips_density(n)
 
 	# --------------------------------------------------------------------------
 	# densification
