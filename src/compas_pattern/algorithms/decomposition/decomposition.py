@@ -6,7 +6,7 @@ from operator import itemgetter
 
 from compas_pattern.algorithms.decomposition.skeletonisation import Skeleton
 
-from compas_pattern.datastructures.mesh_quad_coarse.mesh_quad_coarse import CoarseQuadMesh
+from compas_pattern.datastructures.mesh_quad_pseudo_coarse.mesh_quad_pseudo_coarse import CoarsePseudoQuadMesh
 
 from compas_pattern.datastructures.mesh.mesh import mesh_insert_vertex_on_edge
 from compas_pattern.datastructures.mesh.mesh import mesh_substitute_vertex_in_faces
@@ -61,7 +61,7 @@ class Decomposition(Skeleton):
 	# --------------------------------------------------------------------------
 	# key elements
 	# --------------------------------------------------------------------------
-	
+
 	def corner_faces(self):
 		"""Get the indices of the corner faces in the Delaunay mesh, i.e. the ones with one neighbour.
 
@@ -145,7 +145,7 @@ class Decomposition(Skeleton):
 	# --------------------------------------------------------------------------
 	# decomposition
 	# --------------------------------------------------------------------------
-	
+
 	def decomposition_polylines(self):
 		"""Get all the branch polylines to form a decomposition of the Delaunay mesh.
 		These branches include the ones between singularities, between singularities and boundaries and along boundaries.
@@ -157,7 +157,7 @@ class Decomposition(Skeleton):
 			List of polylines as list of point XYZ-coordinates.
 
 		"""
-		a = self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary() + self.branches_splitting_flipped_faces() + self.branches_splitting_boundary_kinks() 
+		a = self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary() + self.branches_splitting_flipped_faces() + self.branches_splitting_boundary_kinks()
 		self.polylines =  network_polylines(Network.from_lines([(u, v) for polyline in a for u, v in pairwise(polyline)]), splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
 		return self.polylines
 
@@ -180,7 +180,7 @@ class Decomposition(Skeleton):
 		polylines = {(geometric_key(polyline[0]), geometric_key(polyline[-1])): polyline for polyline in self.polylines}
 		return polylines.get((geom_key_1, geom_key_2), polylines.get((geom_key_2, geom_key_1), None))
 
-	def decomposition_mesh(self):
+	def decomposition_mesh(self, poles):
 		"""Return a quad mesh based on the decomposition polylines.
 		Some fixes are added to convert the mesh formed by the decomposition polylines into a (coarse) quad mesh.
 
@@ -191,14 +191,14 @@ class Decomposition(Skeleton):
 
 		"""
 
-
 		polylines = self.decomposition_polylines()
 		boundary_keys = set([geometric_key(self.vertex_coordinates(vkey)) for vkey in self.vertices_on_boundary()])
 		boundary_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) in boundary_keys and geometric_key(polyline[1]) in boundary_keys ]
 		other_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) not in boundary_keys or geometric_key(polyline[1]) not in boundary_keys]
-		self.mesh = CoarseQuadMesh.from_polylines(boundary_polylines, other_polylines)
+		self.mesh = CoarsePseudoQuadMesh.from_polylines(boundary_polylines, other_polylines)
 		self.solve_triangular_faces()
 		self.quadrangulate_polygonal_faces()
+		self.integrate_poles(poles)
 		return self.mesh
 
 	# --------------------------------------------------------------------------
@@ -212,7 +212,7 @@ class Decomposition(Skeleton):
 		-------
 		new_branches : list
 			List of polylines as list of point XYZ-coordinates.
-			
+
 		"""
 
 		new_branches = []
@@ -226,11 +226,11 @@ class Decomposition(Skeleton):
 
 			if len(splits) == 0:
 				new_splits += [vkey for vkey in list(itemgetter(0, int(floor(len(polyedge) / 3)), int(floor(len(polyedge) * 2 / 3)))(polyedge))]
-			
+
 			elif len(splits) == 1:
 				i = polyedge.index(splits[0])
 				new_splits += list(itemgetter(i - int(floor(len(polyedge) * 2 / 3)), i - int(floor(len(polyedge) / 3)))(polyedge))
-			
+
 			elif len(splits) == 2:
 				one, two = list_split(polyedge, [polyedge.index(vkey) for vkey in splits])
 				half = one if len(one) > len(two) else two
@@ -253,12 +253,12 @@ class Decomposition(Skeleton):
 		-------
 		new_branches : list
 			List of polylines as list of point XYZ-coordinates.
-			
+
 		"""
 
 		new_branches = []
 		centre_to_fkey = {geometric_key(self.face_circle(fkey)[0]): fkey for fkey in self.faces()}
-		
+
 		# compute total rotation of polyline
 		for polyline in self.branches_singularity_to_singularity():
 			angles = [angle_vectors_signed(subtract_vectors(v, u), subtract_vectors(w, v), [0., 0., 1.]) for u, v, w in window(polyline, n = 3)]
@@ -296,7 +296,7 @@ class Decomposition(Skeleton):
 		-------
 		new_branches : list
 			List of polylines as list of point XYZ-coordinates.
-			
+
 		"""
 
 		new_branches = []
@@ -305,11 +305,11 @@ class Decomposition(Skeleton):
 		for boundary in self.boundaries():
 			angles = {(u, v, w): angle_vectors(subtract_vectors(self.vertex_coordinates(v), self.vertex_coordinates(u)), subtract_vectors(self.vertex_coordinates(w), self.vertex_coordinates(v))) for u, v, w in window(boundary + boundary[: 2], n = 3)}
 			for u, v, w, x, y in list(window(boundary + boundary[: 4], n = 5)):
-				
+
 				# check if not a corner
 				if self.vertex_degree(w) == 2:
 					continue
-				
+
 				angle = angles[(v, w, x)]
 				adjacent_angles = (angles[(u, v, w)] + angles[(w, x, y)]) / 2
 
@@ -327,14 +327,14 @@ class Decomposition(Skeleton):
 
 	def solve_triangular_faces(self):
 		"""Modify the decomposition mesh from polylines to make it a quad mesh by converting the degenerated quad faces that appear as triangular faces.
-			
+
 		"""
 
 		mesh = self.mesh
 
 		for fkey in list(mesh.faces()):
 			if len(mesh.face_vertices(fkey)) == 3:
-				
+
 				boundary_vertices = [vkey for vkey in mesh.face_vertices(fkey) if mesh.is_vertex_on_boundary(vkey)]
 				case = sum(mesh.is_vertex_on_boundary(vkey) for vkey in mesh.face_vertices(fkey))
 
@@ -357,17 +357,18 @@ class Decomposition(Skeleton):
 					polyline = Polyline(self.decomposition_polyline(*map(lambda x: geometric_key(mesh.vertex_coordinates(x)), boundary_vertices)))
 					point = polyline.point(t = .5, snap = True)
 					new_vkey = mesh.add_vertex(attr_dict = {'x': point.x, 'y': point.y , 'z': point.z})
-					
+
 					# modify triangular face
 					mesh.delete_face(fkey)
-					
+
 					# modify adjacent faces
 					for old_vkey in boundary_vertices:
 						mesh_substitute_vertex_in_faces(mesh, old_vkey, new_vkey, mesh.vertex_faces(old_vkey))
 						mesh.delete_vertex(old_vkey)
 
 	def quadrangulate_polygonal_faces(self):
-		# WIP
+		# WIP: problem not all faces should have the same source for propagation
+
 		mesh = self.mesh
 
 		delaunay_vertex_map = tuple(geometric_key(self.vertex_coordinates(vkey)) for vkey in self.vertices())
@@ -376,23 +377,37 @@ class Decomposition(Skeleton):
 		edges_to_unweld = [edge for edge in mesh.edges() if sum([geometric_key(mesh.vertex_coordinates(i)) in delaunay_vertex_map for i in edge]) == 2]
 		mesh_unweld_edges(mesh, edges_to_unweld)
 
+		#meshes = mesh_explode(mesh)
+		#for mesh in meshes:
+
+
 		candidate_map = {geometric_key(mesh.vertex_coordinates(vkey)): [] for vkey in mesh.vertices()}
 		for vkey in mesh.vertices_on_boundary():
 			candidate_map[geometric_key(mesh.vertex_coordinates(vkey))].append(mesh.vertex_degree(vkey))
 
-		for geom_key, valencies in candidate_map.items():
-			print list(set(valencies))
 		source_map = tuple([geom_key for geom_key, valencies in candidate_map.items() if len(list(set(valencies))) > 1])
-		print source_map
 		self.mesh = mesh_weld(mesh)
 		mesh = self.mesh
-		print 'nb vertices', len(list(mesh.vertices()))
 
 		sources = [vkey for vkey in mesh.vertices() if geometric_key(mesh.vertex_coordinates(vkey)) in source_map]
-		print sources
-		# problem: sources are not the same for all quads
+
 		quadrangulate_mesh(mesh, sources)
 
+	def integrate_poles(self, poles):
+
+		mesh = self.mesh
+		pole_map = tuple([geometric_key(pole) for pole in poles])
+		face_poles = {}
+		for fkey in mesh.faces():
+			if len(mesh.face_vertices(fkey)) == 3:
+				for vkey in mesh.face_vertices(fkey):
+					if geometric_key(mesh.vertex_coordinates(vkey)) in pole_map:
+						face_poles[fkey] = vkey
+						break
+				if fkey not in face_poles:
+					print 'pole missing'
+
+		mesh.face_pole = face_poles
 
 # ==============================================================================
 # Main
