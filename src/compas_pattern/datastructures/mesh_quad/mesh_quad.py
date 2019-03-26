@@ -150,6 +150,9 @@ class QuadMesh(Mesh):
 
 		"""
 
+		if self.vertex_degree(vkey) == 0:
+			return 0
+
 		regular_valency = 4 if not self.is_vertex_on_boundary(vkey) else 3
 
 		return (regular_valency - self.vertex_degree(vkey)) / 4
