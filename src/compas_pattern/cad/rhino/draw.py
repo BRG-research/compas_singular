@@ -13,14 +13,11 @@ except ImportError:
 
 import compas_rhino as rhino
 
+from compas.datastructures import mesh_weld
+
 from compas.geometry import bounding_box
 from compas.geometry import distance_point_point
-from compas.geometry import subtract_vectors
-from compas.geometry import centroid_points
 
-from compas_pattern.geometry.analytical import archimedean_spiral_evaluate
-
-from compas_rhino.modifiers import VertexModifier
 
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
@@ -62,9 +59,10 @@ def draw_mesh(mesh, group = True):
 				rs.AddObjectsToGroup(edges, rs.AddGroup())
 			return edges
 	
+	mesh = mesh_weld(mesh)
 	vertices, faces = mesh.to_vertices_and_faces()
 	mesh = rhino.utilities.drawing.xdraw_mesh(vertices, faces, None, None)
-
+	
 	return mesh
 
 
