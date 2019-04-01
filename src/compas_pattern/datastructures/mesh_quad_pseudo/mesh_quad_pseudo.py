@@ -141,7 +141,6 @@ class PseudoQuadMesh(QuadMesh):
             The number of strips.
 
         """
-
         self.strip = {}
 
         edges = list(self.not_none_edges())
