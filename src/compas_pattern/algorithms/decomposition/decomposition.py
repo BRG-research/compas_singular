@@ -427,7 +427,6 @@ class Decomposition(Skeleton):
 				if fkey not in face_poles:
 					print 'pole missing'
 
-		print face_poles
 		mesh.face_pole = face_poles
 
 # ==============================================================================
