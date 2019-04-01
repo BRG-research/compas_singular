@@ -466,7 +466,11 @@ def editing_geometry_smoothing(coarse_pseudo_quad_mesh):
         else:
             rs.DeleteObject(guid)
 
-    if mesh_to_smooth == 'pseudo_quad_mesh':
+    if mesh_to_smooth == 'coarse_pseudo_quad_mesh':
+        coarse_pseudo_quad_mesh = mesh
+    elif mesh_to_smooth == 'pseudo_quad_mesh':
+        coarse_pseudo_quad_mesh.quad_mesh = mesh
+    elif mesh_to_smooth == 'polygonal_mesh':
         coarse_pseudo_quad_mesh.polygonal_mesh = mesh
 
 def save_design(coarse_pseudo_quad_mesh, layer):
