@@ -32,6 +32,26 @@ class RhinoSurface(RhinoSurface):
 	def __init__(self, guid):
 		super(RhinoSurface, self).__init__(guid) 
 
+	def mesh_uv_to_xyz(self, mesh, cls=None):
+		"""Return the mesh from the inverse mapping of a UV mesh based on the UV parameterisation of the surface.
+
+		Parameters
+		----------
+		mesh : Mesh
+			A mesh.
+
+		Returns
+		-------
+		Mesh, cls
+			The inverse-mapped mesh.
+
+		"""
+		if cls is None:
+			cls = type(mesh)
+
+		vertices, faces = mesh.to_vertices_and_faces()
+		vertices = {vkey: self.point_uv_to_xyz(uv0[:2]) for vkey, uv0 in vertices.items()}
+		return cls.from_vertices_and_faces(vertices, faces)
 
 # ==============================================================================
 # Main
