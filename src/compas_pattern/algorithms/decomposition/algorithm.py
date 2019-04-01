@@ -81,6 +81,7 @@ def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output
 		attr = mesh.face_pole
 		remapped_mesh = RhinoSurface(srf_guid).mesh_uv_to_xyz(mesh)
 		remapped_mesh.face_pole = attr
+
 		outputs.append(remapped_mesh)
 
 	# output decomposition surface
