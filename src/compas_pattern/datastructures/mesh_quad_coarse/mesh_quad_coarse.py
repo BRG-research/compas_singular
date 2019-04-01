@@ -98,8 +98,8 @@ class CoarseQuadMesh(QuadMesh):
 		coarse_quad_mesh.init_strip_density()
 		for skey in coarse_quad_mesh.strips():
 			u, v = coarse_quad_mesh.strip_edges(skey)[0]
-			if coarse_edges_children.get((u, v), coarse_edges_children.get((v, u), None)) is None:
-				print u, v, coarse_edges_children
+			#if coarse_edges_children.get((u, v), coarse_edges_children.get((v, u), None)) is None:
+			#	print u, v, coarse_edges_children
 			d = len(coarse_edges_children.get((u, v), coarse_edges_children.get((v, u), None)))
 			coarse_quad_mesh.set_strip_density(skey, d)
 
