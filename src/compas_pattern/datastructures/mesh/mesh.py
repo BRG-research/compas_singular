@@ -64,6 +64,17 @@ class Mesh(Mesh):
 
 		return cls.from_vertices_and_faces(vertices, faces)
 
+	def to_vertices_and_faces(self, keep_keys=True):
+
+		if keep_keys:
+			vertices = {vkey: self.vertex_coordinates(vkey) for vkey in self.vertices()}
+			faces = {fkey: self.face_vertices(fkey) for fkey in self.faces()}
+		else:
+			key_index = self.key_index()
+			vertices = [self.vertex_coordinates(key) for key in self.vertices()]
+			faces = [[key_index[key] for key in self.face_vertices(fkey)] for fkey in self.faces()]
+		return vertices, faces
+
 	# --------------------------------------------------------------------------
 	# global
 	# --------------------------------------------------------------------------
