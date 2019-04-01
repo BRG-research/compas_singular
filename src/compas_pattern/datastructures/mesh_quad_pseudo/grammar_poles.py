@@ -10,7 +10,10 @@ def split_quad_in_pseudo_quads(mesh, fkey, vkey):
 	if len(mesh.face_vertices(fkey)) != 4:
 		return None
 
-	a, b, c, d = mesh.face_vertices(fkey)
+	a = vkey
+	b = mesh.face_vertex_descendant(fkey, a)
+	c = mesh.face_vertex_descendant(fkey, b)
+	d = mesh.face_vertex_descendant(fkey, c)
 
 	mesh.delete_face(fkey)
 
