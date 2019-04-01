@@ -371,7 +371,12 @@ def editing_geometry_moving(coarse_pseudo_quad_mesh):
         rhino_helper.mesh_move_vertices(mesh, vkeys)
         rs.DeleteObject(guid)
 
-    if mesh_to_modify == 'pseudo_quad_mesh':
+    if mesh_to_modify == 'coarse_pseudo_quad_mesh':
+        coarse_pseudo_quad_mesh = mesh
+    elif mesh_to_modify == 'pseudo_quad_mesh':
+        coarse_pseudo_quad_mesh.quad_mesh = mesh
+        coarse_pseudo_quad_mesh.polygonal_mesh = mesh.copy()
+    elif mesh_to_modify == 'polygonal_mesh':
         coarse_pseudo_quad_mesh.polygonal_mesh = mesh
 
 def editing_geometry_smoothing(coarse_pseudo_quad_mesh):
@@ -470,6 +475,7 @@ def editing_geometry_smoothing(coarse_pseudo_quad_mesh):
         coarse_pseudo_quad_mesh = mesh
     elif mesh_to_smooth == 'pseudo_quad_mesh':
         coarse_pseudo_quad_mesh.quad_mesh = mesh
+        coarse_pseudo_quad_mesh.polygonal_mesh = mesh.copy()
     elif mesh_to_smooth == 'polygonal_mesh':
         coarse_pseudo_quad_mesh.polygonal_mesh = mesh
 
