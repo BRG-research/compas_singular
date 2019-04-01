@@ -32,14 +32,15 @@ mesh0 = CoarseQuadMesh.from_vertices_and_faces(*RhinoMesh.from_guid(guid0).get_v
 surface = RhinoSurface(rs.GetObject(message = 'surface constraint', filter = 8))
 
 def geometrical_processing(mesh, surface):
+    return mesh
     #mesh = CoarseQuadMesh.from_quad_mesh(mesh)
-    mesh.init_strip_density()
-    mesh.set_strips_density(1)
-    mesh.densification()
+    #mesh.init_strip_density()
+    #mesh.set_strips_density(1)
+    #mesh.densification()
     #constraints = automated_smoothing_constraints(mesh.quad_mesh, curves = curves, points = points)
-    constraints = automated_smoothing_surface_constraints(mesh.quad_mesh, surface)
-    constrained_smoothing(mesh.quad_mesh, kmax = 30, damping = .5, constraints = constraints, algorithm = 'area')
-    return draw_mesh(mesh.quad_mesh)
+    #constraints = automated_smoothing_surface_constraints(mesh.quad_mesh, surface)
+    #constrained_smoothing(mesh.quad_mesh, kmax = 30, damping = .5, constraints = constraints, algorithm = 'area')
+    #return draw_mesh(mesh.quad_mesh)
 
 def performance_evaluation(mesh):
     #return random.random()
