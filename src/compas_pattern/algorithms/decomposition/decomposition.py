@@ -19,6 +19,8 @@ from compas.datastructures import mesh_weld
 from compas_pattern.datastructures.mesh.unweld import mesh_unweld_edges
 from compas_pattern.algorithms.decomposition.propagation import quadrangulate_mesh
 
+from compas_pattern.datastructures.mesh_quad_pseudo.grammar_poles import split_quad_in_pseudo_quads
+
 from compas.geometry import length_vector
 from compas.geometry import length_vector_xy
 from compas.geometry import subtract_vectors
@@ -198,7 +200,8 @@ class Decomposition(Skeleton):
 		self.mesh = CoarsePseudoQuadMesh.from_polylines(boundary_polylines, other_polylines)
 		self.solve_triangular_faces()
 		self.quadrangulate_polygonal_faces()
-		self.integrate_poles(poles)
+		self.split_quads_with_poles(poles)
+		self.store_pole_data(poles)
 		return self.mesh
 
 	# --------------------------------------------------------------------------
@@ -393,20 +396,38 @@ class Decomposition(Skeleton):
 
 		quadrangulate_mesh(mesh, sources)
 
-	def integrate_poles(self, poles):
+
+	def split_quads_with_poles(self, poles):
 
 		mesh = self.mesh
 		pole_map = tuple([geometric_key(pole) for pole in poles])
+
+		faces = list(mesh.faces())
+		for fkey in faces:
+			if len(mesh.face_vertices(fkey)) == 4:
+				for vkey in mesh.face_vertices(fkey):
+					if geometric_key(mesh.vertex_coordinates(vkey)) in pole_map:
+						split_quad_in_pseudo_quads(mesh, fkey, vkey)
+						break
+
+	def store_pole_data(self, poles):
+		
+		mesh = self.mesh
+		pole_map = tuple([geometric_key(pole) for pole in poles])
+
 		face_poles = {}
 		for fkey in mesh.faces():
 			if len(mesh.face_vertices(fkey)) == 3:
+				print fkey, 'look for pole'
 				for vkey in mesh.face_vertices(fkey):
+					print vkey, geometric_key(mesh.vertex_coordinates(vkey))
 					if geometric_key(mesh.vertex_coordinates(vkey)) in pole_map:
 						face_poles[fkey] = vkey
 						break
 				if fkey not in face_poles:
 					print 'pole missing'
 
+		print face_poles
 		mesh.face_pole = face_poles
 
 # ==============================================================================
