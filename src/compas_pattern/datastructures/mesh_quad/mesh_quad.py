@@ -231,6 +231,18 @@ class QuadMesh(Mesh):
 
 		return polyedges
 
+	def polylines(self):
+		"""Return the polylines of the quad mesh.
+
+		Returns
+		-------
+		list
+			The polylines.
+
+		"""
+
+		return [[self.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in self.polyedges()]
+
 	def singularity_polyedges(self):
 		"""Collect the polyedges connected to singularities.
 
