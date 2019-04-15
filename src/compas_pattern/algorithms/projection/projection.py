@@ -75,11 +75,13 @@ def two_colourable_projection(mesh, kmax = 1):
 			if not topological_validity:
 				results[combination] = 'invalid topology'
 
+
 			# delete strip vertices in network and check colourability
 			else:
-				copy_network = strip_network.copy()
-				for vkey in combination:
-					copy_network.delete_vertex(vkey)
+				#copy_network = strip_network.copy()
+				#for vkey in combination:
+				#	copy_network.delete_vertex(vkey)
+				copy_network = copy_mesh.strip_connectivity()
 				two_colourability = is_network_two_colorable(copy_network)
 				if not two_colourability:
 					results[combination] = 'not two-colourable'
