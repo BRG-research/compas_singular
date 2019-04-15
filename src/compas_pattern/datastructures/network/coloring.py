@@ -34,7 +34,6 @@ def is_network_two_colorable(network):
 	# start from any vertex, color it and propagate to neighbors
 	key_0 = network.get_any_vertex()
 	sources = [key_0]
-	key_to_color[key_0] = 0
 
 	count = network.number_of_vertices()
 
@@ -42,7 +41,7 @@ def is_network_two_colorable(network):
 	while count > 0 and sources:
 		count -= 1
 		key = sources.pop()
-		nbr_colors = {key_to_color[nbr] for nbr in network.vertex_neighbors(key)}
+		nbr_colors = tuple([key_to_color[nbr] for nbr in network.vertex_neighbors(key)])
 
 		# if two colors already exist in the neighbors, the network is not two-colourable
 		if 0 in nbr_colors and 1 in nbr_colors:
@@ -54,7 +53,7 @@ def is_network_two_colorable(network):
 			elif 1 not in nbr_colors:
 				key_to_color[key] = 1
 			# add uncolored neighbors to sources
-			sources += [nbr for nbr in network.vertex_neighbors(key) if key_to_color[nbr] == -1]
+			sources += [nbr for nbr in network.vertex_neighbors(key) if key_to_color[nbr] == -1 and nbr not in sources]
 
 	return key_to_color
 
@@ -65,28 +64,63 @@ def is_network_two_colorable(network):
 
 if __name__ == '__main__':
 
+	import time
 	import compas
 	from compas_pattern.datastructures.network.network import Network
+	from compas_pattern.datastructures.mesh_quad_coarse.mesh_quad_coarse import CoarseQuadMesh
+	from compas.plotters import NetworkPlotter
+
+	# vertices = [
+	# 	[0, 0, 0],
+	# 	[1, 0, 0],
+	# 	[2, 0, 0],
+	# 	[2, 1, 0],
+	# 	[1, 1, 0],
+	# 	[0, 1, 0],
+	# ]
+
+	# edges = [
+	# 	(0, 1),
+	# 	(1, 2),
+	# 	(2, 3),
+	# 	(3, 4),
+	# 	(4, 5),
+	# 	(5, 0),
+	# 	(0, 3),
+	# 	(2, 5)
+	# ]
+
+	# network = Network.from_vertices_and_edges(vertices, edges)
+	# print is_network_two_colorable(network)
 
 	vertices = [
 		[0, 0, 0],
 		[1, 0, 0],
-		[2, 0, 0],
-		[2, 1, 0],
 		[1, 1, 0],
-		[0, 1, 0],
+		[0, 1, 0]
 	]
 
-	edges = [
-		(0, 1),
-		(1, 2),
-		(2, 3),
-		(3, 4),
-		(4, 5),
-		(5, 0),
-		(0, 3),
-		(2, 5)
+	faces = [
+		[0, 1, 2, 3]
 	]
 
+
+
+	mesh = CoarseQuadMesh.from_vertices_and_faces(vertices, faces)
+	mesh.init_strip_density()
+	mesh.set_strips_density(60)
+	mesh.densification()
+	mesh = mesh.quad_mesh
+	vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
+	edges = list(mesh.edges())
 	network = Network.from_vertices_and_edges(vertices, edges)
-	print is_network_two_colorable(network)
+	#print network.vertex_neighbors(0), network.vertex_neighbors(8), network.vertex_neighbors(17), network.vertex_neighbors(33)
+	t0 = time.time()
+	is_network_two_colorable(network)
+	t1 = time.time()
+	print t1 - t0, network.number_of_vertices(), network.number_of_vertices() / (t1 - t0)
+	plotter = NetworkPlotter(network)
+	plotter.draw_vertices(text='key', radius=.01)
+	plotter.draw_edges()
+	#plotter.show()
+
