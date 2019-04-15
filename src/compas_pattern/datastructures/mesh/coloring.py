@@ -11,9 +11,7 @@ __all__ = [
 	'mesh_vertex_2_coloring',
 	'mesh_vertex_n_coloring',
 	'mesh_face_2_coloring',
-	'mesh_face_n_coloring',
-	'mesh_strip_2_coloring',
-	'mesh_strip_n_coloring'
+	'mesh_face_n_coloring'
 ]
 
 
