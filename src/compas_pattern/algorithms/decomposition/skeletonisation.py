@@ -2,6 +2,8 @@ from compas_pattern.datastructures.mesh.mesh import Mesh
 from compas_pattern.datastructures.network.network import Network
 from compas.datastructures.network.operations import network_polylines
 
+from compas.datastructures import trimesh_face_circle
+
 from compas.utilities import geometric_key
 
 __author__     = ['Robin Oval']
@@ -51,7 +53,7 @@ class Skeleton(Mesh):
 
 		"""
 
-		return [self.face_circle(fkey)[0] for fkey in self.singular_faces()]
+		return [trimesh_face_circle(self, fkey)[0] for fkey in self.singular_faces()]
 		
 	def lines(self):
 		"""Get the lines forming the topological skeleton, i.e. the lines connecting the circumcentres of adjacent faces.
@@ -63,7 +65,7 @@ class Skeleton(Mesh):
 
 		"""
 
-		return [(self.face_circle(fkey)[0], self.face_circle(nbr)[0]) for fkey in self.faces() for nbr in self.face_neighbors(fkey) if fkey < nbr and geometric_key(self.face_circle(fkey)[0]) != geometric_key(self.face_circle(nbr)[0])]
+		return [(trimesh_face_circle(self, fkey)[0], trimesh_face_circle(self, nbr)[0]) for fkey in self.faces() for nbr in self.face_neighbors(fkey) if fkey < nbr and geometric_key(trimesh_face_circle(self, fkey)[0]) != geometric_key(trimesh_face_circle(self, nbr)[0])]
 
 	def branches(self):
 		"""Get the branch polylines of the topological skeleton as polylines connecting singular points.

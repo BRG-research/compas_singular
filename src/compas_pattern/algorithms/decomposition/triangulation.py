@@ -1,11 +1,14 @@
 from compas.geometry import delaunay_from_points
 from compas.geometry import delaunay_from_points_numpy
 from compas.utilities import XFunc
+from compas.rpc import Proxy
 
 from compas.geometry import is_point_in_polygon_xy
 from compas.geometry import length_vector
 from compas.geometry import subtract_vectors
 from compas.geometry import cross_vectors
+
+from compas.datastructures import trimesh_face_circle
 
 from compas_pattern.datastructures.mesh.unweld import mesh_unweld_edges
 
@@ -18,11 +21,29 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
+	'delaunay_numpy_rpc',
 	'delaunay_numpy_xfunc',
 	'delaunay',
 	'boundary_triangulation'
 ]
 
+def delaunay_numpy_rpc(vertices):
+	"""RPC for Delaunay function from numpy.
+
+	Parameters
+	----------
+	vertices : list
+		List of vertex coordinates.
+
+	Returns
+	-------
+	list
+		List of face vertices.
+
+	"""
+
+	proxy_geom = Proxy('compas.geometry')
+	return proxy_geom.delaunay_from_points_numpy(vertices)
 
 def delaunay_numpy_xfunc(vertices):
 	"""Xfunc for Delaunay function from numpy.
@@ -69,7 +90,7 @@ def delaunay(vertices, src = 'compas', cls=None):
 	
 	elif src == 'numpy':
 		faces = XFunc('compas_pattern.algorithms.decomposition.triangulation.delaunay_numpy_xfunc')(vertices)
-	
+		#faces = delaunay_numpy_rpc(vertices)
 	else:
 		return None
 
@@ -118,7 +139,7 @@ def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features =
 
 	# delete faces outisde the borders
 	for fkey in list(delaunay_mesh.faces()):
-		centre = delaunay_mesh.face_circle(fkey)[0]
+		centre = trimesh_face_circle(delaunay_mesh, fkey)[0]
 		if not is_point_in_polygon_xy(centre, outer_boundary) or any([is_point_in_polygon_xy(centre, inner_boundary) for inner_boundary in inner_boundaries]):
 			delaunay_mesh.delete_face(fkey)
 
@@ -137,3 +158,12 @@ def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features =
 if __name__ == '__main__':
 
 	import compas
+	from compas_pattern.datastructures.mesh.mesh import Mesh
+
+	vertices = [
+		[0.0, 0.0, 0.0],
+		[1.0, 0.0, 0.0],
+		[0.0, 1.0, 0.0]
+	]
+
+	delaunay(vertices, src = 'numpy')

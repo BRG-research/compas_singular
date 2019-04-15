@@ -28,6 +28,8 @@ from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import cross_vectors
 
+from compas.datastructures import trimesh_face_circle
+
 from compas.utilities import pairwise
 from compas.utilities import window
 from compas.utilities import geometric_key
@@ -114,7 +116,7 @@ class Decomposition(Skeleton):
 
 		"""
 
-		map_corners = [geometric_key(self.face_circle(corner)[0]) for corner in self.corner_faces()]
+		map_corners = [geometric_key(trimesh_face_circle(self, corner)[0]) for corner in self.corner_faces()]
 		return [branch for branch in self.branches() if geometric_key(branch[0]) not in map_corners and geometric_key(branch[-1]) not in map_corners]
 
 	def branches_singularity_to_boundary(self):
@@ -127,7 +129,7 @@ class Decomposition(Skeleton):
 
 		"""
 
-		return [[self.face_circle(fkey)[0], self.vertex_coordinates(vkey)] for fkey in self.singular_faces() for vkey in self.face_vertices(fkey)]
+		return [[trimesh_face_circle(self, fkey)[0], self.vertex_coordinates(vkey)] for fkey in self.singular_faces() for vkey in self.face_vertices(fkey)]
 
 	def branches_boundary(self):
 		"""Get new branch polylines from the Delaunay mesh boundaries split at the corner and plit vertices. Not part of the topological skeleton.
@@ -260,7 +262,7 @@ class Decomposition(Skeleton):
 		"""
 
 		new_branches = []
-		centre_to_fkey = {geometric_key(self.face_circle(fkey)[0]): fkey for fkey in self.faces()}
+		centre_to_fkey = {geometric_key(trimesh_face_circle(self, fkey)[0]): fkey for fkey in self.faces()}
 
 		# compute total rotation of polyline
 		for polyline in self.branches_singularity_to_singularity():
@@ -285,7 +287,7 @@ class Decomposition(Skeleton):
 					fkey = centre_to_fkey[geometric_key(point)]
 					for edge in self.face_halfedges(fkey):
 						if not self.is_edge_on_boundary(*edge):
-							new_branches += [[self.face_circle(fkey)[0], self.vertex_coordinates(vkey)] for vkey in edge]
+							new_branches += [[trimesh_face_circle(self, fkey)[0], self.vertex_coordinates(vkey)] for vkey in edge]
 							break
 
 		return new_branches
@@ -323,7 +325,7 @@ class Decomposition(Skeleton):
 						fkey = fkeys[int(floor(len(fkeys) / 2))]
 						for edge in self.face_halfedges(fkey):
 							if w in edge and not self.is_edge_on_boundary(*edge):
-								new_branches += [[self.face_circle(fkey)[0], self.vertex_coordinates(vkey)] for vkey in edge]
+								new_branches += [[trimesh_face_circle(self, fkey)[0], self.vertex_coordinates(vkey)] for vkey in edge]
 								break
 
 		return new_branches
