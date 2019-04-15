@@ -1,5 +1,5 @@
-from compas_pattern.datastructures.mesh import Mesh
-from compas_pattern.datastructures.network import Network
+from compas_pattern.datastructures.mesh.mesh import Mesh
+from compas_pattern.datastructures.network.network import Network
 from compas.geometry import convex_hull
 
 from compas.geometry import subtract_vectors
@@ -15,7 +15,7 @@ from compas.geometry import centroid_points
 from compas.datastructures import meshes_join_and_weld
 from compas.datastructures import mesh_weld
 
-from compas.topology import trimesh_subdivide_loop
+from compas.datastructures import trimesh_subdivide_loop
 
 from compas.topology import conway_ambo
 
@@ -23,10 +23,10 @@ from compas.topology import vertex_coloring
 
 from compas.utilities import pairwise
 
-class Weaving(Mesh):
+class Kagome(Mesh):
 
 	def __init__(self):
-		super(Weaving, self).__init__()
+		super(Kagome, self).__init__()
 		self.dense_mesh = None
 		self.kagome = None
 
@@ -36,10 +36,7 @@ class Weaving(Mesh):
 		return cls.from_vertices_and_faces(*mesh.to_vertices_and_faces())
 
 	@classmethod
-	def from_lines(cls, lines):
-
-
-		radius = .2
+	def from_skeleton(cls, lines, radius=1):
 
 		network = Network.from_lines(lines)
 
@@ -144,7 +141,7 @@ class Weaving(Mesh):
 
 	def densification(self, k = 1):
 
-		self.dense_mesh = Weaving.from_mesh(trimesh_subdivide_loop(self, k, fixed = None))
+		self.dense_mesh = Kagome.from_mesh(trimesh_subdivide_loop(self, k, fixed = None))
 	
 	def patterning(self):
 
@@ -300,14 +297,13 @@ if __name__ == '__main__':
 		([0., 0., 0.],[0., 0., 1.]),
 		]
 
-	weaving = Weaving.from_lines(lines)
-	weaving.densification(2)
-	weaving.patterning()
+	kagome = Kagome.from_skeleton(lines)
+	kagome.densification(2)
+	kagome.patterning()
 
-	weaving.kagome_negative_singularities()
-	#print weaving.kagome_mesh
-	weaving.kagome_polyedges()
+	print kagome.kagome_negative_singularities()
 
-	weaving.kagome_polyline_colouring()
+	#kagome.kagome_polyedges()
+	#kagome.kagome_polyline_colouring()
 
 
