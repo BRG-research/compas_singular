@@ -3,24 +3,23 @@ import random
 import rhinoscriptsyntax as rs
 
 from compas_rhino.geometry import RhinoMesh
-from compas_pattern.datastructures.mesh_quad_coarse import CoarseQuadMesh
+from compas_pattern.datastructures.mesh_quad_coarse.mesh_quad_coarse import CoarseQuadMesh
 
 from compas.utilities.statistics import average
-from compas_pattern.algorithms.adjacent_topologies import adjacent_topologies_delete
-from compas_pattern.algorithms.adjacent_topologies import adjacent_topologies_add
+from compas_pattern.algorithms.combination.algorithm import adjacent_topologies
 
-from compas_pattern.topology.grammar import delete_strips
-from compas_pattern.topology.grammar import split_strips
-from compas_pattern.topology.grammar import strips_to_split_to_preserve_boundaries_before_deleting_strips
-from compas_pattern.topology.grammar import edit_strips
+
+from compas_pattern.datastructures.mesh_quad.grammar_pattern import delete_strips
+from compas_pattern.datastructures.mesh_quad.grammar_pattern import split_strips
+from compas_pattern.datastructures.mesh_quad.grammar_pattern import edit_strips
 
 from compas_pattern.cad.rhino.objects.surface import RhinoSurface
-from compas_pattern.cad.rhino.smoothing_constraints import automated_smoothing_constraints
-from compas_pattern.cad.rhino.smoothing_constraints import automated_smoothing_surface_constraints
-from compas_pattern.algorithms.smoothing import constrained_smoothing
+from compas_pattern.algorithms.relaxation.constraints import automated_smoothing_constraints
+from compas_pattern.algorithms.relaxation.constraints import automated_smoothing_surface_constraints
+from compas_pattern.algorithms.relaxation.relaxation import constrained_smoothing
 
-from compas_pattern.cad.rhino.utilities import arrange_guids_in_circle
-from compas_pattern.cad.rhino.utilities import draw_mesh
+from compas_pattern.algorithms.combination.arrange import arrange_in_circle
+from compas_pattern.cad.rhino.draw import draw_mesh
 
 
 guid0 = rs.GetObject('get quad mesh')
