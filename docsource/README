@@ -1,3 +1,0 @@
-# to build docs
-# from compas_pattern
-# $ sphinx-build -E ./docsource ./docs

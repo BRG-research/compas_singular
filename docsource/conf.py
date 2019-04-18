@@ -7,20 +7,20 @@
 import sys
 import os
 
-import compas
-import compas_rbe
+import sphinx_compas_theme
+
 
 # -- General configuration ------------------------------------------------
 
-project          = 'COMPAS Pattern'
-copyright        = 'Block Research Group - ETH Zurich'
-author           = 'Robin Oval'
-release          = '0.1.0'
-version          = '.'.join(release.split('.')[0:2])
+project = 'COMPAS_PATTERN'
+copyright = 'Block Research Group - ETH Zurich'
+author = 'Robin Oval'
+release = '0.1.0'
+version = '.'.join(release.split('.')[0:2])
 
-master_doc       = 'index'
-source_suffix    = ['.rst', ]
-templates_path   = ['_templates', ]
+master_doc = 'index'
+source_suffix = ['.rst', ]
+templates_path = ['_templates', ]
 exclude_patterns = []
 
 pygments_style   = 'sphinx'
@@ -34,8 +34,8 @@ language         = None
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
-    'sphinx.ext.inheritance_diagram',
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'matplotlib.sphinxext.plot_directive',
@@ -44,13 +44,13 @@ extensions = [
 # autodoc options
 
 autodoc_default_flags = [
-    "undoc-members",
-    "show-inheritance",
+    'undoc-members',
+    'show-inheritance',
 ]
 
 autodoc_member_order = 'alphabetical'
 
-autoclass_content = "class"
+autoclass_content = 'class'
 
 # autosummary options
 
@@ -58,7 +58,7 @@ autosummary_generate = True
 
 # napoleon options
 
-napoleon_google_docstring = False
+napoleon_google_docstring = True
 napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = False
 napoleon_include_private_with_doc = False
@@ -95,12 +95,14 @@ intersphinx_mapping = {
 # -- Options for HTML output ----------------------------------------------
 
 html_theme = 'compaspkg'
-html_theme_path = ['../../../compas-dev/sphinx_compas_theme/sphinx_compas_theme']
+html_theme_path = sphinx_compas_theme.get_html_theme_path()
+
 html_theme_options = {
-    "package_name"    : "compas_pattern",
-    "package_title"   : project,
-    "package_version" : release,
+    'package_name'    : 'compas_pattern',
+    'package_title'   : project,
+    'package_version' : release,
 }
+
 html_context = {}
 html_static_path = []
 html_extra_path = ['.nojekyll']
