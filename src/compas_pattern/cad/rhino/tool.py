@@ -76,15 +76,19 @@ def singular():
 
     if pattern_from == 'coarse_pseudo_quad_mesh':
         guid = rs.GetObject('get coarse quad mesh', filter=32)
-        coarse_pseudo_quad_mesh = CoarsePseudoQuadMesh.from_vertices_and_faces(
-            *RhinoMesh.from_guid(guid).get_vertices_and_faces())
+        vertices, faces = RhinoMesh.from_guid(guid).get_vertices_and_faces()
+        poles = []
+        for face in faces:
+            if len(face) == 4:
+                poles = [rs.PointCoordinates(point) for point in rs.GetObjects('get pole points', filter=1)]
+                break
+        coarse_pseudo_quad_mesh = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, poles)
         coarse_pseudo_quad_mesh.init_strip_density()
         coarse_pseudo_quad_mesh.quad_mesh = coarse_pseudo_quad_mesh.copy()
         coarse_pseudo_quad_mesh.polygonal_mesh = coarse_pseudo_quad_mesh.copy()
     elif pattern_from == 'pseudo_quad_mesh':
         guid = rs.GetObject('get quad mesh', filter=32)
-        coarse_pseudo_quad_mesh = CoarsePseudoQuadMesh.from_quad_mesh(PseudoQuadMesh.from_vertices_and_faces(
-            *RhinoMesh.from_guid(guid).get_vertices_and_faces()))
+        coarse_pseudo_quad_mesh = CoarsePseudoQuadMesh.from_quad_mesh(PseudoQuadMesh.from_vertices_and_faces(*RhinoMesh.from_guid(guid).get_vertices_and_faces()))
     elif pattern_from == 'surface_and_features':
         srf_guid = rs.GetObject('get surface', filter=8)
         crv_guids = rs.GetObjects('get optional curve features', filter=4)
