@@ -29,6 +29,7 @@ class Kagome(Mesh):
 		super(Kagome, self).__init__()
 		self.dense_mesh = None
 		self.kagome = None
+		self.kagome_polyedge_data = None
 
 	@classmethod
 	def from_mesh(cls, mesh):
@@ -147,6 +148,20 @@ class Kagome(Mesh):
 
 		self.kagome = conway_ambo(self.dense_mesh)
 
+	def store_kagome_polyedge_data(self):
+
+		self.kagome_polyedge_data = self.kagome_polyedges()
+
+	def kagome_singularities(self):
+
+		singular_faces = []
+		for fkey in self.kagome.faces():
+			singular_hex = all([len(self.kagome.face_vertices(nbr)) == 3 for nbr in self.kagome.face_neighbors(fkey)]) and len(self.kagome.face_vertices(fkey)) != 6
+			singular_tri = all([len(self.kagome.face_vertices(nbr)) == 6 for nbr in self.kagome.face_neighbors(fkey)]) and len(self.kagome.face_vertices(fkey)) != 3
+			if singular_hex or singular_tri:
+				singular_faces.append([self.kagome.vertex_coordinates(vkey) for vkey in self.kagome.face_vertices(fkey) + self.kagome.face_vertices(fkey)[: 1]])
+		return singular_faces
+
 	def kagome_negative_singularities(self):
 
 		return [fkey for fkey in self.kagome.faces() if all([len(self.kagome.face_vertices(nbr)) == 3 for nbr in self.kagome.face_neighbors(fkey)]) and len(self.kagome.face_vertices(fkey)) > 6]
@@ -157,14 +172,17 @@ class Kagome(Mesh):
 
 	def kagome_vertex_opposite_vertex(self, u, v):
 
-		if self.kagome.is_vertex_on_boundary(v):
+		if self.kagome.is_edge_on_boundary(u, v):
 			
-			if not self.kagome.is_vertex_on_boundary(u):
+			if self.kagome.vertex_degree(v) == 2:
 				return None
 			
 			else:
-				return [nbr for nbr in self.kagome.vertex_neighbors(v) if nbr != u and self.kagome.is_vertex_on_boundary(nbr)][0]
+				return [nbr for nbr in self.kagome.vertex_neighbors(v, ordered = True) if nbr != u and self.kagome.is_edge_on_boundary(v, nbr)][0]
 		
+		elif self.kagome.is_vertex_on_boundary(v):
+			return None
+
 		else:
 			nbrs = self.kagome.vertex_neighbors(v, ordered = True)
 			return nbrs[nbrs.index(u) - 2]
@@ -222,11 +240,35 @@ class Kagome(Mesh):
 
 	def kagome_polylines(self):
 
-		return [[self.kagome.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in self.kagome_polyedges()]
+		return [[self.kagome.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in self.kagome_polyedge_data]
+
+	def kagome_polyline_frames(self):
+		polylines_frames = []
+		for polyedge in self.kagome_polyedge_data:
+			polyline_frames = []
+			for i, u in enumerate(polyedge):
+				#if end
+				if i == len(polyedge) - 1:
+					# if closed
+					if polyedge[0] == polyedge[-1]:
+						v = polyedge[1]
+					else:
+						v = polyedge[i - 1]
+				else:
+					v = polyedge[i + 1]
+				x = self.kagome.vertex_normal(u)
+				y = normalize_vector(subtract_vectors(self.kagome.vertex_coordinates(v), self.kagome.vertex_coordinates(u)))
+				if i == len(polyedge) - 1 and polyedge[0] != polyedge[-1]:
+					y = scale_vector(y, -1)
+				z = cross_vectors(x, y)
+				polyline_frames.append([x, y, z])
+			polylines_frames.append(polyline_frames)
+		return polylines_frames
+
 
 	def kagome_polyedge_colouring(self):
 
-		polyedges = self.kagome_polyedges()
+		polyedges = self.kagome_polyedge_data
 
 		edge_to_polyedge_index = {vkey: {} for vkey in self.kagome.vertices()}
 		for i, polyedge in enumerate(polyedges):
@@ -250,34 +292,35 @@ class Kagome(Mesh):
 
 		return {tuple(polyedge): key_to_colour[i] for i, polyedge in enumerate(polyedges)}
 
+	def kagome_polyedge_colouring_2(self):
+
+		polyedges = self.kagome_polyedge_data
+
+		edge_to_polyedge_index = {vkey: {} for vkey in self.kagome.vertices()}
+		for i, polyedge in enumerate(polyedges):
+			for u, v in pairwise(polyedge):
+				edge_to_polyedge_index[u][v] = i
+				edge_to_polyedge_index[v][u] = i
+
+		vertices = [centroid_points([self.kagome.vertex_coordinates(vkey) for vkey in polyedge]) for polyedge in polyedges]
+
+		edges = []
+		for idx, polyedge in enumerate(polyedges):
+			for vkey in polyedge:
+				for vkey_2 in self.kagome.vertex_neighbors(vkey):
+					idx_2 = edge_to_polyedge_index[vkey][vkey_2]
+					if idx_2 != idx and idx < idx_2 and (idx, idx_2) not in edges:
+						edges.append((idx, idx_2))
+
+		polyedge_network = Network.from_vertices_and_edges(vertices, edges)
+
+		key_to_colour = vertex_coloring(polyedge_network.adjacency)
+
+		return [key_to_colour[key] for key in sorted(key_to_colour.keys())]
+
 	def kagome_polyline_colouring(self):
 
 		return {tuple([tuple(self.kagome.vertex_coordinates(vkey)) for vkey in polyedge]): colour for polyedge, colour in self.kagome_polyedge_colouring().items()}
-
-	# def kagome_polyedge_colouring(self):
-
-	# 	polyedges = self.kagome_polyedges()
-
-	# 	edge_to_polyedge = {u: {} for self.kagome.vertices()}
-
-	# 	for i, polyedge in enumerate(polyedges):
-	# 		for u, v in pairwise(polyedge):
-	# 			edge_to_polyedge[u][v] = i
-	# 			edge_to_polyedge[v][u] = i
-
-	# 	edge_to_polyedge = {u: {} for self.kagome.vertices()}
-
-	# 	tri_faces = [fkey for fkey in self.kagome.faces() if len(self.kagome.face_vertices(fkey)) == 3]
-
-	# 	polyedge_to_colour = {i: -1 for i in range(len(polyedges))}
-
-	# 	to_visit = polyedges[:]
-	# 	count = len(to_visit) * 2
-	# 	while to_visit and count:
-	# 		count -= 1
-	# 		polyedge = to_visit.pop()
-	# 		polyedge_to_colour[]
-
 
 
 # ==============================================================================
@@ -301,8 +344,9 @@ if __name__ == '__main__':
 	kagome.densification(2)
 	kagome.patterning()
 
-	print kagome.kagome_negative_singularities()
-
+	#print kagome.kagome_negative_singularities()
+	print kagome.kagome_singularities()
+	#print kagome.kagome_polyline_frames()
 	#kagome.kagome_polyedges()
 	#kagome.kagome_polyline_colouring()
 
