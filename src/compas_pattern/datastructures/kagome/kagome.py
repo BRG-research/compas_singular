@@ -22,6 +22,7 @@ from compas.topology import conway_ambo
 from compas.topology import vertex_coloring
 
 from compas.utilities import pairwise
+from compas.utilities import window
 
 class Kagome(Mesh):
 
@@ -140,9 +141,14 @@ class Kagome(Mesh):
 
 		return [self.vertex_coordinates(vkey) for vkey in self.singularities()]
 
-	def densification(self, k = 1):
+	def densification(self, k = 1, fixed_boundary = True):
 
-		self.dense_mesh = Kagome.from_mesh(trimesh_subdivide_loop(self, k, fixed = None))
+		if fixed_boundary:
+			fixed = self.vertices_on_boundary()
+		else:
+			fixed = None
+
+		self.dense_mesh = Kagome.from_mesh(trimesh_subdivide_loop(self, k, fixed))
 	
 	def patterning(self):
 
@@ -322,6 +328,31 @@ class Kagome(Mesh):
 
 		return {tuple([tuple(self.kagome.vertex_coordinates(vkey)) for vkey in polyedge]): colour for polyedge, colour in self.kagome_polyedge_colouring().items()}
 
+	def kagome_polyedge_weaving(self):
+
+		mesh = self.kagome
+
+		edge_to_polyedge_index = {}
+		for i, polyedge in enumerate(self.kagome_polyedge_data):
+			for u, v in pairwise(polyedge):
+				edge_to_polyedge_index[(u, v)] = i
+				edge_to_polyedge_index[(v, u)] = i
+
+		vertex_to_polyege_offset = {vkey: {} for vkey in mesh.vertices()}
+		for fkey in mesh.faces():
+			if len(mesh.face_vertices(fkey)) == 3:
+				for u, v, w in window(mesh.face_vertices(fkey) + mesh.face_vertices(fkey)[:2], n = 3):
+					vertex_to_polyege_offset[v].update({edge_to_polyedge_index[(u, v)]: +1, edge_to_polyedge_index[(v, w)]: -1})
+			else:
+				for u, v, w in window(mesh.face_vertices(fkey) + mesh.face_vertices(fkey)[:2], n = 3):
+					vertex_to_polyege_offset[v].update({edge_to_polyedge_index[(u, v)]: -1, edge_to_polyedge_index[(v, w)]: +1})
+
+		polyedge_weave = []
+		for i, polyedge in enumerate(self.kagome_polyedge_data):
+			polyedge_weave.append([vertex_to_polyege_offset[vkey][i] for vkey in polyedge])
+
+		return polyedge_weave
+
 
 # ==============================================================================
 # Main
@@ -330,7 +361,22 @@ class Kagome(Mesh):
 if __name__ == '__main__':
 
 	import compas
+	from compas.plotters import MeshPlotter
 
+	vertices = [
+		[0., 0., 0.],
+		[1., 0., 0.],
+		[1., 1., 0.],
+		[0., 1., 0.],
+		[0.5, 0.5, 0.],	
+	]
+
+	faces = [
+		[0, 1, 4],
+		[1, 2, 4],
+		[2, 3, 4],
+		[3, 0, 4],
+	]
 
 	lines = [
 		([0., 0., 0.],[1., 0., -1.]),
@@ -340,14 +386,22 @@ if __name__ == '__main__':
 		([0., 0., 0.],[0., 0., 1.]),
 		]
 
-	kagome = Kagome.from_skeleton(lines)
+	#kagome = Kagome.from_skeleton(lines)
+	kagome = Kagome.from_vertices_and_faces(vertices, faces)
 	kagome.densification(2)
 	kagome.patterning()
+	kagome.store_kagome_polyedge_data()
+
+	#plotter = MeshPlotter(kagome.kagome)
+	#plotter.draw_vertices(radius=.01)
+	#plotter.draw_edges()
+	#plotter.draw_faces()
+	#plotter.show()
 
 	#print kagome.kagome_negative_singularities()
-	print kagome.kagome_singularities()
+	#print kagome.kagome_singularities()
 	#print kagome.kagome_polyline_frames()
 	#kagome.kagome_polyedges()
 	#kagome.kagome_polyline_colouring()
-
+	kagome.kagome_polyedge_weaving()
 
