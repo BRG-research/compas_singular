@@ -219,7 +219,7 @@ class Kagome(Mesh):
 
 		return polyedge
 
-	def kagome_polyedges(self):
+	def kagome_polyedges_0(self):
 
 		polyedges = []
 
@@ -238,6 +238,31 @@ class Kagome(Mesh):
 				elif (v, u) in edges:
 					edges.remove((v, u))
 
+		return polyedges
+
+	def kagome_polyedges(self):
+
+		polyedges = []
+
+		edge_visited = {(u, v): False for u, v in self.kagome.edges()}
+
+		for edge in self.kagome.edges():
+			if edge_visited[edge]:
+				continue
+			u0, v0 = edge
+			# collect new polyedge
+			polyedges.append(self.kagome_polyedge(u0, v0))
+
+			# remove collected edges
+			for u, v in pairwise(polyedges[-1]):
+				#if (u, v) in edge_visited:
+				edge_visited[(u, v)] = True
+				#elif (v, u) in edge_visited:
+				edge_visited[(v, u)] = True
+		#for edge, visited in edges.items():
+		#	if not visited:
+		#		print edge 
+		#print len(polyedges)
 		return polyedges
 
 	def kagome_polyline(self, u, v):
@@ -270,7 +295,6 @@ class Kagome(Mesh):
 				polyline_frames.append([x, y, z])
 			polylines_frames.append(polyline_frames)
 		return polylines_frames
-
 
 	def kagome_polyedge_colouring(self):
 
