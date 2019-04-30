@@ -79,7 +79,7 @@ def singular():
         vertices, faces = RhinoMesh.from_guid(guid).get_vertices_and_faces()
         poles = []
         for face in faces:
-            if len(face) == 4:
+            if len(face) != 4:
                 poles = [rs.PointCoordinates(point) for point in rs.GetObjects('get pole points', filter=1)]
                 break
         coarse_pseudo_quad_mesh = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, poles)
