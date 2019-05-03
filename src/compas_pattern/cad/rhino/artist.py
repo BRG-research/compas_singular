@@ -25,12 +25,30 @@ __license__    = 'MIT License'
 __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
+	'select_quad_mesh_polyedge',
 	'select_mesh_polyedge',
 	'select_mesh_strip',
 	'select_mesh_strips',
 	'add_handle_artist',
 	'add_handles_artist'
 ]
+
+
+def select_quad_mesh_polyedge(mesh):
+
+	artist = rhino_artist.MeshArtist(mesh, layer='mesh_artist')
+	artist.clear_layer()
+	artist.draw_vertexlabels()
+	artist.redraw()
+
+	u, v = rhino_helper.mesh_select_vertices(mesh, message = 'vertex')[:2]
+
+	artist.clear_layer()
+	artist.redraw()
+	rs.DeleteLayer('mesh_artist')
+
+	return mesh.polyedge(u, v)
+
 
 def select_mesh_polyedge(mesh):
 	"""Select mesh polyedge.

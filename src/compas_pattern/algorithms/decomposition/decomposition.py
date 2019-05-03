@@ -161,7 +161,10 @@ class Decomposition(Skeleton):
 			List of polylines as list of point XYZ-coordinates.
 
 		"""
-		a = self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary() + self.branches_splitting_flipped_faces() + self.branches_splitting_boundary_kinks()
+		a = self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary()
+		#a += self.branches_splitting_flipped_faces()
+		#a += self.branches_splitting_boundary_kinks()
+		#a += self.branches_splitting_collapsed_boundaries()
 		self.polylines =  network_polylines(Network.from_lines([(u, v) for polyline in a for u, v in pairwise(polyline)]), splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
 		return self.polylines
 
@@ -344,8 +347,8 @@ class Decomposition(Skeleton):
 				case = sum(mesh.is_vertex_on_boundary(vkey) for vkey in mesh.face_vertices(fkey))
 
 				if case == 1:
-					# convert triangular face to quad by duplicating the boundary vertex
-					# due to singular face vertices at the same location
+					#convert triangular face to quad by duplicating the boundary vertex
+					#due to singular face vertices at the same location
 					u = boundary_vertices[0]
 					v = mesh.add_vertex(attr_dict = {attr: xyz for attr, xyz in zip(['x', 'y', 'z'], mesh.vertex_coordinates(u))})
 
@@ -355,6 +358,18 @@ class Decomposition(Skeleton):
 
 					# modify triangular face
 					mesh_insert_vertex_on_edge(mesh, u, mesh.face_vertex_ancestor(fkey, u), v)
+
+					# # give some length to the new edge
+					# for vkey in [u, v]:
+					# 	x, y, z = centroid_points([mesh.vertex_coordinates(nbr) for nbrr in mesh.vertex_neighbors(vkey)])
+					# 	x0, y0, z0 = mesh.vertex_coordinates(vkey)
+					# 	attr = mesh.vertex[vkey]
+					# 	attr['x'] += 0.1 * (x - x0)
+					# 	attr['y'] += 0.1 * (y - y0)
+					# 	attr['z'] += 0.1 * (z - z0)
+
+					
+
 
 				elif case == 2:
 					# remove triangular face and merge the two boundary vertices

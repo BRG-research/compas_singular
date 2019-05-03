@@ -24,8 +24,8 @@ __all__ = [
 ]
 
 
-def surface_discrete_mapping(srf_guid, precision, crv_guids = [], pt_guids = []):
-	"""Map the boundaries of a Rhino NURBS surface to planar poylines dicretised within some precision using the surface UV parameterisation.
+def surface_discrete_mapping(srf_guid, discretisation, minimum_discretisation = 5, crv_guids = [], pt_guids = []):
+	"""Map the boundaries of a Rhino NURBS surface to planar poylines dicretised within some discretisation using the surface UV parameterisation.
 	Curve and point feautres on the surface can be included.
 
 	Parameters
@@ -36,8 +36,10 @@ def surface_discrete_mapping(srf_guid, precision, crv_guids = [], pt_guids = [])
 		List of guids of curves on the surface.
 	pt_guids : list
 		List of guids of points on the surface.
-	precision : float
-		The discretisation precision of the surface boundaries
+	discretisation : float
+		The discretisation of the surface boundaries.
+	minimum_discretisation : int
+		The minimum discretisation of the surface boundaries.
 
 	Returns
 	-------
@@ -56,7 +58,7 @@ def surface_discrete_mapping(srf_guid, precision, crv_guids = [], pt_guids = [])
 
 		for border in srf.borders(type = i):
 			border = RhinoCurve(border)
-			points = [srf.point_xyz_to_uv(pt) for pt in border.divide(int(border.length() / precision) + 1)]
+			points = [srf.point_xyz_to_uv(pt) for pt in border.divide(max(int(border.length() / discretisation) + 1, minimum_discretisation))]
 			
 			if border.is_closed():
 				points.append(points[0])
@@ -73,7 +75,7 @@ def surface_discrete_mapping(srf_guid, precision, crv_guids = [], pt_guids = [])
 	for crv_guid in crv_guids:
 
 		curve = RhinoCurve(crv_guid)
-		points = [srf.point_xyz_to_uv(pt) for pt in curve.divide(int(curve.length() / precision) + 1)]
+		points = [srf.point_xyz_to_uv(pt) for pt in curve.divide(max(int(curve.length() / discretisation) + 1, minimum_discretisation))]
 		
 		if curve.is_closed():
 			points.append(points[0])

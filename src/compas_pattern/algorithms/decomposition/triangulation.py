@@ -1,6 +1,8 @@
 from compas.geometry import delaunay_from_points
 from compas.geometry import delaunay_from_points_numpy
+
 from compas.utilities import XFunc
+
 from compas.rpc import Proxy
 
 from compas.geometry import is_point_in_polygon_xy
@@ -42,8 +44,8 @@ def delaunay_numpy_rpc(vertices):
 
 	"""
 
-	proxy_geom = Proxy('compas.geometry')
-	return proxy_geom.delaunay_from_points_numpy(vertices)
+	geometry = Proxy('compas.geometry')
+	return geometry.delaunay_from_points_numpy(vertices)
 
 def delaunay_numpy_xfunc(vertices):
 	"""Xfunc for Delaunay function from numpy.
@@ -89,8 +91,8 @@ def delaunay(vertices, src = 'compas', cls=None):
 		faces = delaunay_from_points(vertices)
 	
 	elif src == 'numpy':
-		faces = XFunc('compas_pattern.algorithms.decomposition.triangulation.delaunay_numpy_xfunc')(vertices)
-		#faces = delaunay_numpy_rpc(vertices)
+		#faces = XFunc('compas_pattern.algorithms.decomposition.triangulation.delaunay_numpy_xfunc')(vertices)
+		faces = delaunay_numpy_rpc(vertices)
 	else:
 		return None
 

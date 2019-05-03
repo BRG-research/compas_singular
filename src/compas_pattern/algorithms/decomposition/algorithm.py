@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output_delaunay=False, output_skeleton=True, output_mesh=True, output_polysurface=False):
+def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output_delaunay=False, output_skeleton=True, output_decomposition=False, output_mesh=True, output_polysurface=False):
 	"""Generate the topological skeleton/medial axis of a surface based on a Delaunay triangulation, after mapping and before remapping.
 
 	Parameters
@@ -29,10 +29,13 @@ def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output
 	pt_guids : list
 		A list of Rhino points guids.
 	output_delaunay : bool
-		Output the Delaunay or not.
+		Output the Delaunay mesh or not.
 		Default is False.
 	output_skeleton : bool
-		Output the skeleton or not.
+		Output the skeleton polylines or not.
+		Default is True.
+	output_decomposition : bool
+		Output the decomposition polylines or not.
 		Default is True.
 	output_mesh : bool
 		Output the coarse quad mesh or not.
@@ -60,7 +63,7 @@ def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output
 	"""
 
 	# mapping NURBS surface to planar polyline borders
-	outer_boundary, inner_boundaries, polyline_features, point_features = surface_discrete_mapping(srf_guid, precision, crv_guids, pt_guids)
+	outer_boundary, inner_boundaries, polyline_features, point_features = surface_discrete_mapping(srf_guid, precision, crv_guids = crv_guids, pt_guids = pt_guids)
 
 	# Delaunay triangulation of the palnar polyline borders
 	decomposition = boundary_triangulation(outer_boundary, inner_boundaries, polyline_features, point_features, cls=Decomposition)
@@ -74,6 +77,9 @@ def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output
 	# output remapped topological skeleton/medial axis
 	if output_skeleton:
 		outputs.append([RhinoSurface(srf_guid).polyline_uv_to_xyz(polyline) for polyline in decomposition.branches()])
+
+	if output_decomposition:
+		outputs.append([RhinoSurface(srf_guid).polyline_uv_to_xyz(polyline) for polyline in decomposition.decomposition_polylines()])
 
 	# output decomposition coarse quad mesh
 	if output_mesh:

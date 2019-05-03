@@ -134,6 +134,9 @@ def customized_smoothing_constraints(mesh, constraints):
 
 		guids = display_smoothing_constraints(mesh, constraints)
 		vkeys = mesh_select_vertices(mesh)
+		if len(vkeys) == 2 and rs.GetString('get all polyedge?', strings = ['True', 'False']) == 'True':
+			u, v = vkeys
+			vkeys = mesh.polyedge(u, v)
 		
 		if vkeys is None:
 			break
@@ -177,10 +180,20 @@ def display_smoothing_constraints(mesh, constraints):
 
 	"""
 	
-	color = {vkey: (255, 0, 0) if vkey in constraints and rs.ObjectType(constraints[vkey]) == 1
-				  else (0, 255, 0) if vkey in constraints and rs.ObjectType(constraints[vkey]) == 4
-				  else (0, 0, 255) if vkey in constraints and rs.ObjectType(constraints[vkey]) == 8
-				  else (0, 0, 0) for vkey in mesh.vertices()}
+	#color = {vkey: (255, 0, 0) if vkey in constraints and rs.ObjectType(constraints[vkey]) == 1
+	#			  else (0, 255, 0) if vkey in constraints and rs.ObjectType(constraints[vkey]) == 4
+	#			  else (0, 0, 255) if vkey in constraints and rs.ObjectType(constraints[vkey]) == 8
+	#			  else (0, 0, 0) for vkey in mesh.vertices()}
+
+	guids_index = {guid: i for i, guid in enumerate(list(set(constraints.values())))}
+	n = len(guids_index.keys())
+	color = {}
+	for vkey in mesh.vertices():
+		if vkey in constraints:
+			k = float(guids_index[constraints[vkey]]) / float((n - 1))
+			color[vkey] = (int(255.0 * k), int(255.0 * (1.0 - k)), 0)
+		else:
+			color[vkey] = (0, 0, 0)
 
 	return mesh_draw_vertices(mesh, color = color)
 

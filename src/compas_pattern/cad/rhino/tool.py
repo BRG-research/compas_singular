@@ -34,8 +34,9 @@ from compas_pattern.cad.rhino.artist import select_mesh_strip
 from compas_pattern.cad.rhino.artist import select_mesh_strips
 from compas_pattern.cad.rhino.artist import select_mesh_polyedge
 
-
 from compas_pattern.cad.rhino.draw import draw_mesh
+
+from compas.utilities import pairwise
 
 import compas
 
@@ -63,6 +64,13 @@ __all__ = [
     'evaluate_pattern'
 ]
 
+def clean_faces(faces):
+
+    for face in faces:
+        for u, v in pairwise(face + face[:1]):
+            if u == v:
+                face.remove(u)
+                break
 
 def singular():
     """Explore a pattern, its topology (singularities, densities and symmetries) and its geoemtry (via smoothing).
@@ -77,7 +85,9 @@ def singular():
     if pattern_from == 'coarse_pseudo_quad_mesh':
         guid = rs.GetObject('get coarse quad mesh', filter=32)
         vertices, faces = RhinoMesh.from_guid(guid).get_vertices_and_faces()
+        clean_faces(faces)
         poles = []
+        print faces
         for face in faces:
             if len(face) != 4:
                 poles = [rs.PointCoordinates(point) for point in rs.GetObjects('get pole points', filter=1)]
@@ -88,7 +98,14 @@ def singular():
         coarse_pseudo_quad_mesh.polygonal_mesh = coarse_pseudo_quad_mesh.copy()
     elif pattern_from == 'pseudo_quad_mesh':
         guid = rs.GetObject('get quad mesh', filter=32)
-        coarse_pseudo_quad_mesh = CoarsePseudoQuadMesh.from_quad_mesh(PseudoQuadMesh.from_vertices_and_faces(*RhinoMesh.from_guid(guid).get_vertices_and_faces()))
+        vertices, faces = RhinoMesh.from_guid(guid).get_vertices_and_faces()
+        clean_faces(faces)
+        poles = []
+        for face in faces:
+            if len(face) != 4:
+                poles = [rs.PointCoordinates(point) for point in rs.GetObjects('get pole points', filter=1)]
+                break
+        coarse_pseudo_quad_mesh = CoarsePseudoQuadMesh.from_quad_mesh(PseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, poles))
     elif pattern_from == 'surface_and_features':
         srf_guid = rs.GetObject('get surface', filter=8)
         crv_guids = rs.GetObjects('get optional curve features', filter=4)
@@ -462,7 +479,19 @@ def editing_geometry_smoothing(coarse_pseudo_quad_mesh):
                     settings[operation] = customized_smoothing_constraints(mesh, settings[
                                                                            operation])
                 elif constraint_type == 'reset':
-                    settings[operation] = {}
+                    artist = rhino_artist.MeshArtist(mesh, layer='mesh_artist')
+                    artist.clear_layer()
+                    artist.draw_vertices()
+                    artist.redraw()
+                    vkeys = rhino_helper.mesh_select_vertices(mesh, message = 'vertices')
+                    if vkeys is None:
+                        vkeys = list(mesh.vertices())
+                    artist.clear_layer()
+                    artist.redraw()
+                    rs.DeleteLayer('mesh_artist')
+                    for vkey in vkeys:
+                        if vkey in settings[operation]:
+                            del settings[operation][vkey]
                 else:
                     break
 
