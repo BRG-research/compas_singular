@@ -43,6 +43,8 @@ def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output
 	output_polysurface : bool
 		Output the polysurface or not.
 		Default is False.
+	src : str
+		Source of Delaunay triangulation algorithm.
 
 	Returns
 	-------
