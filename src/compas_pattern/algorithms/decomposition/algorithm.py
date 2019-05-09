@@ -68,7 +68,7 @@ def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output
 	outer_boundary, inner_boundaries, polyline_features, point_features = surface_discrete_mapping(srf_guid, precision, crv_guids = crv_guids, pt_guids = pt_guids)
 
 	# Delaunay triangulation of the palnar polyline borders
-	decomposition = boundary_triangulation(outer_boundary, inner_boundaries, polyline_features, point_features, cls=Decomposition, src='numpy_rpc')
+	decomposition = boundary_triangulation(outer_boundary, inner_boundaries, polyline_features, point_features, cls=Decomposition, src=src)
 
 	outputs = []
 
