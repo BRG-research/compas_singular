@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output_delaunay=False, output_skeleton=True, output_decomposition=False, output_mesh=True, output_polysurface=False):
+def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output_delaunay=False, output_skeleton=True, output_decomposition=False, output_mesh=True, output_polysurface=False, src='numpy_rpc'):
 	"""Generate the topological skeleton/medial axis of a surface based on a Delaunay triangulation, after mapping and before remapping.
 
 	Parameters
@@ -66,7 +66,7 @@ def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output
 	outer_boundary, inner_boundaries, polyline_features, point_features = surface_discrete_mapping(srf_guid, precision, crv_guids = crv_guids, pt_guids = pt_guids)
 
 	# Delaunay triangulation of the palnar polyline borders
-	decomposition = boundary_triangulation(outer_boundary, inner_boundaries, polyline_features, point_features, cls=Decomposition)
+	decomposition = boundary_triangulation(outer_boundary, inner_boundaries, polyline_features, point_features, cls=Decomposition, src='numpy_rpc')
 
 	outputs = []
 

@@ -90,16 +90,17 @@ def delaunay(vertices, src = 'compas', cls=None):
 	if src == 'compas':
 		faces = delaunay_from_points(vertices)
 	
-	elif src == 'numpy':
-		#faces = XFunc('compas_pattern.algorithms.decomposition.triangulation.delaunay_numpy_xfunc')(vertices)
+	elif src == 'numpy_rpc':
 		faces = delaunay_numpy_rpc(vertices)
+	elif src == 'numpy_xfunc':
+		faces = XFunc('compas_pattern.algorithms.decomposition.triangulation.delaunay_numpy_xfunc')(vertices)
 	else:
 		return None
 
 	return cls.from_vertices_and_faces(vertices, faces)
 
 
-def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features = [], point_features = [], src = 'numpy', cls=None):
+def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features = [], point_features = [], src = 'numpy_rpc', cls=None):
 	"""Generate Delaunay triangulation between a planar outer boundary and planar inner boundaries. All vertices lie the boundaries.
 
 	Parameters
