@@ -27,6 +27,7 @@ from compas.geometry import subtract_vectors
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import cross_vectors
+from compas.geometry import centroid_points
 
 from compas.datastructures import trimesh_face_circle
 
@@ -162,9 +163,9 @@ class Decomposition(Skeleton):
 
 		"""
 		a = self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary()
-		#a += self.branches_splitting_flipped_faces()
-		#a += self.branches_splitting_boundary_kinks()
-		#a += self.branches_splitting_collapsed_boundaries()
+		a += self.branches_splitting_flipped_faces()
+		a += self.branches_splitting_boundary_kinks()
+		a += self.branches_splitting_collapsed_boundaries()
 		self.polylines =  network_polylines(Network.from_lines([(u, v) for polyline in a for u, v in pairwise(polyline)]), splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
 		return self.polylines
 
@@ -359,18 +360,6 @@ class Decomposition(Skeleton):
 					# modify triangular face
 					mesh_insert_vertex_on_edge(mesh, u, mesh.face_vertex_ancestor(fkey, u), v)
 
-					# # give some length to the new edge
-					# for vkey in [u, v]:
-					# 	x, y, z = centroid_points([mesh.vertex_coordinates(nbr) for nbrr in mesh.vertex_neighbors(vkey)])
-					# 	x0, y0, z0 = mesh.vertex_coordinates(vkey)
-					# 	attr = mesh.vertex[vkey]
-					# 	attr['x'] += 0.1 * (x - x0)
-					# 	attr['y'] += 0.1 * (y - y0)
-					# 	attr['z'] += 0.1 * (z - z0)
-
-					
-
-
 				elif case == 2:
 					# remove triangular face and merge the two boundary vertices
 					# due to singularities at the same location
@@ -385,6 +374,23 @@ class Decomposition(Skeleton):
 					for old_vkey in boundary_vertices:
 						mesh_substitute_vertex_in_faces(mesh, old_vkey, new_vkey, mesh.vertex_faces(old_vkey))
 						mesh.delete_vertex(old_vkey)
+
+		to_move = {}
+		# give some length to the new edge
+		for edge in mesh.edges():
+			threshold = 1e-6
+			if mesh.edge_length(*edge) < threshold:
+				for vkey in edge:
+					xyz = centroid_points([mesh.vertex_coordinates(nbr) for nbr in mesh.vertex_neighbors(vkey)])
+					xyz0 = mesh.vertex_coordinates(vkey)
+					to_move[vkey] = [0.1 * (a - a0) for a, a0 in zip(xyz, xyz0)]
+
+		print to_move
+		for vkey, xyz in to_move.items():
+			attr = mesh.vertex[vkey]
+			attr['x'] += xyz[0]
+			attr['y'] += xyz[1]
+			attr['z'] += xyz[2]
 
 	def quadrangulate_polygonal_faces(self):
 		# WIP: problem not all faces should have the same source for propagation
