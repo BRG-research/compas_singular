@@ -1,5 +1,5 @@
 from compas.geometry import delaunay_from_points
-from compas.geometry import delaunay_from_points_numpy
+#from compas.geometry.triangulation.triangulation_numpy import delaunay_from_points_numpy
 
 from compas.utilities import XFunc
 
@@ -44,7 +44,7 @@ def delaunay_numpy_rpc(vertices):
 
 	"""
 
-	geometry = Proxy('compas.geometry')
+	geometry = Proxy('compas.geometry.triangulation.triangulation_numpy')
 	return geometry.delaunay_from_points_numpy(vertices)
 
 def delaunay_numpy_xfunc(vertices):
