@@ -86,11 +86,8 @@ def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output
 	# output decomposition coarse quad mesh
 	if output_mesh:
 		mesh = decomposition.decomposition_mesh(point_features)
-		attr = mesh.face_pole
-		remapped_mesh = RhinoSurface(srf_guid).mesh_uv_to_xyz(mesh)
-		remapped_mesh.face_pole = attr
-
-		outputs.append(remapped_mesh)
+		RhinoSurface(srf_guid).mesh_uv_to_xyz(mesh)
+		outputs.append(mesh)
 
 	# output decomposition surface
 	if output_polysurface:
