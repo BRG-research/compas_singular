@@ -1,31 +1,15 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-
-from math import degrees
-from math import acos
-from math import pi
-
-from compas_pattern.datastructures.mesh import Mesh
-
 from compas.geometry import Polyline
 
 from compas.geometry import length_vector
-from compas.geometry import dot_vectors
 from compas.geometry import cross_vectors
 from compas.geometry import subtract_vectors
-from compas.geometry import distance_line_line
-from compas.geometry import distance_point_point
-from compas.geometry import angle_points
-from compas.geometry import normalize_vector
-
-__author__     = ['Robin Oval']
-__copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
-__license__    = 'MIT License'
-__email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
+	'Polyline'
 ]
+
+
+### TO BE PUSHED TO COMPAS ###
 
 
 class Polyline(Polyline):
@@ -74,6 +58,7 @@ class Polyline(Polyline):
 
 		return 2 * length_vector(cross_vectors(ab, bc)) / (length_vector(ac) * length_vector(ab) * length_vector(bc))
 
+
 # ==============================================================================
 # Main
 # ==============================================================================
@@ -82,7 +67,7 @@ if __name__ == '__main__':
 
 	import compas
 
-	points = [[0.0, 0.0, 0.0], [1.0, 5.0, 0.0], [2.0, 0.0, 0.0], [3.0, 0.0, 0.0], [4.0, 0.0, 0.0]]
+	points = [[0.0, 0.0, 0.0], [1.0, 5.0, 0.0], [2.0, 0.0, 0.0], [3.0, -5.0, 0.0], [4.0, 0.0, 0.0]]
 	polyline = Polyline(points)
 
 	for i in range(len(points)):
