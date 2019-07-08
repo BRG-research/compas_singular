@@ -1,6 +1,6 @@
 from math import pi
 
-from compas_pattern.datastructures.mesh.mesh import mesh_move
+from compas_pattern.datastructures.mesh.operations import mesh_move_by
 
 from compas.datastructures import mesh_bounding_box
 
@@ -10,8 +10,8 @@ from compas.geometry import distance_point_point
 from compas.geometry import add_vectors
 from compas.geometry import subtract_vectors
 
-from compas_pattern.geometry.analytical import circle_evaluate
-from compas_pattern.geometry.analytical import archimedean_spiral_evaluate
+from compas.geometry import circle_evaluate
+from compas.geometry import archimedean_spiral_evaluate
 
 from compas_pattern.utilities.lists import common_items
 
@@ -62,7 +62,7 @@ def arrange_in_circle(meshes, centre = None, rmin = 0):
 	r = max(rmin, k * max(scale, n * scale / (2 * pi)))
 
 	for i, mesh in enumerate(meshes):
-		mesh_move(mesh, subtract_vectors(add_vectors(centre, circle_evaluate(2 * pi * float(i) / float(n), r)), mesh.centroid()))
+		mesh_move_by(mesh, subtract_vectors(add_vectors(centre, circle_evaluate(2 * pi * float(i) / float(n), r)), mesh.centroid()))
 
 
 def arrange_in_spiral(meshes, centre = None):
@@ -96,7 +96,7 @@ def arrange_in_spiral(meshes, centre = None):
 		ts.append((2 * scale / b + ts[-1] ** 2) ** .5)
 
 	for mesh, t in zip(meshes, ts):
-		mesh_move(mesh, subtract_vectors(add_vectors(centre, archimedean_spiral_evaluate(t, a, b, 0)), mesh.centroid()))
+		mesh_move_by(mesh, subtract_vectors(add_vectors(centre, archimedean_spiral_evaluate(t, a, b, 0)), mesh.centroid()))
 
 
 def arrange_in_map(primary_topologies, secondary_topologies):
@@ -128,7 +128,7 @@ def arrange_in_map(primary_topologies, secondary_topologies):
 	for mesh, rules in secondary_topologies.items():
 		distances = [len(rules) + len(rules_0) - len(common_items(rules, rules_0)) for mesh_0, rules_0 in primary_topologies.items()]
 		weights = [1.0 / float(d) if d != 0 else 10^(-n) for d in distances]
-		mesh_move(mesh, subtract_vectors(weighted_centroid_points(points, weights), mesh.centroid()))
+		mesh_move_by(mesh, subtract_vectors(weighted_centroid_points(points, weights), mesh.centroid()))
 
 
 # ==============================================================================
