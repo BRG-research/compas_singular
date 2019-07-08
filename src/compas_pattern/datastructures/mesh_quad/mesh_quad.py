@@ -2,46 +2,41 @@ from math import floor
 from operator import itemgetter
 
 from compas_pattern.datastructures.mesh.mesh import Mesh
-from compas_pattern.datastructures.network.network import Network
-
-from compas_pattern.datastructures.network.coloring import is_network_two_colorable
 
 from compas.geometry import centroid_points
 
 from compas.utilities import pairwise
-from compas.utilities import geometric_key
 from compas_pattern.utilities.lists import list_split
 
-__author__     = ['Robin Oval']
-__copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
-__license__    = 'MIT License'
-__email__      = 'oval@arch.ethz.ch'
 
-__all__ = [
-	'QuadMesh',
-]
+__all__ = ['QuadMesh']
+
 
 class QuadMesh(Mesh):
 
 	def __init__(self):
 		super(QuadMesh, self).__init__()
-		self.strip = {}
+		self.data['attributes']['strips'] = {}
+		self.data['attributes']['polyedges'] = {}
 
-	def not_none_edges(self):
-		"""Returns the edges oriented inwards.
+	def strips(self, data=False):
 
-		Parameters
-		----------
+		for skey in self.data['attributes']['strips']:
+			if data:
+				yield skey, self.data['attributes']['strips'][skey]
+			else:
+				yield skey
 
-		Returns
-		-------
-		(w, x) : tuple
-			The opposite edge.
+	def polyedges(self, data=False):
+		for key in self.data['attributes']['polyedges']:
+			if data:
+				yield key, self.data['attributes']['polyedges'][key]
+			else:
+				yield key
 
-		"""
-
-		return [(u, v) if v in self.halfedge[u] and self.halfedge[u][v] is not None else (v, u) for u, v in self.edges()]
-
+	# --------------------------------------------------------------------------
+	# opposite elements
+	# --------------------------------------------------------------------------
 
 	def face_opposite_edge(self, u, v):
 		"""Returns the opposite edge in the quad face.
@@ -57,13 +52,11 @@ class QuadMesh(Mesh):
 		-------
 		(w, x) : tuple
 			The opposite edge.
-
 		"""
 
 		fkey = self.halfedge[u][v]
 		w = self.face_vertex_descendant(fkey, v)
 		x = self.face_vertex_descendant(fkey, w)
-
 		return (w, x)
 
 	def vertex_opposite_vertex(self, u, v):
@@ -103,17 +96,6 @@ class QuadMesh(Mesh):
 	# singularities
 	# --------------------------------------------------------------------------
 
-	def singularities(self):
-		"""Returns all the singularity indices in the quad mesh.
-
-		Returns
-		-------
-		list
-			The list of vertex indices that are quad mesh singularities.
-
-		"""
-		return [vkey for vkey in self.vertices() if self.is_vertex_singular(vkey)]
-
 	def is_vertex_singular(self, vkey):
 		"""Output whether a vertex is quad mesh singularity.
 
@@ -134,6 +116,17 @@ class QuadMesh(Mesh):
 
 		else:
 			return False
+
+	def singularities(self):
+		"""Returns all the singularity indices in the quad mesh.
+
+		Returns
+		-------
+		list
+			The list of vertex indices that are quad mesh singularities.
+
+		"""
+		return [vkey for vkey in self.vertices() if self.is_vertex_singular(vkey)]
 
 	def vertex_index(self, vkey):
 		"""Compute vertex index.
@@ -157,9 +150,12 @@ class QuadMesh(Mesh):
 
 		return (regular_valency - self.vertex_degree(vkey)) / 4
 
+	# --------------------------------------------------------------------------
+	# polyedges
+	# --------------------------------------------------------------------------
 
-	def polyedge(self, u0, v0):
-		"""Returns all the edges in the polyedge of the input edge.
+	def collect_polyedge(self, u0, v0):
+		"""Collect all the edges in the polyedge of the input edge.
 
 		Parameters
 		----------
@@ -199,8 +195,8 @@ class QuadMesh(Mesh):
 
 		return polyedge
 
-	def polyedges(self):
-		"""Collect the polyedges accross four-valent vertices between boundaries and/or singularities.
+	def collect_polyedges(self):
+		"""Collect the polyedges accross four-valent vertices between boundaries and/or singularities and store it in the mesh data attributes.
 
 		Parameters
 		----------
@@ -212,36 +208,25 @@ class QuadMesh(Mesh):
 
 		"""
 
-		polyedges = []
-
 		edges = list(self.edges())
 
+		nb_polyedges = -1
 		while len(edges) > 0:
-
+			nb_polyedges += 1
+			
 			# collect new polyedge
 			u0, v0 = edges.pop()
-			polyedges.append(self.polyedge(u0, v0))
+			polyedge = self.collect_polyedge(u0, v0)
+			self.data['attributes']['polyedges'].update({nb_polyedges: polyedge})
 
 			# remove collected edges
-			for u, v in pairwise(polyedges[-1]):
+			for u, v in pairwise(polyedge):
 				if (u, v) in edges:
 					edges.remove((u, v))
 				elif (v, u) in edges:
 					edges.remove((v, u))
 
-		return polyedges
-
-	def polylines(self):
-		"""Return the polylines of the quad mesh.
-
-		Returns
-		-------
-		list
-			The polylines.
-
-		"""
-
-		return [[self.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in self.polyedges()]
+		return self.polyedges(data=True)
 
 	def singularity_polyedges(self):
 		"""Collect the polyedges connected to singularities.
@@ -254,7 +239,7 @@ class QuadMesh(Mesh):
 		"""
 
 		# keep only polyedges connected to singularities or along the boundary		
-		polyedges = [polyedge for polyedge in self.polyedges() if self.is_vertex_singular(polyedge[0]) or self.is_vertex_singular(polyedge[-1]) or self.is_edge_on_boundary(polyedge[0], polyedge[1])]									
+		polyedges = [polyedge for key, polyedge in self.polyedges(data=True) if self.is_vertex_singular(polyedge[0]) or self.is_vertex_singular(polyedge[-1]) or self.is_edge_on_boundary(polyedge[0], polyedge[1])]									
 
 		# get intersections between polyedges for split
 		vertices = [vkey for polyedge in polyedges for vkey in set(polyedge)]
@@ -262,17 +247,6 @@ class QuadMesh(Mesh):
 		
 		# split singularity polyedges
 		return [split_polyedge for polyedge in polyedges for split_polyedge in list_split(polyedge, [polyedge.index(vkey) for vkey in split_vertices if vkey in polyedge])]
-
-	def singularity_polylines(self):
-		"""Return the polylines connected to singularities.
-
-		Returns
-		-------
-		list
-			The polylines connected to singularities.
-
-		"""
-		return [[self.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in self.singularity_polyedges()]
 
 	def singularity_polyedge_decomposition(self):
 		"""Returns a quad patch decomposition of the mesh based on the singularity polyedges, including boundaries and additionnal splits on the boundaries.
@@ -283,7 +257,7 @@ class QuadMesh(Mesh):
 			The polyedges forming the decomposition.
 
 		"""
-		polyedges = [polyedge for polyedge in self.polyedges() if (self.is_vertex_singular(polyedge[0]) or self.is_vertex_singular(polyedge[-1])) and not self.is_edge_on_boundary(polyedge[0], polyedge[1])]									
+		polyedges = [polyedge for key, polyedge in self.polyedges(data=True) if (self.is_vertex_singular(polyedge[0]) or self.is_vertex_singular(polyedge[-1])) and not self.is_edge_on_boundary(polyedge[0], polyedge[1])]									
 
 		# split boundaries
 		all_splits = self.singularities()
@@ -306,13 +280,13 @@ class QuadMesh(Mesh):
 			for vkey in new_splits:
 				for nbr in self.vertex_neighbors(vkey):
 					if not self.is_edge_on_boundary(vkey, nbr):
-						new_polyedge = self.polyedge(vkey, nbr)
+						new_polyedge = self.collect_polyedge(vkey, nbr)
 						polyedges.append(new_polyedge)
 						all_splits = list(set(all_splits + new_polyedge))
 						break
 
 		# add boundaries
-		polyedges += [polyedge for polyedge in self.polyedges() if self.is_edge_on_boundary(polyedge[0], polyedge[1])]
+		polyedges += [polyedge for key, polyedge in self.polyedges(data=True) if self.is_edge_on_boundary(polyedge[0], polyedge[1])]
 
 		# get intersections between polyedges for split
 		vertices = [vkey for polyedge in polyedges for vkey in set(polyedge)]
@@ -322,24 +296,76 @@ class QuadMesh(Mesh):
 		return [split_polyedge for polyedge in polyedges for split_polyedge in list_split(polyedge, [polyedge.index(vkey) for vkey in split_vertices if vkey in polyedge])]
 
 	# --------------------------------------------------------------------------
-	# strip topology
+	# polylines
+	# --------------------------------------------------------------------------
+
+	def polyedge_graph(self):
+		"""Compute the vertices and edges of the graph representing the polyedge connectivity, where each graph vertex is a mesh polyedge and each graph edge a non-singular mesh vertex representing the crossing of two polyedges.
+		Polyedges connected by their extremities, which are singularities, do not count as overlapping.
+		Potentially includes loop edges (u, u) or multiple arallel edges (u, v) and/or (v, u).
+
+		Returns
+		-------
+		tuple
+			A tuple of two objects, the dictionary of mesh polyedge indices pointing to their centroid coordinates, and the list of edges between graph vertices.
+		"""
+
+		vertices = {key: centroid_points([self.vertex_coordinates(vkey) for vkey in polyedge]) for key, polyedge in self.polyedges(data=True)}
+		edges = []
+		for key, polyedge in self.polyedges(data=True):
+			for vkey in polyedge:
+				if not self.is_vertex_singular(vkey):
+					for key_2, polyedge_2 in self.polyedges(data=True):
+						if vkey in polyedge_2:
+							edges.append((key, key_2))
+							break
+		return vertices, edges
+
+	# --------------------------------------------------------------------------
+	# polylines
+	# --------------------------------------------------------------------------
+
+	def polylines(self):
+		"""Return the polylines of the quad mesh.
+
+		Returns
+		-------
+		list
+			The polylines.
+		"""
+
+		return [[self.vertex_coordinates(vkey) for vkey in polyedge] for key, polyedge in self.polyedges(data=True)]
+
+
+	def singularity_polylines(self):
+		"""Return the polylines connected to singularities.
+
+		Returns
+		-------
+		list
+			The polylines connected to singularities.
+
+		"""
+		return [[self.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in self.singularity_polyedges()]
+
+	def singularity_polyline_decomposition(self):
+		"""Return the polylines forming a quad patch decomposition of the mesh.
+
+		Returns
+		-------
+		list
+			The polylines connected to singularities.
+
+		"""
+		return [[self.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in self.singularity_polyedge_decomposition()]
+
+	# --------------------------------------------------------------------------
+	# strips
 	# --------------------------------------------------------------------------
 
 	def number_of_strips(self):
 		"""Count the number of strips in the mesh."""
 		return len(list(self.strips()))
-
-	def strips(self):
-		"""Iterate over the faces of the mesh.
-
-		Yields
-		------
-		hashable
-			The next strip identifier (*key*).
-		"""
-
-		for skey in self.strip:
-				yield skey
 
 	def collect_strip(self, u0, v0):
 		"""Returns all the edges in the strip of the input edge.
@@ -383,34 +409,30 @@ class QuadMesh(Mesh):
 		return edges
 
 	def collect_strips(self):
-		"""Collect the strip data.
+		"""Collect the strip data and store it in the mesh data attributes.
 
 		Returns
 		-------
-		strip : int
-			The number of strips.
-
+		strips : dict
+			The strip data.
 		"""
 
-		self.strip = {}
+		edges = [(u, v) if self.halfedge[u][v] is not None else (v, u) for u, v in self.edges()]
 
-		edges = list(self.not_none_edges())
-
-		strip = -1
+		nb_strip = -1
 		while len(edges) > 0:
-			strip += 1
+			nb_strip += 1
 
 			u0, v0 = edges.pop()
 			strip_edges = self.collect_strip(u0, v0)
-			self.strip.update({strip: strip_edges})
-
+			self.data['attributes']['strips'].update({nb_strip: strip_edges})
 			for u, v in strip_edges:
 				if (u, v) in edges:
 					edges.remove((u, v))
 				elif (v, u) in edges:
 					edges.remove((v, u))
 
-		return strip
+		return self.strips(data=True)
 
 	def is_strip_closed(self, skey):
 		"""Output whether a strip is closed.
@@ -424,10 +446,9 @@ class QuadMesh(Mesh):
 		-------
 		bool
 			True if the strip is closed. False otherwise.
-
 		"""
 
-		return not self.is_edge_on_boundary(*self.strip[skey][0])
+		return not self.is_edge_on_boundary(*self.strip_edges(skey)[0])
 
 	def strip_edges(self, skey):
 		"""Return the edges of a strip.
@@ -443,8 +464,7 @@ class QuadMesh(Mesh):
 
 		"""
 
-		return self.strip[skey]
-
+		return self.data['attributes']['strips'][skey]
 
 	def edge_strip(self, edge):
 		"""Return the strip of an edge.
@@ -460,9 +480,9 @@ class QuadMesh(Mesh):
 			The strip of the edge.
 		"""
 
-		for strip, edges in self.strip.items():
+		for skey, edges in self.strips(data=True):
 			if edge in edges or tuple(reversed(edge)) in edges:
-				return strip
+				return skey
 
 	def strip_faces(self, skey):
 		"""Return the faces of a strip.
@@ -496,6 +516,10 @@ class QuadMesh(Mesh):
 
 		return [self.edge_strip((u, v)) for u, v in list(self.face_halfedges(fkey))[:2]]
 
+	# --------------------------------------------------------------------------
+	# strip data operations
+	# --------------------------------------------------------------------------
+
 	def substitute_vertex_in_strips(self, old_vkey, new_vkey, strips = None):
 		"""Substitute a vertex by another one.
 
@@ -512,7 +536,7 @@ class QuadMesh(Mesh):
 
 		if strips is None:
 			strips = list(self.strips())
-		self.strip.update({skey: [tuple([new_vkey if vkey == old_vkey else vkey for vkey in list(edge)]) for edge in self.strip[skey]] for skey in strips})
+		self.data['attributes']['strips'].update({skey: [tuple([new_vkey if vkey == old_vkey else vkey for vkey in list(edge)]) for edge in self.strip_edges(skey)] for skey in strips})
 
 	def delete_face_in_strips(self, fkey):
 		"""Delete face in strips.
@@ -526,96 +550,32 @@ class QuadMesh(Mesh):
 
 		"""
 
-		self.strip = {skey: [(u, v) for u, v in self.strip[skey] if self.halfedge[u][v] != fkey] for skey in self.strips()}
+		self.data['attributes']['strips'] = {skey: [(u, v) for u, v in self.strip_edges(skey) if self.halfedge[u][v] != fkey] for skey in self.strips()}
 
-	def strip_connectivity(self):
-		"""Compute the network showing the connecitivty of the strips: a network vertex is a quad mesh strip and a network edge is a quad mesh face.
+	# --------------------------------------------------------------------------
+	# strip graph
+	# --------------------------------------------------------------------------
+
+	def strip_graph(self):
+		"""Compute the vertices and edges of the graph representing the strip connectivity, where each graph vertex is a mesh strip and each graph edge a mesh face representing the crossing of two strips.
+		Potentially includes loop edges (u, u) or multiple arallel edges (u, v) and/or (v, u).
 
 		Returns
 		-------
-		Network
-			A network encoding the connecitivity of the quad mesh strips.
-
+		tuple
+			A tuple of two objects, the dictionary of mesh strip keys pointing to graph vertex coordinates, and the list of edges between graph vertices.
 		"""
 
-		vertices = {skey: centroid_points(self.strip_edge_polyline(skey)) for skey in self.strips()}
+		vertices = {skey: centroid_points(self.strip_edge_midpoint_polyline(skey)) for skey in self.strips()}
 		edges = [tuple(self.face_strips(fkey)) for fkey in self.faces()]
-
-		return Network.from_vertices_and_edges(vertices, edges)
-
-	def sort_two_colourable_strips(self):
-		"""If the strip are two colourable without overlaps, dispatch them in two lists, one per colour.
-
-		Returns
-		-------
-		red_strips, blue_strips : tuple, None
-			A tuple of two lists of strips that do not overlap each other. None if the strips are not two-colourable.
-
-		"""
-
-		strip_connectivity = self.strip_connectivity()
-		key_to_colour = is_network_two_colorable(strip_connectivity)
-
-		if key_to_colour is None:
-			return None
-
-		else:
-			red_strips = [key for key, colour in key_to_colour.items() if colour == 0]
-			blue_strips = [key for key, colour in key_to_colour.items() if colour == 1]
-			return red_strips, blue_strips
+		return vertices, edges
 
 	# --------------------------------------------------------------------------
-	# strip geometry
+	# strip polyedges
 	# --------------------------------------------------------------------------
 
-	def strip_edge_polyline(self, skey):
-		"""Return the strip polyline connecting edge midpoints.
-
-		Parameters
-		----------
-		skey : hashable
-			A strip key.
-
-		Returns
-		-------
-		list
-			The edge midpoint polyline.
-
-		"""
-
-		polyline = [self.edge_midpoint(u, v) for u, v in self.strip_edges(skey)]
-		
-		if self.is_strip_closed(skey):
-			return polyline + polyline[: 1]
-		
-		else:
-			return polyline
-
-	def strip_face_polyline(self, skey):
-		"""Return the strip polyline connecting face centroids.
-
-		Parameters
-		----------
-		skey : hashable
-			A strip key.
-			
-		Returns
-		-------
-		list
-			The face centroid polyline.
-
-		"""
-
-		polyline = [self.face_centroid(fkey) for fkey in self.strip_faces(skey)]
-
-		if self.is_strip_closed(skey):
-			return polyline + polyline[: 1]
-		
-		else:
-			return polyline
-
-	def strip_contour_polyedges(self, skey):
-		"""Return the two contour polyedges of a strip.
+	def strip_side_polyedges(self, skey):
+		"""Return the two side polyedges of a strip.
 
 		Parameters
 		----------
@@ -625,8 +585,7 @@ class QuadMesh(Mesh):
 		Returns
 		-------
 		tuple
-			The pair of polyedges contouring the strip.
-
+			The pair of polyedges on the side of the strip.
 		"""
 
 		strip_edges = self.strip_edges(skey)
@@ -638,10 +597,58 @@ class QuadMesh(Mesh):
 			starts += starts[:1]
 			ends += ends[:1]
 
-		return (starts, ends)	
+		return (starts, ends)
 
-	def strip_contour_polylines(self, skey):
-		"""Return the two contour polylines of a strip.
+	# --------------------------------------------------------------------------
+	# strip polylines
+	# --------------------------------------------------------------------------
+
+	def strip_edge_midpoint_polyline(self, skey):
+		"""Return the strip polyline connecting edge midpoints.
+
+		Parameters
+		----------
+		skey : hashable
+			A strip key.
+
+		Returns
+		-------
+		list
+			The edge midpoint polyline.
+		"""
+
+		polyline = [self.edge_midpoint(u, v) for u, v in self.strip_edges(skey)]
+		
+		if self.is_strip_closed(skey):
+			return polyline + polyline[: 1]
+		
+		else:
+			return polyline
+
+	def strip_face_centroid_polyline(self, skey):
+		"""Return the strip polyline connecting face centroids.
+
+		Parameters
+		----------
+		skey : hashable
+			A strip key.
+			
+		Returns
+		-------
+		list
+			The face centroid polyline.
+		"""
+
+		polyline = [self.face_centroid(fkey) for fkey in self.strip_faces(skey)]
+
+		if self.is_strip_closed(skey):
+			return polyline + polyline[: 1]
+		
+		else:
+			return polyline	
+
+	def strip_side_polylines(self, skey):
+		"""Return the two side polylines of a strip.
 
 		Parameters
 		----------
@@ -651,12 +658,12 @@ class QuadMesh(Mesh):
 		Returns
 		-------
 		tuple
-			The pair of polylines contouring the strip.
-
+			The pair of polylines on the side of the strip.
 		"""
 
-		starts, ends = self.strip_contour_polyedges(skey)
+		starts, ends = self.strip_side_polyedges(skey)
 		return ([self.vertex_coordinates(vkey) for vkey in starts], [self.vertex_coordinates(vkey) for vkey in ends])	
+
 
 # ==============================================================================
 # Main
@@ -670,13 +677,14 @@ if __name__ == '__main__':
 
 	#mesh.delete_face(13)
 
-	print mesh.singularity_polyedges()
-	
 	mesh.collect_strips()
+	#mesh.collect_polyedges()
 
-	for skey in mesh.strips():
-		print mesh.strip_face_polyline(skey)
+	print(list(mesh.strips()))
 
-	mesh.strip_connectivity()
+	#print(mesh.polyedges())
 
+	#print(mesh.singularity_polyedge_decomposition())
 
+	#print(mesh.strip_graph())
+	#print(mesh.polyedge_graph())
