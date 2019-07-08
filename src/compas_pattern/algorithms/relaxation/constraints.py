@@ -1,5 +1,3 @@
-import compas
-
 try:
 	import rhinoscriptsyntax as rs
 
@@ -8,18 +6,15 @@ except ImportError:
 
 from compas.geometry import Polyline
 
-from compas_rhino.geometry import RhinoMesh
+from compas_rhino.geometry import RhinoPoint
 from compas_pattern.cad.rhino.objects.surface import RhinoSurface
 from compas_pattern.cad.rhino.objects.surface import RhinoCurve
-from compas_rhino.geometry import RhinoPoint
 
 from compas.geometry import distance_point_point
 from compas.geometry import closest_point_in_cloud
 
 from compas_rhino.helpers import mesh_draw_vertices
 from compas_rhino.helpers import mesh_select_vertices
-
-from compas_pattern.cad.rhino.draw import draw_mesh
 
 from compas_pattern.utilities.lists import list_split
 
