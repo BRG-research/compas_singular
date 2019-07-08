@@ -15,19 +15,13 @@ from compas_pattern.cad.rhino.objects.curve import RhinoCurve
 from compas_pattern.cad.rhino.objects.surface import RhinoSurface
 
 
-__author__     = ['Robin Oval']
-__copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
-__license__    = 'MIT License'
-__email__      = 'oval@arch.ethz.ch'
-
-
 __all__ = [
     'constrained_smoothing',
     'surface_constrained_smoothing',
 ]
 
 
-def constrained_smoothing(mesh, kmax = 100, damping = 0.5, constraints = {}, algorithm = 'centroid'):
+def constrained_smoothing(mesh, kmax=100, damping=0.5, constraints={}, algorithm='centroid'):
     """Constrained smoothing of a mesh. Constraints can be points, curves or surfaces.
 
     Parameters
@@ -42,7 +36,6 @@ def constrained_smoothing(mesh, kmax = 100, damping = 0.5, constraints = {}, alg
         Dictionary of constraints as vertex keys pointing to Rhino objects (points, curves or surfaces). Emplty by default.
     algorithm : string
         Type of smoothing algorithm to apply (classic centroid or area-based). Classic centroid by default.
-
     """
 
     def callback(k, args):
@@ -63,12 +56,12 @@ def constrained_smoothing(mesh, kmax = 100, damping = 0.5, constraints = {}, alg
             mesh.vertex[vkey]['y'] = y
             mesh.vertex[vkey]['z'] = z
 
-    func = {'centroid': mesh_smooth_centroid, 'area': mesh_smooth_area, 'centerofmass': mesh_smooth_centerofmass}
+    func = {'centroid': mesh_smooth_centroid, 'area': mesh_smooth_area, 'centerofmass': mesh_smooth_centerofmass, 'hybrid': mesh_smooth_hybrid}
 
     if algorithm not in func:
         algorithm = 'centroid'
         
-    func[algorithm](mesh, kmax = kmax, damping = damping, callback = callback, callback_args = [mesh, constraints])
+    func[algorithm](mesh, kmax=kmax, damping=damping, callback=callback, callback_args=[mesh, constraints])
 
 
 def surface_constrained_smoothing(mesh, srf, kmax = 100, damping = 0.5, algorithm = 'centroid'):
@@ -86,7 +79,6 @@ def surface_constrained_smoothing(mesh, srf, kmax = 100, damping = 0.5, algorith
         Damping value for smoothing between 0 and 1. Default value 0.5.
     algorithm : string
         Type of smoothing algorithm to apply (classic centroid or area-based). Classic centroid by default.
-
     """
 
     fixed = [vkey for vkey in mesh.vertices_on_boundary() if mesh.vertex_degree(vkey) == 2]
