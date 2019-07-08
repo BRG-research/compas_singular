@@ -60,9 +60,9 @@ if __name__ == '__main__':
 	]
 
 	mesh = PseudoQuadMesh.from_vertices_and_faces(vertices, faces)
-	print split_quad_in_pseudo_quads(mesh, 0, 0)
+	print(split_quad_in_pseudo_quads(mesh, 0, 0))
 	for fkey in mesh.faces():
-		print fkey, mesh.face_vertices(fkey)
-	print merge_pseudo_quads_in_quad(mesh, 1, 2)
+		print(fkey, mesh.face_vertices(fkey))
+	print(merge_pseudo_quads_in_quad(mesh, 1, 2))
 	for fkey in mesh.faces():
-		print fkey, mesh.face_vertices(fkey)
+		print(fkey, mesh.face_vertices(fkey))
