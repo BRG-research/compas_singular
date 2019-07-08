@@ -3,7 +3,7 @@ from math import pi
 from compas_pattern.datastructures.mesh.mesh import Mesh
 from compas_pattern.datastructures.network.network import Network
 
-from compas_pattern.datastructures.mesh.mesh import mesh_substitute_vertex_in_faces
+from compas_pattern.datastructures.mesh.operations import mesh_substitute_vertex_in_faces
 
 from compas.datastructures import mesh_unweld_vertices
 
@@ -42,6 +42,87 @@ __all__ = [
     'strip_polyedge_update',
     'boundary_strip_preserve'
 ]
+
+# def left_and_right_faces_of_polyedge(mesh, u, v, w):
+
+#     faces = []
+#     count = 100
+#     while count:
+#         count -= 1
+#         if mesh.halfedge[v][w]
+#         faces.append
+
+#     #us = (u1, u2)
+#     i = 0
+#     for nbr in mesh.vertex_neighbors(v, ordered=True):
+#         if mesh.halfedge[v][nbr] is None:
+#             i = 1 - i
+#             continue
+#         if nbr == w or nbr == u:
+#             i = 1 - i
+#         #mesh_substitute_vertex_in_faces(mesh, u, us[i], [mesh.halfedge[v][nbr]])
+
+def add_strip_wip(mesh, polyedge):
+    
+    new_faces = []
+
+    # first face
+    u = polyedge.pop(0)
+    v = polyedge[0]
+    w = polyedge[1]
+    u1 = mesh.add_vertex(attr_dict=mesh.vertex[u])
+    u2 = mesh.add_vertex(attr_dict=mesh.vertex[u])
+    
+    us = (u1, u2)
+    i = 0
+    for nbr in mesh.vertex_neighbors(v, ordered=True):
+        if mesh.halfedge[v][nbr] is None:
+            i = 1 - i
+            continue
+        if nbr == w:
+            i = 1 - i
+        mesh_substitute_vertex_in_faces(mesh, u, us[i], [mesh.halfedge[v][nbr]])
+
+    mesh.delete_vertex(u)
+    new_faces.append(mesh.add_face([u1, u2, v]))
+
+
+    return 0
+
+    # regular faces
+    count = 100
+    while len(polyedge) > 1 and count:
+        count -= 1
+        u = polyedge.pop(0)
+        v = polyedge[0]
+        u1 = mesh.add_vertex(attr_dict=mesh.vertex[u])
+        u2 = mesh.add_vertex(attr_dict=mesh.vertex[u])
+        #adjacent_faces = mesh.vertex_faces(u, ordered=True, include_none=True)
+        #face_1 = mesh.halfedge[u][v]
+        #face_2 = new_faces[-1]
+        # update adjacent faces
+        #previous_face = new_faces.pop()
+        #face_vertices = mesh.face_vertices(previous_face)
+        
+        mesh.delete_face(new_faces.pop())
+        mesh.delete_vertex(u)
+        new_faces.append(mesh.add_face([u1, u2, v]))
+
+    # last face
+    v = polyedge.pop(0)
+    v1 = mesh.add_vertex(attr_dict=mesh.vertex[v])
+    v2 = mesh.add_vertex(attr_dict=mesh.vertex[v])
+    fkey = new_faces.pop()
+    u1 = mesh.face_vertex_descendant(fkey, v)
+    u2 = mesh.face_vertex_descendant(fkey, u1)
+    mesh.delete_face(fkey)
+    mesh.delete_vertex(v)
+    new_faces.append(mesh.add_face([u1, u2, v2, v1]))
+
+    # geometry
+    #func_1(mesh, kinks_xyz, 20, 0.5)
+
+    return 0
 
 
 def edit_strips(mesh, strips_to_add=[], strips_to_delete=[], preserve_boundaries=False):
@@ -87,7 +168,7 @@ def add_strip(mesh, polyedge):
 
     """
 
-    kinks_xyz = [mesh.vertex_coordinates(vkey) for vkey in mesh.kinks(pi / 12)]
+    kinks_xyz = [mesh.vertex_coordinates(vkey) for vkey in mesh.boundary_kinks(pi / 12)]
 
     # close or open status
     closed = polyedge[0] == polyedge[-1]
@@ -167,12 +248,12 @@ def add_strip(mesh, polyedge):
 
     # update transverse strip data
     for skey, i in update.items():
-        mesh.strip[skey] = mesh.collect_strip(
+        mesh.data['attributes']['strips'][skey] = mesh.collect_strip(
             *list(pairwise(left_polyedge))[i])
 
     # add new strip data
     new_skey = list(mesh.strips())[-1] + 1
-    mesh.strip[new_skey] = mesh.collect_strip(
+    mesh.data['attributes']['strips'][new_skey] = mesh.collect_strip(
         left_polyedge[0], right_polyedge[0])
 
     # update adjacent strips
@@ -213,7 +294,7 @@ def func_1(mesh, fix_xyz, kmax, damping):
     for vertices in fix_map.values():
         boundary_vertices = [vkey for vkey in vertices if mesh.is_vertex_on_boundary(vkey)]
         if len(boundary_vertices) == 0:
-            print 'not adapted to fixed non-boundary vertices'
+            print('not adapted to fixed non-boundary vertices')
         elif len(boundary_vertices) == 1:
             fixed += boundary_vertices
         else:
@@ -221,7 +302,7 @@ def func_1(mesh, fix_xyz, kmax, damping):
             if len(corner_vertices) == 1:
                 fixed += corner_vertices
             else:
-                print 'not generalised yet'
+                print('not generalised yet')
 
     split_boundaries = []
     for boundary in mesh.boundaries():
@@ -316,6 +397,8 @@ def delete_strip(mesh, skey, preserve_boundaries=False):
     for fkey in strip_faces:
         mesh.delete_face(fkey)
 
+    old_vkeys_to_new_vkeys = {}
+
     # merge strip edge vertices that are connected
     for part in parts:
 
@@ -340,6 +423,7 @@ def delete_strip(mesh, skey, preserve_boundaries=False):
             # new vertex
             x, y, z = centroid_points(points)
             new_vkey = mesh.add_vertex(attr_dict={'x': x, 'y': y, 'z': z})
+            old_vkeys_to_new_vkeys.update({old_vkey: new_vkey for old_vkey in vertices})
 
             # replace the old vertices
             for old_vkey in vertices:
@@ -351,10 +435,12 @@ def delete_strip(mesh, skey, preserve_boundaries=False):
         for old_vkey in vertices:
             mesh.delete_vertex(old_vkey)
 
-    del mesh.strip[skey]
+    #del mesh.strip[skey]
+    del mesh.data['attributes']['strips'][skey]
 
-    if preserve_boundaries:
-        return skey_to_skeys
+    return old_vkeys_to_new_vkeys
+    #if preserve_boundaries:
+    #    return skey_to_skeys
 
 
 def delete_strips(mesh, skeys, preserve_boundaries=False):
@@ -407,7 +493,7 @@ def split_strip(mesh, skey, n=2):
 
     """
 
-    return [skey] + [add_strip(mesh, mesh.strip_contour_polyedges(skey)[0])[0] for i in range(n - 1)]
+    return [skey] + [add_strip(mesh, mesh.strip_side_polyedges(skey)[0])[0] for i in range(n - 1)]
 
 
 def split_strips(mesh, skey_to_n):
@@ -562,16 +648,37 @@ if __name__ == '__main__':
 
     #mesh = QuadMesh.from_obj(compas.get('quadmesh.obj'))
 
-    adjacency = {0: {1: None, 3: None}, 1: {2: None, 0: None},
-                 2: {3: None, 1: None}, 3: {0: None, 2: None}}
-    for i, path in enumerate(breadth_first_paths(adjacency, 0, 0)):
-        print path
+    #adjacency = {0: {1: None, 3: None}, 1: {2: None, 0: None}, 2: {3: None, 1: None}, 3: {0: None, 2: None}}
+    #for i, path in enumerate(breadth_first_paths(adjacency, 0, 0)):
+    #    print path
     #    if i == 1:
     #        break
     # add_strip(mesh, [26,22,69,67])
 
-    # plotter = MeshPlotter(mesh)
-    # plotter.draw_vertices(text='key')
-    # plotter.draw_edges()
-    # plotter.draw_faces()
-    # plotter.show()
+    vertices = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [2.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [2.0, 1.0, 0.0],
+        [0.0, 2.0, 0.0],
+        [1.0, 2.0, 0.0],
+        [2.0, 2.0, 0.0]
+    ]
+
+    faces = [
+        [0, 1, 4, 3],
+        [1, 2, 5, 4],
+        [3, 4, 7, 6],
+        [4, 5, 8, 7]
+    ]
+
+    mesh = QuadMesh.from_vertices_and_faces(vertices, faces)
+    add_strip_wip(mesh, [3, 4, 5])
+
+    plotter = MeshPlotter(mesh, figsize=(5.0, 5.0))
+    plotter.draw_vertices(text='key')
+    plotter.draw_edges()
+    plotter.draw_faces()
+    plotter.show()
