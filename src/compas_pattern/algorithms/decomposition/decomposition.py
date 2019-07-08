@@ -8,8 +8,8 @@ from compas_pattern.algorithms.decomposition.skeletonisation import Skeleton
 
 from compas_pattern.datastructures.mesh_quad_pseudo_coarse.mesh_quad_pseudo_coarse import CoarsePseudoQuadMesh
 
-from compas_pattern.datastructures.mesh.mesh import mesh_insert_vertex_on_edge
-from compas_pattern.datastructures.mesh.mesh import mesh_substitute_vertex_in_faces
+from compas_pattern.datastructures.mesh.operations import mesh_insert_vertex_on_edge
+from compas_pattern.datastructures.mesh.operations import mesh_substitute_vertex_in_faces
 
 from compas_pattern.datastructures.network.network import Network
 from compas.datastructures.network.operations import network_polylines
@@ -385,7 +385,7 @@ class Decomposition(Skeleton):
 					xyz0 = mesh.vertex_coordinates(vkey)
 					to_move[vkey] = [0.1 * (a - a0) for a, a0 in zip(xyz, xyz0)]
 
-		print to_move
+		print(to_move)
 		for vkey, xyz in to_move.items():
 			attr = mesh.vertex[vkey]
 			attr['x'] += xyz[0]
@@ -419,7 +419,6 @@ class Decomposition(Skeleton):
 
 		quadrangulate_mesh(mesh, sources)
 
-
 	def split_quads_with_poles(self, poles):
 
 		mesh = self.mesh
@@ -441,14 +440,14 @@ class Decomposition(Skeleton):
 		face_poles = {}
 		for fkey in mesh.faces():
 			if len(mesh.face_vertices(fkey)) == 3:
-				print fkey, 'look for pole'
+				print(fkey, 'look for pole')
 				for vkey in mesh.face_vertices(fkey):
-					print vkey, geometric_key(mesh.vertex_coordinates(vkey))
+					print(vkey, geometric_key(mesh.vertex_coordinates(vkey)))
 					if geometric_key(mesh.vertex_coordinates(vkey)) in pole_map:
 						face_poles[fkey] = vkey
 						break
 				if fkey not in face_poles:
-					print 'pole missing'
+					print('pole missing')
 
 		mesh.face_pole = face_poles
 
