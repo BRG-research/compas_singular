@@ -2,11 +2,6 @@ import compas
 
 try:
 	import rhinoscriptsyntax as rs
-	import scriptcontext as sc
-
-	from Rhino.Geometry import Point3d
-
-	find_object = sc.doc.Objects.Find
 
 except ImportError:
 	compas.raise_if_ironpython()
@@ -14,14 +9,12 @@ except ImportError:
 from compas_rhino.geometry.curve import RhinoCurve
 
 
-__author__     = ['Robin Oval']
-__copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
-__license__    = 'MIT License'
-__email__      = 'oval@arch.ethz.ch'
-
 __all__ = [
 	'RhinoCurve'
 ]
+
+
+### TO BE PUSHED TO COMPAS ###
 
 
 class RhinoCurve(RhinoCurve):
