@@ -97,7 +97,6 @@ class Kagome(Mesh):
 					n = len(tube_extremities[(u, v)])
 					l = network.edge_length(u, v) - 2 * radius
 					m = math.floor(l / radius) + 1
-					print n, m
 					pt_uv = tube_extremities[(u, v)]
 					pt_vu = list(reversed(tube_extremities[(v, u)]))
 					dmin = -1
@@ -125,7 +124,7 @@ class Kagome(Mesh):
 							meshes_2.append(Mesh.from_vertices_and_faces(vertices, faces))
 
 		vertices, faces = join_and_weld_meshes(meshes_2)
-		print len(vertices), len(faces)
+
 		#meshes_2 = rs.AddMesh(vertices, faces)
 
 		meshes = []
@@ -412,15 +411,15 @@ if __name__ == '__main__':
 
 	#kagome = Kagome.from_skeleton(lines)
 	kagome = Kagome.from_vertices_and_faces(vertices, faces)
-	kagome.densification(2)
+	kagome.densification(3)
 	kagome.patterning()
 	kagome.store_kagome_polyedge_data()
 
-	#plotter = MeshPlotter(kagome.kagome)
-	#plotter.draw_vertices(radius=.01)
-	#plotter.draw_edges()
-	#plotter.draw_faces()
-	#plotter.show()
+	plotter = MeshPlotter(kagome.kagome)
+	plotter.draw_vertices(radius=.005)
+	plotter.draw_edges()
+	plotter.draw_faces()
+	plotter.show()
 
 	#print kagome.kagome_negative_singularities()
 	#print kagome.kagome_singularities()
