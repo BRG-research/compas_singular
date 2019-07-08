@@ -16,7 +16,7 @@ class PseudoQuadMesh(QuadMesh):
 
     def __init__(self):
         super(PseudoQuadMesh, self).__init__()
-        self.face_pole = {}
+        self.data['attributes']['face_pole'] = {}
 
     @classmethod
     def from_vertices_and_faces_with_poles(cls, vertices, faces, poles=[]):
@@ -25,27 +25,27 @@ class PseudoQuadMesh(QuadMesh):
         for fkey in mesh.faces():
             face_vertices = mesh.face_vertices(fkey)
             if len(face_vertices) == 3:
-                mesh.face_pole[fkey] = face_vertices[0]
+                mesh.data['attributes']['face_pole'][fkey] = face_vertices[0]
                 for vkey in face_vertices:
                     if geometric_key(mesh.vertex_coordinates(vkey)) in pole_map:
-                        mesh.face_pole.update({fkey: vkey})
+                        mesh.data['attributes']['face_pole'].update({fkey: vkey})
                         break
         return mesh
 
     @classmethod
     def from_vertices_and_faces_with_face_poles(cls, vertices, faces, face_poles={}):
         mesh = cls.from_vertices_and_faces(vertices, faces)
-        mesh.face_pole = face_poles
+        mesh.data['attributes']['face_pole'] = face_poles
         return mesh
 
     def poles(self):
-        return list(set(self.face_pole.values()))
+        return list(set(self.data['attributes']['face_pole'].values()))
 
     def is_face_pseudo_quad(self, fkey):
-        return fkey in set(self.face_pole.keys())
+        return fkey in set(self.data['attributes']['face_pole'].keys())
 
     def is_vertex_pole(self, vkey):
-        return vkey in set(self.face_pole.values())
+        return vkey in set(self.data['attributes']['face_pole'].values())
 
     def is_vertex_full_pole(self, vkey):
         return all([self.is_face_pseudo_quad(fkey) for fkey in self.vertex_faces(vkey)])
@@ -54,7 +54,7 @@ class PseudoQuadMesh(QuadMesh):
         return self.is_vertex_pole(vkey) and not self.is_vertex_full_pole(vkey)
 
     def vertex_pole_faces(self, vkey):
-        return [fkey for fkey, pole in self.face_pole.items() if pole == vkey]
+        return [fkey for fkey, pole in self.data['attributes']['face_pole'].items() if pole == vkey]
 
     def face_opposite_edge(self, u, v):
             """Returns the opposite edge in the quad face.
@@ -81,7 +81,7 @@ class PseudoQuadMesh(QuadMesh):
                 return (w, x)
             #if pseudo quad
             if len(self.face_vertices(fkey)) == 3:
-                pole = self.face_pole[fkey]
+                pole = self.data['attributes']['face_pole'][fkey]
                 w = self.face_vertex_descendant(fkey, v)
                 if u == pole:
                     return (w, u)
@@ -143,7 +143,7 @@ class PseudoQuadMesh(QuadMesh):
         """
         self.strip = {}
 
-        edges = list(self.not_none_edges())
+        edges = [(u, v) if self.halfedge[u][v] is not None else (v, u) for u, v in self.edges()]
 
         strip = -1
         while len(edges) > 0:
@@ -287,13 +287,12 @@ class PseudoQuadMesh(QuadMesh):
         """
 
         if self.is_face_pseudo_quad(fkey):
-            pole = self.face_pole[fkey]
+            pole = self.data['attributes']['face_pole'][fkey]
             u = self.face_vertex_descendant(fkey, pole)
             v = self.face_vertex_descendant(fkey, u)
             return [self.edge_strip((pole, u)), self.edge_strip((u, v))]
         else:
             return [self.edge_strip((u, v)) for u, v in list(self.face_halfedges(fkey))[:2]]
-
 
 #     def add_face(self, vertices, fkey=None, attr_dict=None, **kwattr):
 #         """Add a face to the mesh object. Allow [a, b, c, c] faces.
