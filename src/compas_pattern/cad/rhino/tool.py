@@ -30,11 +30,9 @@ from compas_pattern.algorithms.relaxation.constraints import display_smoothing_c
 import compas_rhino.artists as rhino_artist
 import compas_rhino.helpers as rhino_helper
 
-from compas_pattern.cad.rhino.artist import select_mesh_strip
-from compas_pattern.cad.rhino.artist import select_mesh_strips
+from compas_pattern.cad.rhino.artist import select_quad_mesh_strip
+from compas_pattern.cad.rhino.artist import select_quad_mesh_strips
 from compas_pattern.cad.rhino.artist import select_mesh_polyedge
-
-from compas_pattern.cad.rhino.draw import draw_mesh
 
 from compas.utilities import pairwise
 
@@ -87,13 +85,14 @@ def singular():
         vertices, faces = RhinoMesh.from_guid(guid).get_vertices_and_faces()
         clean_faces(faces)
         poles = []
-        print faces
+        #print(faces)
         for face in faces:
             if len(face) != 4:
                 poles = [rs.PointCoordinates(point) for point in rs.GetObjects('get pole points', filter=1)]
                 break
         coarse_pseudo_quad_mesh = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, poles)
-        coarse_pseudo_quad_mesh.init_strip_density()
+        coarse_pseudo_quad_mesh.collect_strips()
+        coarse_pseudo_quad_mesh.set_strips_density(1)
         coarse_pseudo_quad_mesh.quad_mesh = coarse_pseudo_quad_mesh.copy()
         coarse_pseudo_quad_mesh.polygonal_mesh = coarse_pseudo_quad_mesh.copy()
     elif pattern_from == 'pseudo_quad_mesh':
@@ -115,10 +114,12 @@ def singular():
         if pt_guids is None:
             pt_guids = []
         coarse_pseudo_quad_mesh = surface_decomposition(srf_guid, rs.GetReal('precision', number=1.), crv_guids=crv_guids, pt_guids=pt_guids, output_skeleton=False)[0]
-        coarse_pseudo_quad_mesh.init_strip_density()
+        coarse_pseudo_quad_mesh.collect_strips()
+        coarse_pseudo_quad_mesh.set_strips_density(1)
         coarse_pseudo_quad_mesh.quad_mesh = coarse_pseudo_quad_mesh.copy()
         coarse_pseudo_quad_mesh.polygonal_mesh = coarse_pseudo_quad_mesh.copy()
-        guid = draw_mesh(coarse_pseudo_quad_mesh)
+        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh)
+        guid = artist.draw_mesh()
     else:
         return 0
 
@@ -135,7 +136,8 @@ def singular():
 
         if edit is None or edit == 'exit':
             rs.EnableRedraw(False)
-            return draw_mesh(coarse_pseudo_quad_mesh.polygonal_mesh)
+            artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.polygonal_mesh)
+            return artist.draw_mesh()
 
         if edit == 'topology':
             editing_topology(coarse_pseudo_quad_mesh)
@@ -153,7 +155,8 @@ def singular():
             editing_geometry(coarse_pseudo_quad_mesh)
 
         rs.EnableRedraw(False)
-        guid = draw_mesh(coarse_pseudo_quad_mesh.polygonal_mesh)
+        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.polygonal_mesh)
+        guid = artist.draw_mesh()
         rs.EnableRedraw(True)
 
         if edit == 'save':
@@ -177,7 +180,8 @@ def editing_topology(coarse_pseudo_quad_mesh):
 
         # update drawing
         rs.EnableRedraw(False)
-        guid = draw_mesh(coarse_pseudo_quad_mesh)
+        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh)
+        guid = artist.draw_mesh()
         rs.EnableRedraw(True)
 
         # choose operation
@@ -196,7 +200,7 @@ def editing_topology(coarse_pseudo_quad_mesh):
             coarse_pseudo_quad_mesh.set_strip_density(skey, 1)
 
         elif operation == 'delete':
-            skeys = set(select_mesh_strips(coarse_pseudo_quad_mesh))
+            skeys = set(select_quad_mesh_strips(coarse_pseudo_quad_mesh))
             skey_to_skeys = delete_strips(
                 coarse_pseudo_quad_mesh, skeys, preserve_boundaries=True)
             if skey_to_skeys is not None:
@@ -206,7 +210,7 @@ def editing_topology(coarse_pseudo_quad_mesh):
                     coarse_pseudo_quad_mesh.set_strips_density(d, skeys)
 
         elif operation == 'split':
-            skey = select_mesh_strip(coarse_pseudo_quad_mesh)
+            skey = select_quad_mesh_strip(coarse_pseudo_quad_mesh)
             n = rs.GetInteger('number of splits', number=2, minimum=2)
             skeys = split_strip(coarse_pseudo_quad_mesh, skey, n=n)
             # update data
@@ -231,7 +235,8 @@ def editing_density(coarse_pseudo_quad_mesh):
 
         # update drawing
         rs.EnableRedraw(False)
-        guid = draw_mesh(coarse_pseudo_quad_mesh.quad_mesh)
+        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.quad_mesh)
+        guid = artist.draw_mesh()
         rs.EnableRedraw(True)
 
         # choose operation
@@ -245,7 +250,7 @@ def editing_density(coarse_pseudo_quad_mesh):
 
         # get operation parameters
         if 'strip' in operation:
-            skey = select_mesh_strip(coarse_pseudo_quad_mesh, show_density=True)
+            skey = select_quad_mesh_strip(coarse_pseudo_quad_mesh, show_density=True)
 
         if 'value' in operation:
             d = rs.GetInteger('density value', number=3, minimum=1)
@@ -310,7 +315,8 @@ def editing_symmetry(coarse_pseudo_quad_mesh):
     while True:
 
         rs.EnableRedraw(False)
-        guid = draw_mesh(coarse_pseudo_quad_mesh.polygonal_mesh)
+        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.polygonal_mesh)
+        guid = artist.draw_mesh()
         rs.EnableRedraw(True)
 
         operator = rs.GetString(
@@ -371,7 +377,8 @@ def editing_geometry_moving(coarse_pseudo_quad_mesh):
     while True:
 
         rs.EnableRedraw(False)
-        guid = draw_mesh(mesh)
+        artist = rhino_artist.MeshArtist(mesh)
+        guid = artist.draw_mesh()
         rs.EnableRedraw(True)
 
         artist = rhino_artist.MeshArtist(mesh, layer='mesh_artist')
@@ -426,7 +433,8 @@ def editing_geometry_smoothing(coarse_pseudo_quad_mesh):
     while True:
 
         rs.EnableRedraw(False)
-        guid = draw_mesh(mesh)
+        artist = rhino_artist.MeshArtist(mesh)
+        guid = artist.draw_mesh()
         rs.EnableRedraw(True)
 
         operation = rs.GetString('edit smoothing settings?', strings=[
@@ -468,7 +476,7 @@ def editing_geometry_smoothing(coarse_pseudo_quad_mesh):
                     surface_constraint = [
                         obj for obj in object_constraints if rs.ObjectType(obj) == 8]
                     if len(surface_constraint) > 1:
-                        print 'More than one surface constraint! Only the first one is taken into account.'
+                        print('More than one surface constraint! Only the first one is taken into account.')
                     if len(surface_constraint) == 0:
                         surface_constraint = None
                     else:
@@ -527,11 +535,14 @@ def save_design(coarse_pseudo_quad_mesh, layer):
     
     guid = None
     if mesh_to_save == 'coarse_pseudo_quad_mesh':
-        guid = draw_mesh(coarse_pseudo_quad_mesh)
+        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh)
+        guid = artist.draw_mesh(coarse_pseudo_quad_mesh)
     elif mesh_to_save == 'pseudo_quad_mesh':
-        guid = draw_mesh(coarse_pseudo_quad_mesh.quad_mesh)
+        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.quad_mesh)
+        guid = artist.draw_mesh()
     elif mesh_to_save == 'polygonal_mesh':
-        guid = draw_mesh(coarse_pseudo_quad_mesh.polygonal_mesh)
+        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.polygonal_mesh)
+        guid = artist.draw_mesh()
     
     if guid is not None:
         layer = rs.GetLayer(layer=layer)
@@ -560,11 +571,11 @@ def evaluate_pattern(mesh):
             metric = rs.GetString('evaluate topological property?', strings=[
                                   'euler', 'genus', 'boundaries'])
             if metric == 'euler':
-                print 'euler: ', mesh.euler()
+                print('euler: ', mesh.euler())
             elif metric == 'genus':
-                print 'genus: ', mesh.genus()
+                print('genus: ', mesh.genus())
             elif metric == 'boundaries':
-                print 'boundaries: ', len(mesh.boundaries())
+                print('boundaries: ', len(mesh.boundaries()))
 
         elif metric_type == 'geometry':
             metric = rs.GetString('evaluate geometrical property?', strings=[
@@ -578,20 +589,20 @@ def evaluate_pattern(mesh):
                     guids = rhino_helper.mesh_draw_edges(mesh)
                     edges = rhino_helper.mesh_select_edges(mesh)
                     rs.DeleteObjects(guids)
-                    print[mesh.edge_length(*edge) for edge in edges]
+                    print([mesh.edge_length(*edge) for edge in edges])
                 else:
                     edge_lengths = [mesh.edge_length(
                         *edge) for edge in mesh.edges()]
                     if aspect == 'all':
-                        print edge_lengths
+                        print(edge_lengths)
                     elif aspect == 'min':
-                        print min(edge_lengths)
+                        print(min(edge_lengths))
                     elif aspect == 'max':
-                        print max(edge_lengths)
+                        print(max(edge_lengths))
                     elif aspect == 'average':
-                        print average(edge_lengths)
+                        print(average(edge_lengths))
                     elif aspect == 'standard_deviation':
-                        print standard_deviation(edge_lengths)
+                        print(standard_deviation(edge_lengths))
 
 # ==============================================================================
 # Main
