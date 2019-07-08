@@ -55,6 +55,23 @@ def list_split(l, indices):
 
 
 def sublist_from_to_items_in_closed_list(l, from_item, to_item):
+    """Return sublist between oe item to another.
+
+    Parameters
+    ----------
+    l : list
+            A list.
+    from_item
+            An item to be found in the list. The beginning of the sublist.
+    to_item
+            An item to be found in the list. The end of the sublist.
+
+    Returns
+    -------
+    sublist : list
+            A sublist from the input list, between from_item and to_item.
+    """
+
     if from_item == to_item:
         return [from_item]
     if l[0] != l[-1]:
@@ -82,7 +99,6 @@ def are_items_in_list(items, l):
     -------
     bool
             True if all items are in the list. False otherwise.
-
     """
 
     for i in items:
@@ -105,7 +121,6 @@ def common_items(l1, l2):
     -------
     list
             The common items.
-
     """
 
     return [item for item in l1 if item in l2]
@@ -119,6 +134,6 @@ if __name__ == '__main__':
 
     import compas
 
-    print list_split(range(20) + [0], [0, 8, 9, 12, 13])
+    print(list_split(list(range(20)) + [0], [0, 8, 9, 12, 13]))
 
-    print sublist_from_to_items_in_closed_list(range(20), 13, 13)
+    print(sublist_from_to_items_in_closed_list(range(20), 13, 13))
