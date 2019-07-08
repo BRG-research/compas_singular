@@ -1,18 +1,13 @@
-from compas_pattern.datastructures.mesh.mesh import Mesh
-from compas_pattern.datastructures.mesh.mesh import mesh_substitute_vertex_in_faces
+from compas_pattern.datastructures.mesh.operations import mesh_substitute_vertex_in_faces
 
 from compas.topology import adjacency_from_edges
 from compas.topology import connected_components
-
-__author__     = ['Robin Oval']
-__copyright__  = 'Copyright 2017, Block Research Group - ETH Zurich'
-__license__    = 'MIT License'
-__email__      = 'oval@arch.ethz.ch'
 
 
 __all__ = [
     'mesh_unweld_edges'
 ]
+
 
 def mesh_unweld_edges(mesh, edges):
     """Unwelds a mesh along edges.
@@ -60,6 +55,7 @@ def mesh_unweld_edges(mesh, edges):
 
         # delete old vertices
         mesh.delete_vertex(vkey)
+
 
 # ==============================================================================
 # Main
