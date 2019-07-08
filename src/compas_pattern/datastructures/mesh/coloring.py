@@ -1,5 +1,5 @@
-from compas_pattern.datastructures.network import Network
-
+from compas.topology import adjacency_from_edges
+from compas_pattern.topology.coloring import is_adjacency_two_colorable
 from compas.topology import vertex_coloring
 
 __author__     = ['Robin Oval']
@@ -31,8 +31,7 @@ def mesh_vertex_2_coloring(mesh):
 
 	"""
 
-	network = Network.from_vertices_and_edges({vkey: mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()}, list(mesh.edges()))
-	return is_network_two_colorable(network)
+	return is_adjacency_two_colorable(mesh.adjacency)
 
 
 def mesh_vertex_n_coloring(mesh):
@@ -69,11 +68,8 @@ def mesh_face_2_coloring(mesh):
 
 	"""
 
-	vertices = {fkey: mesh.face_centroid(fkey) for fkey in mesh.faces()}
-	edges = [(mesh.halfedge[u][v], mesh.halfedge[v][u]) for u, v in mesh.edges() if not mesh.is_edge_boundary(u, v)]
-	network = Network.from_vertices_and_edges(vertices, edges)
-
-	return is_network_two_colorable(network)
+	edges = [(mesh.halfedge[u][v], mesh.halfedge[v][u]) for u, v in mesh.edges() if not mesh.is_edge_on_boundary(u, v)]
+	return is_adjacency_two_colorable(adjacency_from_edges(edges))
 
 
 def mesh_face_n_coloring(mesh):
@@ -91,11 +87,8 @@ def mesh_face_n_coloring(mesh):
 		
 	"""
 
-	vertices = {fkey: mesh.face_centroid(fkey) for fkey in mesh.faces()}
 	edges = [(mesh.halfedge[u][v], mesh.halfedge[v][u]) for u, v in mesh.edges() if not mesh.is_edge_on_boundary(u, v)]
-	network = Network.from_vertices_and_edges(vertices, edges)
-
-	return vertex_coloring(network.adjacency)
+	return vertex_coloring(adjacency_from_edges(edges))
 
 
 # ==============================================================================
@@ -105,3 +98,11 @@ def mesh_face_n_coloring(mesh):
 if __name__ == '__main__':
 
 	import compas
+	from compas.datastructures import Mesh
+
+	mesh = Mesh.from_obj(compas.get('faces.obj'))
+	print(mesh_vertex_2_coloring(mesh))
+	print(mesh_vertex_n_coloring(mesh))
+	print(mesh_face_2_coloring(mesh))
+	print(mesh_face_n_coloring(mesh))
+
