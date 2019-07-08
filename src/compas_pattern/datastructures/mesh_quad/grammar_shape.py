@@ -1,14 +1,12 @@
 from compas.geometry import centroid_points
 from compas.geometry import distance_point_point
 
-__author__     = ['Robin Oval']
-__copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
-__license__    = 'MIT License'
-__email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
     'add_opening',
-    'add_handle'
+    'add_handle',
+    #'close_opening',
+    #'close_handle'
 ]
 
 def add_opening(mesh, fkey):
@@ -25,20 +23,16 @@ def add_opening(mesh, fkey):
     -------
     list
         List of new vertex keys around the opening oriented towards the outside.
-
     """
 
     initial_vertices = mesh.face_vertices(fkey)
-
     new_vertices = [mesh.add_vertex(attr_dict = {i: xyz for i, xyz in zip(['x', 'y', 'z'], centroid_points([mesh.face_centroid(fkey), mesh.vertex_coordinates(vkey)]))}) for vkey in initial_vertices]
-
     mesh.delete_face(fkey)
-
     new_faces = [mesh.add_face([initial_vertices[i - 1], initial_vertices[i], new_vertices[i], new_vertices[i - 1]]) for i in range(len(initial_vertices))]
-
     return new_vertices
 
-def add_handle(mesh, fkey_1, fkey_2, extremity = False):
+
+def add_handle(mesh, fkey_1, fkey_2):
     """Add a handle between two quad mesh faces.
 
     Parameters
@@ -49,25 +43,16 @@ def add_handle(mesh, fkey_1, fkey_2, extremity = False):
         A face key.
     fkey_2 : hashable
         A face key.
-    extremity : bool
-        Add rings of faces at the extremitites. Default is False.
 
     Returns
     -------
     list
         List of new face keys around the opening
-
     """
 
-    if extremity:
-        # add two openings
-        new_vertices_1 = add_opening(mesh, fkey_1)
-        new_vertices_2 = add_opening(mesh, fkey_2)
-    else:
-        new_vertices_1 = list(reversed(mesh.face_vertices(fkey_1)))
-        new_vertices_2 = list(reversed(mesh.face_vertices(fkey_2)))
-        mesh.delete_face(fkey_1)
-        mesh.delete_face(fkey_2)
+    # add two openings
+    new_vertices_1 = add_opening(mesh, fkey_1)
+    new_vertices_2 = add_opening(mesh, fkey_2)
 
     # get offset between new openings as to minimise the twist of the handle
     offset_distance = {k: sum([distance_point_point(mesh.vertex_coordinates(new_vertices_1[(i - 1) % 4]), mesh.vertex_coordinates(new_vertices_2[(- i - k) % 4])) for i in range(4)]) for k in range(4)}
@@ -79,6 +64,7 @@ def add_handle(mesh, fkey_1, fkey_2, extremity = False):
 
 # def close_opening(mesh, polyedge):
 #     return 0
+
 
 # def close_handle(mesh, fkeys):
 #     # remove handle and close openings
@@ -104,6 +90,7 @@ def add_handle(mesh, fkey_1, fkey_2, extremity = False):
 #         new_fkeys += close_opening(mesh, list(reversed(bdry)))
 
 #     return new_fkeys
+
 
 # def close_handle_2(mesh, edge_path_1, edge_path_2):
 #     # two closed edge paths
