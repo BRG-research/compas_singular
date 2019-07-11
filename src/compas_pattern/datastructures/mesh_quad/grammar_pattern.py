@@ -378,6 +378,17 @@ def delete_strip(mesh, skey, preserve_boundaries=False):
     strip_edges = mesh.strip_edges(skey)
     strip_faces = mesh.strip_faces(skey)
 
+    # collateral strip deletions
+    collateral_deleted_strips = []
+    #print('strip_faces: ', strip_faces)
+    for skey_2 in mesh.strips():
+        if skey_2 == skey:
+            continue
+        #print('strip_faces_2: ', mesh.strip_faces(skey_2), [mesh.strip_faces(skey_2) in strip_faces])
+        if all([fkey in strip_faces for fkey in mesh.strip_faces(skey_2)]):
+            collateral_deleted_strips.append(skey_2)
+    #print('collateral_deleted_strips: ', collateral_deleted_strips)
+
     # build network between vertices of the edges of the strip to delete to
     # get the disconnect parts of vertices to merge
     vertices = set([i for edge in strip_edges for i in edge])
@@ -435,12 +446,12 @@ def delete_strip(mesh, skey, preserve_boundaries=False):
         for old_vkey in vertices:
             mesh.delete_vertex(old_vkey)
 
-    #del mesh.strip[skey]
+    # delete data of deleted strip and collateral deleted strips
     del mesh.data['attributes']['strips'][skey]
+    for skey_2 in collateral_deleted_strips:
+        del mesh.data['attributes']['strips'][skey_2]
 
     return old_vkeys_to_new_vkeys
-    #if preserve_boundaries:
-    #    return skey_to_skeys
 
 
 def delete_strips(mesh, skeys, preserve_boundaries=False):
