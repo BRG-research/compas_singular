@@ -41,9 +41,7 @@ def find_form(mesh):
     loads = [[0.0, 0.0, 50.0 / len(vertices)]] * len(vertices)
     xyz, q, f, l, r = fd_numpy(vertices, edges, fixed, q, loads)
     for vkey, coordinates in zip(mesh.vertices(), xyz):
-        mesh.vertex[vkey]['x'] = coordinates[0]
-        mesh.vertex[vkey]['y'] = coordinates[1]
-        mesh.vertex[vkey]['z'] = coordinates[2]
+    	mesh_move_vertex_to(mesh, coordinates, vkey)
 
 def compute_load_path(mesh):
 	return sum([mesh.edge_length(*edge) ** 2 for edge in mesh.edges()])
