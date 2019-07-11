@@ -71,6 +71,20 @@ class Mesh(Mesh):
 
 		return [vkey for vkey in self.vertices_on_boundary() if self.is_boundary_vertex_kink(vkey, threshold_angle)]
 
+	def vertex_centroid(self):
+		"""Calculate the centroid of the mesh vertices.
+
+		Parameters
+		----------
+
+		Returns
+		-------
+		list
+			The coordinates of the centroid of the mesh vertices.
+		"""
+
+		return centroid_points([self.vertex_coordinates(vkey) for vkey in self.vertices()])
+		
 
 # ==============================================================================
 # Main
