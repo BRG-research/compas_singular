@@ -1,0 +1,1 @@
+from compas_pattern.datastructures.network.network import *
