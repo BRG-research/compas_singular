@@ -38,7 +38,7 @@ def arrange_in_line(meshes, centre = None):
 	scale = k * max(widths)	
 
 	for i, mesh in enumerate(meshes):
-		mesh_move(mesh, subtract_vectors(add_vectors(centre, [(i + 1) * scale, 0, 0]), mesh.centroid()))
+		mesh_move_by(mesh, subtract_vectors(add_vectors(centre, [(i + 1) * scale, 0, 0]), mesh.centroid()))
 
 def arrange_in_circle(meshes, centre = None, rmin = 0):
 
