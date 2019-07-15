@@ -208,9 +208,6 @@ class QuadMesh(Mesh):
 
 		"""
 
-		if self.data['attributes']['polyedges'] is None:
-			self.data['attributes']['polyedges'] = {}
-
 		edges = list(self.edges())
 
 		nb_polyedges = -1
@@ -385,9 +382,6 @@ class QuadMesh(Mesh):
 		strip : list
 			The list of the edges in strip.
 		"""
-
-		if self.data['attributes']['strips'] is None:
-			self.data['attributes']['strips'] = {}
 
 		if self.halfedge[u0][v0] is None:
 			u0, v0 = v0, u0

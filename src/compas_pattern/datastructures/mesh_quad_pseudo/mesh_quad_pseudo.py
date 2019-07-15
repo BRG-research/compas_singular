@@ -141,17 +141,16 @@ class PseudoQuadMesh(QuadMesh):
             The number of strips.
 
         """
-        self.strip = {}
 
         edges = [(u, v) if self.halfedge[u][v] is not None else (v, u) for u, v in self.edges()]
 
-        strip = -1
+        nb_strip = -1
         while len(edges) > 0:
-            strip += 1
+            nb_strip += 1
 
             u0, v0 = edges.pop()
             strip_edges = self.collect_strip(u0, v0)
-            self.strip.update({strip: strip_edges})
+            self.data['attributes']['strips'].update({nb_strip: strip_edges})
 
             for u, v in strip_edges:
                 if u != v:
@@ -160,10 +159,10 @@ class PseudoQuadMesh(QuadMesh):
                     elif (v, u) in edges:
                         edges.remove((v, u))
 
-        return strip
+        return self.strips(data=True)
 
     def has_strip_poles(self, skey):
-        return self.strip[skey][0][0] == self.strip[skey][0][1] or self.strip[skey][-1][0] == self.strip[skey][-1][1]
+        return self.data['attributes']['strips'][skey][0][0] == self.data['attributes']['strips'][skey][0][1] or self.data['attributes']['strips'][skey][-1][0] == self.data['attributes']['strips'][skey][-1][1]
 
     def is_strip_closed(self, skey):
         """Output whether a strip is closed.
@@ -180,7 +179,7 @@ class PseudoQuadMesh(QuadMesh):
 
         """
 
-        return not self.has_strip_poles(skey) and not self.is_edge_on_boundary(*self.strip[skey][0])
+        return not self.has_strip_poles(skey) and not self.is_edge_on_boundary(*self.data['attributes']['strips'][skey][0])
 
     def is_vertex_singular(self, vkey):
         """Output whether a vertex is quad mesh singularity.

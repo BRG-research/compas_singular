@@ -32,9 +32,6 @@ class CoarseQuadMesh(QuadMesh):
 
 		self.data['attributes']['quad_mesh'] = None
 		self.data['attributes']['polygonal_mesh'] = None
-		
-		self.quad_mesh = None
-		self.polygonal_mesh = None
 
 	# --------------------------------------------------------------------------
 	# constructors
@@ -96,7 +93,7 @@ class CoarseQuadMesh(QuadMesh):
 			coarse_quad_mesh.set_strips_density(1)
 			for skey in coarse_quad_mesh.strips():
 				u, v = coarse_quad_mesh.strip_edges(skey)[0]
-				d = len(coarse_edges_children.get((u, v), coarse_edges_children.get((v, u), None)))
+				d = len(coarse_edges_children.get((u, v), coarse_edges_children.get((v, u), [])))
 				coarse_quad_mesh.set_strip_density(skey, d)
 
 		# store quad mesh and use as polygonal mesh

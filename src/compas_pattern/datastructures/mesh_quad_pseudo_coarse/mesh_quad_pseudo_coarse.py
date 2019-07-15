@@ -33,7 +33,7 @@ class CoarsePseudoQuadMesh(PseudoQuadMesh, CoarseQuadMesh):
 		for fkey in self.faces():
 			polylines = [[self.edge_point(u, v, float(i) / float(self.get_strip_density(self.edge_strip((u, v))))) for i in range(0, self.get_strip_density(self.edge_strip((u, v))) + 1)] for u, v in self.face_halfedges(fkey)]
 			if self.is_face_pseudo_quad(fkey):
-				pole = self.face_pole[fkey]
+				pole = self.data['attributes']['face_pole'][fkey]
 				idx = self.face_vertices(fkey).index(pole)
 				polylines.insert(idx, None)
 			ab, bc, cd, da = polylines
@@ -58,17 +58,17 @@ class CoarsePseudoQuadMesh(PseudoQuadMesh, CoarseQuadMesh):
 						face_pole_map[geometric_key(mesh.face_center(fkey))] = geometric_key(mesh.vertex_coordinates(u))
 						break
 
-		self.quad_mesh = meshes_join_and_weld(meshes)
+		self.set_quad_mesh(meshes_join_and_weld(meshes))
 
 		face_pole = {}
-		for fkey in self.quad_mesh.faces():
-			if geometric_key(self.quad_mesh.face_center(fkey)) in face_pole_map:
-				for vkey in self.quad_mesh.face_vertices(fkey):
-					if geometric_key(self.quad_mesh.vertex_coordinates(vkey)) == face_pole_map[geometric_key(self.quad_mesh.face_center(fkey))]:
+		for fkey in self.get_quad_mesh().faces():
+			if geometric_key(self.get_quad_mesh().face_center(fkey)) in face_pole_map:
+				for vkey in self.get_quad_mesh().face_vertices(fkey):
+					if geometric_key(self.get_quad_mesh().vertex_coordinates(vkey)) == face_pole_map[geometric_key(self.get_quad_mesh().face_center(fkey))]:
 						face_pole[fkey] = vkey
 						break
-		self.quad_mesh.face_pole = face_pole
-		return self.quad_mesh
+		self.get_quad_mesh().data['attributes']['face_pole'] = face_pole
+		return self.get_quad_mesh()
 	
 
 # ==============================================================================
