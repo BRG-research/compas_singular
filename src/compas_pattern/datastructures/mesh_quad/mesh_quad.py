@@ -170,7 +170,6 @@ class QuadMesh(Mesh):
 			The list of the vertices in polyedge.
 		"""
 
-
 		polyedge = [u0, v0]
 
 		while len(polyedge) <= self.number_of_vertices():
