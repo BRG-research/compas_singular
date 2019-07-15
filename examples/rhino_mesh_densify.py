@@ -5,7 +5,11 @@ from compas_pattern.cad.rhino.artist import select_quad_mesh_strip
 from compas_rhino.artists import MeshArtist
 
 guid = rs.GetObject('get (coarse) quad mesh', filter = 32)
-poles = [rs.PointCoordinates(pole) for pole in rs.GetObjects('get pole points', filter = 1)]
+poles = rs.GetObjects('get pole points', filter = 1)
+if poles is None:
+    poles = []
+else:
+    poles = [rs.PointCoordinates(pole) for pole in poles]
 
 vertices, faces = RhinoMesh.from_guid(guid).get_vertices_and_faces()
 mesh = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, poles)

@@ -12,7 +12,8 @@ crv_guids = rs.GetObjects('get curves', filter = 4)
 pt_guids = rs.GetObjects('get points', filter = 1)
 rs.EnableRedraw(False)
 vertices = rs.MeshVertices(guid)
-faces = rs.MeshFaceVertices(guid)
+faces = [list(face) for face in rs.MeshFaceVertices(guid)]
+
 mesh = Mesh.from_vertices_and_faces(vertices, faces)
 
 if srf_guid is not None:
