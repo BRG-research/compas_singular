@@ -56,7 +56,7 @@ def constrained_smoothing(mesh, kmax=100, damping=0.5, constraints={}, algorithm
             mesh.vertex[vkey]['y'] = y
             mesh.vertex[vkey]['z'] = z
 
-    func = {'centroid': mesh_smooth_centroid, 'area': mesh_smooth_area, 'centerofmass': mesh_smooth_centerofmass, 'hybrid': mesh_smooth_hybrid}
+    func = {'centroid': mesh_smooth_centroid, 'area': mesh_smooth_area, 'centerofmass': mesh_smooth_centerofmass}
 
     if algorithm not in func:
         algorithm = 'centroid'
