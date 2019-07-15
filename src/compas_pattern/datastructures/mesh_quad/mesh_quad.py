@@ -16,8 +16,8 @@ class QuadMesh(Mesh):
 
 	def __init__(self):
 		super(QuadMesh, self).__init__()
-		self.data['attributes']['strips'] = None
-		self.data['attributes']['polyedges'] = None
+		self.data['attributes']['strips'] = {}
+		self.data['attributes']['polyedges'] = {}
 
 	def strips(self, data=False):
 
