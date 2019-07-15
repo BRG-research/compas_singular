@@ -92,9 +92,11 @@ def singular():
                 break
         coarse_pseudo_quad_mesh = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, poles)
         coarse_pseudo_quad_mesh.collect_strips()
+        print(coarse_pseudo_quad_mesh.data['attributes']['strips'])
         coarse_pseudo_quad_mesh.set_strips_density(1)
-        coarse_pseudo_quad_mesh.quad_mesh = coarse_pseudo_quad_mesh.copy()
-        coarse_pseudo_quad_mesh.polygonal_mesh = coarse_pseudo_quad_mesh.copy()
+        coarse_pseudo_quad_mesh.set_quad_mesh(coarse_pseudo_quad_mesh.copy())
+        coarse_pseudo_quad_mesh.set_polygonal_mesh(coarse_pseudo_quad_mesh.copy())
+        print(coarse_pseudo_quad_mesh.data['attributes']['strips'])
     elif pattern_from == 'pseudo_quad_mesh':
         guid = rs.GetObject('get quad mesh', filter=32)
         vertices, faces = RhinoMesh.from_guid(guid).get_vertices_and_faces()
@@ -116,8 +118,8 @@ def singular():
         coarse_pseudo_quad_mesh = surface_decomposition(srf_guid, rs.GetReal('precision', number=1.), crv_guids=crv_guids, pt_guids=pt_guids, output_skeleton=False)[0]
         coarse_pseudo_quad_mesh.collect_strips()
         coarse_pseudo_quad_mesh.set_strips_density(1)
-        coarse_pseudo_quad_mesh.quad_mesh = coarse_pseudo_quad_mesh.copy()
-        coarse_pseudo_quad_mesh.polygonal_mesh = coarse_pseudo_quad_mesh.copy()
+        coarse_pseudo_quad_mesh.set_quad_mesh(coarse_pseudo_quad_mesh.copy())
+        coarse_pseudo_quad_mesh.set_polygonal_mesh(coarse_pseudo_quad_mesh.copy())
         artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh)
         guid = artist.draw_mesh()
     else:
@@ -136,17 +138,17 @@ def singular():
 
         if edit is None or edit == 'exit':
             rs.EnableRedraw(False)
-            artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.polygonal_mesh)
+            artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.get_polygonal_mesh())
             return artist.draw_mesh()
 
         if edit == 'topology':
             editing_topology(coarse_pseudo_quad_mesh)
             coarse_pseudo_quad_mesh.densification()
-            coarse_pseudo_quad_mesh.polygonal_mesh = coarse_pseudo_quad_mesh.quad_mesh.copy()
+            coarse_pseudo_quad_mesh.set_polygonal_mesh(coarse_pseudo_quad_mesh.get_quad_mesh().copy())
 
         elif edit == 'density':
             editing_density(coarse_pseudo_quad_mesh)
-            coarse_pseudo_quad_mesh.polygonal_mesh = coarse_pseudo_quad_mesh.quad_mesh.copy()
+            coarse_pseudo_quad_mesh.set_polygonal_mesh(coarse_pseudo_quad_mesh.get_quad_mesh().copy())
 
         elif edit == 'symmetry':
             editing_symmetry(coarse_pseudo_quad_mesh)
@@ -155,7 +157,7 @@ def singular():
             editing_geometry(coarse_pseudo_quad_mesh)
 
         rs.EnableRedraw(False)
-        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.polygonal_mesh)
+        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.get_polygonal_mesh())
         guid = artist.draw_mesh()
         rs.EnableRedraw(True)
 
@@ -163,7 +165,7 @@ def singular():
             save_design(coarse_pseudo_quad_mesh, layer)
 
         if edit == 'evaluate':
-            evaluate_pattern(coarse_pseudo_quad_mesh.polygonal_mesh)
+            evaluate_pattern(coarse_pseudo_quad_mesh.get_polygonal_mesh())
 
 
 def editing_topology(coarse_pseudo_quad_mesh):
@@ -235,7 +237,7 @@ def editing_density(coarse_pseudo_quad_mesh):
 
         # update drawing
         rs.EnableRedraw(False)
-        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.quad_mesh)
+        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.get_quad_mesh())
         guid = artist.draw_mesh()
         rs.EnableRedraw(True)
 
@@ -251,7 +253,8 @@ def editing_density(coarse_pseudo_quad_mesh):
         # get operation parameters
         if 'strip' in operation:
             skey = select_quad_mesh_strip(coarse_pseudo_quad_mesh, show_density=True)
-
+            print(skey)
+            print(coarse_pseudo_quad_mesh.data['attributes']['strips'])
         if 'value' in operation:
             d = rs.GetInteger('density value', number=3, minimum=1)
         elif 'length' in operation:
@@ -315,7 +318,7 @@ def editing_symmetry(coarse_pseudo_quad_mesh):
     while True:
 
         rs.EnableRedraw(False)
-        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.polygonal_mesh)
+        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.get_polygonal_mesh())
         guid = artist.draw_mesh()
         rs.EnableRedraw(True)
 
@@ -327,14 +330,14 @@ def editing_symmetry(coarse_pseudo_quad_mesh):
                 rs.DeleteObjects(guid)
             else:
                 rs.DeleteObject(guid)
-            return coarse_pseudo_quad_mesh.polygonal_mesh
+            return coarse_pseudo_quad_mesh.get_polygonal_mesh()
 
         elif operator == 'seed':
-            coarse_pseudo_quad_mesh.polygonal_mesh = coarse_pseudo_quad_mesh.quad_mesh.copy()
+            coarse_pseudo_quad_mesh.set_polygonal_mesh(coarse_pseudo_quad_mesh.get_quad_mesh().copy())
 
         elif operator in conway and conway[operator] in globals() and str(conway[operator])[: 6] == 'conway':
-            coarse_pseudo_quad_mesh.polygonal_mesh = globals()[conway[operator]](
-                coarse_pseudo_quad_mesh.polygonal_mesh)
+            coarse_pseudo_quad_mesh.set_polygonal_mesh(globals()[conway[operator]](
+                coarse_pseudo_quad_mesh.get_polygonal_mesh()))
 
         if type(guid) == list:
             rs.DeleteObjects(guid)
@@ -368,9 +371,9 @@ def editing_geometry_moving(coarse_pseudo_quad_mesh):
     if mesh_to_modify == 'coarse_pseudo_quad_mesh':
         mesh = coarse_pseudo_quad_mesh
     elif mesh_to_modify == 'pseudo_quad_mesh':
-        mesh = coarse_pseudo_quad_mesh.quad_mesh
+        mesh = coarse_pseudo_quad_mesh.get_quad_mesh()
     elif mesh_to_modify == 'polygonal_mesh':
-        mesh = coarse_pseudo_quad_mesh.polygonal_mesh
+        mesh = coarse_pseudo_quad_mesh.get_polygonal_mesh()
     else:
         return 0
 
@@ -402,10 +405,10 @@ def editing_geometry_moving(coarse_pseudo_quad_mesh):
     if mesh_to_modify == 'coarse_pseudo_quad_mesh':
         coarse_pseudo_quad_mesh = mesh
     elif mesh_to_modify == 'pseudo_quad_mesh':
-        coarse_pseudo_quad_mesh.quad_mesh = mesh
-        coarse_pseudo_quad_mesh.polygonal_mesh = mesh.copy()
+        coarse_pseudo_quad_mesh.set_quad_mesh(mesh)
+        coarse_pseudo_quad_mesh.set_polygonal_mesh(mesh.copy())
     elif mesh_to_modify == 'polygonal_mesh':
-        coarse_pseudo_quad_mesh.polygonal_mesh = mesh
+        coarse_pseudo_quad_mesh.set_polygonal_mesh(mesh)
 
 def editing_geometry_smoothing(coarse_pseudo_quad_mesh):
     """Edit the geometry of a pattern with smoothing.
@@ -422,9 +425,9 @@ def editing_geometry_smoothing(coarse_pseudo_quad_mesh):
     if mesh_to_smooth == 'coarse_pseudo_quad_mesh':
         mesh = coarse_pseudo_quad_mesh
     elif mesh_to_smooth == 'pseudo_quad_mesh':
-        mesh = coarse_pseudo_quad_mesh.quad_mesh
+        mesh = coarse_pseudo_quad_mesh.get_quad_mesh
     elif mesh_to_smooth == 'polygonal_mesh':
-        mesh = coarse_pseudo_quad_mesh.polygonal_mesh
+        mesh = coarse_pseudo_quad_mesh.get_polygonal_mesh()
     else:
         return 0
 
@@ -515,10 +518,10 @@ def editing_geometry_smoothing(coarse_pseudo_quad_mesh):
     if mesh_to_smooth == 'coarse_pseudo_quad_mesh':
         coarse_pseudo_quad_mesh = mesh
     elif mesh_to_smooth == 'pseudo_quad_mesh':
-        coarse_pseudo_quad_mesh.quad_mesh = mesh
-        coarse_pseudo_quad_mesh.polygonal_mesh = mesh.copy()
+        coarse_pseudo_quad_mesh.set_quad_mesh(mesh)
+        coarse_pseudo_quad_mesh.set_polygonal_mesh(mesh.copy())
     elif mesh_to_smooth == 'polygonal_mesh':
-        coarse_pseudo_quad_mesh.polygonal_mesh = mesh
+        coarse_pseudo_quad_mesh.set_polygonal_mesh(mesh)
 
 def save_design(coarse_pseudo_quad_mesh, layer):
     """Save one of the meshes based on the coarse quad mesh.
@@ -538,10 +541,10 @@ def save_design(coarse_pseudo_quad_mesh, layer):
         artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh)
         guid = artist.draw_mesh(coarse_pseudo_quad_mesh)
     elif mesh_to_save == 'pseudo_quad_mesh':
-        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.quad_mesh)
+        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.get_quad_mesh())
         guid = artist.draw_mesh()
     elif mesh_to_save == 'polygonal_mesh':
-        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.polygonal_mesh)
+        artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.get_polygonal_mesh())
         guid = artist.draw_mesh()
     
     if guid is not None:
