@@ -6,7 +6,7 @@ __all__ = [
 
 
 def sort_faces(mesh, u, v, w):
-	print(u, v, w)
+	#print(u, v, w)
 
 	faces = [[], []]
 	k = 0
@@ -94,8 +94,8 @@ def add_strip(mesh, polyedge):
 			if not is_closed:
 				new_faces.append(mesh.add_face([v1, w, v2]))
 			else:
-				new_faces.append(mesh.add_face([v1, w, v2]))
 				new_faces.append(mesh.add_face([v1, v2, u1]))
+				new_faces.append(mesh.add_face([v1, w, v2]))
 		elif len(polyedge) == 0:
 			if not is_closed:
 				u1, u2 = left_polyedge[-2], right_polyedge[-2]
@@ -103,13 +103,14 @@ def add_strip(mesh, polyedge):
 				mesh.delete_face(face)
 				new_faces.append(mesh.add_face([u1, v1, v2, u2]))
 			else:
-				u1, u2 = left_polyedge[0], right_polyedge[0]
+				u1, u2 = left_polyedge[-2], right_polyedge[-2]
 				face = new_faces.pop()
 				mesh.delete_face(face)
-				new_faces.append(mesh.add_face([u1, v1, v2, u2]))
+				new_faces.append(mesh.add_face([v1, u1, u2, v2]))
 				face = new_faces.pop(0)
 				mesh.delete_face(face)
-				new_faces.append(mesh.add_face([u1, v1, v2, u2]))
+				u1, u2 = left_polyedge[0], right_polyedge[0]
+				new_faces.append(mesh.add_face([v1, u1, u2, v2]))
 		else:
 			face = new_faces.pop()
 			mesh.delete_face(face)
@@ -118,14 +119,13 @@ def add_strip(mesh, polyedge):
 
 
 		# include pseudo closed polyedges
-		
 		# update polyedge
-
+	print(new_faces)
+	for fkey in new_faces:
+		print(fkey, mesh.face_vertices(fkey))
 	# strip data update
-
-	# geometry processing
-
 	# out put new_faces, left_polyedge, right_polyedge, map vertices
+
 
 # ==============================================================================
 # Main
@@ -157,12 +157,14 @@ if __name__ == '__main__':
 
 
 	add_strip(mesh, polyedge)
-	mesh_smooth_centroid(mesh, fixed=[vkey for vkey in mesh.vertices_on_boundary() if len(mesh.vertex_neighbors(vkey)) == 2], kmax=1)
 
-	plotter = MeshPlotter(mesh, figsize = (20, 20))
-	plotter.draw_vertices(radius = 0.1)
+	#mesh_smooth_centroid(mesh, fixed=[vkey for vkey in mesh.vertices_on_boundary() if len(mesh.vertex_neighbors(vkey)) == 2], kmax=1)
+	mesh_smooth_centroid(mesh, kmax=1)
+
+	plotter = MeshPlotter(mesh, figsize=(20, 20))
+	plotter.draw_vertices(radius=0.1, text='key')
 	plotter.draw_edges()
-	plotter.draw_faces()
+	plotter.draw_faces(text='key')
 	plotter.show()
 
 
