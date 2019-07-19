@@ -19,8 +19,8 @@ from compas_rhino.helpers import mesh_select_vertices
 from compas_pattern.utilities.lists import list_split
 
 __all__ = [
-	'automated_smoothing_constraints',
 	'automated_smoothing_surface_constraints',
+	'automated_smoothing_constraints',
 	'customized_smoothing_constraints',
 	'display_smoothing_constraints'
 ]
