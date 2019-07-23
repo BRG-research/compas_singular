@@ -10,8 +10,7 @@ __all__ = [
 	'mesh_graph',
 	'are_mesh_graphs_isomorphic',
 	'are_meshes_isomorphic',
-	'matches_between_ismorphic_meshes',
-	'remove_isomorphism_in_polyedge'
+	'matches_between_ismorphic_meshes'
 ]
 
 
@@ -74,51 +73,7 @@ def matches_between_ismorphic_meshes(mesh_i, mesh_j, boundary_edge_data=False):
 	mesh_graph_j = mesh_graph(mesh_j, boundary_edge_data=boundary_edge_data)
 	matcher = nx.isomorphism.GraphMatcher(mesh_graph_i, mesh_graph_j)
 	return matcher.match()
-
-# --------------------------------------------------------------------------
-# polyedge isomorphism
-# --------------------------------------------------------------------------
-
-
-def remove_isomorphism_in_polyedge(polyedge):
-	# remove isomorphisms in polyedges (open or closed)
-
-	# if closed: min value first, and its minimum neighbour value second
-	if polyedge[0] == polyedge[-1]:
-		polyedge = polyedge[:-1]
-		candidates = []
-
-		start = min(polyedge)
-		for i, key in enumerate(polyedge):
-			# collect all candidates, there may be multiple minimum values and multiple minimum neighbours
-			if key == start:        
-				candidate = polyedge[i:] + polyedge[:i] + [polyedge[i]]
-				candidates.append(candidate)
-				candidates.append(list(reversed(candidate)))
-		for k in range(1, len(polyedge) + 1):
-			n = len(candidates)
-			if n == 1:
-				break
-			# get minimum-sum sub-polyedge
-			min_x = None
-			for candidate in candidates:
-				x = sum(candidate[:k])
-				if min_x is None or x < min_x:
-					min_x = x
-			# compare to minimum-sum sub-polyedge
-			for i, candidate in enumerate(reversed(candidates)):
-				if sum(candidate[:k]) > min_x:
-					del candidates[n - i - 1]
-		# potentially multiple canidates left due to symmetry in polyedge, but no isomorphism left
-		polyedge = candidates[0]
-
-	# if open: minimum value extremmity at the start
-	else:
-		if polyedge[0] > polyedge[-1]:
-			polyedge = list(reversed(polyedge))
-
-	return polyedge
-
+	
 
 # ==============================================================================
 # Main
