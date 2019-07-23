@@ -1,127 +1,69 @@
-import itertools
+import itertools as it
+import random as rd
 
-from compas.utilities import pairwise
+from compas_pattern.utilities.lists import remove_isomorphism_in_integer_list
+from compas_pattern.datastructures.mesh_quad.grammar.add_strip import is_polyedge_valid_for_strip_addition
 
 __all__ = [
-	'enumerate_deletion_rules',
-	'enumerate_addition_rules',
-	'open_boundary_polyedges_no_duplicates_length_k',
-	'open_boundary_polyedges_no_duplicates',
-	'closed_boundary_polyedges_no_duplicates_length_k',
-	'closed_polyedges_no_duplicates'
 ]
 
 
-def enumerate_deletion_rules(self):
+def exhaustive_enumeration_k(turtle, tail=None, path_length=5):
+
+	for path in it.product((0, 1), repeat=path_length):
+		turtle.reset()
+		turtle.start(tail=tail)
+		turtle.toggle()
+		turtle.interpret_path(path)
+		yield turtle.polyedge
+
+
+def random_polyedge(turtle, max_path_length=10):
+
+	turtle.reset()
+	# random start
+	vertices = list(turtle.mesh.vertices())
+	tail = vertices[rd.randint(0, len(vertices) - 1)]
+	turtle.start(tail=tail)
+	# random length
+	n = rd.randint(1, max_path_length)
+	# random path
+	path = [rd.randint(0, 1) for i in range(n)]
+	turtle.toggle()
+	turtle.interpret_path(path)
+	return turtle.polyedge
+
+
+def collect_polyedges(turtle, total=100, part_random=.2, max_path_length=10):
+
+	polyedges = set()
+	tail = next(turtle.mesh.vertices())
+	k = 1
+	enumerate_polyedges = exhaustive_enumeration_k(turtle, tail=tail, path_length=k)
 	
-	self.collect_strips()
-	return [[skey] for skey in self.strips()]
+	count = total * 10
+	while len(polyedges) < total * (1 - part_random) and count:
+		count -= 1
+		try:
+			polyedge = next(enumerate_polyedges)
+		except:
+			k += 1
+			enumerate_polyedges = exhaustive_enumeration_k(turtle, tail=tail, path_length=k)
+			polyedge = next(enumerate_polyedges)
+		polyedge = tuple(remove_isomorphism_in_integer_list(polyedge))
+		if polyedge not in polyedges and is_polyedge_valid_for_strip_addition(turtle.mesh, polyedge):
+			polyedges.add(polyedge)
 
+	random_polyedges = set()
+	count = total * 10
+	while len(random_polyedges) < total * part_random and count:
+		count -= 1
+		polyedge = random_polyedge(turtle, max_path_length=max_path_length)
+		polyedge = tuple(remove_isomorphism_in_integer_list(polyedge))
+		if polyedge not in polyedges and polyedge not in random_polyedges and is_polyedge_valid_for_strip_addition(turtle.mesh, polyedge):
+			random_polyedges.add(polyedge)
 
-def enumerate_addition_rules(coarse_quad_mesh, ks):
-
-	return open_boundary_polyedges_no_duplicates(coarse_quad_mesh, ks)
-	#return closed_boundary_polyedges_no_duplicates(coarse_quad_mesh, ks)
-
-def open_boundary_polyedges_no_duplicates_length_k(mesh, k):
-	"""All open polyedges with length k from a boundary vertex to another one, without duplicate vertices.
-
-	Parameters
-	----------
-	mesh : Mesh
-		A mesh.
-	k : int
-		The length of the polyedge as the number of edges.
-
-	Returns
-	-------
-	polyedges : list
-		List of polyedges as tuples of vertices
-
-	"""
-
-	polyedges = []
-
-	for permutation in itertools.permutations(mesh.vertices(), k):
-		if mesh.is_vertex_on_boundary(permutation[0]) and mesh.is_vertex_on_boundary(permutation[-1]):
-			if all([v in mesh.halfedge[u] for u, v in pairwise(permutation)]):
-				# avoid reversed polyedges
-				if permutation[::-1] not in polyedges:
-					polyedges.append(permutation)
-
-	return polyedges
-
-
-def open_boundary_polyedges_no_duplicates(mesh, ks):
-	"""All open polyedges with different lengths k from a boundary vertex to another one, without duplicate vertices.
-
-	Parameters
-	----------
-	mesh : Mesh
-		A mesh.
-	ks: list
-		The lengths of the polyedge as the number of edges.
-
-	Returns
-	-------
-	polyedges : list
-		List of polyedges as tuples of vertices, sorted by length.
-
-	"""
-
-	return [polyedge for k in sorted(ks) for polyedge in open_boundary_polyedges_no_duplicates_length_k(mesh, k)]
-
-
-def closed_boundary_polyedges_no_duplicates_length_k(mesh, k):
-	"""All closed polyedges with length k from a boundary vertex to another one, without duplicate vertices.
-
-	Parameters
-	----------
-	mesh : Mesh
-		A mesh.
-	k : int
-		The length of the polyedge as the number of edges.
-
-	Returns
-	-------
-	polyedges : list
-		List of polyedges as tuples of vertices
-
-	"""
-
-	polyedges = []
-
-	for permutation in itertools.permutations(mesh.vertices(), k):
-		if all([v in mesh.halfedge[u] for u, v in pairwise(permutation + permutation[: 1])]):
-			# avoid redundant polyedges
-			for i in range(k):
-				offset_permutation = permutation[i :] + permutation[: i]
-				if offset_permutation in polyedges or offset_permutation[::-1] in polyedges:
-					break
-				if i == k -1:
-					polyedges.append(permutation)
-
-	return [list(polyedge + polyedge[: 1]) for polyedge in polyedges]
-
-
-def closed_boundary_polyedges_no_duplicates(mesh, ks):
-	"""All closed polyedges with different lengths k from a boundary vertex to another one, without duplicate vertices.
-
-	Parameters
-	----------
-	mesh : Mesh
-		A mesh.
-	ks: list
-		The lengths of the polyedge as the number of edges.
-
-	Returns
-	-------
-	polyedges : list
-		List of polyedges as tuples of vertices, sorted by length.
-
-	"""
-
-	return [polyedge for k in sorted(ks) for polyedge in closed_boundary_polyedges_no_duplicates_length_k(mesh, k)]
+	return polyedges, random_polyedges
 
 
 # ==============================================================================
@@ -130,5 +72,16 @@ def closed_boundary_polyedges_no_duplicates(mesh, ks):
 
 if __name__ == '__main__':
 
+	import time
 	import compas
-	
+	from compas_pattern.algorithms.exploration.turtle import Turtle
+	from compas_pattern.datastructures.mesh_quad.mesh_quad import QuadMesh
+	import itertools as it
+
+	mesh = QuadMesh.from_obj(compas.get('faces.obj'))
+	turtle = Turtle(mesh)
+
+	polyedges = collect_polyedges(turtle, total=20, part_random=.2, max_path_length=10)
+	print(polyedges)
+
+
