@@ -157,7 +157,7 @@ def add_strip(mesh, polyedge, close=True):
 def adjacency_from_to_via_vertices(mesh, from_vkey, to_vkey, via_vkeys):
 	# get mesh adjacency constraiend to from_vkey and via_keys, via_keys and via_keys, and via_vkeys and to_vkey
 
-	all_vkeys = set([from_vkey, to_vkey, *via_vkeys])
+	#all_vkeys = set([from_vkey, to_vkey, *via_vkeys])
 	adjacency = {}
 	for vkey, nbrs in mesh.adjacency.items():
 		if vkey not in all_vkeys:
@@ -178,6 +178,13 @@ def polyedge_from_to_via_vertices(mesh, from_vkey, to_vkey, via_vkeys):
 
 	adjacency = adjacency_from_to_via_vertices(mesh, from_vkey, to_vkey, via_vkeys)
 	return next(breadth_first_paths(adjacency, from_vkey, to_vkey))
+
+
+def is_polyedge_valid_for_strip_addition(mesh, polyedge):
+	if len(polyedge) > 2:
+		if polyedge[0] == polyedge[-1] or (mesh.is_vertex_on_boundary(polyedge[0]) and mesh.is_vertex_on_boundary(polyedge[-1])):
+			return True
+	return False
 
 # ==============================================================================
 # Main
