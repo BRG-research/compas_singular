@@ -1,7 +1,8 @@
 __all__ = [
     'list_split',
     'are_items_in_list',
-    'sublist_from_to_items_in_closed_list'
+    'sublist_from_to_items_in_closed_list',
+    'remove_isomorphism_in_integer_list'
 ]
 
 
@@ -124,6 +125,50 @@ def common_items(l1, l2):
     """
 
     return [item for item in l1 if item in l2]
+
+
+def remove_isomorphism_in_integer_list(l):
+    # remove isomorphisms in list (open or closed)
+    # interpreted as a polyedge
+
+    if len(l) < 2:
+        return l
+        
+    # if closed: min value first, and its minimum neighbour value second
+    if l[0] == l[-1]:
+        l = l[:-1]
+        candidates = []
+
+        start = min(l)
+        for i, key in enumerate(l):
+            # collect all candidates, there may be multiple minimum values and multiple minimum neighbours
+            if key == start:        
+                candidate = l[i:] + l[:i] + [l[i]]
+                candidates.append(candidate)
+                candidates.append(list(reversed(candidate)))
+        for k in range(1, len(l) + 1):
+            n = len(candidates)
+            if n == 1:
+                break
+            # get minimum-sum sub-list
+            min_x = None
+            for candidate in candidates:
+                x = sum(candidate[:k])
+                if min_x is None or x < min_x:
+                    min_x = x
+            # compare to minimum-sum sub-list
+            for i, candidate in enumerate(reversed(candidates)):
+                if sum(candidate[:k]) > min_x:
+                    del candidates[n - i - 1]
+        # potentially multiple canidates left due to symmetry in list, but no isomorphism left
+        l = candidates[0]
+
+    # if open: minimum value extremmity at the start
+    else:
+        if l[0] > l[-1]:
+            l = list(reversed(l))
+
+    return l
 
 
 # ==============================================================================
