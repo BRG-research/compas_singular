@@ -1,5 +1,6 @@
 from compas.datastructures.mesh import Mesh
 
+from compas.geometry import centroid_points
 from compas.geometry import angle_points
 
 from compas.utilities import geometric_key
