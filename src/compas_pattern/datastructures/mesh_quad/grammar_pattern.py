@@ -32,7 +32,7 @@ __license__ = 'MIT License'
 __email__ = 'oval@arch.ethz.ch'
 
 __all__ = [
-    'edit_strips',
+    'add_and_delete_strips',
     'add_strip',
     'add_strips',
     'delete_strip',
@@ -125,7 +125,7 @@ def add_strip_wip(mesh, polyedge):
     return 0
 
 
-def edit_strips(mesh, strips_to_add=[], strips_to_delete=[], preserve_boundaries=False):
+def add_and_delete_strips(mesh, strips_to_add=[], strips_to_delete=[], preserve_boundaries=False):
     """Add and delete strips.
 
     Parameters
