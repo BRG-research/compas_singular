@@ -258,11 +258,9 @@ class PseudoQuadMesh(QuadMesh):
 
         faces = []
         edges = self.strip_edges(skey)
-        for i, edge in enumerate(edges):
-            u, v = edge
+        for i, (u, v) in enumerate(edges):
             if i == 0 and u == v:
                 x, w = edges[1]
-
                 faces.append(self.halfedge[w][x])
             elif i == len(edges) - 1 and u == v:
                 pass
@@ -292,6 +290,21 @@ class PseudoQuadMesh(QuadMesh):
             return [self.edge_strip((pole, u)), self.edge_strip((u, v))]
         else:
             return [self.edge_strip((u, v)) for u, v in list(self.face_halfedges(fkey))[:2]]
+
+    def delete_face_in_strips(self, fkey):
+        """Delete face in strips.
+
+        Parameters
+        ----------
+        old_vkey : hashable
+            The old vertex key.
+        new_vkey : hashable
+            The new vertex key.
+
+        """
+
+        self.data['attributes']['strips'] = {skey: [(u, v) for u, v in self.strip_edges(skey) if u == v or (self.halfedge[u][v] != fkey and self.halfedge[v][u] != fkey)] for skey in self.strips()}
+
 
 #     def add_face(self, vertices, fkey=None, attr_dict=None, **kwattr):
 #         """Add a face to the mesh object. Allow [a, b, c, c] faces.
@@ -368,42 +381,42 @@ class PseudoQuadMesh(QuadMesh):
 
 #         return fkey
 
-#     def delete_face(self, fkey):
-#         """Delete a face from the mesh object. Valid for [a, b, c, c] faces.
+    # def delete_face(self, fkey):
+    #     """Delete a face from the mesh object. Valid for [a, b, c, c] faces.
 
-#         Parameters
-#         ----------
-#         fkey : hashable
-#             The identifier of the face.
+    #     Parameters
+    #     ----------
+    #     fkey : hashable
+    #         The identifier of the face.
 
-#         Examples
-#         --------
-#         .. plot::
-#             :include-source:
+    #     Examples
+    #     --------
+    #     .. plot::
+    #         :include-source:
 
-#             import compas
-#             from compas.datastructures import Mesh
-#             from compas.plotters import MeshPlotter
+    #         import compas
+    #         from compas.datastructures import Mesh
+    #         from compas.plotters import MeshPlotter
 
-#             mesh = Mesh.from_obj(compas.get('faces.obj'))
+    #         mesh = Mesh.from_obj(compas.get('faces.obj'))
 
-#             mesh.delete_face(12)
+    #         mesh.delete_face(12)
 
-#             plotter = MeshPlotter(mesh)
-#             plotter.draw_vertices()
-#             plotter.draw_faces()
-#             plotter.show()
+    #         plotter = MeshPlotter(mesh)
+    #         plotter.draw_vertices()
+    #         plotter.draw_faces()
+    #         plotter.show()
 
-#         """
+    #     """
 
-#         for u, v in self.face_halfedges(fkey):
-#             if u != v:
-#                 self.halfedge[u][v] = None
-#                 if self.halfedge[v][u] is None:
-#                     del self.halfedge[u][v]
-#                     del self.halfedge[v][u]
+    #     for u, v in self.face_halfedges(fkey):
+    #         if u != v:
+    #             self.halfedge[u][v] = None
+    #             if u in self.halfedge[v] and self.halfedge[v][u] is None:
+    #                 del self.halfedge[u][v]
+    #                 del self.halfedge[v][u]
 
-#         del self.face[fkey]
+    #     del self.face[fkey]
 
 #     def edges(self, data=False):
 #         """Iterate over the edges of the mesh.
