@@ -58,7 +58,7 @@ def surface_discrete_mapping(srf_guid, discretisation, minimum_discretisation = 
 
 		for border in srf.borders(type = i):
 			border = RhinoCurve(border)
-			points = [srf.point_xyz_to_uv(pt) for pt in border.divide(max(int(border.length() / discretisation) + 1, minimum_discretisation))]
+			points = [list(srf.point_xyz_to_uv(pt)) + [0.0] for pt in border.divide(max(int(border.length() / discretisation) + 1, minimum_discretisation))]
 			
 			if border.is_closed():
 				points.append(points[0])
@@ -75,7 +75,7 @@ def surface_discrete_mapping(srf_guid, discretisation, minimum_discretisation = 
 	for crv_guid in crv_guids:
 
 		curve = RhinoCurve(crv_guid)
-		points = [srf.point_xyz_to_uv(pt) for pt in curve.divide(max(int(curve.length() / discretisation) + 1, minimum_discretisation))]
+		points = [list(srf.point_xyz_to_uv(pt)) + [0.0] for pt in curve.divide(max(int(curve.length() / discretisation) + 1, minimum_discretisation))]
 		
 		if curve.is_closed():
 			points.append(points[0])
@@ -85,7 +85,7 @@ def surface_discrete_mapping(srf_guid, discretisation, minimum_discretisation = 
 	polyline_features = network_polylines(Network.from_lines([(u, v) for curve in mapped_curves for u, v in pairwise(curve)]))
 
 	# mapping of the point features onthe surface
-	point_features = [srf.point_xyz_to_uv(rs.PointCoordinates(pt_guid)) for pt_guid in pt_guids]
+	point_features = [list(srf.point_xyz_to_uv(rs.PointCoordinates(pt_guid))) + [0.0] for pt_guid in pt_guids]
 
 	return outer_boundaries[0], inner_boundaries, polyline_features, point_features
 
