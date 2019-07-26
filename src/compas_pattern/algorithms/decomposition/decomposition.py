@@ -385,7 +385,6 @@ class Decomposition(Skeleton):
 					xyz0 = mesh.vertex_coordinates(vkey)
 					to_move[vkey] = [0.1 * (a - a0) for a, a0 in zip(xyz, xyz0)]
 
-		print(to_move)
 		for vkey, xyz in to_move.items():
 			attr = mesh.vertex[vkey]
 			attr['x'] += xyz[0]
@@ -440,16 +439,14 @@ class Decomposition(Skeleton):
 		face_poles = {}
 		for fkey in mesh.faces():
 			if len(mesh.face_vertices(fkey)) == 3:
-				print(fkey, 'look for pole')
 				for vkey in mesh.face_vertices(fkey):
-					print(vkey, geometric_key(mesh.vertex_coordinates(vkey)))
 					if geometric_key(mesh.vertex_coordinates(vkey)) in pole_map:
 						face_poles[fkey] = vkey
 						break
 				if fkey not in face_poles:
 					print('pole missing')
 
-		mesh.face_pole = face_poles
+		mesh.data['attributes']['face_pole'] = face_poles
 
 # ==============================================================================
 # Main
