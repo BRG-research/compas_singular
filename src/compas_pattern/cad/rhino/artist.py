@@ -108,15 +108,15 @@ def select_quad_mesh_polyedge(mesh):
 	return mesh.polyedge(*edge)
 
 
-def select_quad_mesh_strip(mesh, show_density = False):
+def select_quad_mesh_strip(mesh, text='key'):
 	"""Select quad mesh strip.
 
 	Parameters
 	----------
 	mesh : QuadMesh, CoarseQuadMesh
 		The quad mesh or coarse quad mesh.
-	show_density : bool
-		Optional argument to show strip density parameter if CoarseQuadMesh. False by default.
+	text : str
+		Optional argument to show the strip key or density. The key by default.
 
 	Returns
 	-------
@@ -137,9 +137,12 @@ def select_quad_mesh_strip(mesh, show_density = False):
 		rs.ObjectColor(guid, strip_to_color[skey])
 		rs.CurveArrows(guid, arrow_style = 3)
 
-	# show strip density parameters
-	if show_density:
-		guids_to_dot = {guid: rs.AddTextDot(mesh.get_strip_density(skey), Polyline(mesh.strip_edge_midpoint_polyline(skey)).point(t = .5)) for guid, skey in guids_to_strip.items()}
+	# show strip key or density
+	if text == 'key' or text == 'density':
+		if text == 'key':
+			guids_to_dot = {guid: rs.AddTextDot(skey, Polyline(mesh.strip_edge_midpoint_polyline(skey)).point(t = .5)) for guid, skey in guids_to_strip.items()}
+		elif text == 'density':
+			guids_to_dot = {guid: rs.AddTextDot(mesh.get_strip_density(skey), Polyline(mesh.strip_edge_midpoint_polyline(skey)).point(t = .5)) for guid, skey in guids_to_strip.items()}
 		for guid, dot in guids_to_dot.items():
 			rs.ObjectColor(dot, rs.ObjectColor(guid))
 
@@ -150,21 +153,21 @@ def select_quad_mesh_strip(mesh, show_density = False):
 
 	# delete objects
 	rs.DeleteObjects(guids_to_strip.keys())
-	if show_density:
+	if text == 'key' or text == 'density':
 		rs.DeleteObjects(guids_to_dot.values())
 	
 	return skey
 
 
-def select_quad_mesh_strips(mesh, show_density = False):
+def select_quad_mesh_strips(mesh, text='key'):
 	"""Select quad mesh strips.
 
 	Parameters
 	----------
 	mesh : QuadMesh, CoarseQuadMesh
 		The quad mesh or coarse quad mesh.
-	show_density : bool
-		Optional argument to show strip density parameter if CoarseQuadMesh. False by default.
+	text : str
+		Optional argument to show the strip key or density. The key by default.
 
 	Returns
 	-------
@@ -177,7 +180,7 @@ def select_quad_mesh_strips(mesh, show_density = False):
 
 	while True:
 		
-		skey = select_quad_mesh_strip(mesh, show_density = show_density)
+		skey = select_quad_mesh_strip(mesh, text=text)
 
 		if skey is None:
 			return skeys
