@@ -249,7 +249,7 @@ class Decomposition(Skeleton):
 				fkey = list(self.vertex_faces(vkey))[0]
 				for edge in self.face_halfedges(fkey):
 					if vkey in edge and not self.is_edge_on_boundary(*edge):
-						new_branches += [[self.face_circle(fkey)[0], self.vertex_coordinates(vkey_2)] for vkey_2 in edge]
+						new_branches += [[trimesh_face_circle(self, fkey)[0], self.vertex_coordinates(vkey_2)] for vkey_2 in edge]
 						all_splits.update(edge)
 						break
 
