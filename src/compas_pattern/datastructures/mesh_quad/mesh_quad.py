@@ -256,10 +256,13 @@ class QuadMesh(Mesh):
 			The polyedges forming the decomposition.
 
 		"""
+		if self.data['attributes']['polyedges'] == {}:
+			self.collect_polyedges()
+
 		polyedges = [polyedge for key, polyedge in self.polyedges(data=True) if (self.is_vertex_singular(polyedge[0]) or self.is_vertex_singular(polyedge[-1])) and not self.is_edge_on_boundary(polyedge[0], polyedge[1])]									
 
 		# split boundaries
-		all_splits = self.singularities()
+		all_splits = [vkey for polyedge in polyedges for vkey in polyedge]
 		for boundary in self.boundaries():
 			splits = [vkey for vkey in boundary if vkey in all_splits]
 			new_splits = []
@@ -271,8 +274,8 @@ class QuadMesh(Mesh):
 				i = boundary.index(splits[0])
 				new_splits += list(itemgetter(i - int(floor(len(boundary) * 2 / 3)), i - int(floor(len(boundary) / 3)))(boundary))
 			
-			elif len(splits) == 2:
-				one, two = list_split(boundary, [boundary.index(vkey) for vkey in splits])
+			elif len(splits) == 2:			
+				one, two = list_split(boundary + boundary[:1], [boundary.index(vkey) for vkey in splits])
 				half = one if len(one) > len(two) else two
 				new_splits.append(half[int(floor(len(half) / 2))])	
 
@@ -565,7 +568,7 @@ class QuadMesh(Mesh):
 			A tuple of two objects, the dictionary of mesh strip keys pointing to graph vertex coordinates, and the list of edges between graph vertices.
 		"""
 
-		vertices = {skey: centroid_points(self.strip_edge_midpoint_polyline(skey)) for skey in self.strips()}
+		vertices = {skey: centroid_points(self.strip_edge_midpoint_polyline(skey) if not self.is_strip_closed(skey) else self.strip_edge_midpoint_polyline(skey)[:-1]) for skey in self.strips()}
 		edges = [tuple(self.face_strips(fkey)) for fkey in self.faces()]
 		return vertices, edges
 
@@ -671,19 +674,25 @@ class QuadMesh(Mesh):
 if __name__ == '__main__':
 
 	import compas
+	from compas_plotters.meshplotter import MeshPlotter
 
-	mesh = QuadMesh.from_obj(compas.get('faces.obj'))
-
-	#mesh.delete_face(13)
+	#mesh = QuadMesh.from_obj(compas.get('faces.obj'))
+	mesh = QuadMesh.from_json('/Users/Robin/Desktop/json/debug.json')
 
 	mesh.collect_strips()
-	#mesh.collect_polyedges()
+	mesh.collect_polyedges()
 
-	print(list(mesh.strips()))
+	#print(mesh.singularities())
+	#print(len(list(mesh.strips())))
+	#print(len(list(mesh.polyedges())))
 
-	#print(mesh.polyedges())
-
-	#print(mesh.singularity_polyedge_decomposition())
+	print(len(mesh.singularity_polyedge_decomposition()))
 
 	#print(mesh.strip_graph())
 	#print(mesh.polyedge_graph())
+
+	plotter = MeshPlotter(mesh, figsize=(20, 20))
+	plotter.draw_vertices(radius=0.4, text='key')
+	plotter.draw_edges()
+	plotter.draw_faces()
+	# plotter.show()
