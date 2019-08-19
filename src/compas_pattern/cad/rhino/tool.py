@@ -14,10 +14,10 @@ from compas_rhino.geometry import RhinoPoint
 
 from compas_pattern.algorithms.decomposition.algorithm import surface_decomposition
 
-from compas_pattern.datastructures.mesh_quad.grammar_pattern import add_strip
-from compas_pattern.datastructures.mesh_quad.grammar_pattern import delete_strips
-from compas_pattern.datastructures.mesh_quad.grammar_pattern import split_strip
-from compas_pattern.datastructures.mesh_quad.grammar_pattern import boundary_strip_preserve
+from compas_pattern.datastructures.mesh_quad.grammar.add_strip import add_strip
+from compas_pattern.datastructures.mesh_quad.grammar.delete_strip import delete_strips
+#from compas_pattern.datastructures.mesh_quad.add_strip import split_strip
+#from compas_pattern.datastructures.mesh_quad.delete_strip import boundary_strip_preserve
 
 from compas.topology import *
 
@@ -204,7 +204,7 @@ def editing_topology(coarse_pseudo_quad_mesh):
         elif operation == 'delete':
             skeys = set(select_quad_mesh_strips(coarse_pseudo_quad_mesh))
             skey_to_skeys = delete_strips(
-                coarse_pseudo_quad_mesh, skeys, preserve_boundaries=True)
+                coarse_pseudo_quad_mesh, skeys)
             if skey_to_skeys is not None:
                 for skey_0, skeys in skey_to_skeys.items():
                     d = int(
@@ -252,7 +252,7 @@ def editing_density(coarse_pseudo_quad_mesh):
 
         # get operation parameters
         if 'strip' in operation:
-            skey = select_quad_mesh_strip(coarse_pseudo_quad_mesh, show_density=True)
+            skey = select_quad_mesh_strip(coarse_pseudo_quad_mesh, text='density')
             print(skey)
             print(coarse_pseudo_quad_mesh.data['attributes']['strips'])
         if 'value' in operation:
