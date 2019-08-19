@@ -1,55 +1,66 @@
-from math import pi
-from math import sin
-
 from compas_pattern.datastructures.mesh_quad.coloring import quad_mesh_polyedge_2_coloring
-from compas.geometry import scale_vector
 from compas_pattern.datastructures.mesh.operations import mesh_move_vertices_by
 
+from compas.utilities import pairwise
+
+
 __all__ = [
-    'fold_quad_mesh',
-    'corrugate_quad_mesh'
+    'fold_quad_mesh'
 ]
 
 
-def quad_mesh_polyedge_direction(quad_mesh, direction):
-    polyedges = quad_mesh.polyedges()
-    idx_to_color = quad_mesh_polyedge_2_coloring(quad_mesh)
-    return [polyedges[idx] for idx, color in idx_to_color.items() if color == direction]
+def fold_vertex_group(quad_mesh, polyedges):
+    # is it always possible? a type of vertex 2-coloring?
 
-
-def quad_mesh_polyedge_align(quad_mesh, polyedges_0, polyedges_1):
-    # make a stack
-    # start with one, get an othrogonal polyedge and align the other
-    # cluster per strip before?
-    #vertex_to_polyedges = {vkey: [] for vkey in quad_mesh.vertices()}
-    #for polyedge in polyedges_0 + polyegdges_1:
-
-
-    pass
-
-
-def fold_quad_mesh(quad_mesh, polyedges, amplitude):
-    moves = {}
+    is_edge_in_polyedges = {edge: False for edge in quad_mesh.edges()}
     for polyedge in polyedges:
-        for i, vkey in enumerate(polyedge):
-            normal = quad_mesh.vertex_normal(vkey)
-            eps = (i % 2) * 2 - 1
-            factor = eps * amplitude / 2
-            moves[vkey] = scale_vector(normal, factor)
-    mesh_move_vertices_by(quad_mesh, moves)
-    return moves
+        for u, v in pairwise(polyedge):
+            edge = (u, v) if (u, v) in is_edge_in_polyedges else (v, u)
+            is_edge_in_polyedges[edge] = True
+        
+    n = quad_mesh.number_of_vertices() * 2
+    vkey0 = quad_mesh.get_any_vertex()
+    vkey_to_group = {vkey0: 0}
+    to_visit = quad_mesh.vertex_neighbors(vkey0)
+    
+    while len(to_visit) > 0 and n:
+        n -= 1
+        vkey = to_visit.pop()
+
+        for nbr in quad_mesh.vertex_neighbors(vkey):
+            if (vkey, nbr) in is_edge_in_polyedges:
+                in_polyedge = is_edge_in_polyedges[(vkey, nbr)]
+            elif (nbr, vkey) in is_edge_in_polyedges:
+                in_polyedge = is_edge_in_polyedges[(nbr, vkey)]
+            
+            if nbr in vkey_to_group:
+                vkey_to_group[vkey] = vkey_to_group[nbr] if not in_polyedge else 1 - vkey_to_group[nbr]
+        
+        for nbr in quad_mesh.vertex_neighbors(vkey):
+
+            if (vkey, nbr) in is_edge_in_polyedges:
+                in_polyedge = is_edge_in_polyedges[(vkey, nbr)]
+            elif (nbr, vkey) in is_edge_in_polyedges:
+                in_polyedge = is_edge_in_polyedges[(nbr, vkey)]
+            
+            if nbr in vkey_to_group:
+                if (vkey_to_group[vkey] == vkey_to_group[nbr]) == in_polyedge:
+                    print('!')
+        
+        to_visit += [nbr for nbr in quad_mesh.vertex_neighbors(vkey) if nbr not in vkey_to_group]
+
+    return vkey_to_group
 
 
-def corrugate_quad_mesh(quad_mesh, polyedges, amplitudes, numbers):
-    # amplitudes : list of amplitude of corrugations for each polyedge
-    # numbers : list of number of corrugations for each polyedge
+def fold(quad_mesh, vkey_to_group, func0, func1):
+
     moves = {}
-    for polyedge in polyedges:
-        n = len(polyedge)
-        for i, vkey in enumerate(polyedge):
-            normal = quad_mesh.vertex_normal(vkey)
-            factor = amplitudes[i] / 2. * sin(2 * pi * numbers[i] * float(i) / float(n - 1))
-            moves[vkey] = scale_vector(normal, factor)
+    for vkey, group in vkey_to_group.items():
+        if group == 0:
+            vector = func0(quad_mesh, vkey)
+        elif group == 1:
+            vector = func1(quad_mesh, vkey)
+        moves[vkey] = vector
     mesh_move_vertices_by(quad_mesh, moves)
     return moves
 
@@ -61,3 +72,34 @@ def corrugate_quad_mesh(quad_mesh, polyedges, amplitudes, numbers):
 if __name__ == '__main__':
 
     import compas
+    from compas_pattern.datastructures.mesh_quad.mesh_quad import QuadMesh
+    from compas_pattern.datastructures.mesh_quad_coarse.coloring import dense_quad_mesh_polyedge_2_coloring
+    from compas.geometry import scale_vector
+    from compas_plotters.meshplotter import MeshPlotter
+
+    def func0(mesh, vkey):
+        normal = mesh.vertex_normal(vkey)
+        return scale_vector(normal, 1)
+
+    def func1(mesh, vkey):
+        normal = mesh.vertex_normal(vkey)
+        return scale_vector(normal, -1)
+
+    mesh = QuadMesh.from_json('/Users/Robin/Desktop/json/debug.json')
+    mesh.collect_strips()
+    mesh.collect_polyedges()
+
+    polyedge_key_to_colour = dense_quad_mesh_polyedge_2_coloring(mesh)
+    polyedges_0 = [mesh.data['attributes']['polyedges'][key] for key, colour in polyedge_key_to_colour.items() if colour == 0]
+    polyedges_1 = [mesh.data['attributes']['polyedges'][key] for key, colour in polyedge_key_to_colour.items() if colour == 1]
+
+    vkey_to_group = fold_vertex_group(mesh, polyedges_1)
+    #fold(mesh, vkey_to_group, func0, func1)
+
+    plotter = MeshPlotter(mesh, figsize=(20, 20))
+    plotter.draw_vertices(radius=0.4, text=vkey_to_group)
+    plotter.draw_edges()
+    plotter.draw_faces()
+    plotter.show()
+
+
