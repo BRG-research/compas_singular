@@ -32,7 +32,7 @@ def is_adjacency_two_colorable(adjacency):
 	while count > 0 and sources:
 		count -= 1
 		key = sources.pop()
-		nbr_colors = tuple([key_to_color[nbr] for nbr in adjacency[key]])
+		nbr_colors = set([key_to_color[nbr] for nbr in adjacency[key]])
 
 		# if two colors already exist in the neighbors, the network is not two-colourable
 		if 0 in nbr_colors and 1 in nbr_colors:
@@ -55,20 +55,36 @@ def is_adjacency_two_colorable(adjacency):
 
 if __name__ == '__main__':
 
+	import time
 	import compas
+	from compas_pattern.datastructures.mesh.mesh import Mesh
 	from compas.topology import adjacency_from_edges
 
-	edges = [
-		(0, 1),
-		(1, 2),
-		(2, 3),
-		(3, 4),
-		(4, 5),
-		(5, 0),
-		(0, 3),
-		(2, 5)
-	]
+	# edges = [
+	# 	(0, 1),
+	# 	(1, 2),
+	# 	(2, 3),
+	# 	(3, 4),
+	# 	(4, 5),
+	# 	(5, 0),
+	# 	(0, 3),
+	# 	(2, 5)
+	# ]
 
-	adjacency = adjacency_from_edges(edges)
-	print(adjacency)
-	print(is_adjacency_two_colorable(adjacency))
+	# adjacency = adjacency_from_edges(edges)
+	# print(adjacency)
+	
+	# t0 = time.time()
+	# print(is_adjacency_two_colorable(adjacency))
+	# t1 = time.time()
+	# print(t1 - t0)
+
+	mesh = Mesh.from_obj(compas.get('faces.obj'))
+
+	t0 = time.time()
+	print(is_adjacency_two_colorable(mesh.adjacency))
+	t1 = time.time()
+	print(t1 - t0)
+
+
+
