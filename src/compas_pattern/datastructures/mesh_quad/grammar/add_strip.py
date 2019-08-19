@@ -1,5 +1,5 @@
 from compas.topology import breadth_first_paths
-from compas_pattern.datastructures.mesh.operations import mesh_substitute_vertex_in_faces
+from compas.datastructures import mesh_substitute_vertex_in_faces
 from compas_pattern.datastructures.mesh_quad.grammar_pattern import strip_polyedge_update
 
 __all__ = [
@@ -7,31 +7,19 @@ __all__ = [
 ]
 
 
-def sort_faces(mesh, u, v, w):
-	#print(u, v, w)
 
-	faces = [[], []]
-	k = 0
-	vertex_faces = mesh.vertex_faces(v, ordered=True, include_none=True)
-	f0 = mesh.halfedge[w][v] if w is not None else None
-	i0 = vertex_faces.index(f0)
-	vertex_faces = vertex_faces[i0:] + vertex_faces[:i0]
+def add_strips(mesh, polyedges, callback=None, callback_args=None):
 
-	for face in vertex_faces:
-		
-		if face is not None:
-			faces[k].append(face)
+	to_add = polyedges.copy()
+	while len(to_add) > 0:
+		polyedge = to_add.pop()
+		add_strip(mesh, polyedge)
+		# update polyedges
+		if callback:
+			if callable(callback):
+				callback(mesh, callback_args)
 
-		if u is None:
-		 	if face is None:
-		 		k = 1 - k
-		elif face == mesh.halfedge[v][u]:
-		 		k = 1 - k
-
-	return faces
-
-
-def add_strip(mesh, polyedge, close=True):
+def add_strip(mesh, polyedge):
 
 	# store data
 	left_polyedge = []
@@ -39,7 +27,7 @@ def add_strip(mesh, polyedge, close=True):
 	new_faces = []
 
 	# exception if closed
-	is_closed = polyedge[0] == polyedge[-1] and close
+	is_closed = polyedge[0] == polyedge[-1]
 	if is_closed:
 		polyedge.pop()
 
@@ -79,11 +67,19 @@ def add_strip(mesh, polyedge, close=True):
 			else:
 				w = left_polyedge[0]
 
-		
-
 		# add new vertices
-		faces_1, faces_2 = sort_faces(mesh, u1, v, w)
+		faces = sort_faces(mesh, u1, v, w)
 		v1, v2 = mesh.add_vertex(attr_dict=mesh.vertex[v]), mesh.add_vertex(attr_dict=mesh.vertex[v])
+		if type(faces[0]) == list:
+			faces_1, faces_2 = faces
+		else:
+			# exception necessary for U-turns
+			if faces[0] in mesh.vertex_faces(left_polyedge[-2]):
+				faces_1 = faces
+				faces_2 = []
+			else:
+				faces_1 = []
+				faces_2 = faces
 		mesh_substitute_vertex_in_faces(mesh, v, v1, faces_1)
 		mesh_substitute_vertex_in_faces(mesh, v, v2, faces_2)
 		mesh.delete_vertex(v)
@@ -118,8 +114,6 @@ def add_strip(mesh, polyedge, close=True):
 			new_faces.append(mesh.add_face([u1, v1, v2, u2]))
 			new_faces.append(mesh.add_face([v1, w, v2]))
 
-		# print('!', polyedge)
-		#print(v, v1, v2)
 		# update
 		polyedge_0 = []
 		via_vkeys = [v1, v2]
@@ -127,37 +121,61 @@ def add_strip(mesh, polyedge, close=True):
 			if vkey != v:
 				polyedge_0.append(vkey)
 			else:
-				# print('?')
 				from_vkey = polyedge[i - 1]
 				to_vkey = polyedge[i + 1]
 				polyedge_0 += polyedge_from_to_via_vertices(mesh, from_vkey, to_vkey, via_vkeys)[1:-1]
 		polyedge = polyedge_0
-		# print('!!', polyedge)
-
-
-		# for fkey in new_faces:
-		# 	print(fkey, mesh.face_vertices(fkey))
-		
-		# mesh_smooth_centroid(mesh, kmax=1)
-		# plotter = MeshPlotter(mesh, figsize = (20, 20))
-		# plotter.draw_vertices(radius = 0.25, text='key')
-		# plotter.draw_edges()
-		# plotter.draw_faces(text='key')
-		# plotter.show()
 
 		# include pseudo closed polyedges
 		# update polyedge
+
+	# mesh_smooth_centroid(mesh, kmax=1)
+	# plotter = MeshPlotter(mesh, figsize = (20, 20))
+	# plotter.draw_vertices(radius = 0.25, text='key')
+	# plotter.draw_edges()
+	# plotter.draw_faces(text='key')
+	# plotter.show()
 
 	# strip data update
 	# out put new_faces, left_polyedge, right_polyedge, map vertices
 
 
+def update_polyedge(polyedge, old_vkey_to_new_vkey):
+
+	return [old_vkey_to_new_vkey.get(vkey, vkey) for vkey in polyedge]
+
+
+def sort_faces(mesh, u, v, w):
+
+	sorted_faces = [[], []]
+	k = 0
+	vertex_faces = mesh.vertex_faces(v, ordered=True, include_none=True)
+	f0 = mesh.halfedge[w][v] if w is not None else None
+	i0 = vertex_faces.index(f0)
+	vertex_faces = vertex_faces[i0:] + vertex_faces[:i0]
+
+	for face in vertex_faces:
+		
+		if face is not None:
+			sorted_faces[k].append(face)
+
+		if u is None:
+		 	if face is None:
+		 		k = 1 - k
+		elif face == mesh.halfedge[v][u]:
+		 		k = 1 - k
+
+	# indeterminate exception if u == w
+	if u == w:
+		return [face for faces in sorted_faces for face in faces]
+	else:
+		return sorted_faces
 
 
 def adjacency_from_to_via_vertices(mesh, from_vkey, to_vkey, via_vkeys):
 	# get mesh adjacency constraiend to from_vkey and via_keys, via_keys and via_keys, and via_vkeys and to_vkey
 
-	#all_vkeys = set([from_vkey, to_vkey, *via_vkeys])
+	all_vkeys = set([from_vkey, to_vkey] + via_vkeys)
 	adjacency = {}
 	for vkey, nbrs in mesh.adjacency.items():
 		if vkey not in all_vkeys:
@@ -193,50 +211,67 @@ def is_polyedge_valid_for_strip_addition(mesh, polyedge):
 if __name__ == '__main__':
 
 	import compas
-	from compas_pattern.datastructures.mesh_quad.mesh_quad import QuadMesh
+	from compas_pattern.datastructures.mesh_quad_coarse.mesh_quad_coarse import CoarseQuadMesh
 	from compas.datastructures import mesh_smooth_centroid
 	from compas_pattern.datastructures.mesh.operations import mesh_move_by
 	from compas.datastructures import meshes_join
 	from compas_plotters.meshplotter import MeshPlotter
 
+	# mesh = CoarseQuadMesh.from_obj(compas.get('faces.obj'))
 
-	mesh = QuadMesh.from_obj(compas.get('faces.obj'))
+	# # plotter = MeshPlotter(mesh, figsize = (20, 20))
+	# # plotter.draw_vertices(radius = 0.25, text='key')
+	# # plotter.draw_edges()
+	# # plotter.draw_faces(text='key')
+	# # plotter.show()
 
-	# plotter = MeshPlotter(mesh, figsize = (20, 20))
-	# plotter.draw_vertices(radius = 0.25, text='key')
+	# polyedges = [
+	# 	[6, 7, 8, 9, 10, 11],
+	# 	[0, 1, 2, 3, 4, 5],
+	# 	[30, 31, 32, 33, 34, 35],
+	# 	[24, 25, 26, 32],
+	# 	[14, 15, 21, 20, 14],
+	# 	[6, 7, 8, 14, 13, 7, 1],
+	# 	# [2, 8, 2],
+	# 	[1, 2, 8, 2, 3],
+	# 	# [2, 8, 14, 8, 2],
+	# 	[0, 1, 2, 8, 2, 3, 4, 5],
+	# ]
+
+	# # from compas.utilities import window
+	# # for u, v, w in window(polyedges[0], n=3):
+	# # 	 print(sort_faces(mesh, u, v, w))
+
+	# meshes = []
+	# for i, polyedge in enumerate(polyedges):
+	# 	print(polyedge)
+	# 	mesh2 = mesh.copy()
+	# 	add_strip(mesh2, polyedge)
+	# 	#mesh_smooth_centroid(mesh2, fixed=[vkey for vkey in mesh.vertices_on_boundary() if len(mesh.vertex_neighbors(vkey)) == 2], kmax=1)
+	# 	mesh_smooth_centroid(mesh2, kmax=20)
+	# 	mesh_move_by(mesh2, [i * 10.0, 0.0, 0.0])
+	# 	meshes.append(mesh2)
+
+	# mesh = meshes_join(meshes)
+
+	# plotter = MeshPlotter(mesh, figsize=(20, 20))
+	# plotter.draw_vertices()#radius=0.1, text='key')
 	# plotter.draw_edges()
-	# plotter.draw_faces(text='key')
+	# plotter.draw_faces()
 	# plotter.show()
 
-	polyedges = [
-		[6, 7, 8, 9, 10, 11],
-		[0, 1, 2, 3, 4, 5],
-		[30, 31, 32, 33, 34, 35],
-		[24, 25, 26, 32],
-		[14, 15, 21, 20, 14],
-		[6, 7, 8, 14, 13, 7, 1],
-		# [2, 8, 2],
-		# [1, 2, 8, 2, 3],
-		# [2, 8, 14, 8, 2],
-		# [0, 1, 2, 8, 2, 3, 4, 5],
-	]
+	# #print(polyedge_from_to_via_vertices(mesh, 6, 8, [12, 13, 14]))
 
-	meshes = []
-	for i, polyedge in enumerate(polyedges):
-		mesh2 = mesh.copy()
-		add_strip(mesh2, polyedge, close=True)
-		#mesh_smooth_centroid(mesh2, fixed=[vkey for vkey in mesh.vertices_on_boundary() if len(mesh.vertex_neighbors(vkey)) == 2], kmax=1)
-		mesh_smooth_centroid(mesh2, kmax=1)
-		mesh_move_by(mesh2, [i * 10.0, 0.0, 0.0])
-		meshes.append(mesh2)
-
-	mesh = meshes_join(meshes)
-
+	vertices = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.5, 0.5, 0.0]]
+	faces = [[0, 1, 2, 4] , [2, 3, 0, 4]]
+	mesh = CoarseQuadMesh.from_vertices_and_faces(vertices, faces)
+	polyedge = [2, 4, 0]
+	add_strip(mesh, polyedge)
+	for fkey in mesh.faces():
+		print(mesh.face_vertices(fkey))
+	mesh_smooth_centroid(mesh, kmax=10)
 	plotter = MeshPlotter(mesh, figsize=(20, 20))
-	plotter.draw_vertices(radius=0.1)
+	plotter.draw_vertices(radius=0.001, text='key')
 	plotter.draw_edges()
 	plotter.draw_faces()
 	plotter.show()
-
-	#print(polyedge_from_to_via_vertices(mesh, 6, 8, [12, 13, 14]))
-
