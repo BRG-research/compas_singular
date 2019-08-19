@@ -203,6 +203,17 @@ class CoarseQuadMesh(QuadMesh):
 
 		self.set_strip_density(skey, int(ceil(sum([self.edge_length(u, v) for u, v in self.strip_edges(skey)]) / len(list(self.strip_edges(skey))) / t)))
 
+	def set_strip_density_func(self, skey, func, func_args):
+		"""Set the strip densities based on a function.
+
+		Parameters
+		----------
+		skey : hashable
+			A strip key.
+		"""
+
+		self.set_strip_density(skey, int(func(skey, func_args)))
+
 	def set_strips_density_target(self, t, skeys=None):
 		"""Set the strip densities based on a target length and the average length of the strip edges.
 
@@ -217,7 +228,21 @@ class CoarseQuadMesh(QuadMesh):
 		if skeys is None:
 			skeys = self.strips()
 		for skey in skeys:
-			self.set_strip_density(skey, int(ceil(sum([self.edge_length(u, v) for u, v in self.strip_edges(skey)]) / len(list(self.strip_edges(skey))) / t)))
+			self.set_strip_density_target(skey, t)
+
+	def set_strips_density_func(self, func, func_args, skeys=None):
+		"""Set the strip densities based on a function.
+
+		Parameters
+		----------
+		skeys : list, None
+			The keys of strips to set density. If is None, all strips are considered.
+		"""
+
+		if skeys is None:
+			skeys = self.strips()
+		for skey in skeys:
+			self.set_strip_density_func(skey, func, func_args)
 
 	def set_mesh_density_face_target(self, nb_faces):
 		"""Set equal strip densities based on a target number of faces.
@@ -385,15 +410,17 @@ if __name__ == '__main__':
 	import compas
 	from compas_pattern.datastructures.mesh_quad.mesh_quad import QuadMesh
 	from compas.datastructures.mesh import mesh_smooth_centroid
-	from compas.plotters import MeshPlotter
+	from compas_plotters.meshplotter import MeshPlotter
 
-	mesh = QuadMesh.from_obj(compas.get('faces.obj'))
+	#mesh = QuadMesh.from_obj(compas.get('faces.obj'))
+	mesh = QuadMesh.from_json('/Users/Robin/Desktop/json/debug.json')
 	mesh.collect_strips()
 	mesh.collect_polyedges()
 
 	mesh_0 = CoarseQuadMesh.from_quad_mesh(mesh)
 	mesh_0.collect_strips()
 	mesh_0.collect_polyedges()
+	print(mesh_0.is_quadmesh())
 	print(mesh_0.number_of_strips())
 
 	# vertices = [[12.97441577911377, 24.33094596862793, 0.0], [18.310085296630859, 8.467333793640137, 0.0], [30.052173614501953, 18.846050262451172, 0.0], [17.135400772094727, 16.750551223754883, 0.0], [16.661802291870117, 22.973459243774414, 0.0], [14.180665969848633, 26.949295043945313, 0.0], [36.052761077880859, 26.372636795043945, 0.0], [26.180931091308594, 21.778648376464844, 0.0], [19.647378921508789, 12.288106918334961, 0.0], [9.355668067932129, 16.475896835327148, 0.0], [18.929227828979492, 16.271940231323242, 0.0], [7.34525203704834, 12.111981391906738, 0.0], [13.31309986114502, 14.699410438537598, 0.0], [18.699434280395508, 19.613750457763672, 0.0], [11.913931846618652, 10.593378067016602, 0.0], [17.163223266601563, 26.870658874511719, 0.0], [26.110898971557617, 26.634754180908203, 0.0], [22.851469039916992, 9.81414794921875, 0.0], [21.051292419433594, 7.556171894073486, 0.0], [22.1370792388916, 19.089054107666016, 0.0]]
@@ -406,17 +433,19 @@ if __name__ == '__main__':
 	# mesh_0.collect_strips()
 	# mesh_0.collect_polyedges()
 	
-	print(mesh_0.number_of_strips())
-	print(mesh_0.data['attributes']['vertex_coarse_to_dense'])
-	print(mesh_0.data['attributes']['edge_coarse_to_dense'])
+	# print(mesh_0.number_of_strips())
+	# print(mesh_0.data['attributes']['vertex_coarse_to_dense'])
+	# print(mesh_0.data['attributes']['edge_coarse_to_dense'])
 
-	mesh_0.set_strips_density(1)
-	mesh_0.set_strip_density(0, 6)
-	mesh_0.set_strip_density(1, 5)
-	mesh_0.densification()
+	# mesh_0.set_strips_density(1)
+	# mesh_0.set_strip_density(0, 6)
+	# mesh_0.set_strip_density(1, 5)
+	# mesh_0.densification()
 	#mesh_0.get_strip_densities()
 	#mesh_smooth_centroid(mesh_0.quad_mesh, kmax = 10)
 
-	#plotter = MeshPlotter(mesh_0.quad_mesh, figsize=(10, 10))
-	#plotter.draw_edges()
-	#plotter.show()
+	plotter = MeshPlotter(mesh_0, figsize=(10, 10))
+	plotter.draw_edges()
+	plotter.draw_vertices()
+	plotter.draw_faces()
+	plotter.show()
