@@ -306,80 +306,80 @@ class PseudoQuadMesh(QuadMesh):
         self.data['attributes']['strips'] = {skey: [(u, v) for u, v in self.strip_edges(skey) if u == v or (self.halfedge[u][v] != fkey and self.halfedge[v][u] != fkey)] for skey in self.strips()}
 
 
-#     def add_face(self, vertices, fkey=None, attr_dict=None, **kwattr):
-#         """Add a face to the mesh object. Allow [a, b, c, c] faces.
+    # def add_face(self, vertices, fkey=None, attr_dict=None, **kwattr):
+    #     """Add a face to the mesh object. Allow [a, b, c, c] faces.
 
-#         Parameters
-#         ----------
-#         vertices : list
-#             A list of vertex keys.
-#             For every vertex that does not yet exist, a new vertex is created.
-#         attr_dict : dict, optional
-#             Face attributes.
-#         kwattr : dict, optional
-#             Additional named face attributes.
-#             Named face attributes overwrite corresponding attributes in the
-#             attribute dict (``attr_dict``).
+    #     Parameters
+    #     ----------
+    #     vertices : list
+    #         A list of vertex keys.
+    #         For every vertex that does not yet exist, a new vertex is created.
+    #     attr_dict : dict, optional
+    #         Face attributes.
+    #     kwattr : dict, optional
+    #         Additional named face attributes.
+    #         Named face attributes overwrite corresponding attributes in the
+    #         attribute dict (``attr_dict``).
 
-#         Returns
-#         -------
-#         int
-#             The key of the face.
-#             The key is an integer, if no key was provided.
-#         hashable
-#             The key of the face.
-#             Any hashable object may be provided as identifier for the face.
-#             Provided keys are returned unchanged.
+    #     Returns
+    #     -------
+    #     int
+    #         The key of the face.
+    #         The key is an integer, if no key was provided.
+    #     hashable
+    #         The key of the face.
+    #         Any hashable object may be provided as identifier for the face.
+    #         Provided keys are returned unchanged.
 
-#         Raises
-#         ------
-#         TypeError
-#             If the provided face key is of an unhashable type.
+    #     Raises
+    #     ------
+    #     TypeError
+    #         If the provided face key is of an unhashable type.
 
-#         Notes
-#         -----
-#         If no key is provided for the face, one is generated
-#         automatically. An automatically generated key is an integer that increments
-#         the highest integer value of any key used so far by 1.
+    #     Notes
+    #     -----
+    #     If no key is provided for the face, one is generated
+    #     automatically. An automatically generated key is an integer that increments
+    #     the highest integer value of any key used so far by 1.
 
-#         If a key with an integer value is provided that is higher than the current
-#         highest integer key value, then the highest integer value is updated accordingly.
+    #     If a key with an integer value is provided that is higher than the current
+    #     highest integer key value, then the highest integer value is updated accordingly.
 
-#         See Also
-#         --------
-#         * :meth:`add_vertex`
-#         * :meth:`add_edge`
+    #     See Also
+    #     --------
+    #     * :meth:`add_vertex`
+    #     * :meth:`add_edge`
 
-#         Examples
-#         --------
-#         >>>
+    #     Examples
+    #     --------
+    #     >>>
 
-#         """
-#         attr = self._compile_fattr(attr_dict, kwattr)
+    #     """
+    #     attr = self._compile_fattr(attr_dict, kwattr)
 
-#         # remove clean vertices to allow [a, b, c, c] faces
-#         #self._clean_vertices(vertices)
+    #     # remove clean vertices to allow [a, b, c, c] faces
+    #     #self._clean_vertices(vertices)
 
-#         if len(vertices) < 3:
-#             return
+    #     if len(vertices) < 3:
+    #         return
 
-#         keys = []
-#         for key in vertices:
-#             if key not in self.vertex:
-#                 key = self.add_vertex(key)
-#             keys.append(key)
+    #     keys = []
+    #     for key in vertices:
+    #         if key not in self.vertex:
+    #             key = self.add_vertex(key)
+    #         keys.append(key)
 
-#         fkey = self._get_face_key(fkey)
+    #     fkey = self._get_face_key(fkey)
 
-#         self.face[fkey] = keys
-#         self.facedata[fkey] = attr
+    #     self.face[fkey] = keys
+    #     self.facedata[fkey] = attr
 
-#         for u, v in self._cycle_keys(keys):
-#             self.halfedge[u][v] = fkey
-#             if u not in self.halfedge[v]:
-#                 self.halfedge[v][u] = None
+    #     for u, v in self._cycle_keys(keys):
+    #         self.halfedge[u][v] = fkey
+    #         if u not in self.halfedge[v]:
+    #             self.halfedge[v][u] = None
 
-#         return fkey
+    #     return fkey
 
     # def delete_face(self, fkey):
     #     """Delete a face from the mesh object. Valid for [a, b, c, c] faces.
@@ -408,13 +408,92 @@ class PseudoQuadMesh(QuadMesh):
     #         plotter.show()
 
     #     """
-
+    #     def check_validity(self):
+    #         for u, v in self.edges():
+    #             if v not in self.halfedge[u] or u not in self.halfedge[v]:
+    #                 return (u, v)
+    #     #if check_validity is not None:
+    #     #    print('!!!')
     #     for u, v in self.face_halfedges(fkey):
-    #         if u != v:
+    #         self.halfedge[u][v] = None
+    #         if self.halfedge[v][u] is None:
+    #             del self.halfedge[u][v]
+    #             del self.halfedge[v][u]
+    #     del self.face[fkey]
+
+
+    # def delete_vertex(self, key):
+    #     """Delete a vertex from the mesh and everything that is attached to it.
+
+    #     Parameters
+    #     ----------
+    #     key : hashable
+    #         The identifier of the vertex.
+
+    #     Examples
+    #     --------
+    #     .. plot::
+    #         :include-source:
+
+    #         import compas
+    #         from compas.datastructures import Mesh
+    #         from compas_plotters import MeshPlotter
+
+    #         mesh = Mesh.from_obj(compas.get('faces.obj'))
+
+    #         mesh.delete_vertex(17)
+
+    #         color = {key: '#ff0000' for key in mesh.vertices() if mesh.vertex_degree(key) == 2}
+
+    #         plotter = MeshPlotter(mesh)
+    #         plotter.draw_vertices(facecolor=color)
+    #         plotter.draw_faces()
+    #         plotter.show()
+
+    #     In some cases, disconnected vertices can remain after application of this
+    #     method. To remove these vertices as well, combine this method with vertex
+    #     culling (:meth:`cull_vertices`).
+
+    #     .. plot::
+    #         :include-source:
+
+    #         import compas
+    #         from compas.datastructures import Mesh
+    #         from compas_plotters import MeshPlotter
+
+    #         mesh = Mesh.from_obj(compas.get('faces.obj'))
+
+    #         mesh.delete_vertex(17)
+    #         mesh.delete_vertex(18)
+    #         mesh.delete_vertex(0)
+    #         mesh.cull_vertices()
+
+    #         color = {key: '#ff0000' for key in mesh.vertices() if mesh.vertex_degree(key) == 2}
+
+    #         plotter = MeshPlotter(mesh)
+    #         plotter.draw_vertices(facecolor=color)
+    #         plotter.draw_faces()
+    #         plotter.show()
+
+    #     """
+    #     nbrs = self.vertex_neighbors(key)
+    #     for nbr in nbrs:
+    #         fkey = self.halfedge[key][nbr]
+    #         if fkey is None:
+    #             continue
+    #         for u, v in self.face_halfedges(fkey):
     #             self.halfedge[u][v] = None
-    #             if u in self.halfedge[v] and self.halfedge[v][u] is None:
-    #                 del self.halfedge[u][v]
-    #                 del self.halfedge[v][u]
+    #         del self.face[fkey]
+    #     for nbr in nbrs:
+    #         print(nbr, key)
+    #         del self.halfedge[nbr][key]
+    #     for nbr in nbrs:
+    #         for n in self.vertex_neighbors(nbr):
+    #             if self.halfedge[nbr][n] is None and self.halfedge[n][nbr] is None:
+    #                 del self.halfedge[nbr][n]
+    #                 del self.halfedge[n][nbr]
+    #     del self.halfedge[key]
+    #     del self.vertex[key]
 
     #     del self.face[fkey]
 
