@@ -12,7 +12,7 @@ from compas.geometry import cross_vectors
 
 from compas.datastructures import trimesh_face_circle
 
-from compas_pattern.datastructures.mesh.unweld import mesh_unweld_edges
+from compas.datastructures import mesh_unweld_edges
 
 from compas.utilities import pairwise
 from compas.utilities import geometric_key
