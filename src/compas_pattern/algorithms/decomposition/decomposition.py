@@ -8,15 +8,15 @@ from compas_pattern.algorithms.decomposition.skeletonisation import Skeleton
 
 from compas_pattern.datastructures.mesh_quad_pseudo_coarse.mesh_quad_pseudo_coarse import CoarsePseudoQuadMesh
 
-from compas_pattern.datastructures.mesh.operations import mesh_insert_vertex_on_edge
-from compas_pattern.datastructures.mesh.operations import mesh_substitute_vertex_in_faces
+from compas.datastructures import mesh_insert_vertex_on_edge
+from compas.datastructures import mesh_substitute_vertex_in_faces
 
 from compas_pattern.datastructures.network.network import Network
 from compas.datastructures.network.operations import network_polylines
 from compas.geometry import Polyline
 
 from compas.datastructures import mesh_weld
-from compas_pattern.datastructures.mesh.unweld import mesh_unweld_edges
+from compas.datastructures import mesh_unweld_edges
 from compas_pattern.algorithms.decomposition.propagation import quadrangulate_mesh
 
 from compas_pattern.datastructures.mesh_quad_pseudo.grammar_poles import split_quad_in_pseudo_quads
@@ -162,11 +162,11 @@ class Decomposition(Skeleton):
 			List of polylines as list of point XYZ-coordinates.
 
 		"""
-		a = self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary()
-		a += self.branches_splitting_flipped_faces()
-		a += self.branches_splitting_boundary_kinks()
-		a += self.branches_splitting_collapsed_boundaries()
-		self.polylines =  network_polylines(Network.from_lines([(u, v) for polyline in a for u, v in pairwise(polyline)]), splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
+		branches = self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary()
+		branches += self.branches_splitting_boundary_kinks()
+		branches += self.branches_splitting_collapsed_boundaries()
+		branches += self.branches_splitting_flipped_faces()
+		self.polylines =  network_polylines(Network.from_lines([(u, v) for polyline in branches for u, v in pairwise(polyline)]), splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
 		return self.polylines
 
 	def decomposition_polyline(self, geom_key_1, geom_key_2):
@@ -230,7 +230,7 @@ class Decomposition(Skeleton):
 
 		for polyedge in [bdry + bdry[0 :] for bdry in self.boundaries()]:
 
-			splits = [vkey for vkey in polyedge if vkey in all_splits]
+			splits = set([vkey for vkey in polyedge if vkey in all_splits])
 			new_splits = []
 
 			if len(splits) == 0:
