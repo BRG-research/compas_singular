@@ -42,7 +42,7 @@ def explore(processing_func=dummy_processing_func, evaluation_func=dummy_evaluat
 	explorator.redraw_current_mesh()
 	rs.EnableRedraw(True)
 
-	count = 10
+	count = 20
 	while count:
 		count -= 1
 
@@ -69,6 +69,7 @@ def explore(processing_func=dummy_processing_func, evaluation_func=dummy_evaluat
 
 		if rs.GetString('continue?', 'No', ['Yes', 'No']) != 'Yes':
 		 	break
+		 
 		explorator.modify_add_settings()
 
 

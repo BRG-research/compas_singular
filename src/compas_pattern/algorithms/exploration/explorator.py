@@ -3,7 +3,7 @@ import operator as op
 from math import ceil
 
 from compas_pattern.algorithms.exploration.turtle import Turtle
-from compas_pattern.algorithms.exploration.enumeration import collect_polyedges
+from compas_pattern.algorithms.exploration.collection import collect_polyedges
 from compas_pattern.datastructures.mesh_quad.grammar_pattern import delete_strip
 from compas_pattern.datastructures.mesh_quad.grammar_pattern import add_strip
 from compas_pattern.datastructures.mesh_quad.grammar_pattern import add_and_delete_strips
@@ -51,7 +51,7 @@ class Explorator:
 		self.dx = 10.0
 		self.dy = 10.0
 
-		self.settings = {'add': {'total': 20, 'part_random': .5, 'max_path_length': 20}}
+		self.settings = {'add': {'total': 20, 'part_random': .5, 'min_path_length': 1, 'max_path_length': 20}}
 
 	def set_processing_func(self, func):
 		self.processing_func = func
@@ -187,16 +187,24 @@ class Explorator:
 			guid = MeshArtist(self.processing_func(mesh)).draw_mesh()
 			self.guid_to_mesh_suggested[guid] = mesh
 
-	# def remove_saved_meshes(self, meshes):
-	# 	for mesh in meshes:
-	# 		if mesh in self.saved_meshes:
-	# 			del self.saved_meshes[mesh]
+	# ==============================================================================
+	# storing
+	# ==============================================================================
 
-	# def remove_worst_meshes(self, k=0.5):
-	# 	sorted_meshes = sorted(self.saved_meshes.items(), key=op.itemgetter(1))
-	# 	n = len(sorted_meshes)
-	# 	for mesh, perf in sorted_meshes[:ceil(k * n)]:
-	# 		del self.saved_meshes[mesh]
+	def use_best_mesh(self):
+		self.mesh = min(self.saved_meshes, key=self.saved_meshes.get).copy()
+	
+	def remove_saved_meshes(self, meshes):
+		self.saved_meshes = {}
+		self.guid_to_mesh_save = {}
+		
+	def remove_worst_meshes(self, k=0.5):
+		sorted_meshes = sorted(self.saved_meshes.items(), key=op.itemgetter(1))
+		to_delete = set(sorted_meshes[:ceil((1-k) * len(sorted_meshes))])
+		for guid, mesh in self.guid_to_mesh_saved.items():
+			if mesh in to_delete:
+				del self.guid_to_mesh_saved[guid]
+				del self.saved_meshes[mesh]
 
 	# ==============================================================================
 	# evaluate
