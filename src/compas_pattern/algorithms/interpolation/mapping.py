@@ -1,10 +1,12 @@
 import itertools as it
 
-from compas_pattern.datastructures.mesh_quad.grammar_pattern import delete_strip
-from compas_pattern.datastructures.mesh_quad.grammar_pattern import delete_strips
-from compas_pattern.datastructures.mesh_quad.grammar_pattern import add_strips
+from compas_pattern.datastructures.mesh_quad.grammar.delete_strip import delete_strip
+from compas_pattern.datastructures.mesh_quad.grammar.delete_strip import delete_strips
+from compas_pattern.datastructures.mesh_quad.grammar.add_strip import add_strips
 
-from compas_pattern.algorithms.interpolation.isomorphism import *
+from compas_pattern.algorithms.interpolation.isomorphism import are_strips_isomorphic
+from compas_pattern.algorithms.interpolation.isomorphism import are_meshes_isomorphic
+from compas_pattern.algorithms.interpolation.isomorphism import matches_between_ismorphic_meshes
 
 __all__ = [
 ]
@@ -90,14 +92,15 @@ def distance_and_deletion_rules_between_2_meshes(mesh_i, mesh_j):
     
     for k in range(0, max(ni, nj) + 1):
         
-        for nodes_i in it.combinations(list(mesh_i.strips()), max(k, k + ni - nj)):
+        for nodes_i in it.combinations(list(mesh_i.strips()), k + max(0, ni - nj)):
             mesh_i_copy = mesh_i.copy()
             delete_strips(mesh_i_copy, nodes_i)
             # discard if collateral strip deletions, which are at a higher distance
             if ni - mesh_i_copy.number_of_strips() != len(nodes_i):
                 continue
 
-            for nodes_j in it.combinations(list(mesh_j.strips()), max(k, k + nj - ni)):
+            for nodes_j in it.combinations(list(mesh_j.strips()), k + max(0, nj - ni)):
+                print(nodes_i, nodes_j)
                 mesh_j_copy = mesh_j.copy()
                 delete_strips(mesh_j_copy, nodes_j)
                 # discard if collateral strip deletions, which are at a higher distance
@@ -108,7 +111,7 @@ def distance_and_deletion_rules_between_2_meshes(mesh_i, mesh_j):
                 if are_strips_isomorphic(mesh_i_copy, mesh_j_copy, close_strip_data=True):  
                     # test mesh isomorphism
                     if are_meshes_isomorphic(mesh_i_copy, mesh_j_copy, boundary_edge_data=True):
-                        distance = max(k, k + ni - nj) + max(k, k + nj - ni)
+                        distance = 2 * k + abs(ni - nj)
                         results.append((distance, {mesh_i: nodes_i, mesh_j: nodes_j}))
         
         # potentially several combinations with different combinations of strips at the same distance
@@ -248,13 +251,18 @@ if __name__ == '__main__':
     mesh_4 = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/i.json')
     mesh_5 = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/j.json')
 
+    mesh_sym = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/neunmuenster_1.json')
+    mesh_asym = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/neunmuenster_2.json')
+
     # mesh_1.collect_strips()
     # mesh_5.collect_strips()
     # print(distance_and_deletion_rules_between_2_meshes(mesh_1, mesh_5))
 
-    meshes = [mesh_2, mesh_3]
+    meshes = [mesh_sym, mesh_asym]
     for mesh in meshes:
+        print(mesh.number_of_vertices())
         mesh.collect_strips()
+        print(mesh.number_of_strips())
 
     for result in distance_and_deletion_rules_between_2_meshes(*meshes):
         print(result)
