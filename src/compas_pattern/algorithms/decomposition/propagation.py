@@ -87,15 +87,17 @@ def quadrangulate_face(mesh, fkey, sources):
 				# update adjacent faces
 				update_adjacent_face(mesh, wx[1], wx[0], list(reversed(new_vertices)))
 			elif len(uv) != 2 and len(wx) != 2 and len(uv) != len(wx):
+				pass
 				# apply Takayama's work
-				print('not implemented yet')
+				#print('not implemented yet')
 
 		mesh.delete_face(fkey)
 
 		discrete_coons_patch_mesh(mesh, ab, bc, list(reversed(cd)), list(reversed(da)))
 
 	else:
-		print('not generalised yet')
+		pass
+		#print('not generalised yet')
 
 	return new_sources
 

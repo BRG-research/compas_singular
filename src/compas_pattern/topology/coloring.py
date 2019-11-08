@@ -26,7 +26,7 @@ def is_adjacency_two_colorable(adjacency):
 	key_0 = next(iter(adjacency.keys()))
 	sources = [key_0]
 
-	count = len(adjacency.keys())
+	count = len(adjacency.keys()) * 2
 
 	# propagate until all vertices are colored or two adjacent vertices have the same color
 	while count > 0 and sources:
@@ -59,7 +59,7 @@ if __name__ == '__main__':
 	import compas
 	from compas_pattern.datastructures.mesh.mesh import Mesh
 	from compas.topology import adjacency_from_edges
-
+	from compas.topology import vertex_coloring
 	# edges = [
 	# 	(0, 1),
 	# 	(1, 2),
@@ -86,5 +86,9 @@ if __name__ == '__main__':
 	t1 = time.time()
 	print(t1 - t0)
 
+	t0 = time.time()
+	print(vertex_coloring(mesh.adjacency))
+	t1 = time.time()
+	print(t1 - t0)
 
 
