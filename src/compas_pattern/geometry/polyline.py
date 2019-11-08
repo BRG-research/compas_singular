@@ -14,7 +14,7 @@ __all__ = [
 
 class Polyline(Polyline):
 
-	def __init__(self, guid):
+	def __init__(self, points):
 		super(Polyline, self).__init__(points) 
 
 	def vertex_curvature(self, i):
@@ -51,7 +51,7 @@ class Polyline(Polyline):
 		if i == 0 or i == n - 1:
 			return 0.0
 
-		a, b, c = points[i - 1 : i + 2]
+		a, b, c = self.points[i - 1 : i + 2]
 		ab = subtract_vectors(b, a)
 		bc = subtract_vectors(c, b)
 		ac = subtract_vectors(c, a)
