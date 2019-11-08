@@ -1,6 +1,9 @@
 from compas.geometry import delaunay_from_points
 #from compas.geometry.triangulation.triangulation_numpy import delaunay_from_points_numpy
 
+from compas_pattern.datastructures.mesh.mesh import Mesh
+from compas_pattern.algorithms.decomposition.decomposition import Decomposition
+
 from compas.utilities import XFunc
 
 from compas.rpc import Proxy
