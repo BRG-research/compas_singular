@@ -27,11 +27,17 @@ class CoarsePseudoQuadMesh(PseudoQuadMesh, CoarseQuadMesh):
 
 		"""
 
+		edge_strip = {}
+		for skey, edges in self.strips(data=True):
+		    for edge in edges:
+		        edge_strip[edge] = skey
+		        edge_strip[tuple(reversed(edge))] = skey
+
 		pole_map = tuple([geometric_key(self.vertex_coordinates(pole)) for pole in self.poles()])
 
 		meshes = []
 		for fkey in self.faces():
-			polylines = [[self.edge_point(u, v, float(i) / float(self.get_strip_density(self.edge_strip((u, v))))) for i in range(0, self.get_strip_density(self.edge_strip((u, v))) + 1)] for u, v in self.face_halfedges(fkey)]
+			polylines = [[self.edge_point(u, v, float(i) / float(self.get_strip_density(edge_strip[(u, v)]))) for i in range(0, self.get_strip_density(edge_strip[(u, v)]) + 1)] for u, v in self.face_halfedges(fkey)]
 			if self.is_face_pseudo_quad(fkey):
 				pole = self.data['attributes']['face_pole'][fkey]
 				idx = self.face_vertices(fkey).index(pole)

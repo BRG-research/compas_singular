@@ -2,6 +2,8 @@ from compas_pattern.datastructures.mesh_quad.mesh_quad import QuadMesh
 
 from compas.utilities import geometric_key
 
+from compas_pattern.utilities.lists import list_split
+
 __author__     = ['Robin Oval']
 __copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
 __license__    = 'MIT License'
@@ -40,6 +42,9 @@ class PseudoQuadMesh(QuadMesh):
 
     def poles(self):
         return list(set(self.data['attributes']['face_pole'].values()))
+
+    def is_pole(self, vkey):
+        return vkey in set(self.poles())
 
     def is_face_pseudo_quad(self, fkey):
         return fkey in set(self.data['attributes']['face_pole'].keys())
@@ -285,6 +290,7 @@ class PseudoQuadMesh(QuadMesh):
 
         if self.is_face_pseudo_quad(fkey):
             pole = self.data['attributes']['face_pole'][fkey]
+            #print(pole, fkey, self.face_vertices(fkey))
             u = self.face_vertex_descendant(fkey, pole)
             v = self.face_vertex_descendant(fkey, u)
             return [self.edge_strip((pole, u)), self.edge_strip((u, v))]
@@ -305,6 +311,27 @@ class PseudoQuadMesh(QuadMesh):
 
         self.data['attributes']['strips'] = {skey: [(u, v) for u, v in self.strip_edges(skey) if u == v or (self.halfedge[u][v] != fkey and self.halfedge[v][u] != fkey)] for skey in self.strips()}
 
+
+    def singularity_polyedges(self):
+        """Collect the polyedges connected to singularities.
+
+        Returns
+        -------
+        list
+            The polyedges connected to singularities.
+
+        """
+
+        poles = set(self.poles())
+        # keep only polyedges connected to singularities or along the boundary      
+        polyedges = [polyedge for key, polyedge in self.polyedges(data=True) if (self.is_vertex_singular(polyedge[0]) and not self.is_pole(polyedge[0])) or (self.is_vertex_singular(polyedge[-1]) and not self.is_pole(polyedge[-1])) or self.is_edge_on_boundary(polyedge[0], polyedge[1])]                                    
+
+        # get intersections between polyedges for split
+        vertices = [vkey for polyedge in polyedges for vkey in set(polyedge)]
+        split_vertices = [vkey for vkey in self.vertices() if vertices.count(vkey) > 1]
+        
+        # split singularity polyedges
+        return [split_polyedge for polyedge in polyedges for split_polyedge in list_split(polyedge, [polyedge.index(vkey) for vkey in split_vertices if vkey in polyedge])]
 
     # def add_face(self, vertices, fkey=None, attr_dict=None, **kwattr):
     #     """Add a face to the mesh object. Allow [a, b, c, c] faces.

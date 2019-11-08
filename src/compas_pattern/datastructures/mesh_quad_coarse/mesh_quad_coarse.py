@@ -16,7 +16,7 @@ from compas.geometry import discrete_coons_patch
 
 from compas.utilities import pairwise
 from compas.utilities import reverse_geometric_key
-
+from compas.utilities import average
 
 __all__ = ['CoarseQuadMesh']
 
@@ -201,7 +201,7 @@ class CoarseQuadMesh(QuadMesh):
 			A target length.
 		"""
 
-		self.set_strip_density(skey, int(ceil(sum([self.edge_length(u, v) for u, v in self.strip_edges(skey)]) / len(list(self.strip_edges(skey))) / t)))
+		self.set_strip_density(skey, int(ceil(average([self.edge_length(u, v) for u, v in self.strip_edges(skey) if u != v]) / t)))
 
 	def set_strip_density_func(self, skey, func, func_args):
 		"""Set the strip densities based on a function.
@@ -268,9 +268,15 @@ class CoarseQuadMesh(QuadMesh):
 		"""Generate a denser quad mesh from the coarse quad mesh and its strip densities.
 		"""
 
+		edge_strip = {}
+		for skey, edges in self.strips(data=True):
+		    for edge in edges:
+		        edge_strip[edge] = skey
+		        edge_strip[tuple(reversed(edge))] = skey
+
 		meshes = []
 		for fkey in self.faces():
-			ab, bc, cd, da = [[self.edge_point(u, v, float(i) / float(self.get_strip_density(self.edge_strip((u, v))))) for i in range(0, self.get_strip_density(self.edge_strip((u, v))) + 1)] for u, v in self.face_halfedges(fkey)]
+			ab, bc, cd, da = [[self.edge_point(u, v, float(i) / float(self.get_strip_density(edge_strip[(u, v)]))) for i in range(0, self.get_strip_density(edge_strip[(u, v)]) + 1)] for u, v in self.face_halfedges(fkey)]
 			vertices, faces = discrete_coons_patch(ab, bc, list(reversed(cd)), list(reversed(da)))
 			meshes.append(QuadMesh.from_vertices_and_faces(vertices, faces))
 		self.set_quad_mesh(meshes_join_and_weld(meshes))
