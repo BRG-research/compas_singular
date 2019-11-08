@@ -221,7 +221,8 @@ def func_1(mesh, fix_xyz, kmax, damping):
             if len(corner_vertices) == 1:
                 fixed += corner_vertices
             else:
-                print('not generalised yet')
+                pass
+                #print('not generalised yet')
 
     split_boundaries = []
     for boundary in mesh.boundaries():
@@ -366,6 +367,15 @@ def delete_strip(mesh, skey, preserve_boundaries=False):
     del mesh.data['attributes']['strips'][skey]
     for skey_2 in collateral_deleted_strips:
         del mesh.data['attributes']['strips'][skey_2]
+    #print(old_vkeys_to_new_vkeys)
+    #print(mesh.data['attributes']['face_pole'])
+    if 'face_pole' in mesh.data['attributes']:
+        for fkey, pole in mesh.data['attributes']['face_pole'].items():
+            if fkey in mesh.data['attributes']['face_pole']:
+                #print(fkey, pole, mesh.data['attributes']['face_pole'])
+                if pole == mesh.data['attributes']['face_pole'][fkey]:
+                    if pole in old_vkeys_to_new_vkeys:
+                        mesh.data['attributes']['face_pole'][fkey] = old_vkeys_to_new_vkeys[pole]
 
     return old_vkeys_to_new_vkeys
 
@@ -390,13 +400,56 @@ def delete_strips(mesh, skeys, preserve_boundaries=False):
     """
 
     if preserve_boundaries:
-        skey_to_skeys = split_strips(mesh, boundary_strip_preserve(mesh, skeys))
+        skey_to_skeys = split_strips(mesh, strips_to_split_to_prevent_boundary_collapse(mesh, skeys))
 
     for skey in skeys:
         delete_strip(mesh, skey)
 
     if preserve_boundaries:
         return skey_to_skeys
+
+
+def strips_to_split_to_prevent_boundary_collapse(mesh, skeys):
+    """Computes strips to split to preserve boundaries before deleting strips.
+
+    Parameters
+    ----------
+    mesh : QuadMesh
+        A quad mesh.
+    skey : set
+        Strip keys.
+
+    Returns
+    -------
+    to_split: dict
+        A dictionary of strip keys pointing to the refinement value.
+
+    """
+
+    to_split = {}
+    for boundary in mesh.boundaries():
+        non_deleted_strips = [mesh.edge_strip((u, v)) for u, v in pairwise(boundary + boundary[:1]) if mesh.edge_strip((u, v)) not in skeys]
+
+        if len(non_deleted_strips) == 0:
+            return {}
+
+        elif len(non_deleted_strips) == 1:
+            skey = non_deleted_strips[0]
+            if skey in to_split:
+                if to_split[skey] == 3:
+                    break
+                if to_split[skey] == 2:
+                    to_split[skey] = 3
+            else:
+                to_split[skey] = 3
+
+        elif len(non_deleted_strips) == 2:
+            for skey in non_deleted_strips:
+                if skey in to_split:
+                    break
+            to_split.update({skey: 2 for skey in non_deleted_strips})
+
+    return to_split
 
 
 def split_strip(mesh, skey, n=2):
@@ -513,8 +566,26 @@ def strip_polyedge_update(mesh, polyedge, vertex_modifications):
 
     return shortest_polyedge
 
+def collateral_strip_deletions(mesh, skeys):
+    """Return the strips that would be deleted from the deletion of other strips.
+    """
+
+    deleted_fkeys = [fkey for skey in skeys for fkey in mesh.strip_faces(skey)]
+    return [skey for skey in mesh.strips() if skey not in skeys and all([fkey in deleted_fkeys for fkey in mesh.strip_faces(skey)])]
 
 
+def total_boundary_deletions(mesh, skeys):
+    """Return the strips that would be deleted from the deletion of other strips.
+    """
+
+    deleted_strips = list(skeys) + list(collateral_strip_deletions(mesh, skeys))
+    deleted_boundaries = []
+    deleted_edges = set([edge for skey in deleted_strips for edge in mesh.strip_edges(skey)])
+    for boundary in mesh.boundaries():
+        edges = [(u, v) for u, v in pairwise(boundary + boundary[:1])]
+        if all([(u, v) in deleted_edges or (v, u) in deleted_edges for u, v in edges]):
+            deleted_boundaries.append(boundary)
+    return deleted_boundaries
 
 
 # ==============================================================================
@@ -537,30 +608,47 @@ if __name__ == '__main__':
     #        break
     # add_strip(mesh, [26,22,69,67])
 
+    # vertices = [
+    #     [0.0, 0.0, 0.0],
+    #     [1.0, 0.0, 0.0],
+    #     [2.0, 0.0, 0.0],
+    #     [0.0, 1.0, 0.0],
+    #     [1.0, 1.0, 0.0],
+    #     [2.0, 1.0, 0.0],
+    #     [0.0, 2.0, 0.0],
+    #     [1.0, 2.0, 0.0],
+    #     [2.0, 2.0, 0.0]
+    # ]
+
+    # faces = [
+    #     [0, 1, 4, 3],
+    #     [1, 2, 5, 4],
+    #     [3, 4, 7, 6],
+    #     [4, 5, 8, 7]
+    # ]
+
+    # mesh = QuadMesh.from_vertices_and_faces(vertices, faces)
+    # add_strip_wip(mesh, [3, 4, 5])
+
+    # plotter = MeshPlotter(mesh, figsize=(5.0, 5.0))
+    # plotter.draw_vertices(text='key')
+    # plotter.draw_edges()
+    # plotter.draw_faces()
+    # plotter.show()
+
     vertices = [
         [0.0, 0.0, 0.0],
         [1.0, 0.0, 0.0],
-        [2.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0],
         [1.0, 1.0, 0.0],
-        [2.0, 1.0, 0.0],
-        [0.0, 2.0, 0.0],
-        [1.0, 2.0, 0.0],
-        [2.0, 2.0, 0.0]
+        [0.0, 1.0, 0.0],
     ]
 
     faces = [
-        [0, 1, 4, 3],
-        [1, 2, 5, 4],
-        [3, 4, 7, 6],
-        [4, 5, 8, 7]
+        [0, 1, 2, 3],
     ]
 
     mesh = QuadMesh.from_vertices_and_faces(vertices, faces)
-    add_strip_wip(mesh, [3, 4, 5])
+    mesh.collect_strips()
 
-    plotter = MeshPlotter(mesh, figsize=(5.0, 5.0))
-    plotter.draw_vertices(text='key')
-    plotter.draw_edges()
-    plotter.draw_faces()
-    plotter.show()
+    print(total_boundary_deletions(mesh, [0, 1]))
+    print(collateral_strip_deletions(mesh,[0]))
