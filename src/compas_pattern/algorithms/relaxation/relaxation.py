@@ -13,6 +13,7 @@ from compas.datastructures import mesh_smooth_centerofmass
 from compas_rhino.geometry import RhinoPoint
 from compas_pattern.cad.rhino.objects.curve import RhinoCurve
 from compas_pattern.cad.rhino.objects.surface import RhinoSurface
+from compas_rhino.geometry import RhinoMesh
 
 
 __all__ = [
@@ -49,6 +50,8 @@ def constrained_smoothing(mesh, kmax=100, damping=0.5, constraints={}, algorithm
                 x, y, z = RhinoCurve(constraint).closest_point(mesh.vertex_coordinates(vkey))
             elif rs.ObjectType(constraint) == 8:
                 x, y, z = RhinoSurface(constraint).closest_point(mesh.vertex_coordinates(vkey))
+            elif rs.ObjectType(constraint) == 32:
+                x, y, z = RhinoMesh(constraint).closest_point(mesh.vertex_coordinates(vkey))
             else:
                 continue
 

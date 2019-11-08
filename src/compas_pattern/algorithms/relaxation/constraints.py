@@ -62,7 +62,7 @@ def automated_smoothing_surface_constraints(mesh, surface):
 	return constraints
 
 
-def automated_smoothing_constraints(mesh, points = None, curves = None, surface = None):
+def automated_smoothing_constraints(mesh, points = None, curves = None, surface = None, mesh2 = None):
 	"""Apply automatically point, curve and surface constraints to the vertices of a mesh to smooth.
 
 	Parameters
@@ -75,6 +75,8 @@ def automated_smoothing_constraints(mesh, points = None, curves = None, surface 
 		List of RhinoCurve objects on which to constrain mesh vertices. Default is None.
 	surface : RhinoSurface
 		A RhinoSurface object on which to constrain mesh vertices. Default is None.
+	mesh2 : RhinoMesh
+		A RhinoMesh object on which to constrain mesh vertices. Default is None.
 
 	Returns
 	-------
@@ -91,7 +93,10 @@ def automated_smoothing_constraints(mesh, points = None, curves = None, surface 
 	
 	if points is not None and len(points) != 0:
 		constrained_vertices.update({vertices[closest_point_in_cloud(rs.PointCoordinates(point), vertex_coordinates)[2]]: point for point in points})
-	
+
+	if mesh2 is not None:
+		constraints.update({vkey: mesh2 for vkey in mesh.vertices()})
+
 	if surface is not None:
 		constraints.update({vkey: surface for vkey in mesh.vertices()})
 	
