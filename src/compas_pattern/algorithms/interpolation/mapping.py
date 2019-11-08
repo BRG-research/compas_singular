@@ -86,11 +86,14 @@ def distance_and_deletion_rules_between_2_meshes(mesh_i, mesh_j):
     # check cost for checking isomorphism of graph compared to mesh
     # other possibility to compare: very fast heuristic ismorphism check on strip graph and classic one on mesh graph
 
+    nb_graph_iso_check = 0
+    nb_mesh_iso_check = 0
+    #nb_discard = 0
     results = []
 
     ni, nj = mesh_i.number_of_strips(), mesh_j.number_of_strips()
     
-    for k in range(0, max(ni, nj) + 1):
+    for k in range(0, max(ni, nj) - 1):
         
         for nodes_i in it.combinations(list(mesh_i.strips()), k + max(0, ni - nj)):
             mesh_i_copy = mesh_i.copy()
@@ -100,23 +103,36 @@ def distance_and_deletion_rules_between_2_meshes(mesh_i, mesh_j):
                 continue
 
             for nodes_j in it.combinations(list(mesh_j.strips()), k + max(0, nj - ni)):
-                print(nodes_i, nodes_j)
                 mesh_j_copy = mesh_j.copy()
                 delete_strips(mesh_j_copy, nodes_j)
                 # discard if collateral strip deletions, which are at a higher distance
                 if nj - mesh_j_copy.number_of_strips() != len(nodes_j):
                     continue
 
-                # test strip isomorphism
-                if are_strips_isomorphic(mesh_i_copy, mesh_j_copy, close_strip_data=True):  
-                    # test mesh isomorphism
-                    if are_meshes_isomorphic(mesh_i_copy, mesh_j_copy, boundary_edge_data=True):
-                        distance = 2 * k + abs(ni - nj)
-                        results.append((distance, {mesh_i: nodes_i, mesh_j: nodes_j}))
+                # # test strip isomorphism
+                # nb_graph_iso_check += 1
+                # if are_strips_isomorphic(mesh_i_copy, mesh_j_copy, close_strip_data=True):  
+                #     # test mesh isomorphism
+                #     nb_mesh_iso_check += 1
+                #     if are_meshes_isomorphic(mesh_i_copy, mesh_j_copy, boundary_edge_data=True):
+                #         distance = 2 * k + abs(ni - nj)
+                #         results.append((distance, {mesh_i: nodes_i, mesh_j: nodes_j}))
+
+                nb_mesh_iso_check += 1
+                if are_meshes_isomorphic(mesh_i_copy, mesh_j_copy, boundary_edge_data=True):
+                    distance = 2 * k + abs(ni - nj)
+                    results.append((distance, {mesh_i: nodes_i, mesh_j: nodes_j}))
+
+                # if are_strips_isomorphic(mesh_i_copy, mesh_j_copy, close_strip_data=True):  
+                #     distance = 2 * k + abs(ni - nj)
+                #     results.append((distance, {mesh_i: nodes_i, mesh_j: nodes_j}))
+
         
         # potentially several combinations with different combinations of strips at the same distance
         if len(results) != 0:
+            #print(nb_graph_iso_check, nb_mesh_iso_check)
             return results
+
 
 
 def submesh_and_distance_and_deletion_rules_between_2_meshes(mesh_i, mesh_j):
@@ -240,32 +256,38 @@ def interpolation(meshes):
 
 if __name__ == '__main__':
 
+    import time
+
     from compas_pattern.datastructures.mesh_quad_coarse.mesh_quad_coarse import CoarseQuadMesh
+    from compas_pattern.datastructures.mesh_quad_pseudo_coarse.mesh_quad_pseudo_coarse import CoarsePseudoQuadMesh
+    from compas_pattern.datastructures.mesh_quad_pseudo.mesh_quad_pseudo import PseudoQuadMesh
     from compas_pattern.algorithms.interpolation.layout import *
     from compas.datastructures import meshes_join
     from compas_plotters.meshplotter import MeshPlotter
+    from compas.utilities import average
+    from compas_pattern.algorithms.interpolation.isomorphism import are_meshes_isomorphic
 
-    mesh_1 = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/f.json')
-    mesh_2 = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/g.json')
-    mesh_3 = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/h.json')
-    mesh_4 = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/i.json')
-    mesh_5 = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/j.json')
+    # mesh_1 = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/f.json')
+    # mesh_2 = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/g.json')
+    # mesh_3 = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/h.json')
+    # mesh_4 = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/i.json')
+    # mesh_5 = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/j.json')
 
-    mesh_sym = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/neunmuenster_1.json')
-    mesh_asym = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/neunmuenster_2.json')
+    # mesh_sym = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/neunmuenster_1.json')
+    # mesh_asym = CoarseQuadMesh.from_json('/Users/Robin/Desktop/json/neunmuenster_2.json')
 
-    # mesh_1.collect_strips()
-    # mesh_5.collect_strips()
-    # print(distance_and_deletion_rules_between_2_meshes(mesh_1, mesh_5))
+    # # mesh_1.collect_strips()
+    # # mesh_5.collect_strips()
+    # # print(distance_and_deletion_rules_between_2_meshes(mesh_1, mesh_5))
 
-    meshes = [mesh_sym, mesh_asym]
-    for mesh in meshes:
-        print(mesh.number_of_vertices())
-        mesh.collect_strips()
-        print(mesh.number_of_strips())
+    # meshes = [mesh_sym, mesh_asym]
+    # for mesh in meshes:
+    #     print(mesh.number_of_vertices())
+    #     mesh.collect_strips()
+    #     print(mesh.number_of_strips())
 
-    for result in distance_and_deletion_rules_between_2_meshes(*meshes):
-        print(result)
+    # for result in distance_and_deletion_rules_between_2_meshes(*meshes):
+    #     print(result)
     # mapper = Mapper(meshes)
     # mapper.compute_submesh()
     # mapper.compute_maps()
@@ -291,3 +313,72 @@ if __name__ == '__main__':
     # plotter.draw_edges()
     # plotter.draw_faces()
     # plotter.show()
+
+    mesh_1 = PseudoQuadMesh.from_json('/Users/Robin/Desktop/distance_validation/50.json')
+    mesh_2 = PseudoQuadMesh.from_json('/Users/Robin/Desktop/distance_validation/51.json')
+
+    # new_face_pole_1 = {int(fkey): vkey for fkey, vkey in mesh_1.data['attributes']['face_pole'].items()}
+    # mesh_1.data['attributes']['face_pole'] = new_face_pole_1
+    mesh_1.collect_strips()
+
+    # new_face_pole_2 = {int(fkey): vkey for fkey, vkey in mesh_2.data['attributes']['face_pole'].items()}
+    # mesh_2.data['attributes']['face_pole'] = new_face_pole_2
+    mesh_2.collect_strips()
+
+    #n1 > n2
+    n1, n2 = mesh_1.number_of_strips(), mesh_2.number_of_strips()
+    print(n1, n2)
+    t = []
+    for i in range(1):
+        t0 = time.time()
+        results = distance_and_deletion_rules_between_2_meshes(mesh_1, mesh_2)
+        t1 = time.time()
+        t.append(t1-t0)
+    n0 = n1 - len(results[0][1][mesh_1])
+    k = n2 - n0
+    d = results[0][0]
+    nb_submeshes = len(results)
+    dt = average(t)
+    print(n1, n2, n0, k, d, nb_submeshes, dt)
+
+    non_iso_submeshes = []
+    for result in results:
+        submesh_1 = mesh_1.copy()
+        strips_1 = result[1][mesh_1]
+        delete_strips(submesh_1, strips_1)
+        add = True
+        for submesh in non_iso_submeshes:
+            if are_meshes_isomorphic(submesh_1, submesh, boundary_edge_data=True):
+                add = False
+                break
+        if add:
+            non_iso_submeshes.append(submesh_1)
+
+    print(len(non_iso_submeshes))
+
+    for i, mesh in enumerate(non_iso_submeshes):
+        mesh.to_json('/Users/Robin/Desktop/distance_validation/7_{}.json'.format(i))
+        # plotter = MeshPlotter(mesh, figsize = (20, 20))
+        # plotter.draw_vertices(radius = 0.01)
+        # plotter.draw_edges()
+        # plotter.draw_faces()
+        # plotter.show()
+
+    # for result in results:
+    #     print(result)
+    #     submesh_1 = mesh_1.copy()
+    #     strips_1 = result[1][mesh_1]
+    #     delete_strips(submesh_1, strips_1)
+    #     plotter = MeshPlotter(submesh_1, figsize = (20, 20))
+    #     plotter.draw_vertices(radius = 0.01)
+    #     plotter.draw_edges()
+    #     plotter.draw_faces()
+    #     plotter.show()
+    #     submesh_2 = mesh_2.copy()
+    #     strips_2 = result[1][mesh_2]
+    #     delete_strips(submesh_2, strips_2)
+    #     plotter = MeshPlotter(submesh_2, figsize = (20, 20))
+    #     plotter.draw_vertices(radius = 0.01)
+    #     plotter.draw_edges()
+    #     plotter.draw_faces()
+    #     plotter.show()
