@@ -78,10 +78,10 @@ def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output
 
 	# output remapped topological skeleton/medial axis
 	if output_skeleton:
-		outputs.append([RhinoSurface(srf_guid).polyline_uv_to_xyz(polyline) for polyline in decomposition.branches()])
+		outputs.append([RhinoSurface(srf_guid).polyline_uv_to_xyz([xyz[:2] for xyz in polyline]) for polyline in decomposition.branches()])
 
 	if output_decomposition:
-		outputs.append([RhinoSurface(srf_guid).polyline_uv_to_xyz(polyline) for polyline in decomposition.decomposition_polylines()])
+		outputs.append([RhinoSurface(srf_guid).polyline_uv_to_xyz([xyz[:2] for xyz in polyline]) for polyline in decomposition.decomposition_polylines()])
 
 	# output decomposition coarse quad mesh
 	if output_mesh:
@@ -106,3 +106,10 @@ def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output
 if __name__ == '__main__':
 
 	import compas
+	from compas_pattern.datastructures.mesh.mesh import Mesh
+	#from compas_pattern.algorithms.decomposition import Decomposition
+
+	outer_boundary = [[1.0, 0.125, 0.0], [1.0, 0.25, 0.0], [1.0, 0.375, 0.0], [1.0, 0.5, 0.0], [1.0, 0.625, 0.0], [1.0, 0.75, 0.0], [1.0, 0.875, 0.0], [1.0, 1.0, 0.0], [0.875, 1.0, 0.0], [0.75, 1.0, 0.0], [0.625, 1.0, 0.0], [0.5, 1.0, 0.0], [0.375, 1.0, 0.0], [0.25, 1.0, 0.0], [0.125, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.875, 0.0], [0.0, 0.75, 0.0], [0.0, 0.625, 0.0], [0.0, 0.5, 0.0], [0.0, 0.375, 0.0], [0.0, 0.25, 0.0], [0.0, 0.125, 0.0], [0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.25, 0.0, 0.0], [0.375, 0.0, 0.0], [0.5, 0.0, 0.0], [0.625, 0.0, 0.0], [0.75, 0.0, 0.0], [0.875, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 0.125, 0.0]]
+	point_features = [[0.29999999999999999, 0.59999999999999998, 0.0]]
+
+	decomposition = boundary_triangulation(outer_boundary, inner_boundaries=[], polyline_features=[], point_features=point_features, cls=Decomposition, src='numpy_rpc')
