@@ -1,6 +1,6 @@
 from compas_pattern.datastructures.mesh.mesh import Mesh
 from compas_pattern.datastructures.network.network import Network
-from compas.datastructures.network.operations import network_polylines
+from compas.datastructures.network.core.operations.join import network_polylines
 
 from compas.datastructures import trimesh_face_circle
 

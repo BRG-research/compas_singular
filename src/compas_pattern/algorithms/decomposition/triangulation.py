@@ -27,8 +27,6 @@ __email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
 	'delaunay_numpy_rpc',
-	'delaunay_numpy_xfunc',
-	'delaunay',
 	'boundary_triangulation'
 ]
 
@@ -50,60 +48,8 @@ def delaunay_numpy_rpc(vertices):
 	geometry = Proxy('compas.geometry.triangulation.triangulation_numpy')
 	return geometry.delaunay_from_points_numpy(vertices)
 
-def delaunay_numpy_xfunc(vertices):
-	"""Xfunc for Delaunay function from numpy.
 
-	Parameters
-	----------
-	vertices : list
-		List of vertex coordinates.
-
-	Returns
-	-------
-	list
-		List of face vertices.
-
-	"""
-
-	return delaunay_from_points_numpy(vertices)
-
-
-def delaunay(vertices, src = 'compas', cls=None):
-	"""Group the Delaunay functions from compas, numpy.
-
-	Parameters
-	----------
-	vertices : list
-		List of vertex coordinates.
-	src : string
-		Specify Delaunay algorithm to use: compas or numpy.
-	cls
-		Mesh class.
-
-	Returns
-	-------
-	cls
-		The Delaunay mesh.
-
-	"""
-
-	if cls is None:
-		cls = Mesh
-
-	if src == 'compas':
-		faces = delaunay_from_points(vertices)
-	
-	elif src == 'numpy_rpc':
-		faces = delaunay_numpy_rpc(vertices)
-	elif src == 'numpy_xfunc':
-		faces = XFunc('compas_pattern.algorithms.decomposition.triangulation.delaunay_numpy_xfunc')(vertices)
-	else:
-		return None
-
-	return cls.from_vertices_and_faces(vertices, faces)
-
-
-def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features = [], point_features = [], src = 'numpy_rpc', cls=None):
+def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features = [], point_features = [], cls=None):
 	"""Generate Delaunay triangulation between a planar outer boundary and planar inner boundaries. All vertices lie the boundaries.
 
 	Parameters
@@ -116,8 +62,6 @@ def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features =
 		List of planar polyline_features as lists of vertex coordinates.
 	point_features : list
 		List of planar point_features as lists of vertex coordinates.
-	src : string
-		Specify Delaunay algorithm to use: compas or numpy.
 	cls
 		Mesh class.
 
@@ -133,7 +77,7 @@ def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features =
 
 	# generate planar Delaunay triangulation
 	vertices = [pt for boundary in [outer_boundary] + inner_boundaries + polyline_features for pt in boundary] + point_features
-	delaunay_mesh = delaunay(vertices, src = src, cls = cls)
+	delaunay_mesh = Decomposition.from_vertices_and_faces(vertices, delaunay_numpy_rpc(vertices))
 	
 	# delete false faces with aligned vertices
 	for fkey in list(delaunay_mesh.faces()):
@@ -164,12 +108,3 @@ def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features =
 if __name__ == '__main__':
 
 	import compas
-	from compas_pattern.datastructures.mesh.mesh import Mesh
-
-	vertices = [
-		[0.0, 0.0, 0.0],
-		[1.0, 0.0, 0.0],
-		[0.0, 1.0, 0.0]
-	]
-
-	delaunay(vertices, src = 'numpy')

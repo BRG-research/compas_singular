@@ -12,8 +12,10 @@ from compas.datastructures import mesh_insert_vertex_on_edge
 from compas.datastructures import mesh_substitute_vertex_in_faces
 
 from compas_pattern.datastructures.network.network import Network
-from compas.datastructures.network.operations import network_polylines
+from compas.datastructures.network.core.operations.join import network_polylines
 from compas.geometry import Polyline
+
+from compas.datastructures import mesh_explode
 
 from compas.datastructures import mesh_weld
 from compas.datastructures import mesh_unweld_edges
@@ -394,29 +396,39 @@ class Decomposition(Skeleton):
 	def quadrangulate_polygonal_faces(self):
 		# WIP: problem not all faces should have the same source for propagation
 
-		mesh = self.mesh
+		supermesh = self.mesh
 
 		delaunay_vertex_map = tuple(geometric_key(self.vertex_coordinates(vkey)) for vkey in self.vertices())
 		#newly added vertices in mesh that were not in the Delaunay are missing...
 
-		edges_to_unweld = [edge for edge in mesh.edges() if sum([geometric_key(mesh.vertex_coordinates(i)) in delaunay_vertex_map for i in edge]) == 2]
-		mesh_unweld_edges(mesh, edges_to_unweld)
+		edges_to_unweld = [edge for edge in supermesh.edges() if sum([geometric_key(supermesh.vertex_coordinates(i)) in delaunay_vertex_map for i in edge]) == 2]
+		mesh_unweld_edges(supermesh, edges_to_unweld)
 
-		#meshes = mesh_explode(mesh)
-		#for mesh in meshes:
+		meshes = mesh_explode(supermesh)
 
+		for mesh in meshes:
+			candidate_map = {geometric_key(mesh.vertex_coordinates(vkey)): [] for vkey in mesh.vertices()}
+			for vkey in mesh.vertices_on_boundary():
+				candidate_map[geometric_key(mesh.vertex_coordinates(vkey))].append(mesh.vertex_degree(vkey))
 
-		candidate_map = {geometric_key(mesh.vertex_coordinates(vkey)): [] for vkey in mesh.vertices()}
-		for vkey in mesh.vertices_on_boundary():
-			candidate_map[geometric_key(mesh.vertex_coordinates(vkey))].append(mesh.vertex_degree(vkey))
+			source_map = tuple([geom_key for geom_key, valencies in candidate_map.items() if len(list(set(valencies))) > 1])
+			self.mesh = mesh_weld(mesh)
+			mesh = self.mesh
 
-		source_map = tuple([geom_key for geom_key, valencies in candidate_map.items() if len(list(set(valencies))) > 1])
-		self.mesh = mesh_weld(mesh)
+			sources = [vkey for vkey in mesh.vertices() if geometric_key(mesh.vertex_coordinates(vkey)) in source_map]
+
+			quadrangulate_mesh(mesh, sources)
+
+	def quadrangulate_polygonal_faces_wip(self):
 		mesh = self.mesh
 
-		sources = [vkey for vkey in mesh.vertices() if geometric_key(mesh.vertex_coordinates(vkey)) in source_map]
+		# delaunay_vertex_map = tuple(geometric_key(self.vertex_coordinates(vkey)) for vkey in self.vertices())
+		
+		# for fkey in mesh.faces():
+		# 	face_vertices = mesh.face_vertices(fkey)
+		# 	if len(face_vertices) > 4:
+				
 
-		quadrangulate_mesh(mesh, sources)
 
 	def split_quads_with_poles(self, poles):
 

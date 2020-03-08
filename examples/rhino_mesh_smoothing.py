@@ -22,21 +22,23 @@ else:
     constraints = {}
 if crv_guids is not None:
     for vkey in mesh.vertices():
-        if not mesh.is_vertex_on_boundary(vkey):
-            for crv_guid in crv_guids:
-                if rs.IsPointOnCurve(crv_guid, mesh.vertex_coordinates(vkey)):
-                    constraints[vkey] = crv_guid
-                    break
+        #if not mesh.is_vertex_on_boundary(vkey):
+        for crv_guid in crv_guids:
+            if rs.Distance(mesh.vertex_coordinates(vkey), rs.EvaluateCurve(crv_guid, rs.CurveClosestPoint(crv_guid, mesh.vertex_coordinates(vkey)))) < .1:
+            #if rs.IsPointOnCurve(crv_guid, mesh.vertex_coordinates(vkey)):
+                constraints[vkey] = crv_guid
+                break
 
 constraints.update(automated_smoothing_constraints(mesh, pt_guids))
 
-kmax = rs.GetInteger('number of smoothing iterations?', 20, 0, 100)
+kmax = rs.GetInteger('number of smoothing iterations?', 50, 0, 100)
 damping = rs.GetReal('value of smoothing damping?', 0.5, 0, 1)
 
 count = 100
 while count:
     count -=1
-    constrained_smoothing(mesh, kmax = kmax, damping = damping, constraints = constraints, algorithm = 'area')
+    constrained_smoothing(mesh, kmax = int(kmax/2), damping = damping, constraints = constraints, algorithm = 'centroid')
+    constrained_smoothing(mesh, kmax = int(kmax/2), damping = damping, constraints = constraints, algorithm = 'area')
     artist = MeshArtist(mesh)
     guid = artist.draw_mesh()
     bool = rs.GetString('more smoothing?', 'False', ['True', 'False'])

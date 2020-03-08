@@ -11,11 +11,16 @@ from compas_pattern.cad.rhino.objects.surface import RhinoSurface
 from compas.utilities import geometric_key
 
 __all__ = [
-	'surface_decomposition'
+	'surface_decomposition',
+	'decomposition_delaunay',
+	'decomposition_skeleton',
+	'decomposition_curves',
+	'decomposition_mesh',
+	'decomposition_polysurface'
 ]
 
 
-def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output_delaunay=False, output_skeleton=True, output_decomposition=False, output_mesh=True, output_polysurface=False, src='numpy_rpc'):
+def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[]):
 	"""Generate the topological skeleton/medial axis of a surface based on a Delaunay triangulation, after mapping and before remapping.
 
 	Parameters
@@ -28,28 +33,11 @@ def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output
 		A list of Rhino curve guids.
 	pt_guids : list
 		A list of Rhino points guids.
-	output_delaunay : bool
-		Output the Delaunay mesh or not.
-		Default is False.
-	output_skeleton : bool
-		Output the skeleton polylines or not.
-		Default is True.
-	output_decomposition : bool
-		Output the decomposition polylines or not.
-		Default is True.
-	output_mesh : bool
-		Output the coarse quad mesh or not.
-		Default is True.
-	output_polysurface : bool
-		Output the polysurface or not.
-		Default is False.
-	src : str
-		Source of Delaunay triangulation algorithm.
 
 	Returns
 	-------
-	list
-		The requested outputs.
+	decomposition : Decomposition
+		The decomposition of the surface and its features.
 
 	References
 	----------
@@ -68,36 +56,33 @@ def surface_decomposition(srf_guid, precision, crv_guids=[], pt_guids=[], output
 	outer_boundary, inner_boundaries, polyline_features, point_features = surface_discrete_mapping(srf_guid, precision, crv_guids = crv_guids, pt_guids = pt_guids)
 
 	# Delaunay triangulation of the palnar polyline borders
-	decomposition = boundary_triangulation(outer_boundary, inner_boundaries, polyline_features, point_features, cls=Decomposition, src=src)
+	decomposition = boundary_triangulation(outer_boundary, inner_boundaries, polyline_features, point_features, cls=Decomposition)
 
-	outputs = []
+	return decomposition, outer_boundary, inner_boundaries, polyline_features, point_features
 
+def decomposition_delaunay(srf_guid, decomposition):
 	# output remapped Delaunay mesh
-	if output_delaunay:
-		outputs.append(RhinoSurface(srf_guid).mesh_uv_to_xyz(decomposition))
+	return RhinoSurface(srf_guid).mesh_uv_to_xyz(decomposition)
 
+def decomposition_skeleton(srf_guid, decomposition):
 	# output remapped topological skeleton/medial axis
-	if output_skeleton:
-		outputs.append([RhinoSurface(srf_guid).polyline_uv_to_xyz([xyz[:2] for xyz in polyline]) for polyline in decomposition.branches()])
+	return [RhinoSurface(srf_guid).polyline_uv_to_xyz([xyz[:2] for xyz in polyline]) for polyline in decomposition.branches()]
 
-	if output_decomposition:
-		outputs.append([RhinoSurface(srf_guid).polyline_uv_to_xyz([xyz[:2] for xyz in polyline]) for polyline in decomposition.decomposition_polylines()])
+def decomposition_curves(srf_guid, decomposition):
+	return [RhinoSurface(srf_guid).polyline_uv_to_xyz([xyz[:2] for xyz in polyline]) for polyline in decomposition.decomposition_polylines()]
 
+def decomposition_mesh(srf_guid, decomposition, point_features):
 	# output decomposition coarse quad mesh
-	if output_mesh:
 		mesh = decomposition.decomposition_mesh(point_features)
-		RhinoSurface(srf_guid).mesh_uv_to_xyz(mesh)
-		outputs.append(mesh)
+		RhinoSurface.from_guid(srf_guid).mesh_uv_to_xyz(mesh)
+		return mesh
 
-	# output decomposition surface
-	if output_polysurface:
-		mesh = decomposition.decomposition_mesh()
-		nurbs_curves = {(geometric_key(polyline[i]), geometric_key(polyline[-i -1])): rs.AddInterpCrvOnSrfUV(srf_guid, [pt[:2] for pt in polyline]) for polyline in decomposition.decomposition_polylines() for i in [0, -1]}
-		outputs.append(rs.JoinSurfaces([rs.AddEdgeSrf([nurbs_curves[(geometric_key(mesh.vertex_coordinates(u)), geometric_key(mesh.vertex_coordinates(v)))] for u, v in mesh.face_halfedges(fkey)]) for fkey in mesh.faces()], delete_input=True))
-		rs.DeleteObjects(list(nurbs_curves.values()))
-
-	return outputs
-
+def decomposition_polysurface(srf_guid, decomposition, point_features):
+	mesh = decomposition.decomposition_mesh()
+	nurbs_curves = {(geometric_key(polyline[i]), geometric_key(polyline[-i -1])): rs.AddInterpCrvOnSrfUV(srf_guid, [pt[:2] for pt in polyline]) for polyline in decomposition.decomposition_polylines() for i in [0, -1]}
+	polysurface = rs.JoinSurfaces([rs.AddEdgeSrf([nurbs_curves[(geometric_key(mesh.vertex_coordinates(u)), geometric_key(mesh.vertex_coordinates(v)))] for u, v in mesh.face_halfedges(fkey)]) for fkey in mesh.faces()], delete_input=True)
+	rs.DeleteObjects(list(nurbs_curves.values()))
+	return polysurface
 
 # ==============================================================================
 # Main
@@ -107,9 +92,9 @@ if __name__ == '__main__':
 
 	import compas
 	from compas_pattern.datastructures.mesh.mesh import Mesh
-	#from compas_pattern.algorithms.decomposition import Decomposition
+	#from compas_pattern.algorithms.decomposition.decomposition import Decomposition
 
 	outer_boundary = [[1.0, 0.125, 0.0], [1.0, 0.25, 0.0], [1.0, 0.375, 0.0], [1.0, 0.5, 0.0], [1.0, 0.625, 0.0], [1.0, 0.75, 0.0], [1.0, 0.875, 0.0], [1.0, 1.0, 0.0], [0.875, 1.0, 0.0], [0.75, 1.0, 0.0], [0.625, 1.0, 0.0], [0.5, 1.0, 0.0], [0.375, 1.0, 0.0], [0.25, 1.0, 0.0], [0.125, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.875, 0.0], [0.0, 0.75, 0.0], [0.0, 0.625, 0.0], [0.0, 0.5, 0.0], [0.0, 0.375, 0.0], [0.0, 0.25, 0.0], [0.0, 0.125, 0.0], [0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.25, 0.0, 0.0], [0.375, 0.0, 0.0], [0.5, 0.0, 0.0], [0.625, 0.0, 0.0], [0.75, 0.0, 0.0], [0.875, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 0.125, 0.0]]
 	point_features = [[0.29999999999999999, 0.59999999999999998, 0.0]]
 
-	decomposition = boundary_triangulation(outer_boundary, inner_boundaries=[], polyline_features=[], point_features=point_features, cls=Decomposition, src='numpy_rpc')
+	decomposition = boundary_triangulation(outer_boundary, inner_boundaries=[], polyline_features=[], point_features=point_features, cls=Decomposition)

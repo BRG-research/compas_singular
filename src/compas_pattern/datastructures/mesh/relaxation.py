@@ -45,13 +45,13 @@ def constrained_smoothing(mesh, kmax=100, damping=0.5, constraints={}, algorithm
 
         for vkey, constraint in constraints.items():
             if rs.ObjectType(constraint) == 1:
-                x, y, z = RhinoPoint(constraint).xyz
+                x, y, z = RhinoPoint.from_guid(constraint).xyz
             elif rs.ObjectType(constraint) == 4:
-                x, y, z = RhinoCurve(constraint).closest_point(mesh.vertex_coordinates(vkey))
+                x, y, z = RhinoCurve.from_guid(constraint).closest_point(mesh.vertex_coordinates(vkey))
             elif rs.ObjectType(constraint) == 8:
-                x, y, z = RhinoSurface(constraint).closest_point(mesh.vertex_coordinates(vkey))
+                x, y, z = RhinoSurface.from_guid(constraint).closest_point(mesh.vertex_coordinates(vkey))
             elif rs.ObjectType(constraint) == 32:
-                x, y, z = RhinoMesh(constraint).closest_point(mesh.vertex_coordinates(vkey))
+                x, y, z = RhinoMesh.from_guid(constraint).closest_point(mesh.vertex_coordinates(vkey))
             else:
                 continue
 

@@ -145,6 +145,14 @@ def add_strip(mesh, polyedge):
 	#print(left_polyedge, right_polyedge)
 	return n, old_vkeys_to_new_vkeys
 
+def add_element_start(mesh, u, v):
+	pass
+
+def add_element_main(mesh, u, v):
+	pass
+
+def add_element_end(mesh, u, v):
+	pass
 
 def update_strip_data(mesh, full_updated_polyedge, old_vkeys_to_new_vkeys):
 	

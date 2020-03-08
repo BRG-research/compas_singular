@@ -7,7 +7,8 @@ __all__ = [
 	'delete_strips',
 	'delete_strip',
 	'strip_edge_network',
-	'update_strip_data'
+	'update_strip_data',
+	'strips_to_split_to_prevent_boundary_collapse'
 ]
 
 
@@ -21,7 +22,7 @@ def delete_strips(mesh, skeys, callback=None, callback_args=None):
 					callback(mesh, callback_args)
 
 
-def delete_strip(mesh, skey):
+def delete_strip(mesh, skey, update_data=True):
 	"""Delete a strip.
 
 	Parameters
@@ -30,6 +31,8 @@ def delete_strip(mesh, skey):
 		A quad mesh.
 	skey : hashable
 		A strip key.
+	update_data : bool, optional
+		Update strip data. Default is True.
  
 	Returns
 	-------
@@ -65,7 +68,8 @@ def delete_strip(mesh, skey):
 			mesh.delete_vertex(old_vkey)
 
 	# update strip data
-	update_strip_data(mesh, old_vkeys_to_new_vkeys)
+	if update_data:
+		update_strip_data(mesh, old_vkeys_to_new_vkeys)
 
 	return old_vkeys_to_new_vkeys
 

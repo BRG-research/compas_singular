@@ -1,4 +1,12 @@
-__all__ = []
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+
+__all__ = [
+	'extract_pareto_indices',
+	'is_dominating'
+
+]
 
 
 def extract_pareto_indices(data, k=1.0):
@@ -10,7 +18,7 @@ def extract_pareto_indices(data, k=1.0):
 	data : list
 		A list of iterables storing the performance data.
 	k : float, optional
-		Parameter for weak domination. Default if 1.0.
+		Parameter for weak domination. Default is 1.0.
 
 	Returns
 	-------

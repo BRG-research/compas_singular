@@ -1,5 +1,5 @@
 from compas.datastructures import Network
-from compas.datastructures.network.operations import network_polylines
+from compas.datastructures.network.core.operations.join import network_polylines
 
 from compas_pattern.cad.rhino.objects.surface import RhinoSurface
 from compas_pattern.cad.rhino.objects.curve import RhinoCurve
@@ -48,7 +48,7 @@ def surface_discrete_mapping(srf_guid, discretisation, minimum_discretisation = 
 
 	"""
 
-	srf = RhinoSurface(srf_guid)
+	srf = RhinoSurface.from_guid(srf_guid)
 
 	# a boundary may be made of multiple boundary components and therefore checking for closeness and joining are necessary
 	mapped_borders = []
@@ -57,7 +57,7 @@ def surface_discrete_mapping(srf_guid, discretisation, minimum_discretisation = 
 		mapped_border = []
 
 		for border in srf.borders(type = i):
-			border = RhinoCurve(border)
+			border = RhinoCurve.from_guid(border)
 			points = [list(srf.point_xyz_to_uv(pt)) + [0.0] for pt in border.divide(max(int(border.length() / discretisation) + 1, minimum_discretisation))]
 			
 			if border.is_closed():
@@ -74,7 +74,7 @@ def surface_discrete_mapping(srf_guid, discretisation, minimum_discretisation = 
 
 	for crv_guid in crv_guids:
 
-		curve = RhinoCurve(crv_guid)
+		curve = RhinoCurve.from_guid(crv_guid)
 		points = [list(srf.point_xyz_to_uv(pt)) + [0.0] for pt in curve.divide(max(int(curve.length() / discretisation) + 1, minimum_discretisation))]
 		
 		if curve.is_closed():

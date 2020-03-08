@@ -29,6 +29,39 @@ class Mesh(Mesh):
 			faces = [[key_index[key] for key in self.face_vertices(fkey)] for fkey in self.faces()]
 		return vertices, faces
 
+	def boundaries(self):
+		"""Collect the mesh boundaries as lists of vertices.
+
+		Parameters
+		----------
+		mesh : Mesh
+			Mesh.
+
+		Returns
+		-------
+		boundaries : list
+			List of boundaries as lists of vertex keys.
+
+		"""
+
+		boundaries = []
+
+		# get all boundary edges pointing outwards
+		boundary_edges = {u: v for u, v in self.edges_on_boundary(chained=True)}
+
+		# start new boundary
+		while len(boundary_edges) > 0:
+			boundary = list(boundary_edges.popitem())
+
+			# get consecuvite vertex until the boundary is closed
+			while boundary[0] != boundary[-1]:
+				boundary.append(boundary_edges[boundary[-1]])
+				boundary_edges.pop(boundary[-2])
+
+			boundaries.append(boundary[: -1])
+
+		return boundaries
+	
 	def is_boundary_vertex_kink(self, vkey, threshold_angle):
 		"""Return whether there is a kink at a boundary vertex according to a threshold angle.
 
@@ -96,3 +129,4 @@ if __name__ == '__main__':
 	import compas
 
 	mesh = Mesh.from_obj(compas.get('faces.obj'))
+	print(mesh.boundaries())

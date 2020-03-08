@@ -1,15 +1,28 @@
-""""""
+"""
+********************************************************************************
+compas_pattern
+********************************************************************************
 
-import os
+.. currentmodule:: compas_pattern
 
-HERE = os.path.abspath(os.path.dirname(__file__))
-HOME = os.path.abspath(os.path.join(HERE, '../../'))
-DATA = os.path.join(HOME, 'data')
-TEMP = os.path.join(HOME, 'temp')
+Hello!
+
+.. toctree::
+    :maxdepth: 1
+
+    compas_pattern.topology
+    compas_pattern.utilities
+
+"""
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+from .utilities import *
+
+__author__ = 'Robin OVAL'
 
 
-def get(relpath):
-    return os.path.join(DATA, relpath)
+__all__ = [name for name in dir() if not name.startswith('_')]
 
-
-__all__ = []

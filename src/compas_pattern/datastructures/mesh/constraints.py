@@ -13,8 +13,8 @@ from compas_pattern.cad.rhino.objects.surface import RhinoCurve
 from compas.geometry import distance_point_point
 from compas.geometry import closest_point_in_cloud
 
-from compas_rhino.helpers import mesh_draw_vertices
-from compas_rhino.helpers import mesh_select_vertices
+from compas_rhino.artists import MeshArtist
+from compas_rhino.selectors import mesh_select_vertices
 
 from compas_pattern.utilities.lists import list_split
 
@@ -52,7 +52,7 @@ def automated_smoothing_surface_constraints(mesh, surface):
 
 	for vkey in mesh.vertices_on_boundary():
 		xyz = mesh.vertex_coordinates(vkey)
-		projections = {curve: distance_point_point(xyz, RhinoCurve(curve).closest_point(xyz)) for curve in curves}
+		projections = {curve: distance_point_point(xyz, RhinoCurve.from_guid(curve).closest_point(xyz)) for curve in curves}
 		constraints.update({vkey: min(projections, key = projections.get)})
 
 	key_to_index = {i: vkey for i, vkey in enumerate(mesh.vertices_on_boundary())}
@@ -195,7 +195,8 @@ def display_smoothing_constraints(mesh, constraints):
 		else:
 			color[vkey] = (0, 0, 0)
 
-	return mesh_draw_vertices(mesh, color = color)
+	artist = MeshArtist(mesh)
+	return artist.draw_vertices(color = color)
 
 
 # ==============================================================================
