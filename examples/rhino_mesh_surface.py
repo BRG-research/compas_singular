@@ -33,6 +33,9 @@ print 'smoothing...'
 constraints = automated_smoothing_surface_constraints(coarse_quad_mesh.get_quad_mesh(), RhinoSurface.from_guid(srf_guid))
 constraints.update(automated_smoothing_constraints(coarse_quad_mesh.get_quad_mesh(), pt_guids))
 constrained_smoothing(coarse_quad_mesh.get_quad_mesh(), kmax = int(kmax), damping = float(damping), constraints = constraints, algorithm = 'area')
+for obj in set(constraints.values()):
+    if rs.ObjectType(obj) != 8:
+        rs.DeleteObject(obj)
 
 rs.EnableRedraw(False)
 MeshArtist(coarse_quad_mesh.get_quad_mesh()).draw_mesh()

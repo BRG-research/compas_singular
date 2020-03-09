@@ -78,6 +78,7 @@ class RhinoSurface(RhinoSurface):
 			else:
 				kinks += extremities
 
+		rs.DeleteObjects(borders)
 		return list(set(kinks))
 
 	def closest_point_on_boundaries(self, xyz):
