@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
 try:
     import rhinoscriptsyntax as rs
 
@@ -11,8 +15,8 @@ from compas.datastructures import mesh_smooth_area
 from compas.datastructures import mesh_smooth_centerofmass
 
 from compas_rhino.geometry import RhinoPoint
-from compas_pattern.cad.rhino.objects.curve import RhinoCurve
-from compas_pattern.cad.rhino.objects.surface import RhinoSurface
+from compas_pattern.rhino import RhinoCurve
+from compas_pattern.rhino import RhinoSurface
 from compas_rhino.geometry import RhinoMesh
 
 

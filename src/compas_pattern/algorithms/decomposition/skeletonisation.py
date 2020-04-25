@@ -1,19 +1,16 @@
-from compas_pattern.datastructures.mesh.mesh import Mesh
-from compas_pattern.datastructures.network.network import Network
-from compas.datastructures.network.core.operations.join import network_polylines
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
+from compas_pattern.datastructures import Mesh
+from compas_pattern.datastructures import Network
+from compas.datastructures import network_polylines
 
 from compas.datastructures import trimesh_face_circle
 
 from compas.utilities import geometric_key
 
-__author__     = ['Robin Oval']
-__copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
-__license__    = 'MIT License'
-__email__      = 'oval@arch.ethz.ch'
-
-__all__ = [
-	'Skeleton',
-]
+__all__ = ['Skeleton']
 
 class Skeleton(Mesh):
 	"""Skeleton class for the generation of the topological skeleton or medial axis from a Delaunay mesh.
@@ -30,6 +27,19 @@ class Skeleton(Mesh):
 
 	def __init__(self):
 		super(Skeleton, self).__init__()
+
+	@classmethod
+	def from_mesh(cls, mesh):
+		"""Construct a Skeleton object from a Mesh.
+
+		Returns
+		-------
+		Skeleton
+			A skeleton object.
+
+		"""
+
+		return cls.from_vertices_and_faces(*mesh.to_vertices_and_faces())
 
 	def singular_faces(self):
 		"""Get the indices of the singular faces in the Delaunay mesh, i.e. the ones with three neighbours.
@@ -78,6 +88,7 @@ class Skeleton(Mesh):
 		"""
 
 		return network_polylines(Network.from_lines(self.lines()))
+
 
 # ==============================================================================
 # Main

@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
 from compas_pattern.datastructures.mesh_quad_coarse.mesh_quad_coarse import CoarseQuadMesh
 from compas_pattern.datastructures.mesh_quad.coloring import quad_mesh_strip_2_coloring
 from compas.utilities import pairwise

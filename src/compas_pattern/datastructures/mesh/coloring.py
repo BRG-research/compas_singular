@@ -1,11 +1,11 @@
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
 from compas.topology import adjacency_from_edges
 from compas_pattern.topology.coloring import is_adjacency_two_colorable
 from compas.topology import vertex_coloring
 
-__author__     = ['Robin Oval']
-__copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
-__license__    = 'MIT License'
-__email__      = 'oval@arch.ethz.ch'
 
 __all__ = [
 	'mesh_vertex_2_coloring',

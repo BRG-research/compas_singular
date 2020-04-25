@@ -12,7 +12,7 @@ import sphinx_compas_theme
 
 # -- General configuration ------------------------------------------------
 
-project = 'COMPAS_PATTERN'
+project = 'compas_pattern'
 copyright = 'Block Research Group - ETH Zurich'
 author = 'Robin Oval'
 release = '0.1.0'

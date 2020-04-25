@@ -1,8 +1,12 @@
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
 from compas.geometry import discrete_coons_patch
-from compas_pattern.utilities.lists import list_split
+from compas_pattern.utilities import list_split
 
 __all__ = [
-	'quandragulate_mesh',
+	'quadrangulate_mesh',
 	'quadrangulate_face',
 	'discrete_coons_patch_mesh',
 	'update_adjacent_face'
@@ -157,7 +161,7 @@ def update_adjacent_face(mesh, u, v, vertices_uv):
 if __name__ == '__main__':
 
 	import compas
-	from compas.plotters import MeshPlotter
+	#from compas.plotters import MeshPlotter
 	from compas_pattern.datastructures.mesh.mesh import Mesh
 
 	vertices = [
@@ -184,14 +188,14 @@ if __name__ == '__main__':
 	mesh = Mesh.from_vertices_and_faces(vertices, faces)
 
 	#quadrangulate_face(mesh, 0, sources)
-	quadrangulate_mesh(mesh, sources)
+	#quadrangulate_mesh(mesh, sources)
 	# for vkey in mesh.vertices():
 	# 	print 'vkey', vkey, mesh.vertex_faces(vkey)
 	# for fkey in mesh.faces():
 	# 	print 'fkey', fkey, mesh.face_vertices(fkey)
 
-	plotter = MeshPlotter(mesh)
-	plotter.draw_vertices(text='key')
-	plotter.draw_edges()
-	plotter.draw_faces(text='key')
-	plotter.show()
+	# plotter = MeshPlotter(mesh)
+	# plotter.draw_vertices(text='key')
+	# plotter.draw_edges()
+	# plotter.draw_faces(text='key')
+	# plotter.show()

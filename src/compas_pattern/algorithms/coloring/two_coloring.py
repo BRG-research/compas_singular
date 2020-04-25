@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
 import time
 
 import itertools
@@ -15,7 +19,7 @@ from compas_pattern.utilities.lists import are_items_in_list
 
 
 __all__ = [
-	'two_colourable_projection',
+	'TwoColourableProjection',
 ]
 
 

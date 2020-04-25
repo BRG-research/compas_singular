@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
 from math import pi
 
 from compas_pattern.datastructures.mesh.mesh import Mesh
@@ -10,26 +14,21 @@ from compas.datastructures import mesh_unweld_vertices
 from compas.topology import shortest_path
 
 from compas.topology import connected_components
-from compas.datastructures import network_disconnected_vertices
+from compas.datastructures import network_disconnected_nodes
 from compas.topology import breadth_first_paths
 
 from compas.datastructures.mesh import mesh_smooth_centroid
 
 from compas.geometry import centroid_points
-from compas.geometry.transformations.transformations import project_point_line
+from compas.geometry import project_point_line
 
-from compas_pattern.geometry.projection import closest_point_on_polyline
+from compas_pattern.geometry import closest_point_on_polyline
 
 from compas.utilities import geometric_key
 from compas.utilities import pairwise
-from compas_pattern.utilities.lists import sublist_from_to_items_in_closed_list
-from compas_pattern.utilities.lists import list_split
+from compas_pattern.utilities import sublist_from_to_items_in_closed_list
+from compas_pattern.utilities import list_split
 
-
-__author__ = ['Robin Oval']
-__copyright__ = 'Copyright 2018, Block Research Group - ETH Zurich'
-__license__ = 'MIT License'
-__email__ = 'oval@arch.ethz.ch'
 
 __all__ = [
     'add_and_delete_strips',
@@ -40,7 +39,9 @@ __all__ = [
     'split_strip',
     'split_strips',
     'strip_polyedge_update',
-    'boundary_strip_preserve'
+    'strips_to_split_to_prevent_boundary_collapse',
+    'collateral_strip_deletions',
+    'total_boundary_deletions'
 ]
 
 

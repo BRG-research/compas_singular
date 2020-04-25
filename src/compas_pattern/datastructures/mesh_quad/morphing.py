@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
 from compas_pattern.datastructures.mesh_quad.coloring import quad_mesh_polyedge_2_coloring
 from compas_pattern.datastructures.mesh.operations import mesh_move_vertices_by
 
@@ -5,7 +9,8 @@ from compas.utilities import pairwise
 
 
 __all__ = [
-    'fold_quad_mesh'
+    'fold',
+    'fold_vertex_group'
 ]
 
 

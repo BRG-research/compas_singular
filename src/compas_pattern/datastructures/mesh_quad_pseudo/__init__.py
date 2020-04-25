@@ -1,2 +1,8 @@
-from compas_pattern.datastructures.mesh_quad_pseudo.mesh_quad_pseudo import *
-from compas_pattern.datastructures.mesh_quad_pseudo.grammar_poles import *
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
+from .mesh_quad_pseudo import *
+from .grammar_poles import *
+
+__all__ = [name for name in dir() if not name.startswith('_')]

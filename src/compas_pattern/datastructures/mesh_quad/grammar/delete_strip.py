@@ -1,14 +1,9 @@
 from compas_pattern.datastructures.network.network import Network
-from compas.datastructures import network_disconnected_vertices
+from compas.datastructures import network_disconnected_nodes
 from compas.datastructures import mesh_substitute_vertex_in_faces
 from compas.geometry import centroid_points
 
 __all__ = [
-	'delete_strips',
-	'delete_strip',
-	'strip_edge_network',
-	'update_strip_data',
-	'strips_to_split_to_prevent_boundary_collapse'
 ]
 
 
@@ -43,7 +38,7 @@ def delete_strip(mesh, skey, update_data=True):
 
 	# build network between vertices of the edges of the strip to delete to get the disconnect parts of vertices to merge
 	network = strip_edge_network(mesh, skey)
-	disc_vertices = network_disconnected_vertices(network)
+	disc_vertices = network_disconnected_nodes(network)
 
 	# delete strip faces
 	for fkey in mesh.strip_faces(skey):
@@ -78,7 +73,7 @@ def strip_edge_network(mesh, skey):
 	all_strip_vertices = list(set([vkey for edge in mesh.strip_edges(skey) for vkey in edge]))
 	strip_edges = [(u, v) for u, v in mesh.strip_edges(skey) if u != v] # exception for poles
 	strip_vertices = {vkey: mesh.vertex_coordinates(vkey) for vkey in all_strip_vertices}
-	return Network.from_vertices_and_edges(strip_vertices, strip_edges)
+	return Network.from_nodes_and_edges(strip_vertices, strip_edges)
 
 
 def update_strip_data(mesh, old_vkeys_to_new_vkeys):

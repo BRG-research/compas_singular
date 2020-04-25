@@ -1,14 +1,19 @@
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
 try:
 	import rhinoscriptsyntax as rs
 
 except ImportError:
-		compas.raise_if_ironpython()
+	import compas
+	compas.raise_if_ironpython()
 
 from compas.geometry import Polyline
 
 from compas_rhino.geometry import RhinoPoint
-from compas_pattern.cad.rhino.objects.surface import RhinoSurface
-from compas_pattern.cad.rhino.objects.surface import RhinoCurve
+from compas_pattern.rhino import RhinoSurface
+from compas_pattern.rhino import RhinoCurve
 
 from compas.geometry import distance_point_point
 from compas.geometry import closest_point_in_cloud
@@ -16,7 +21,7 @@ from compas.geometry import closest_point_in_cloud
 from compas_rhino.artists import MeshArtist
 from compas_rhino.selectors import mesh_select_vertices
 
-from compas_pattern.utilities.lists import list_split
+from compas_pattern.utilities import list_split
 
 __all__ = [
 	'automated_smoothing_surface_constraints',

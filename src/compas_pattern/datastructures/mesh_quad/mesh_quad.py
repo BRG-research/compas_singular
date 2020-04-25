@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
 from math import floor
 from operator import itemgetter
 
@@ -6,7 +10,7 @@ from compas_pattern.datastructures.mesh.mesh import Mesh
 from compas.geometry import centroid_points
 
 from compas.utilities import pairwise
-from compas_pattern.utilities.lists import list_split
+from compas_pattern.utilities import list_split
 
 
 __all__ = ['QuadMesh']
@@ -52,6 +56,7 @@ class QuadMesh(Mesh):
 		-------
 		(w, x) : tuple
 			The opposite edge.
+
 		"""
 
 		fkey = self.halfedge[u][v]
@@ -677,22 +682,22 @@ if __name__ == '__main__':
 	from compas_plotters.meshplotter import MeshPlotter
 
 	#mesh = QuadMesh.from_obj(compas.get('faces.obj'))
-	mesh = QuadMesh.from_json('/Users/Robin/Desktop/json/debug.json')
+	#mesh = QuadMesh.from_json('/Users/Robin/Desktop/json/debug.json')
 
-	mesh.collect_strips()
-	mesh.collect_polyedges()
+	#mesh.collect_strips()
+	#mesh.collect_polyedges()
 
 	#print(mesh.singularities())
 	#print(len(list(mesh.strips())))
 	#print(len(list(mesh.polyedges())))
 
-	print(len(mesh.singularity_polyedge_decomposition()))
+	#print(len(mesh.singularity_polyedge_decomposition()))
 
 	#print(mesh.strip_graph())
 	#print(mesh.polyedge_graph())
 
-	plotter = MeshPlotter(mesh, figsize=(20, 20))
-	plotter.draw_vertices(radius=0.4, text='key')
-	plotter.draw_edges()
-	plotter.draw_faces()
+	#plotter = MeshPlotter(mesh, figsize=(20, 20))
+	#plotter.draw_vertices(radius=0.4, text='key')
+	#plotter.draw_edges()
+	#plotter.draw_faces()
 	# plotter.show()

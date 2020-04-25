@@ -1,3 +1,7 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+
 from compas.geometry import Polyline
 
 from compas.geometry import length_vector
@@ -9,9 +13,6 @@ __all__ = [
 ]
 
 
-### TO BE PUSHED TO COMPAS ###
-
-
 class Polyline(Polyline):
 
 	def __init__(self, points):
@@ -20,24 +21,19 @@ class Polyline(Polyline):
 	def vertex_curvature(self, i):
 		"""Discrete polyline curvature.
 
-
 		Parameters
 		----------
-		i: int
+		i : int
 			Vertex index.
 
 		Returns
 		-------
-		curvature: float, None
+		curvature : float, None
 			Curvature at the vertex.
 			None if index out of range
 
-		Raises
-		------
-		-
-
 		 References
-	    ----------
+	    -----------
 	    .. [1] Lionel Du Peloux. Modeling of bending-torsion couplings in active-bending structures. Application to the design of elastic gridshells. PhD thesis, Universite Paris Est, Ecole des Ponts ParisTech. 2017.
 	           Available at: https://tel.archives-ouvertes.fr/tel-01757782/document.
 

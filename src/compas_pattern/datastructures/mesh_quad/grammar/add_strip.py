@@ -4,7 +4,6 @@ from compas_pattern.datastructures.mesh_quad.grammar_pattern import strip_polyed
 from compas.utilities import pairwise
 
 __all__ = [
-	'add_strip'
 ]
 
 
@@ -64,6 +63,7 @@ def add_strip(mesh, polyedge):
 				u1 = polyedge[-1] # artificial u1
 			# v
 			v = polyedge.pop(0)
+			full_updated_polyedge.append(v)
 			# w
 			if len(polyedge) != 0:
 				w = polyedge[0]
@@ -136,7 +136,6 @@ def add_strip(mesh, polyedge):
 	# include pseudo closed polyedges
 
 
-	
 	old_vkeys_to_new_vkeys = {u0: (u1, u2) for u0, u1, u2 in zip(full_updated_polyedge, left_polyedge, right_polyedge)}
 	
 	#for fkey in mesh.faces():
@@ -275,16 +274,17 @@ if __name__ == '__main__':
 	mesh.collect_strips()
 	#polyedge = [0, 1, 2, 8, 14, 13, 12, 6, 0]
 	#polyedge = [7, 8, 9, 15, 21, 20, 19, 13, 7]
-	polyedge = [0, 1, 7, 6]
-	add_strip(mesh, polyedge)
+	polyedge = [0, 1, 7, 6, 0]
+	output = add_strip(mesh, polyedge)
+	print(output)
 	mesh_smooth_centroid(mesh, kmax=10, fixed=mesh.vertices_on_boundary())
-	plotter = MeshPlotter(mesh, figsize=(20, 20))
-	plotter.draw_vertices(radius=0.1, text='key')
+	plotter = MeshPlotter(mesh, figsize=(5, 5))
+	plotter.draw_vertices(radius=0.2, text='key')
 	plotter.draw_edges()
 	plotter.draw_faces()
 	plotter.show()
 
-	# plotter = MeshPlotter(mesh, figsize = (20, 20))
+	# plotter = MeshPlotter(mesh, figsize = (5, 5))
 	# plotter.draw_vertices(radius = 0.25, text='key')
 	# plotter.draw_edges()
 	# plotter.draw_faces(text='key')

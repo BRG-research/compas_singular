@@ -1,3 +1,7 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+
 from compas_pattern.datastructures.mesh.mesh import Mesh
 from compas_pattern.datastructures.network.network import Network
 from compas.geometry import convex_hull
@@ -17,12 +21,14 @@ from compas.datastructures import mesh_weld
 
 from compas.datastructures import trimesh_subdivide_loop
 
-from compas.topology import conway_ambo
+from compas.datastructures import mesh_conway_ambo
 
 from compas.topology import vertex_coloring
 
 from compas.utilities import pairwise
 from compas.utilities import window
+
+__all__ = ['Kagome']
 
 class Kagome(Mesh):
 
@@ -151,7 +157,7 @@ class Kagome(Mesh):
 	
 	def patterning(self):
 
-		self.kagome = conway_ambo(self.dense_mesh)
+		self.kagome = mesh_conway_ambo(self.dense_mesh)
 
 	def store_kagome_polyedge_data(self):
 

@@ -1,17 +1,15 @@
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
 from compas_pattern.datastructures.mesh_quad.mesh_quad import QuadMesh
 
 from compas.utilities import geometric_key
 
-from compas_pattern.utilities.lists import list_split
+from compas_pattern.utilities import list_split
 
-__author__     = ['Robin Oval']
-__copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
-__license__    = 'MIT License'
-__email__      = 'oval@arch.ethz.ch'
 
-__all__ = [
-
-]
+__all__ = ['PseudoQuadMesh']
 
 
 class PseudoQuadMesh(QuadMesh):

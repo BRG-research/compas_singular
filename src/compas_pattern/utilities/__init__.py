@@ -7,7 +7,7 @@ compas_pattern.utilities
 
 
 Lists
-====
+=====
 
 Some utilities to manipulate lists.
 
@@ -23,7 +23,7 @@ Some utilities to manipulate lists.
 
 
 Pareto
-====
+======
 
 Some utilities to extract Pareto fronts.
 

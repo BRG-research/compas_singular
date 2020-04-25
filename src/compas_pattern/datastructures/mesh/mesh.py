@@ -1,4 +1,8 @@
-from compas.datastructures.mesh import Mesh
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
+from compas.datastructures import Mesh
 
 from compas.geometry import centroid_points
 from compas.geometry import angle_points
@@ -28,7 +32,7 @@ class Mesh(Mesh):
 			vertices = [self.vertex_coordinates(key) for key in self.vertices()]
 			faces = [[key_index[key] for key in self.face_vertices(fkey)] for fkey in self.faces()]
 		return vertices, faces
-
+	
 	def boundaries(self):
 		"""Collect the mesh boundaries as lists of vertices.
 
@@ -44,24 +48,26 @@ class Mesh(Mesh):
 
 		"""
 
+		boundary_edges = {}
+		for u, v in self.edges():
+			if self.halfedge[u][v] is None:
+				boundary_edges[u] = v
+			elif self.halfedge[v][u] is None:
+				boundary_edges[v] = u
+
 		boundaries = []
-
-		# get all boundary edges pointing outwards
-		boundary_edges = {u: v for u, v in self.edges_on_boundary(chained=True)}
-
-		# start new boundary
+		boundary = [*boundary_edges.popitem()]
 		while len(boundary_edges) > 0:
-			boundary = list(boundary_edges.popitem())
-
-			# get consecuvite vertex until the boundary is closed
-			while boundary[0] != boundary[-1]:
-				boundary.append(boundary_edges[boundary[-1]])
-				boundary_edges.pop(boundary[-2])
-
-			boundaries.append(boundary[: -1])
+			w = boundary_edges.pop(boundary[-1])
+			if w == boundary[0]:
+				boundaries.append(boundary)
+				if len(boundary_edges) > 0:
+					boundary = [*boundary_edges.popitem()]
+			else:
+				boundary.append(w)
 
 		return boundaries
-	
+
 	def is_boundary_vertex_kink(self, vkey, threshold_angle):
 		"""Return whether there is a kink at a boundary vertex according to a threshold angle.
 
@@ -129,4 +135,9 @@ if __name__ == '__main__':
 	import compas
 
 	mesh = Mesh.from_obj(compas.get('faces.obj'))
-	print(mesh.boundaries())
+	print(mesh.number_of_vertices(), len(mesh.vertices_on_boundary()), mesh.boundaries())
+	for fkey in mesh.faces():
+		if not mesh.is_face_on_boundary(fkey):
+			mesh.delete_face(fkey)
+			break
+	print(mesh.number_of_vertices(), len(mesh.vertices_on_boundary()), mesh.boundaries())

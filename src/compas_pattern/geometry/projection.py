@@ -1,3 +1,7 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+
 from math import pi
 from math import cos
 from math import sin
@@ -13,6 +17,7 @@ from compas.geometry import subtract_vectors
 
 from compas.utilities import pairwise
 
+
 __all__ = [
     'closest_point_on_circle',
     'closest_point_on_line',
@@ -20,9 +25,6 @@ __all__ = [
     'closest_point_on_polyline',
     'closest_point_on_polylines'
 ]
-
-
-### TO BE PUSHED TO COMPAS ###
 
 
 def closest_point_on_circle(x0, y0, r):
@@ -186,13 +188,13 @@ if __name__ == '__main__':
 
     import compas
 
-    # a, b = [0.0, 0.0, 0.0], [2.0, 2.0, 0.0]
-    # for c in [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [-1.0, 0.0, 0.0], [2.0, 3.0, 0.0]]:
-    #     print(closest_point_on_line(a, b, c))
-    #     print(closest_point_on_segment(a, b, c))
+    a, b = [0.0, 0.0, 0.0], [2.0, 2.0, 0.0]
+    for c in [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [-1.0, 0.0, 0.0], [2.0, 3.0, 0.0]]:
+        print(closest_point_on_line(a, b, c))
+        print(closest_point_on_segment(a, b, c))
 
-    # polyline = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]
-    # c = [0.75, 0.75, 0]
-    # print(closest_point_on_polyline(polyline, c))
+    polyline = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]
+    c = [0.75, 0.75, 0]
+    print(closest_point_on_polyline(polyline, c))
 
     print(closest_point_on_circle(2.0, -1.0, 2.0))

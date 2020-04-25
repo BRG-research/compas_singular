@@ -7,7 +7,7 @@ compas_pattern.topology
 
 
 Coloring
-====
+========
 
 Coloring elements based on their topology.
 

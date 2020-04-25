@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
 from math import floor
 from math import ceil
 from math import pi
@@ -6,13 +10,13 @@ from operator import itemgetter
 
 from compas_pattern.algorithms.decomposition.skeletonisation import Skeleton
 
-from compas_pattern.datastructures.mesh_quad_pseudo_coarse.mesh_quad_pseudo_coarse import CoarsePseudoQuadMesh
+from compas_pattern.datastructures import CoarsePseudoQuadMesh
 
 from compas.datastructures import mesh_insert_vertex_on_edge
 from compas.datastructures import mesh_substitute_vertex_in_faces
 
-from compas_pattern.datastructures.network.network import Network
-from compas.datastructures.network.core.operations.join import network_polylines
+from compas_pattern.datastructures import Network
+from compas.datastructures import network_polylines
 from compas.geometry import Polyline
 
 from compas.datastructures import mesh_explode
@@ -21,7 +25,7 @@ from compas.datastructures import mesh_weld
 from compas.datastructures import mesh_unweld_edges
 from compas_pattern.algorithms.decomposition.propagation import quadrangulate_mesh
 
-from compas_pattern.datastructures.mesh_quad_pseudo.grammar_poles import split_quad_in_pseudo_quads
+from compas_pattern.datastructures import split_quad_in_pseudo_quads
 
 from compas.geometry import length_vector
 from compas.geometry import length_vector_xy
@@ -36,34 +40,48 @@ from compas.datastructures import trimesh_face_circle
 from compas.utilities import pairwise
 from compas.utilities import window
 from compas.utilities import geometric_key
-from compas_pattern.utilities.lists import list_split
+from compas_pattern.utilities import list_split
 
-__author__     = ['Robin Oval']
-__copyright__  = 'Copyright 2018, Block Research Group - ETH Zurich'
-__license__    = 'MIT License'
-__email__      = 'oval@arch.ethz.ch'
+__all__ = ['SkeletonDecomposition']
 
-__all__ = [
-	'Decomposition',
-]
-
-class Decomposition(Skeleton):
-	"""Decomposition class for the generate a coarse quad mesh based on a topological skeleton and its singularities.
-
-	References
-	----------
-	.. [1] Oval et al. 2018. *Topology finding of patterns for shell structures*.
-		   Submitted for publication in Automation in Construction.
+class SkeletonDecomposition(Skeleton):
+	"""SkeletonDecomposition class for the generate a coarse quad mesh based on a topological skeleton and its singularities.
 
 	"""
 
 	def __init__(self):
-		super(Decomposition, self).__init__()
+		super(SkeletonDecomposition, self).__init__()
 		self.mesh = None
 		self.polylines = None
 
 		self.relative_kink_angle_limit = pi / 8.
 		self.flip_angle_limit = pi / 2.
+
+	@classmethod
+	def from_skeleton(cls, skeleton):
+		"""Construct a SkeletonDecomposition object from a Skeleton.
+
+		Returns
+		-------
+		Skeleton
+			A skeleton object.
+
+		"""
+
+		return cls.from_vertices_and_faces(*skeleton.to_vertices_and_faces())
+
+	@classmethod
+	def from_mesh(cls, mesh):
+		"""Construct a SkeletonDecomposition object from a Mesh.
+
+		Returns
+		-------
+		Skeleton
+			A skeleton object.
+
+		"""
+
+		return cls.from_vertices_and_faces(*mesh.to_vertices_and_faces())
 
 	# --------------------------------------------------------------------------
 	# key elements
