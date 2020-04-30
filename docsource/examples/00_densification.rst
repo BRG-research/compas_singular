@@ -11,7 +11,27 @@ This example shows how to densify a (coarse) quad mesh into a quad mesh. The dat
 Regular quad mesh
 =================
 
+.. literalinclude:: ../../examples/00_densification.py
 
+.. figure:: ../_images/00_densification_0.png
+    :width: 50%
+
+    Initial coarse quad mesh.
+
+.. figure:: ../_images/00_densification_1.png
+    :width: 50%
+
+    First densification with a uniform subdivision value.
+
+.. figure:: ../_images/00_densification_2.png
+    :width: 50%
+
+    Second densification with a uniform target length.
+
+.. figure:: ../_images/00_densification_3.png
+    :width: 50%
+
+    Edited second densification with a specific subvidision value.
 
 |
 
@@ -21,4 +41,15 @@ Regular quad mesh
 Quad mesh with pseudo-quads
 =========================================
 
+.. literalinclude:: ../../examples/00_densification_poles.py
+
+.. figure:: ../_images/00_densification_poles_0.png
+    :width: 50%
+
+    Initial coarse quad mesh.
+
+.. figure:: ../_images/00_densification_poles_1.png
+    :width: 50%
+
+    Densification with a uniform target length.
 

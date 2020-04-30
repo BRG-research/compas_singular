@@ -56,13 +56,14 @@ class Mesh(Mesh):
 				boundary_edges[v] = u
 
 		boundaries = []
-		boundary = [*boundary_edges.popitem()]
+		u, v
+		boundary = list(boundary_edges.popitem())
 		while len(boundary_edges) > 0:
 			w = boundary_edges.pop(boundary[-1])
 			if w == boundary[0]:
 				boundaries.append(boundary)
 				if len(boundary_edges) > 0:
-					boundary = [*boundary_edges.popitem()]
+					boundary = list(boundary_edges.popitem())
 			else:
 				boundary.append(w)
 

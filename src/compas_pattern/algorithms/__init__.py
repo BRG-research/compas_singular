@@ -27,12 +27,12 @@ Algorithm for decomposition of surfaces into coarse quad meshes. Optional point 
     :toctree: generated/
     :nosignatures:
 
-    DecompositionRemap
-    SkeletonDecomposition
-    Skeleton
-    DecompositionMap
+    surface_discrete_mapping
     boundary_triangulation
-
+    Skeleton
+    SkeletonDecomposition
+    DecompositionRemap    
+    
 
 Interpolation
 =============

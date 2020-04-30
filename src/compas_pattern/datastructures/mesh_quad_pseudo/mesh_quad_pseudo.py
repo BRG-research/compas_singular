@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
+from ast import literal_eval
+
 from compas_pattern.datastructures.mesh_quad.mesh_quad import QuadMesh
 
 from compas.utilities import geometric_key
@@ -17,6 +19,54 @@ class PseudoQuadMesh(QuadMesh):
     def __init__(self):
         super(PseudoQuadMesh, self).__init__()
         self.data['attributes']['face_pole'] = {}
+
+    @property
+    def data(self):
+        return super(QuadMesh, self).data
+
+    @data.setter
+    def data(self, data):
+
+        attributes = data['attributes']
+        dva = data.get('dva') or {}
+        dfa = data.get('dfa') or {}
+        dea = data.get('dea') or {}
+        vertex = data.get('vertex') or {}
+        face = data.get('face') or {}
+        facedata = data.get('facedata') or {}
+        edgedata = data.get('edgedata') or {}
+        max_int_key = data.get('max_int_key', -1)
+        max_int_fkey = data.get('max_int_fkey', -1)
+
+        self.attributes.update(attributes)
+        self.default_vertex_attributes.update(dva)
+        self.default_face_attributes.update(dfa)
+        self.default_edge_attributes.update(dea)
+
+        self.vertex = {}
+        self.face = {}
+        self.halfedge = {}
+        self.facedata = {}
+        self.edgedata = {}
+
+        for key, attr in iter(vertex.items()):
+            self.add_vertex(literal_eval(key), attr_dict=attr)
+
+        for fkey, vertices in iter(face.items()):
+            attr = facedata.get(fkey) or {}
+            vertices = [literal_eval(k) for k in vertices]
+            self.add_face(vertices, fkey=literal_eval(fkey), attr_dict=attr)
+
+        for uv, attr in iter(edgedata.items()):
+            self.edgedata[literal_eval(uv)] = attr or {}
+
+        self._max_int_key = max_int_key
+        self._max_int_fkey = max_int_fkey
+
+        data_face_pole = {}
+        for fkey, vkey in iter(data['attributes']['face_pole'].items()):
+            data_face_pole[literal_eval(fkey)] = vkey
+        self.data['attributes']['face_pole'] = data_face_pole
 
     @classmethod
     def from_vertices_and_faces_with_poles(cls, vertices, faces, poles=[]):
@@ -84,6 +134,9 @@ class PseudoQuadMesh(QuadMesh):
                 return (w, x)
             #if pseudo quad
             if len(self.face_vertices(fkey)) == 3:
+                print(self.face_vertices(fkey))
+                print(fkey, self.data['attributes']['face_pole'])
+
                 pole = self.data['attributes']['face_pole'][fkey]
                 w = self.face_vertex_descendant(fkey, v)
                 if u == pole:

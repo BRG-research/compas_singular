@@ -1,12 +1,14 @@
 try:
-    import rhinoscriptsyntax as rs
+	import rhinoscriptsyntax as rs
+
 except ImportError:
-    compas.raise_if_ironpython()
+	import compas
+	compas.raise_if_ironpython()
 
 from compas_pattern.algorithms import surface_discrete_mapping
 from compas_pattern.algorithms import boundary_triangulation
 from compas_pattern.algorithms import SkeletonDecomposition
-from compas_pattern.algorithms import decomposition_mesh
+from compas_pattern.rhino.objects.surface import RhinoSurface
 from compas_rhino.artists import MeshArtist
 
 # draw your own surfaces, curves and points or get them from examples/data/01_decomposition.3dm
@@ -28,7 +30,10 @@ mesh = boundary_triangulation(outer_boundary, inner_boundaries, polyline_feature
 decomposition = SkeletonDecomposition.from_mesh(mesh)
 
 # build decomposition mesh
-mesh = decomposition_mesh(decomposition, srf_guid, point_features)
+mesh = decomposition.decomposition_mesh(point_features)
+
+# remap mesh on surface
+RhinoSurface.from_guid(srf_guid).mesh_uv_to_xyz(mesh)
 
 # draw decomposition mesh
 MeshArtist(mesh).draw_mesh()

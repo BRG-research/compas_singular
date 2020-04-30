@@ -19,26 +19,12 @@ except ImportError:
 
 
 __all__ = [
-	'DecompositionMap'
+	'surface_discrete_mapping'
 ]
 
-class DecompositionMap(RhinoSurface):
-
-	curve_features = None
-	point_features = None
-
-	mapped_outer_boundary = None
-	mapped_inner_boundaries = None
-	mapped_polyline_features = None
-	mapped_point_features = None
-
-	def __init__(self):
-		super(RhinoSurface, self).__init__()
-
-def surface_discrete_mapping(self, discretisation, minimum_discretisation = 5, crv_guids = [], pt_guids = []):
+def surface_discrete_mapping(srf_guid, discretisation, minimum_discretisation = 5, crv_guids = [], pt_guids = []):
 	"""Map the boundaries of a Rhino NURBS surface to planar poylines dicretised within some discretisation using the surface UV parameterisation.
 	Curve and point feautres on the surface can be included.
-
 	Parameters
 	----------
 	srf_guid : guid
@@ -51,16 +37,13 @@ def surface_discrete_mapping(self, discretisation, minimum_discretisation = 5, c
 		The discretisation of the surface boundaries.
 	minimum_discretisation : int
 		The minimum discretisation of the surface boundaries.
-
 	Returns
 	-------
 	tuple
 		Tuple of the mapped objects: outer boundary, inner boundaries, polyline_features, point_features.
-
 	"""
 
-	self.curve_features = [RhinoCurve.from_guid(crv_guid) for crv_guid in crv_guids]
-	self.point_features = [rs.PointCoordinates(pt_guid) for pt_guid in pt_guids]
+	srf = RhinoSurface.from_guid(srf_guid)
 
 	# a boundary may be made of multiple boundary components and therefore checking for closeness and joining are necessary
 	mapped_borders = []
@@ -68,9 +51,9 @@ def surface_discrete_mapping(self, discretisation, minimum_discretisation = 5, c
 	for i in [1, 2]:
 		mapped_border = []
 
-		for border in self.borders(type = i):
+		for border in srf.borders(type = i):
 			border = RhinoCurve.from_guid(border)
-			points = [list(self.point_xyz_to_uv(pt)) + [0.0] for pt in border.divide(max(int(border.length() / discretisation) + 1, minimum_discretisation))]
+			points = [list(srf.point_xyz_to_uv(pt)) + [0.0] for pt in border.divide(max(int(border.length() / discretisation) + 1, minimum_discretisation))]
 			
 			if border.is_closed():
 				points.append(points[0])
@@ -84,9 +67,10 @@ def surface_discrete_mapping(self, discretisation, minimum_discretisation = 5, c
 	# mapping of the curve features on the surface
 	mapped_curves = []
 
-	for curve in self.curve_features:
+	for crv_guid in crv_guids:
 
-		points = [list(self.point_xyz_to_uv(pt)) + [0.0] for pt in curve.divide(max(int(curve.length() / discretisation) + 1, minimum_discretisation))]
+		curve = RhinoCurve.from_guid(crv_guid)
+		points = [list(srf.point_xyz_to_uv(pt)) + [0.0] for pt in curve.divide(max(int(curve.length() / discretisation) + 1, minimum_discretisation))]
 		
 		if curve.is_closed():
 			points.append(points[0])
@@ -96,12 +80,9 @@ def surface_discrete_mapping(self, discretisation, minimum_discretisation = 5, c
 	polyline_features = network_polylines(Network.from_lines([(u, v) for curve in mapped_curves for u, v in pairwise(curve)]))
 
 	# mapping of the point features onthe surface
-	point_features = [list(self.point_xyz_to_uv(point)) + [0.0] for point in self.point_features]
+	point_features = [list(srf.point_xyz_to_uv(rs.PointCoordinates(pt_guid))) + [0.0] for pt_guid in pt_guids]
 
-	self.mapped_outer_boundary = outer_boundaries[0]
-	self.mapped_inner_boundaries = inner_boundaries
-	self.mapped_polyline_features = polyline_features
-	self.mapped_point_features = point_features
+	return outer_boundaries[0], inner_boundaries, polyline_features, point_features
 
 
 # ==============================================================================

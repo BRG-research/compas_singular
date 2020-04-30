@@ -19,7 +19,11 @@
     <link rel="stylesheet" type="text/css" href="../../_static/css/compas-reference.css" />
 
     
+        <link rel="next" title="boundary_triangulation" href="compas_pattern.algorithms.boundary_triangulation.html" />
     
+    
+    
+        <link rel="prev" title="TwoColourableProjection.strip_deletions_yielding_two_colourability" href="compas_pattern.algorithms.TwoColourableProjection.strip_deletions_yielding_two_colourability.html" />
     
 
     <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
@@ -54,6 +58,27 @@
 
                     <div class="detail section" id="surface-discrete-mapping">
 <h1>surface_discrete_mapping</h1>
+<dl class="function">
+<dt id="compas_pattern.algorithms.surface_discrete_mapping">
+<code class="sig-prename descclassname">compas_pattern.algorithms.</code><code class="sig-name descname">surface_discrete_mapping</code><span class="sig-paren">(</span><em class="sig-param">srf_guid</em>, <em class="sig-param">discretisation</em>, <em class="sig-param">minimum_discretisation=5</em>, <em class="sig-param">crv_guids=[]</em>, <em class="sig-param">pt_guids=[]</em><span class="sig-paren">)</span></dt>
+<dd><p>Map the boundaries of a Rhino NURBS surface to planar poylines dicretised within some discretisation using the surface UV parameterisation.
+Curve and point feautres on the surface can be included.
+:Parameters: * <strong>srf_guid</strong> (<em>guid</em>) – A surface guid.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>crv_guids</strong> (<em>list</em>) – List of guids of curves on the surface.</p></li>
+<li><p><strong>pt_guids</strong> (<em>list</em>) – List of guids of points on the surface.</p></li>
+<li><p><strong>discretisation</strong> (<em>float</em>) – The discretisation of the surface boundaries.</p></li>
+<li><p><strong>minimum_discretisation</strong> (<em>int</em>) – The minimum discretisation of the surface boundaries.</p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>tuple</em> – Tuple of the mapped objects: outer boundary, inner boundaries, polyline_features, point_features.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 
                     
@@ -82,12 +107,23 @@
                         <div class="navbar-expand-md">
                             <div id="compas-navigation" class="collapse navbar-collapse compas-navigation">
 
-                            <ul class="nav flex-column">
+                            <ul class="nav flex-column active">
 <li class="nav-item"><a class="nav-link reference internal" href="../../00_introduction.html">Introduction</a></li>
 <li class="nav-item"><a class="nav-link reference internal" href="../../01_getting_started.html">Getting started</a></li>
 <li class="nav-item"><a class="nav-link reference internal" href="../../02_overview.html">Overview</a></li>
 <li class="nav-item"><a class="nav-link reference internal" href="../../03_examples.html">Examples</a></li>
-<li class="nav-item"><a class="nav-link reference internal" href="../../04_api.html">API</a></li>
+<li class="nav-item active"><a class="nav-link reference internal" href="../../04_api.html">API</a><ul class="nav active">
+<li class="nav-item active"><a class="nav-link reference internal" href="../compas_pattern.html">compas_pattern</a><ul class="nav active">
+<li class="nav-item active"><a class="nav-link reference internal" href="../compas_pattern.algorithms.html">compas_pattern.algorithms</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="../compas_pattern.datastructures.html">compas_pattern.datastructures</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="../compas_pattern.rhino.html">compas_pattern.rhino</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="../compas_pattern.geometry.html">compas_pattern.geometry</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="../compas_pattern.topology.html">compas_pattern.topology</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="../compas_pattern.utilities.html">compas_pattern.utilities</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="nav-item"><a class="nav-link reference internal" href="../../05_license.html">License</a></li>
 <li class="nav-item"><a class="nav-link reference internal" href="../../06_citing.html">Citing</a></li>
 <li class="nav-item"><a class="nav-link reference internal" href="../../07_publications.html">Publications</a></li>
@@ -121,7 +157,7 @@
     <footer class="bg-dark pb-5">
         <div class="container text-center pt-5 pb-5 text-muted">
             
-                Last updated on Apr 25, 2020.
+                Last updated on Apr 30, 2020.
             
 
             

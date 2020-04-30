@@ -62,6 +62,78 @@
 <hr class="docutils" />
 <div class="section" id="regular-quad-mesh">
 <h2>Regular quad mesh</h2>
+<div class="language-python notranslate"><div class="highlight"><pre><code><span></span><span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">compas_pattern.datastructures</span> <span class="kn">import</span> <span class="n">CoarseQuadMesh</span>
+
+<span class="kn">from</span> <span class="nn">compas_plotters.meshplotter</span> <span class="kn">import</span> <span class="n">MeshPlotter</span>
+
+<span class="c1"># read input data</span>
+<span class="n">json_data</span> <span class="o">=</span> <span class="s1">&#39;data/coarse_quad_mesh_british_museum.json&#39;</span>
+
+<span class="n">coarse_quad_mesh</span> <span class="o">=</span> <span class="n">CoarseQuadMesh</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">json_data</span><span class="p">)</span>
+
+<span class="c1"># plot coarse quad mesh</span>
+<span class="n">plotter</span> <span class="o">=</span> <span class="n">MeshPlotter</span><span class="p">(</span><span class="n">coarse_quad_mesh</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_edges</span><span class="p">()</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_vertices</span><span class="p">(</span><span class="n">radius</span><span class="o">=.</span><span class="mi">05</span><span class="p">)</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_faces</span><span class="p">()</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># collect strip data</span>
+<span class="n">coarse_quad_mesh</span><span class="o">.</span><span class="n">collect_strips</span><span class="p">()</span>
+
+<span class="c1"># densification with uniform density</span>
+<span class="n">coarse_quad_mesh</span><span class="o">.</span><span class="n">set_strips_density</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">coarse_quad_mesh</span><span class="o">.</span><span class="n">densification</span><span class="p">()</span>
+
+<span class="c1"># plot dense quad mesh</span>
+<span class="n">plotter</span> <span class="o">=</span> <span class="n">MeshPlotter</span><span class="p">(</span><span class="n">coarse_quad_mesh</span><span class="o">.</span><span class="n">get_quad_mesh</span><span class="p">(),</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_edges</span><span class="p">()</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_vertices</span><span class="p">(</span><span class="n">radius</span><span class="o">=.</span><span class="mi">05</span><span class="p">)</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_faces</span><span class="p">()</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># densification with target length</span>
+<span class="n">coarse_quad_mesh</span><span class="o">.</span><span class="n">set_strips_density_target</span><span class="p">(</span><span class="n">t</span><span class="o">=.</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">coarse_quad_mesh</span><span class="o">.</span><span class="n">densification</span><span class="p">()</span>
+
+<span class="c1"># plot dense quad mesh</span>
+<span class="n">plotter</span> <span class="o">=</span> <span class="n">MeshPlotter</span><span class="p">(</span><span class="n">coarse_quad_mesh</span><span class="o">.</span><span class="n">get_quad_mesh</span><span class="p">(),</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_edges</span><span class="p">()</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_vertices</span><span class="p">(</span><span class="n">radius</span><span class="o">=.</span><span class="mi">05</span><span class="p">)</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_faces</span><span class="p">()</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># change density of one strip</span>
+<span class="n">skey</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">coarse_quad_mesh</span><span class="o">.</span><span class="n">strips</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">coarse_quad_mesh</span><span class="o">.</span><span class="n">set_strip_density</span><span class="p">(</span><span class="n">skey</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">coarse_quad_mesh</span><span class="o">.</span><span class="n">densification</span><span class="p">()</span>
+
+<span class="c1"># plot dense quad mesh</span>
+<span class="n">plotter</span> <span class="o">=</span> <span class="n">MeshPlotter</span><span class="p">(</span><span class="n">coarse_quad_mesh</span><span class="o">.</span><span class="n">get_quad_mesh</span><span class="p">(),</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_edges</span><span class="p">()</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_vertices</span><span class="p">(</span><span class="n">radius</span><span class="o">=.</span><span class="mi">05</span><span class="p">)</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_faces</span><span class="p">()</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+</div>
+<div class="figure align-default" id="id1">
+<a class="reference internal image-reference" href="../_images/00_densification_0.png"><img alt="../_images/00_densification_0.png" src="../_images/00_densification_0.png" style="width: 50%;" /></a>
+<p class="caption"><span class="caption-text">Initial coarse quad mesh.</span></p>
+</div>
+<div class="figure align-default" id="id2">
+<a class="reference internal image-reference" href="../_images/00_densification_1.png"><img alt="../_images/00_densification_1.png" src="../_images/00_densification_1.png" style="width: 50%;" /></a>
+<p class="caption"><span class="caption-text">First densification with a uniform subdivision value.</span></p>
+</div>
+<div class="figure align-default" id="id3">
+<a class="reference internal image-reference" href="../_images/00_densification_2.png"><img alt="../_images/00_densification_2.png" src="../_images/00_densification_2.png" style="width: 50%;" /></a>
+<p class="caption"><span class="caption-text">Second densification with a uniform target length.</span></p>
+</div>
+<div class="figure align-default" id="id4">
+<a class="reference internal image-reference" href="../_images/00_densification_3.png"><img alt="../_images/00_densification_3.png" src="../_images/00_densification_3.png" style="width: 50%;" /></a>
+<p class="caption"><span class="caption-text">Edited second densification with a specific subvidision value.</span></p>
+</div>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
@@ -69,6 +141,47 @@
 <hr class="docutils" />
 <div class="section" id="quad-mesh-with-pseudo-quads">
 <h2>Quad mesh with pseudo-quads</h2>
+<div class="language-python notranslate"><div class="highlight"><pre><code><span></span><span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">compas_pattern.datastructures</span> <span class="kn">import</span> <span class="n">CoarsePseudoQuadMesh</span>
+
+<span class="kn">from</span> <span class="nn">compas_plotters.meshplotter</span> <span class="kn">import</span> <span class="n">MeshPlotter</span>
+
+<span class="c1"># read input data</span>
+<span class="n">json_data</span> <span class="o">=</span> <span class="s1">&#39;data/coarse_quad_mesh_british_museum_poles.json&#39;</span>
+
+<span class="n">coarse_pseudo_quad_mesh</span> <span class="o">=</span> <span class="n">CoarsePseudoQuadMesh</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">json_data</span><span class="p">)</span>
+
+<span class="c1">#plot coarse quad mesh</span>
+<span class="n">plotter</span> <span class="o">=</span> <span class="n">MeshPlotter</span><span class="p">(</span><span class="n">coarse_pseudo_quad_mesh</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_edges</span><span class="p">()</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_vertices</span><span class="p">(</span><span class="n">radius</span><span class="o">=.</span><span class="mi">05</span><span class="p">)</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_faces</span><span class="p">()</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># collect strip data</span>
+<span class="n">coarse_pseudo_quad_mesh</span><span class="o">.</span><span class="n">collect_strips</span><span class="p">()</span>
+
+<span class="c1"># densification with target length</span>
+<span class="n">coarse_pseudo_quad_mesh</span><span class="o">.</span><span class="n">set_strips_density_target</span><span class="p">(</span><span class="n">t</span><span class="o">=.</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">coarse_pseudo_quad_mesh</span><span class="o">.</span><span class="n">densification</span><span class="p">()</span>
+
+<span class="c1"># plot dense quad mesh</span>
+<span class="n">plotter</span> <span class="o">=</span> <span class="n">MeshPlotter</span><span class="p">(</span><span class="n">coarse_pseudo_quad_mesh</span><span class="o">.</span><span class="n">get_quad_mesh</span><span class="p">(),</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_edges</span><span class="p">()</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_vertices</span><span class="p">(</span><span class="n">radius</span><span class="o">=.</span><span class="mi">05</span><span class="p">)</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">draw_faces</span><span class="p">()</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+</div>
+<div class="figure align-default" id="id5">
+<a class="reference internal image-reference" href="../_images/00_densification_poles_0.png"><img alt="../_images/00_densification_poles_0.png" src="../_images/00_densification_poles_0.png" style="width: 50%;" /></a>
+<p class="caption"><span class="caption-text">Initial coarse quad mesh.</span></p>
+</div>
+<div class="figure align-default" id="id6">
+<a class="reference internal image-reference" href="../_images/00_densification_poles_1.png"><img alt="../_images/00_densification_poles_1.png" src="../_images/00_densification_poles_1.png" style="width: 50%;" /></a>
+<p class="caption"><span class="caption-text">Densification with a uniform target length.</span></p>
+</div>
 </div>
 </div>
 
@@ -145,7 +258,7 @@
     <footer class="bg-dark pb-5">
         <div class="container text-center pt-5 pb-5 text-muted">
             
-                Last updated on Apr 25, 2020.
+                Last updated on Apr 30, 2020.
             
 
             
