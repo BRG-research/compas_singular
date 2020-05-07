@@ -9,6 +9,7 @@ try:
 	import rhinoscriptsyntax as rs
 
 except ImportError:
+	import compas
 	compas.raise_if_ironpython()
 
 import compas_rhino as rhino

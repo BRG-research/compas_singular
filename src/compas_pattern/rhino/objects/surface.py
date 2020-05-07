@@ -66,12 +66,12 @@ class RhinoSurface(RhinoSurface):
 		kinks = []
 		borders = self.borders(type=0)
 
-		for border in borders:
-			border = RhinoCurve.from_guid(border)
-			extremities = map(lambda x: rs.EvaluateCurve(border.guid, rs.CurveParameter(border.guid, x)), [0., 1.])
+		for border_guid in borders:
+			extremities = map(lambda x: rs.EvaluateCurve(border_guid, rs.CurveParameter(border_guid, x)), [0., 1.])
 
-			if border.is_closed():
-				start_tgt, end_tgt = border.tangents(extremities)
+			if rs.IsCurveClosed(border_guid):
+				start_tgt = rs.CurveTangent(border_guid, rs.CurveParameter(border_guid, 0.))
+				end_tgt = rs.CurveTangent(border_guid, rs.CurveParameter(border_guid, 1.))
 				if angle_vectors(start_tgt, end_tgt) > threshold:
 					kinks += extremities
 

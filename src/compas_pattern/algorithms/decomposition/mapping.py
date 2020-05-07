@@ -51,15 +51,14 @@ def surface_discrete_mapping(srf_guid, discretisation, minimum_discretisation = 
 	for i in [1, 2]:
 		mapped_border = []
 
-		for border in srf.borders(type = i):
-			border = RhinoCurve.from_guid(border)
-			points = [list(srf.point_xyz_to_uv(pt)) + [0.0] for pt in border.divide(max(int(border.length() / discretisation) + 1, minimum_discretisation))]
+		for border_guid in srf.borders(type = i):
+			points = [list(srf.point_xyz_to_uv(pt)) + [0.0] for pt in rs.DivideCurve(border_guid, max(int(rs.CurveLength(border_guid) / discretisation) + 1, minimum_discretisation))]
 			
-			if border.is_closed():
+			if rs.IsCurveClosed(border_guid):
 				points.append(points[0])
 			
 			mapped_border.append(points)
-			rs.DeleteObject(border.guid)
+			rs.DeleteObject(border_guid)
 		mapped_borders.append(mapped_border)
 
 	outer_boundaries, inner_boundaries = [network_polylines(Network.from_lines([(u, v) for border in mapped_borders[i] for u, v in pairwise(border)])) for i in [0, 1]]

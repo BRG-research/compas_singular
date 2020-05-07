@@ -232,6 +232,22 @@ class QuadMesh(Mesh):
 
 		return self.polyedges(data=True)
 
+	def is_polyedge_closed(self, pkey):
+		"""Output whether a polyedge is closed.
+
+		Parameters
+		----------
+		pkey : hashable
+			A strip key.
+
+		Returns
+		-------
+		bool
+			True if the polyedge is closed. False otherwise.
+		"""
+
+		return self.data['attributes']['polyedges'][pkey][0] == self.data['attributes']['polyedges'][pkey][-1]
+
 	def singularity_polyedges(self):
 		"""Collect the polyedges connected to singularities.
 

@@ -294,11 +294,11 @@ class TwoColourableProjection:
 
 		mesh = self.quad_mesh
 
-		# result for input mesh
-		vertices, edges = mesh.strip_graph()
-		if is_adjacency_two_colorable(adjacency_from_edges(edges)) is not None:
-			self.results = True
-			return True
+		# # result for input mesh
+		# vertices, edges = mesh.strip_graph()
+		# if is_adjacency_two_colorable(adjacency_from_edges(edges)) is not None:
+		# 	self.results = True
+		# 	return True
 
 		results = {}
 
@@ -306,8 +306,6 @@ class TwoColourableProjection:
 		n = mesh.number_of_strips()
 		if kmax < 1 or kmax > n:
 			kmax = n
-		
-		t0 = time.time()
 
 		# start iteration
 		k = 0
@@ -358,10 +356,7 @@ class TwoColourableProjection:
 			if not to_continue:
 				break
 
-		t1 = time.time()
-
-		self.results = results
-		self.time = t1 - t0
+		return self.results
 
 	def projection_0(self, kmax = 1):
 		"""Projection of a coarse quad mesh to the closest two-colourable sub-spaces.
@@ -507,7 +502,7 @@ if __name__ == '__main__':
 	vertices_1 = [[-332.0, -22.0, 0.0], [-332.0, -19.0, 0.0], [-332.0, -5.0, 0.0], [-332.0, -2.0, 0.0], [-329.0, -22.0, 0.0], [-329.0, -19.0, 0.0], [-329.0, -5.0, 0.0], [-329.0, -2.0, 0.0], [-324.0, -15.0, 0.0], [-324.0, -9.0, 0.0], [-318.0, -15.0, 0.0], [-318.0, -9.0, 0.0], [-312.0, -22.0, 0.0], [-312.0, -19.0, 0.0], [-312.0, -5.0, 0.0], [-312.0, -2.0, 0.0], [-305.0, -15.0, 0.0], [-305.0, -9.0, 0.0], [-299.0, -15.0, 0.0], [-299.0, -9.0, 0.0], [-295.0, -22.0, 0.0], [-295.0, -19.0, 0.0], [-295.0, -5.0, 0.0], [-295.0, -2.0, 0.0], [-292.0, -22.0, 0.0], [-292.0, -19.0, 0.0], [-292.0, -5.0, 0.0], [-292.0, -2.0, 0.0]]
 	faces_1 = [[16, 17, 14, 13], [14, 17, 19, 22], [21, 22, 19, 18], [21, 18, 16, 13], [8, 9, 6, 5], [6, 9, 11, 14], [13, 14, 11, 10], [13, 10, 8, 5], [4, 5, 1, 0], [5, 6, 2, 1], [6, 7, 3, 2], [14, 15, 7, 6], [22, 23, 15, 14], [12, 13, 5, 4], [20, 21, 13, 12], [26, 27, 23, 22], [25, 26, 22, 21], [24, 25, 21, 20]]
 
-	mesh = QuadMesh.from_vertices_and_faces(vertices_1, faces_1)
+	mesh = QuadMesh.from_vertices_and_faces(vertices, faces)
 
 	# plotter = MeshPlotter(mesh, figsize=(5.0, 5.0))
 	# plotter.draw_vertices(text='key')
@@ -517,5 +512,5 @@ if __name__ == '__main__':
 
 	mesh.collect_strips()
 	projection = TwoColourableProjection(mesh)
-	projection.projection(kmax=10)
-	print(projection.strip_deletions_yielding_two_colourability())
+	for i in projection.projection(kmax=5):
+		print(projection.strip_deletions_yielding_two_colourability())

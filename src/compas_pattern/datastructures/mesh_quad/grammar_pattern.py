@@ -314,11 +314,11 @@ def delete_strip(mesh, skey, preserve_boundaries=False):
     old_to_new = {vkey: i for i, vkey in enumerate(vertices)}
     new_to_old = {i: vkey for i, vkey in enumerate(vertices)}
     # network
-    vertex_coordinates = [mesh.vertex_coordinates(vkey) for vkey in vertices]
+    vertex_coordinates = {i: mesh.vertex_coordinates(vkey) for i, vkey in enumerate(vertices)}
     edges = [(old_to_new[u], old_to_new[v]) for u, v in strip_edges]
-    network = Network.from_vertices_and_edges(vertex_coordinates, edges)
+    network = Network.from_nodes_and_edges(vertex_coordinates, edges)
     # disconnected parts
-    parts = network_disconnected_vertices(network)
+    parts = network_disconnected_nodes(network)
 
     # delete strip faces
     for fkey in strip_faces:
