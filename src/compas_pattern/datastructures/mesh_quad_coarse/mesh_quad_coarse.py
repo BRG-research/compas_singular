@@ -291,7 +291,7 @@ class CoarseQuadMesh(QuadMesh):
 		
 		t2 = time.time()
 		
-		self.set_quad_mesh(meshes_join_and_weld(meshes))
+		self.set_quad_mesh(meshes_join_and_weld(face_meshes.values()))
 		#mesh = join_mesh(meshes)
 		# for u, v in self.edges():
 		# 	if not self.is_edge_on_boundary(u, v):
@@ -472,10 +472,10 @@ if __name__ == '__main__':
 	#mesh_0.get_strip_densities()
 	#mesh_smooth_centroid(mesh_0.quad_mesh, kmax = 10)
 
-	mesh_0.set_strips_density(10)
-	mesh_0.densification()
+	#mesh_0.set_strips_density(10)
+	#mesh_0.densification()
 
-	plotter = MeshPlotter(mesh_0.get_quad_mesh(), figsize=(10, 10))
+	plotter = MeshPlotter(mesh_0, figsize=(10, 10))
 	plotter.draw_edges()
 	plotter.draw_vertices()
 	plotter.draw_faces()

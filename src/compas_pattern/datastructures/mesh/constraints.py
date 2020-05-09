@@ -47,12 +47,12 @@ def automated_smoothing_surface_constraints(mesh, surface):
 		A dictionary of mesh constraints for smoothing as vertex keys pointing to point, curve or surface objects.
 
 	"""
-
+	print(surface)
 	constraints = {}
 
 	points = [rs.AddPoint(point) for point in surface.kinks()]
 	curves = surface.borders(type = 0)
-
+	print(curves)
 	constraints.update({vkey: surface.guid for vkey in mesh.vertices()})
 
 	for vkey in mesh.vertices_on_boundary():

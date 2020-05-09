@@ -65,6 +65,7 @@ class PseudoQuadMesh(QuadMesh):
 
         data_face_pole = {}
         for fkey, vkey in iter(data['attributes']['face_pole'].items()):
+            print(fkey, type(fkey))
             data_face_pole[literal_eval(fkey)] = vkey
         self.data['attributes']['face_pole'] = data_face_pole
 

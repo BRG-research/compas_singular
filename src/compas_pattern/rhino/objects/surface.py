@@ -50,9 +50,13 @@ class RhinoSurface(RhinoSurface):
 			The GUIDs of the extracted border curves.
 
 		"""
-		border = rs.DuplicateSurfaceBorder(self.guid, type=type)
-		curves = rs.ExplodeCurves(border, delete_input=True)
-		return curves
+		curves = rs.DuplicateSurfaceBorder(self.guid, type=type)
+		exploded_curves = rs.ExplodeCurves(curves, delete_input=False)
+		if len(exploded_curves) == 0:
+			return curves
+		else:
+			rs.DeleteObjects(curves)
+			return exploded_curves
 
 	def kinks(self, threshold=1e-3):
 		"""Return the XYZ coordinates of kinks, i.e. tangency discontinuities, along the surface's boundaries.

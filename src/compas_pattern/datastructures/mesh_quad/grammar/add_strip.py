@@ -10,7 +10,7 @@ __all__ = [
 
 def add_strips(mesh, polyedges, callback=None, callback_args=None):
 
-	to_add = polyedges.copy()
+	to_add = polyedges[:]
 	while len(to_add) > 0:
 		polyedge = to_add.pop()
 		add_strip(mesh, polyedge)

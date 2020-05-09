@@ -8,7 +8,7 @@ except ImportError:
 	import compas
 	compas.raise_if_ironpython()
 
-import copy
+from copy import deepcopy
 
 from compas_pattern.datastructures import CoarseQuadMesh
 from compas_pattern.datastructures import QuadMesh
@@ -17,8 +17,8 @@ from compas_pattern.algorithms import surface_discrete_mapping
 from compas_pattern.algorithms import boundary_triangulation
 from compas_pattern.algorithms import SkeletonDecomposition
 
-from compas_pattern.datastructures.mesh_quad.grammar.add_strip import add_strip
-from compas_pattern.datastructures.mesh_quad.grammar.delete_strip import delete_strip
+from compas_pattern.datastructures.mesh_quad.grammar.add_strip import add_strips
+from compas_pattern.datastructures.mesh_quad.grammar.delete_strip import delete_strips
 
 from compas_pattern.datastructures import automated_smoothing_surface_constraints
 from compas_pattern.datastructures import automated_smoothing_constraints
@@ -38,7 +38,7 @@ __all__ = []
 
 
 # ==============================================================================
-# Input/ouput
+# From/to Rhino
 # ==============================================================================
 
 
@@ -65,43 +65,48 @@ def gh_vertices(mesh):
 
 
 def gh_faces(mesh):
+	key_to_index = mesh.key_index()
 	face_vertices = DataTree[object]()
 	for fkey in mesh.faces():
 		path = GH_Path(fkey)
-		face_vertices.AddRange(mesh.face_vertices(fkey), path)
+		face_vertices.AddRange([key_to_index[vkey] for vkey in mesh.face_vertices(fkey)], path)
 	return face_vertices
 
 
 def gh_edges(mesh):
+	key_to_index = mesh.key_index()
 	edge_vertices = DataTree[object]()
 	for i, edge in enumerate(mesh.edges()):
 		path = GH_Path(i)
-		edge_vertices.AddRange(edge, path)
+		edge_vertices.AddRange([key_to_index[vkey] for vkey in edge], path)
 	return edge_vertices
 
 
 def gh_singularities(quad_mesh):
-	return quad_mesh.singularities()
+	key_to_index = quad_mesh.key_index()
+	return [key_to_index[vkey] for vkey in quad_mesh.singularities()]
 
 
 def gh_strips(quad_mesh):
+	key_to_index = quad_mesh.key_index()
 	strip_edges = DataTree[object]()
 	strip_closed = DataTree[object]()
 	for skey, edges in quad_mesh.strips(data=True):
 		for i, edge in enumerate(edges):
 			path = GH_Path(skey, i)
-			strip_edges.AddRange(edge, path)
+			strip_edges.AddRange([key_to_index[vkey] for vkey in edge], path)
 		path = GH_Path(skey)
 		strip_closed.Add(quad_mesh.is_strip_closed(skey), path)
 	return strip_edges, strip_closed
 
 
 def gh_polyedges(quad_mesh):
+	key_to_index = quad_mesh.key_index()
 	polyedge_vertices = DataTree[object]()
 	polyedge_closed = DataTree[object]()
 	for pkey, polyedge in quad_mesh.polyedges(data=True):
 		path = GH_Path(pkey)
-		polyedge_vertices.AddRange(polyedge, path)
+		polyedge_vertices.AddRange([key_to_index[vkey] for vkey in polyedge], path)
 		polyedge_closed.Add(quad_mesh.is_polyedge_closed(pkey), path)
 	return polyedge_vertices, polyedge_closed
 
@@ -122,18 +127,32 @@ def gh_store_polyedges(quad_mesh):
 
 
 # ==============================================================================
-# Edit
+# Topology
 # ==============================================================================
 
 
-def gh_add_strip(mesh, polyedge_to_add):
-	add_strip(mesh, polyedge_to_add)
-	return mesh
+def gh_add_delete_strips(mesh, polyedges_to_add, strips_to_delete):
+	index_to_key = {index: key for index, key in enumerate(mesh.vertices())}
+	strip_index_to_key = {index: key for index, key in enumerate(mesh.strips())}
+	mesh_2 = deepcopy(mesh)
+	polyedges_to_add_lists = [[key for key in polyedge] for polyedge in polyedges_to_add.Branches]
+	add_strips(mesh_2, polyedges_to_add_lists)
+	delete_strips(mesh_2, [strip_index_to_key[index] for index in strips_to_delete])
+	return mesh_2
 
 
-def gh_delete_strip(mesh, strip_to_delete):
-	delete_strip(mesh, strip_to_delete)
-	return mesh
+def gh_add_strips(mesh, polyedges_to_add):
+	mesh_2 = deepcopy(mesh)
+	polyedges_to_add_lists = [[key for key in polyedge] for polyedge in polyedges_to_add.Branches]
+	add_strips(mesh_2, polyedges_to_add_lists)
+	return mesh_2
+
+
+def gh_delete_strips(mesh, strips_to_delete):
+	mesh_2 = deepcopy(mesh)
+	strip_index_to_key = {index: key for index, key in enumerate(mesh.strips())}
+	delete_strips(mesh_2, [strip_index_to_key[index] for index in strips_to_delete])
+	return mesh_2
 	
 
 # ==============================================================================
@@ -146,7 +165,6 @@ def gh_coarsening(quad_mesh):
 
 
 def gh_densifiying(coarse_quad_mesh, strips_subdivision):
-	# input as list of valeu sorted per strip key or dictionary with right key as path?
 	for skey, d in zip(coarse_quad_mesh.strips(), strips_subdivision):
 		coarse_quad_mesh.set_strip_density(skey, d)
 	coarse_quad_mesh.densification()
@@ -159,12 +177,13 @@ def gh_densifiying(coarse_quad_mesh, strips_subdivision):
 
 
 def gh_constrained_smoothing(mesh, k=10, damping=0.5, surface_constraint=None, point_constraints=[]):
+	mesh_2 = deepcopy(mesh)
 	constraints = {}
 	surface = RhinoSurface.from_guid(surface_constraint)
-	constraints.update(automated_smoothing_surface_constraints(mesh, surface))
-	constraints.update(automated_smoothing_constraints(mesh, points=point_constraints))
-	constrained_smoothing(mesh, k, damping, constraints, algorithm='area')
-	return mesh
+	constraints.update(automated_smoothing_surface_constraints(mesh_2, surface))
+	constraints.update(automated_smoothing_constraints(mesh_2, points=point_constraints))
+	constrained_smoothing(mesh_2, k, damping, constraints, algorithm='area')
+	return mesh_2
 
 
 # ==============================================================================

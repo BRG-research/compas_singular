@@ -283,7 +283,8 @@ class QuadMesh(Mesh):
 		polyedges = [polyedge for key, polyedge in self.polyedges(data=True) if (self.is_vertex_singular(polyedge[0]) or self.is_vertex_singular(polyedge[-1])) and not self.is_edge_on_boundary(polyedge[0], polyedge[1])]									
 
 		# split boundaries
-		all_splits = [vkey for polyedge in polyedges for vkey in polyedge]
+		all_splits = list(set([vkey for polyedge in polyedges for vkey in polyedge] + self.singularities()))
+
 		for boundary in self.boundaries():
 			splits = [vkey for vkey in boundary if vkey in all_splits]
 			new_splits = []
