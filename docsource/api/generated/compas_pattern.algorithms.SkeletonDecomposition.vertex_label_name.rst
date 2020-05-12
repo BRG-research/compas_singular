@@ -1,8 +1,0 @@
-.. rst-class:: detail
-
-SkeletonDecomposition.vertex_label_name
-=================================================================
-
-.. currentmodule:: compas_pattern.algorithms
-
-.. automethod:: SkeletonDecomposition.vertex_label_name

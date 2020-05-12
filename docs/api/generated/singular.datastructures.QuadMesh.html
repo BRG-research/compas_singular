@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>singular</title>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <meta name="author" content="" />
+    <meta name="description" content="" />
+
+    <link rel="shortcut icon" href="../../_static/images/compas.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.9/styles/default.min.css">
+    <!-- <link rel="stylesheet" type="text/css" href="../../_static/css/prism.css" /> -->
+    <link rel="stylesheet" type="text/css" href="../../_static/css/compas.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/compas-reference.css" />
+
+    
+        <link rel="next" title="QuadMesh.__init__" href="singular.datastructures.QuadMesh.__init__.html" />
+    
+    
+    
+        <link rel="prev" title="display_smoothing_constraints" href="singular.datastructures.display_smoothing_constraints.html" />
+    
+
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+</head>
+
+<body data-spy="scroll" data-target="#compas-localnav">
+
+    <nav class="navbar navbar-expand compas-navbar">
+        <a class="navbar-brand" href="/">
+            <img src="../../_static/images/compas_icon_white.png" width="36px" height="36px" alt="compas" />
+        </a>
+
+        <ul class="navbar-nav">
+            <li class="nav-item"><a class="nav-link" href="../../index.html">singular</a></li>
+        </ul>
+
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item"><a class="nav-link" target="_blank" href="">Github</a></li>
+            <li class="nav-item"><a class="nav-link" target="_blank" href="https://compas-dev.github.io">COMPAS framework</a></li>
+        </ul>
+    </nav>    
+
+    <div class="container-fluid">
+        <div class="row flex-xl-nowrap">
+
+            <main class="col-12 col-md-9 col-xl-8 compas-content" role="main">
+                <div class="container">
+                
+
+                    
+
+                    <div class="detail section" id="quadmesh">
+<h1>QuadMesh</h1>
+<dl class="class">
+<dt id="singular.datastructures.QuadMesh">
+<em class="property">class </em><code class="sig-prename descclassname">singular.datastructures.</code><code class="sig-name descname">QuadMesh</code></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">singular.datastructures.mesh.mesh.Mesh</span></code></p>
+<p class="rubric">Attributes</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+</tbody>
+</table>
+<p class="rubric">Inherited Attributes</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">adjacency</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">data</span></code></p></td>
+<td><p>A data dict representing the mesh data structure for serialisation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p>The name of the data structure.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.__init__.html#singular.datastructures.QuadMesh.__init__" title="singular.datastructures.QuadMesh.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>()</p></td>
+<td><p>Initialize self.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.collect_polyedge.html#singular.datastructures.QuadMesh.collect_polyedge" title="singular.datastructures.QuadMesh.collect_polyedge"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect_polyedge</span></code></a>(u0, v0)</p></td>
+<td><p>Collect all the edges in the polyedge of the input edge.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.collect_polyedges.html#singular.datastructures.QuadMesh.collect_polyedges" title="singular.datastructures.QuadMesh.collect_polyedges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect_polyedges</span></code></a>()</p></td>
+<td><p>Collect the polyedges accross four-valent vertices between boundaries and/or singularities and store it in the mesh data attributes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.collect_strip.html#singular.datastructures.QuadMesh.collect_strip" title="singular.datastructures.QuadMesh.collect_strip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect_strip</span></code></a>(u0, v0)</p></td>
+<td><p>Returns all the edges in the strip of the input edge.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.collect_strips.html#singular.datastructures.QuadMesh.collect_strips" title="singular.datastructures.QuadMesh.collect_strips"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect_strips</span></code></a>()</p></td>
+<td><p>Collect the strip data and store it in the mesh data attributes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.delete_face_in_strips.html#singular.datastructures.QuadMesh.delete_face_in_strips" title="singular.datastructures.QuadMesh.delete_face_in_strips"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete_face_in_strips</span></code></a>(fkey)</p></td>
+<td><p>Delete face in strips.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edge_strip.html#singular.datastructures.QuadMesh.edge_strip" title="singular.datastructures.QuadMesh.edge_strip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edge_strip</span></code></a>(edge)</p></td>
+<td><p>Return the strip of an edge.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_opposite_edge.html#singular.datastructures.QuadMesh.face_opposite_edge" title="singular.datastructures.QuadMesh.face_opposite_edge"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_opposite_edge</span></code></a>(u, v)</p></td>
+<td><p>Returns the opposite edge in the quad face.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_strips.html#singular.datastructures.QuadMesh.face_strips" title="singular.datastructures.QuadMesh.face_strips"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_strips</span></code></a>(fkey)</p></td>
+<td><p>Return the two strips of a face.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_polyedge_closed.html#singular.datastructures.QuadMesh.is_polyedge_closed" title="singular.datastructures.QuadMesh.is_polyedge_closed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_polyedge_closed</span></code></a>(pkey)</p></td>
+<td><p>Output whether a polyedge is closed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_strip_closed.html#singular.datastructures.QuadMesh.is_strip_closed" title="singular.datastructures.QuadMesh.is_strip_closed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_strip_closed</span></code></a>(skey)</p></td>
+<td><p>Output whether a strip is closed.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_vertex_singular.html#singular.datastructures.QuadMesh.is_vertex_singular" title="singular.datastructures.QuadMesh.is_vertex_singular"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_vertex_singular</span></code></a>(vkey)</p></td>
+<td><p>Output whether a vertex is quad mesh singularity.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.number_of_strips.html#singular.datastructures.QuadMesh.number_of_strips" title="singular.datastructures.QuadMesh.number_of_strips"><code class="xref py py-obj docutils literal notranslate"><span class="pre">number_of_strips</span></code></a>()</p></td>
+<td><p>Count the number of strips in the mesh.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.polyedge_graph.html#singular.datastructures.QuadMesh.polyedge_graph" title="singular.datastructures.QuadMesh.polyedge_graph"><code class="xref py py-obj docutils literal notranslate"><span class="pre">polyedge_graph</span></code></a>()</p></td>
+<td><p>Compute the vertices and edges of the graph representing the polyedge connectivity, where each graph vertex is a mesh polyedge and each graph edge a non-singular mesh vertex representing the crossing of two polyedges.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.polyedges.html#singular.datastructures.QuadMesh.polyedges" title="singular.datastructures.QuadMesh.polyedges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">polyedges</span></code></a>([data])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.polylines.html#singular.datastructures.QuadMesh.polylines" title="singular.datastructures.QuadMesh.polylines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">polylines</span></code></a>()</p></td>
+<td><p>Return the polylines of the quad mesh.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.singularities.html#singular.datastructures.QuadMesh.singularities" title="singular.datastructures.QuadMesh.singularities"><code class="xref py py-obj docutils literal notranslate"><span class="pre">singularities</span></code></a>()</p></td>
+<td><p>Returns all the singularity indices in the quad mesh.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.singularity_polyedge_decomposition.html#singular.datastructures.QuadMesh.singularity_polyedge_decomposition" title="singular.datastructures.QuadMesh.singularity_polyedge_decomposition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">singularity_polyedge_decomposition</span></code></a>()</p></td>
+<td><p>Returns a quad patch decomposition of the mesh based on the singularity polyedges, including boundaries and additionnal splits on the boundaries.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.singularity_polyedges.html#singular.datastructures.QuadMesh.singularity_polyedges" title="singular.datastructures.QuadMesh.singularity_polyedges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">singularity_polyedges</span></code></a>()</p></td>
+<td><p>Collect the polyedges connected to singularities.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.singularity_polyline_decomposition.html#singular.datastructures.QuadMesh.singularity_polyline_decomposition" title="singular.datastructures.QuadMesh.singularity_polyline_decomposition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">singularity_polyline_decomposition</span></code></a>()</p></td>
+<td><p>Return the polylines forming a quad patch decomposition of the mesh.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.singularity_polylines.html#singular.datastructures.QuadMesh.singularity_polylines" title="singular.datastructures.QuadMesh.singularity_polylines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">singularity_polylines</span></code></a>()</p></td>
+<td><p>Return the polylines connected to singularities.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.strip_edge_midpoint_polyline.html#singular.datastructures.QuadMesh.strip_edge_midpoint_polyline" title="singular.datastructures.QuadMesh.strip_edge_midpoint_polyline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_edge_midpoint_polyline</span></code></a>(skey)</p></td>
+<td><p>Return the strip polyline connecting edge midpoints.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.strip_edges.html#singular.datastructures.QuadMesh.strip_edges" title="singular.datastructures.QuadMesh.strip_edges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_edges</span></code></a>(skey)</p></td>
+<td><p>Return the edges of a strip.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.strip_face_centroid_polyline.html#singular.datastructures.QuadMesh.strip_face_centroid_polyline" title="singular.datastructures.QuadMesh.strip_face_centroid_polyline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_face_centroid_polyline</span></code></a>(skey)</p></td>
+<td><p>Return the strip polyline connecting face centroids.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.strip_faces.html#singular.datastructures.QuadMesh.strip_faces" title="singular.datastructures.QuadMesh.strip_faces"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_faces</span></code></a>(skey)</p></td>
+<td><p>Return the faces of a strip.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.strip_graph.html#singular.datastructures.QuadMesh.strip_graph" title="singular.datastructures.QuadMesh.strip_graph"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_graph</span></code></a>()</p></td>
+<td><p>Compute the vertices and edges of the graph representing the strip connectivity, where each graph vertex is a mesh strip and each graph edge a mesh face representing the crossing of two strips.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.strip_side_polyedges.html#singular.datastructures.QuadMesh.strip_side_polyedges" title="singular.datastructures.QuadMesh.strip_side_polyedges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_side_polyedges</span></code></a>(skey)</p></td>
+<td><p>Return the two side polyedges of a strip.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.strip_side_polylines.html#singular.datastructures.QuadMesh.strip_side_polylines" title="singular.datastructures.QuadMesh.strip_side_polylines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_side_polylines</span></code></a>(skey)</p></td>
+<td><p>Return the two side polylines of a strip.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.strips.html#singular.datastructures.QuadMesh.strips" title="singular.datastructures.QuadMesh.strips"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strips</span></code></a>([data])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.substitute_vertex_in_strips.html#singular.datastructures.QuadMesh.substitute_vertex_in_strips" title="singular.datastructures.QuadMesh.substitute_vertex_in_strips"><code class="xref py py-obj docutils literal notranslate"><span class="pre">substitute_vertex_in_strips</span></code></a>(old_vkey, new_vkey)</p></td>
+<td><p>Substitute a vertex by another one.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_index.html#singular.datastructures.QuadMesh.vertex_index" title="singular.datastructures.QuadMesh.vertex_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_index</span></code></a>(vkey)</p></td>
+<td><p>Compute vertex index.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_opposite_vertex.html#singular.datastructures.QuadMesh.vertex_opposite_vertex" title="singular.datastructures.QuadMesh.vertex_opposite_vertex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_opposite_vertex</span></code></a>(u, v)</p></td>
+<td><p>Returns the opposite vertex to u accross vertex v.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Inherited Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.add_face.html#singular.datastructures.QuadMesh.add_face" title="singular.datastructures.QuadMesh.add_face"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_face</span></code></a>(vertices[, fkey, attr_dict])</p></td>
+<td><p>Add a face to the mesh object.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.add_vertex.html#singular.datastructures.QuadMesh.add_vertex" title="singular.datastructures.QuadMesh.add_vertex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_vertex</span></code></a>([key, attr_dict])</p></td>
+<td><p>Add a vertex to the mesh object.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.area.html#singular.datastructures.QuadMesh.area" title="singular.datastructures.QuadMesh.area"><code class="xref py py-obj docutils literal notranslate"><span class="pre">area</span></code></a>()</p></td>
+<td><p>Calculate the total mesh area.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.boundaries.html#singular.datastructures.QuadMesh.boundaries" title="singular.datastructures.QuadMesh.boundaries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">boundaries</span></code></a>()</p></td>
+<td><p>Collect the mesh boundaries as lists of vertices.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.boundary_kinks.html#singular.datastructures.QuadMesh.boundary_kinks" title="singular.datastructures.QuadMesh.boundary_kinks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">boundary_kinks</span></code></a>(threshold_angle)</p></td>
+<td><p>Return the boundary vertices with kinks.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.bounding_box.html#singular.datastructures.QuadMesh.bounding_box" title="singular.datastructures.QuadMesh.bounding_box"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bounding_box</span></code></a>()</p></td>
+<td><p>Compute the (axis aligned) bounding box of a mesh.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.bounding_box_xy.html#singular.datastructures.QuadMesh.bounding_box_xy" title="singular.datastructures.QuadMesh.bounding_box_xy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bounding_box_xy</span></code></a>()</p></td>
+<td><p>Compute the (axis aligned) bounding box of a projection of the mesh in the XY plane.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.centroid.html#singular.datastructures.QuadMesh.centroid" title="singular.datastructures.QuadMesh.centroid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">centroid</span></code></a>()</p></td>
+<td><p>Calculate the mesh centroid.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.clear.html#singular.datastructures.QuadMesh.clear" title="singular.datastructures.QuadMesh.clear"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear</span></code></a>()</p></td>
+<td><p>Clear all the mesh data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.collapse_edge.html#singular.datastructures.QuadMesh.collapse_edge" title="singular.datastructures.QuadMesh.collapse_edge"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collapse_edge</span></code></a>(u, v[, t, allow_boundary, fixed])</p></td>
+<td><p>Collapse an edge to its first or second vertex, or to an intermediate point.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.connected_components.html#singular.datastructures.QuadMesh.connected_components" title="singular.datastructures.QuadMesh.connected_components"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connected_components</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.copy.html#singular.datastructures.QuadMesh.copy" title="singular.datastructures.QuadMesh.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a>([cls])</p></td>
+<td><p>Make an independent copy of the mesh object.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.cull_vertices.html#singular.datastructures.QuadMesh.cull_vertices" title="singular.datastructures.QuadMesh.cull_vertices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cull_vertices</span></code></a>()</p></td>
+<td><p>Remove all unused vertices from the mesh object.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.delete_face.html#singular.datastructures.QuadMesh.delete_face" title="singular.datastructures.QuadMesh.delete_face"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete_face</span></code></a>(fkey)</p></td>
+<td><p>Delete a face from the mesh object.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.delete_vertex.html#singular.datastructures.QuadMesh.delete_vertex" title="singular.datastructures.QuadMesh.delete_vertex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete_vertex</span></code></a>(key)</p></td>
+<td><p>Delete a vertex from the mesh and everything that is attached to it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.dual.html#singular.datastructures.QuadMesh.dual" title="singular.datastructures.QuadMesh.dual"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dual</span></code></a>([cls])</p></td>
+<td><p>Construct the dual of a mesh.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edge_attribute.html#singular.datastructures.QuadMesh.edge_attribute" title="singular.datastructures.QuadMesh.edge_attribute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edge_attribute</span></code></a>(key, name[, value])</p></td>
+<td><p>Get or set an attribute of an edge.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edge_attributes.html#singular.datastructures.QuadMesh.edge_attributes" title="singular.datastructures.QuadMesh.edge_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edge_attributes</span></code></a>(key[, names, values])</p></td>
+<td><p>Get or set multiple attributes of an edge.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edge_coordinates.html#singular.datastructures.QuadMesh.edge_coordinates" title="singular.datastructures.QuadMesh.edge_coordinates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edge_coordinates</span></code></a>(u, v[, axes])</p></td>
+<td><p>Return the coordinates of the start and end point of an edge.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edge_direction.html#singular.datastructures.QuadMesh.edge_direction" title="singular.datastructures.QuadMesh.edge_direction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edge_direction</span></code></a>(u, v)</p></td>
+<td><p>Return the direction vector of an edge.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edge_faces.html#singular.datastructures.QuadMesh.edge_faces" title="singular.datastructures.QuadMesh.edge_faces"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edge_faces</span></code></a>(u, v)</p></td>
+<td><p>Find the two faces adjacent to an edge.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edge_length.html#singular.datastructures.QuadMesh.edge_length" title="singular.datastructures.QuadMesh.edge_length"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edge_length</span></code></a>(u, v)</p></td>
+<td><p>Return the length of an edge.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edge_midpoint.html#singular.datastructures.QuadMesh.edge_midpoint" title="singular.datastructures.QuadMesh.edge_midpoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edge_midpoint</span></code></a>(u, v)</p></td>
+<td><p>Return the location of the midpoint of an edge.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edge_point.html#singular.datastructures.QuadMesh.edge_point" title="singular.datastructures.QuadMesh.edge_point"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edge_point</span></code></a>(u, v[, t])</p></td>
+<td><p>Return the location of a point along an edge.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edge_vector.html#singular.datastructures.QuadMesh.edge_vector" title="singular.datastructures.QuadMesh.edge_vector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edge_vector</span></code></a>(u, v)</p></td>
+<td><p>Return the vector of an edge.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edges.html#singular.datastructures.QuadMesh.edges" title="singular.datastructures.QuadMesh.edges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edges</span></code></a>([data])</p></td>
+<td><p>Iterate over the edges of the mesh.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edges_attribute.html#singular.datastructures.QuadMesh.edges_attribute" title="singular.datastructures.QuadMesh.edges_attribute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edges_attribute</span></code></a>(name[, value, keys])</p></td>
+<td><p>Get or set an attribute of multiple edges.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edges_attributes.html#singular.datastructures.QuadMesh.edges_attributes" title="singular.datastructures.QuadMesh.edges_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edges_attributes</span></code></a>([names, values, keys])</p></td>
+<td><p>Get or set multiple attributes of multiple edges.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edges_on_boundaries.html#singular.datastructures.QuadMesh.edges_on_boundaries" title="singular.datastructures.QuadMesh.edges_on_boundaries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edges_on_boundaries</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edges_on_boundary.html#singular.datastructures.QuadMesh.edges_on_boundary" title="singular.datastructures.QuadMesh.edges_on_boundary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edges_on_boundary</span></code></a>([oriented])</p></td>
+<td><p>Find the edges on the boundary.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edges_where.html#singular.datastructures.QuadMesh.edges_where" title="singular.datastructures.QuadMesh.edges_where"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edges_where</span></code></a>(conditions[, data])</p></td>
+<td><p>Get edges for which a certain condition or set of conditions is true.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.edges_where_predicate.html#singular.datastructures.QuadMesh.edges_where_predicate" title="singular.datastructures.QuadMesh.edges_where_predicate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edges_where_predicate</span></code></a>(predicate[, data])</p></td>
+<td><p>Get edges for which a certain condition or set of conditions is true using a lambda function.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.euler.html#singular.datastructures.QuadMesh.euler" title="singular.datastructures.QuadMesh.euler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">euler</span></code></a>()</p></td>
+<td><p>Calculate the Euler characterisic.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_adjacency.html#singular.datastructures.QuadMesh.face_adjacency" title="singular.datastructures.QuadMesh.face_adjacency"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_adjacency</span></code></a>()</p></td>
+<td><p>Build a face adjacency dict.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_adjacency_halfedge.html#singular.datastructures.QuadMesh.face_adjacency_halfedge" title="singular.datastructures.QuadMesh.face_adjacency_halfedge"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_adjacency_halfedge</span></code></a>(f1, f2)</p></td>
+<td><p>Find one half-edge over which two faces are adjacent.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_adjacency_vertices.html#singular.datastructures.QuadMesh.face_adjacency_vertices" title="singular.datastructures.QuadMesh.face_adjacency_vertices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_adjacency_vertices</span></code></a>(f1, f2)</p></td>
+<td><p>Find all vertices over which two faces are adjacent.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_area.html#singular.datastructures.QuadMesh.face_area" title="singular.datastructures.QuadMesh.face_area"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_area</span></code></a>(fkey)</p></td>
+<td><p>Compute the area of a face.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_aspect_ratio.html#singular.datastructures.QuadMesh.face_aspect_ratio" title="singular.datastructures.QuadMesh.face_aspect_ratio"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_aspect_ratio</span></code></a>(fkey)</p></td>
+<td><p>Face aspect ratio as the ratio between the lengths of the maximum and minimum face edges.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_attribute.html#singular.datastructures.QuadMesh.face_attribute" title="singular.datastructures.QuadMesh.face_attribute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_attribute</span></code></a>(key, name[, value])</p></td>
+<td><p>Get or set an attribute of a face.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_attributes.html#singular.datastructures.QuadMesh.face_attributes" title="singular.datastructures.QuadMesh.face_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_attributes</span></code></a>(key[, names, values])</p></td>
+<td><p>Get or set multiple attributes of a face.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_center.html#singular.datastructures.QuadMesh.face_center" title="singular.datastructures.QuadMesh.face_center"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_center</span></code></a>(fkey)</p></td>
+<td><p>Compute the location of the center of mass of a face.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_centroid.html#singular.datastructures.QuadMesh.face_centroid" title="singular.datastructures.QuadMesh.face_centroid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_centroid</span></code></a>(fkey)</p></td>
+<td><p>Compute the location of the centroid of a face.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_coordinates.html#singular.datastructures.QuadMesh.face_coordinates" title="singular.datastructures.QuadMesh.face_coordinates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_coordinates</span></code></a>(fkey[, axes])</p></td>
+<td><p>Compute the coordinates of the vertices of a face.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_corners.html#singular.datastructures.QuadMesh.face_corners" title="singular.datastructures.QuadMesh.face_corners"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_corners</span></code></a>(fkey)</p></td>
+<td><p>Return triplets of face vertices forming the corners of the face.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_curvature.html#singular.datastructures.QuadMesh.face_curvature" title="singular.datastructures.QuadMesh.face_curvature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_curvature</span></code></a>(fkey)</p></td>
+<td><p>Dimensionless face curvature as the maximum face vertex deviation from the best-fit plane of the face vertices divided by the average lengths of the face vertices to the face centroid.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_degree.html#singular.datastructures.QuadMesh.face_degree" title="singular.datastructures.QuadMesh.face_degree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_degree</span></code></a>(fkey)</p></td>
+<td><p>Count the neighbors of a face.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_flatness.html#singular.datastructures.QuadMesh.face_flatness" title="singular.datastructures.QuadMesh.face_flatness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_flatness</span></code></a>(fkey)</p></td>
+<td><p>Compute the flatness of the mesh face.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_halfedges.html#singular.datastructures.QuadMesh.face_halfedges" title="singular.datastructures.QuadMesh.face_halfedges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_halfedges</span></code></a>(fkey)</p></td>
+<td><p>The halfedges of a face.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_max_degree.html#singular.datastructures.QuadMesh.face_max_degree" title="singular.datastructures.QuadMesh.face_max_degree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_max_degree</span></code></a>()</p></td>
+<td><p>Compute the maximum degree of all faces.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_min_degree.html#singular.datastructures.QuadMesh.face_min_degree" title="singular.datastructures.QuadMesh.face_min_degree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_min_degree</span></code></a>()</p></td>
+<td><p>Compute the minimum degree of all faces.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_neighborhood.html#singular.datastructures.QuadMesh.face_neighborhood" title="singular.datastructures.QuadMesh.face_neighborhood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_neighborhood</span></code></a>(key[, ring])</p></td>
+<td><p>Return the faces in the neighborhood of a face.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_neighbors.html#singular.datastructures.QuadMesh.face_neighbors" title="singular.datastructures.QuadMesh.face_neighbors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_neighbors</span></code></a>(fkey)</p></td>
+<td><p>Return the neighbors of a face across its edges.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_normal.html#singular.datastructures.QuadMesh.face_normal" title="singular.datastructures.QuadMesh.face_normal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_normal</span></code></a>(fkey[, unitized])</p></td>
+<td><p>Compute the normal of a face.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_skewness.html#singular.datastructures.QuadMesh.face_skewness" title="singular.datastructures.QuadMesh.face_skewness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_skewness</span></code></a>(fkey)</p></td>
+<td><p>Face skewness as the maximum absolute angular deviation from the ideal polygon angle.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_vertex_ancestor.html#singular.datastructures.QuadMesh.face_vertex_ancestor" title="singular.datastructures.QuadMesh.face_vertex_ancestor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_vertex_ancestor</span></code></a>(fkey, key[, n])</p></td>
+<td><p>Return the n-th vertex before the specified vertex in a specific face.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_vertex_descendant.html#singular.datastructures.QuadMesh.face_vertex_descendant" title="singular.datastructures.QuadMesh.face_vertex_descendant"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_vertex_descendant</span></code></a>(fkey, key[, n])</p></td>
+<td><p>Return the n-th vertex after the specified vertex in a specific face.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.face_vertices.html#singular.datastructures.QuadMesh.face_vertices" title="singular.datastructures.QuadMesh.face_vertices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">face_vertices</span></code></a>(fkey)</p></td>
+<td><p>The vertices of a face.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.faces.html#singular.datastructures.QuadMesh.faces" title="singular.datastructures.QuadMesh.faces"><code class="xref py py-obj docutils literal notranslate"><span class="pre">faces</span></code></a>([data])</p></td>
+<td><p>Iterate over the faces of the mesh.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.faces_attribute.html#singular.datastructures.QuadMesh.faces_attribute" title="singular.datastructures.QuadMesh.faces_attribute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">faces_attribute</span></code></a>(name[, value, keys])</p></td>
+<td><p>Get or set an attribute of multiple faces.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.faces_attributes.html#singular.datastructures.QuadMesh.faces_attributes" title="singular.datastructures.QuadMesh.faces_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">faces_attributes</span></code></a>([names, values, keys])</p></td>
+<td><p>Get or set multiple attributes of multiple faces.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.faces_on_boundary.html#singular.datastructures.QuadMesh.faces_on_boundary" title="singular.datastructures.QuadMesh.faces_on_boundary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">faces_on_boundary</span></code></a>()</p></td>
+<td><p>Find the faces on the boundary.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.faces_where.html#singular.datastructures.QuadMesh.faces_where" title="singular.datastructures.QuadMesh.faces_where"><code class="xref py py-obj docutils literal notranslate"><span class="pre">faces_where</span></code></a>(conditions[, data])</p></td>
+<td><p>Get faces for which a certain condition or set of conditions is true.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.faces_where_predicate.html#singular.datastructures.QuadMesh.faces_where_predicate" title="singular.datastructures.QuadMesh.faces_where_predicate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">faces_where_predicate</span></code></a>(predicate[, data])</p></td>
+<td><p>Get faces for which a certain condition or set of conditions is true using a lambda function.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.flip_cycles.html#singular.datastructures.QuadMesh.flip_cycles" title="singular.datastructures.QuadMesh.flip_cycles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flip_cycles</span></code></a>()</p></td>
+<td><p>Flip the cycle directions of all faces.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.from_data.html#singular.datastructures.QuadMesh.from_data" title="singular.datastructures.QuadMesh.from_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_data</span></code></a>(data)</p></td>
+<td><p>Construct a mesh from structured data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.from_json.html#singular.datastructures.QuadMesh.from_json" title="singular.datastructures.QuadMesh.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a>(filepath)</p></td>
+<td><p>Construct a datastructure from structured data contained in a json file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.from_lines.html#singular.datastructures.QuadMesh.from_lines" title="singular.datastructures.QuadMesh.from_lines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_lines</span></code></a>(lines[, delete_boundary_face, …])</p></td>
+<td><p>Construct a mesh object from a list of lines described by start and end point coordinates.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.from_obj.html#singular.datastructures.QuadMesh.from_obj" title="singular.datastructures.QuadMesh.from_obj"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_obj</span></code></a>(filepath[, precision])</p></td>
+<td><p>Construct a mesh object from the data described in an OBJ file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.from_off.html#singular.datastructures.QuadMesh.from_off" title="singular.datastructures.QuadMesh.from_off"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_off</span></code></a>(filepath)</p></td>
+<td><p>Construct a mesh object from the data described in a OFF file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.from_pickle.html#singular.datastructures.QuadMesh.from_pickle" title="singular.datastructures.QuadMesh.from_pickle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_pickle</span></code></a>(filepath)</p></td>
+<td><p>Construct a mesh from serialised data contained in a pickle file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.from_ply.html#singular.datastructures.QuadMesh.from_ply" title="singular.datastructures.QuadMesh.from_ply"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_ply</span></code></a>(filepath[, precision])</p></td>
+<td><p>Construct a mesh object from the data described in a PLY file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.from_points.html#singular.datastructures.QuadMesh.from_points" title="singular.datastructures.QuadMesh.from_points"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_points</span></code></a>(points[, boundary, holes])</p></td>
+<td><p>Construct a mesh from a delaunay triangulation of a set of points.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.from_polygons.html#singular.datastructures.QuadMesh.from_polygons" title="singular.datastructures.QuadMesh.from_polygons"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_polygons</span></code></a>(polygons[, precision])</p></td>
+<td><p>Construct a mesh from a series of polygons.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.from_polyhedron.html#singular.datastructures.QuadMesh.from_polyhedron" title="singular.datastructures.QuadMesh.from_polyhedron"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_polyhedron</span></code></a>(f)</p></td>
+<td><p>Construct a mesh from a platonic solid.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.from_polylines.html#singular.datastructures.QuadMesh.from_polylines" title="singular.datastructures.QuadMesh.from_polylines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_polylines</span></code></a>(boundary_polylines, …)</p></td>
+<td><p>Construct mesh from polylines.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.from_shape.html#singular.datastructures.QuadMesh.from_shape" title="singular.datastructures.QuadMesh.from_shape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_shape</span></code></a>(shape, **kwargs)</p></td>
+<td><p>Construct a mesh from a primitive shape.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.from_stl.html#singular.datastructures.QuadMesh.from_stl" title="singular.datastructures.QuadMesh.from_stl"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_stl</span></code></a>(filepath[, precision])</p></td>
+<td><p>Construct a mesh object from the data described in a STL file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.from_vertices_and_faces.html#singular.datastructures.QuadMesh.from_vertices_and_faces" title="singular.datastructures.QuadMesh.from_vertices_and_faces"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_vertices_and_faces</span></code></a>(vertices, faces)</p></td>
+<td><p>Construct a mesh object from a list of vertices and faces.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.genus.html#singular.datastructures.QuadMesh.genus" title="singular.datastructures.QuadMesh.genus"><code class="xref py py-obj docutils literal notranslate"><span class="pre">genus</span></code></a>()</p></td>
+<td><p>Calculate the genus.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.get_any_face.html#singular.datastructures.QuadMesh.get_any_face" title="singular.datastructures.QuadMesh.get_any_face"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_any_face</span></code></a>()</p></td>
+<td><p>Get the identifier of a random face.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.get_any_face_vertex.html#singular.datastructures.QuadMesh.get_any_face_vertex" title="singular.datastructures.QuadMesh.get_any_face_vertex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_any_face_vertex</span></code></a>(fkey)</p></td>
+<td><p>Get the identifier of a random vertex of a specific face.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.get_any_vertex.html#singular.datastructures.QuadMesh.get_any_vertex" title="singular.datastructures.QuadMesh.get_any_vertex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_any_vertex</span></code></a>()</p></td>
+<td><p>Get the identifier of a random vertex.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.get_any_vertices.html#singular.datastructures.QuadMesh.get_any_vertices" title="singular.datastructures.QuadMesh.get_any_vertices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_any_vertices</span></code></a>(n[, exclude_leaves])</p></td>
+<td><p>Get a list of identifiers of a random set of n vertices.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.gkey_key.html#singular.datastructures.QuadMesh.gkey_key" title="singular.datastructures.QuadMesh.gkey_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gkey_key</span></code></a>([precision])</p></td>
+<td><p>Returns a dictionary that maps <em>geometric keys</em> of a certain precision to the keys of the corresponding vertices.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.halfedge_face.html#singular.datastructures.QuadMesh.halfedge_face" title="singular.datastructures.QuadMesh.halfedge_face"><code class="xref py py-obj docutils literal notranslate"><span class="pre">halfedge_face</span></code></a>(u, v)</p></td>
+<td><p>Find the face corresponding to a halfedge.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.has_edge.html#singular.datastructures.QuadMesh.has_edge" title="singular.datastructures.QuadMesh.has_edge"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_edge</span></code></a>(key)</p></td>
+<td><p>Verify that the mesh contains a specific edge.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.has_face.html#singular.datastructures.QuadMesh.has_face" title="singular.datastructures.QuadMesh.has_face"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_face</span></code></a>(fkey)</p></td>
+<td><p>Verify that a face is part of the mesh.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.has_halfedge.html#singular.datastructures.QuadMesh.has_halfedge" title="singular.datastructures.QuadMesh.has_halfedge"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_halfedge</span></code></a>(key)</p></td>
+<td><p>Verify that a halfedge is part of the mesh.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.has_vertex.html#singular.datastructures.QuadMesh.has_vertex" title="singular.datastructures.QuadMesh.has_vertex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_vertex</span></code></a>(key)</p></td>
+<td><p>Verify that a vertex is in the mesh.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.index_key.html#singular.datastructures.QuadMesh.index_key" title="singular.datastructures.QuadMesh.index_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">index_key</span></code></a>()</p></td>
+<td><p>Returns a dictionary that maps the indices of a vertex list to keys in a vertex dictionary.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.insert_vertex.html#singular.datastructures.QuadMesh.insert_vertex" title="singular.datastructures.QuadMesh.insert_vertex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">insert_vertex</span></code></a>(fkey[, key, xyz, return_fkeys])</p></td>
+<td><p>Insert a vertex in the specified face.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_boundary_vertex_kink.html#singular.datastructures.QuadMesh.is_boundary_vertex_kink" title="singular.datastructures.QuadMesh.is_boundary_vertex_kink"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_boundary_vertex_kink</span></code></a>(vkey, threshold_angle)</p></td>
+<td><p>Return whether there is a kink at a boundary vertex according to a threshold angle.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_connected.html#singular.datastructures.QuadMesh.is_connected" title="singular.datastructures.QuadMesh.is_connected"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_connected</span></code></a>()</p></td>
+<td><p>Verify that the mesh is connected.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_edge_on_boundary.html#singular.datastructures.QuadMesh.is_edge_on_boundary" title="singular.datastructures.QuadMesh.is_edge_on_boundary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_edge_on_boundary</span></code></a>(u, v)</p></td>
+<td><p>Verify that an edge is on the boundary.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_empty.html#singular.datastructures.QuadMesh.is_empty" title="singular.datastructures.QuadMesh.is_empty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_empty</span></code></a>()</p></td>
+<td><p>Boolean whether the mesh is empty.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_face_on_boundary.html#singular.datastructures.QuadMesh.is_face_on_boundary" title="singular.datastructures.QuadMesh.is_face_on_boundary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_face_on_boundary</span></code></a>(key)</p></td>
+<td><p>Verify that a face is on a boundary.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_manifold.html#singular.datastructures.QuadMesh.is_manifold" title="singular.datastructures.QuadMesh.is_manifold"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_manifold</span></code></a>()</p></td>
+<td><p>Verify that the mesh is manifold.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_orientable.html#singular.datastructures.QuadMesh.is_orientable" title="singular.datastructures.QuadMesh.is_orientable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_orientable</span></code></a>()</p></td>
+<td><p>Verify that the mesh is orientable.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_quadmesh.html#singular.datastructures.QuadMesh.is_quadmesh" title="singular.datastructures.QuadMesh.is_quadmesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_quadmesh</span></code></a>()</p></td>
+<td><p>Verify that the mesh consists of only quads.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_regular.html#singular.datastructures.QuadMesh.is_regular" title="singular.datastructures.QuadMesh.is_regular"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_regular</span></code></a>()</p></td>
+<td><p>Verify that the mesh is regular.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_trimesh.html#singular.datastructures.QuadMesh.is_trimesh" title="singular.datastructures.QuadMesh.is_trimesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_trimesh</span></code></a>()</p></td>
+<td><p>Verify that the mesh consists of only triangles.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_valid.html#singular.datastructures.QuadMesh.is_valid" title="singular.datastructures.QuadMesh.is_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_valid</span></code></a>()</p></td>
+<td><p>Verify that the mesh is valid.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_vertex_connected.html#singular.datastructures.QuadMesh.is_vertex_connected" title="singular.datastructures.QuadMesh.is_vertex_connected"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_vertex_connected</span></code></a>(key)</p></td>
+<td><p>Verify that a vertex is connected.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.is_vertex_on_boundary.html#singular.datastructures.QuadMesh.is_vertex_on_boundary" title="singular.datastructures.QuadMesh.is_vertex_on_boundary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_vertex_on_boundary</span></code></a>(key)</p></td>
+<td><p>Verify that a vertex is on a boundary.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.key_gkey.html#singular.datastructures.QuadMesh.key_gkey" title="singular.datastructures.QuadMesh.key_gkey"><code class="xref py py-obj docutils literal notranslate"><span class="pre">key_gkey</span></code></a>([precision])</p></td>
+<td><p>Returns a dictionary that maps vertex dictionary keys to the corresponding <em>geometric key</em> up to a certain precision.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.key_index.html#singular.datastructures.QuadMesh.key_index" title="singular.datastructures.QuadMesh.key_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">key_index</span></code></a>()</p></td>
+<td><p>Returns a dictionary that maps vertex dictionary keys to the corresponding index in a vertex list or array.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.normal.html#singular.datastructures.QuadMesh.normal" title="singular.datastructures.QuadMesh.normal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normal</span></code></a>()</p></td>
+<td><p>Calculate the average mesh normal.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.number_of_edges.html#singular.datastructures.QuadMesh.number_of_edges" title="singular.datastructures.QuadMesh.number_of_edges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">number_of_edges</span></code></a>()</p></td>
+<td><p>Count the number of edges in the mesh.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.number_of_faces.html#singular.datastructures.QuadMesh.number_of_faces" title="singular.datastructures.QuadMesh.number_of_faces"><code class="xref py py-obj docutils literal notranslate"><span class="pre">number_of_faces</span></code></a>()</p></td>
+<td><p>Count the number of faces in the mesh.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.number_of_vertices.html#singular.datastructures.QuadMesh.number_of_vertices" title="singular.datastructures.QuadMesh.number_of_vertices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">number_of_vertices</span></code></a>()</p></td>
+<td><p>Count the number of vertices in the mesh.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.smooth_area.html#singular.datastructures.QuadMesh.smooth_area" title="singular.datastructures.QuadMesh.smooth_area"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smooth_area</span></code></a>([fixed, kmax, damping, …])</p></td>
+<td><p>Smooth a mesh by moving each vertex to the barycenter of the centroids of the surrounding faces, weighted by area.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.smooth_centroid.html#singular.datastructures.QuadMesh.smooth_centroid" title="singular.datastructures.QuadMesh.smooth_centroid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smooth_centroid</span></code></a>([fixed, kmax, damping, …])</p></td>
+<td><p>Smooth a mesh by moving every free vertex to the centroid of its neighbors.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.split_edge.html#singular.datastructures.QuadMesh.split_edge" title="singular.datastructures.QuadMesh.split_edge"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_edge</span></code></a>(u, v[, t, allow_boundary])</p></td>
+<td><p>Split and edge by inserting a vertex along its length.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.split_face.html#singular.datastructures.QuadMesh.split_face" title="singular.datastructures.QuadMesh.split_face"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_face</span></code></a>(fkey, u, v)</p></td>
+<td><p>Split a face by inserting an edge between two specified vertices.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.summary.html#singular.datastructures.QuadMesh.summary" title="singular.datastructures.QuadMesh.summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">summary</span></code></a>()</p></td>
+<td><p>Print a summary of the mesh.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.to_data.html#singular.datastructures.QuadMesh.to_data" title="singular.datastructures.QuadMesh.to_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_data</span></code></a>()</p></td>
+<td><p>Returns a dictionary of structured data representing the mesh.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.to_json.html#singular.datastructures.QuadMesh.to_json" title="singular.datastructures.QuadMesh.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>(filepath[, pretty])</p></td>
+<td><p>Serialise the structured data representing the data structure to json.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.to_lines.html#singular.datastructures.QuadMesh.to_lines" title="singular.datastructures.QuadMesh.to_lines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_lines</span></code></a>(filepath)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.to_obj.html#singular.datastructures.QuadMesh.to_obj" title="singular.datastructures.QuadMesh.to_obj"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_obj</span></code></a>(filepath[, precision])</p></td>
+<td><p>Write the mesh to an OBJ file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.to_off.html#singular.datastructures.QuadMesh.to_off" title="singular.datastructures.QuadMesh.to_off"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_off</span></code></a>(filepath, **kwargs)</p></td>
+<td><p>Write a mesh object to an OFF file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.to_pickle.html#singular.datastructures.QuadMesh.to_pickle" title="singular.datastructures.QuadMesh.to_pickle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_pickle</span></code></a>(filepath)</p></td>
+<td><p>Serialise the structured data representing the mesh to a pickle file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.to_ply.html#singular.datastructures.QuadMesh.to_ply" title="singular.datastructures.QuadMesh.to_ply"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_ply</span></code></a>(filepath, **kwargs)</p></td>
+<td><p>Write a mesh object to a PLY file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.to_points.html#singular.datastructures.QuadMesh.to_points" title="singular.datastructures.QuadMesh.to_points"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_points</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.to_polygons.html#singular.datastructures.QuadMesh.to_polygons" title="singular.datastructures.QuadMesh.to_polygons"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_polygons</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.to_polylines.html#singular.datastructures.QuadMesh.to_polylines" title="singular.datastructures.QuadMesh.to_polylines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_polylines</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.to_quadmesh.html#singular.datastructures.QuadMesh.to_quadmesh" title="singular.datastructures.QuadMesh.to_quadmesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_quadmesh</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.to_stl.html#singular.datastructures.QuadMesh.to_stl" title="singular.datastructures.QuadMesh.to_stl"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_stl</span></code></a>(filepath)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.to_trimesh.html#singular.datastructures.QuadMesh.to_trimesh" title="singular.datastructures.QuadMesh.to_trimesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_trimesh</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.to_vertices_and_faces.html#singular.datastructures.QuadMesh.to_vertices_and_faces" title="singular.datastructures.QuadMesh.to_vertices_and_faces"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_vertices_and_faces</span></code></a>([keep_keys])</p></td>
+<td><p>Return the vertices and faces of a mesh.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.transform.html#singular.datastructures.QuadMesh.transform" title="singular.datastructures.QuadMesh.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>(transformation)</p></td>
+<td><p>Transform a mesh.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.transformed.html#singular.datastructures.QuadMesh.transformed" title="singular.datastructures.QuadMesh.transformed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformed</span></code></a>(transformation)</p></td>
+<td><p>Transform a copy of <code class="docutils literal notranslate"><span class="pre">mesh</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.unify_cycles.html#singular.datastructures.QuadMesh.unify_cycles" title="singular.datastructures.QuadMesh.unify_cycles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unify_cycles</span></code></a>([root])</p></td>
+<td><p>Unify the cycle directions of all faces.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.unset_edge_attribute.html#singular.datastructures.QuadMesh.unset_edge_attribute" title="singular.datastructures.QuadMesh.unset_edge_attribute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unset_edge_attribute</span></code></a>(key, name)</p></td>
+<td><p>Unset the attribute of an edge.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.unset_face_attribute.html#singular.datastructures.QuadMesh.unset_face_attribute" title="singular.datastructures.QuadMesh.unset_face_attribute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unset_face_attribute</span></code></a>(key, name)</p></td>
+<td><p>Unset the attribute of a face.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.unset_vertex_attribute.html#singular.datastructures.QuadMesh.unset_vertex_attribute" title="singular.datastructures.QuadMesh.unset_vertex_attribute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unset_vertex_attribute</span></code></a>(key, name)</p></td>
+<td><p>Unset the attribute of a vertex.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.update_default_edge_attributes.html#singular.datastructures.QuadMesh.update_default_edge_attributes" title="singular.datastructures.QuadMesh.update_default_edge_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_default_edge_attributes</span></code></a>([attr_dict])</p></td>
+<td><p>Update the default edge attributes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.update_default_face_attributes.html#singular.datastructures.QuadMesh.update_default_face_attributes" title="singular.datastructures.QuadMesh.update_default_face_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_default_face_attributes</span></code></a>([attr_dict])</p></td>
+<td><p>Update the default face attributes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.update_default_vertex_attributes.html#singular.datastructures.QuadMesh.update_default_vertex_attributes" title="singular.datastructures.QuadMesh.update_default_vertex_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_default_vertex_attributes</span></code></a>([attr_dict])</p></td>
+<td><p>Update the default vertex attributes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_area.html#singular.datastructures.QuadMesh.vertex_area" title="singular.datastructures.QuadMesh.vertex_area"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_area</span></code></a>(key)</p></td>
+<td><p>Compute the tributary area of a vertex.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_attribute.html#singular.datastructures.QuadMesh.vertex_attribute" title="singular.datastructures.QuadMesh.vertex_attribute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_attribute</span></code></a>(key, name[, value])</p></td>
+<td><p>Get or set an attribute of a vertex.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_attributes.html#singular.datastructures.QuadMesh.vertex_attributes" title="singular.datastructures.QuadMesh.vertex_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_attributes</span></code></a>(key[, names, values])</p></td>
+<td><p>Get or set multiple attributes of a vertex.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_centroid.html#singular.datastructures.QuadMesh.vertex_centroid" title="singular.datastructures.QuadMesh.vertex_centroid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_centroid</span></code></a>()</p></td>
+<td><p>Calculate the centroid of the mesh vertices.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_coordinates.html#singular.datastructures.QuadMesh.vertex_coordinates" title="singular.datastructures.QuadMesh.vertex_coordinates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_coordinates</span></code></a>(key[, axes])</p></td>
+<td><p>Return the coordinates of a vertex.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_curvature.html#singular.datastructures.QuadMesh.vertex_curvature" title="singular.datastructures.QuadMesh.vertex_curvature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_curvature</span></code></a>(vkey)</p></td>
+<td><p>Dimensionless vertex curvature.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_degree.html#singular.datastructures.QuadMesh.vertex_degree" title="singular.datastructures.QuadMesh.vertex_degree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_degree</span></code></a>(key)</p></td>
+<td><p>Count the neighbors of a vertex.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_faces.html#singular.datastructures.QuadMesh.vertex_faces" title="singular.datastructures.QuadMesh.vertex_faces"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_faces</span></code></a>(key[, ordered, include_none])</p></td>
+<td><p>The faces connected to a vertex.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_laplacian.html#singular.datastructures.QuadMesh.vertex_laplacian" title="singular.datastructures.QuadMesh.vertex_laplacian"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_laplacian</span></code></a>(key)</p></td>
+<td><p>Compute the vector from a vertex to the centroid of its neighbors.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_max_degree.html#singular.datastructures.QuadMesh.vertex_max_degree" title="singular.datastructures.QuadMesh.vertex_max_degree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_max_degree</span></code></a>()</p></td>
+<td><p>Compute the maximum degree of all vertices.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_min_degree.html#singular.datastructures.QuadMesh.vertex_min_degree" title="singular.datastructures.QuadMesh.vertex_min_degree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_min_degree</span></code></a>()</p></td>
+<td><p>Compute the minimum degree of all vertices.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_neighborhood.html#singular.datastructures.QuadMesh.vertex_neighborhood" title="singular.datastructures.QuadMesh.vertex_neighborhood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_neighborhood</span></code></a>(key[, ring])</p></td>
+<td><p>Return the vertices in the neighborhood of a vertex.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_neighborhood_centroid.html#singular.datastructures.QuadMesh.vertex_neighborhood_centroid" title="singular.datastructures.QuadMesh.vertex_neighborhood_centroid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_neighborhood_centroid</span></code></a>(key)</p></td>
+<td><p>Compute the centroid of the neighbors of a vertex.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_neighbors.html#singular.datastructures.QuadMesh.vertex_neighbors" title="singular.datastructures.QuadMesh.vertex_neighbors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_neighbors</span></code></a>(key[, ordered])</p></td>
+<td><p>Return the neighbors of a vertex.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertex_normal.html#singular.datastructures.QuadMesh.vertex_normal" title="singular.datastructures.QuadMesh.vertex_normal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertex_normal</span></code></a>(key)</p></td>
+<td><p>Return the normal vector at the vertex as the weighted average of the normals of the neighboring faces.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertices.html#singular.datastructures.QuadMesh.vertices" title="singular.datastructures.QuadMesh.vertices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertices</span></code></a>([data])</p></td>
+<td><p>Iterate over the vertices of the mesh.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertices_attribute.html#singular.datastructures.QuadMesh.vertices_attribute" title="singular.datastructures.QuadMesh.vertices_attribute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertices_attribute</span></code></a>(name[, value, keys])</p></td>
+<td><p>Get or set an attribute of multiple vertices.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertices_attributes.html#singular.datastructures.QuadMesh.vertices_attributes" title="singular.datastructures.QuadMesh.vertices_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertices_attributes</span></code></a>([names, values, keys])</p></td>
+<td><p>Get or set multiple attributes of multiple vertices.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertices_on_boundaries.html#singular.datastructures.QuadMesh.vertices_on_boundaries" title="singular.datastructures.QuadMesh.vertices_on_boundaries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertices_on_boundaries</span></code></a>()</p></td>
+<td><p>Find the vertices on all boundaries of the mesh.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertices_on_boundary.html#singular.datastructures.QuadMesh.vertices_on_boundary" title="singular.datastructures.QuadMesh.vertices_on_boundary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertices_on_boundary</span></code></a>([ordered])</p></td>
+<td><p>Find the vertices on the boundary.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertices_where.html#singular.datastructures.QuadMesh.vertices_where" title="singular.datastructures.QuadMesh.vertices_where"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertices_where</span></code></a>(conditions[, data])</p></td>
+<td><p>Get vertices for which a certain condition or set of conditions is true.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="singular.datastructures.QuadMesh.vertices_where_predicate.html#singular.datastructures.QuadMesh.vertices_where_predicate" title="singular.datastructures.QuadMesh.vertices_where_predicate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vertices_where_predicate</span></code></a>(predicate[, data])</p></td>
+<td><p>Get vertices for which a certain condition or set of conditions is true using a lambda function.</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+                    
+                
+                </div>
+            </main>
+
+            <!-- site navigation sidebar -->
+
+            <div class="col-12 col-md-3 col-xl-2 compas-sidebar" role="navigation"> 
+                <div class="navbar-light">
+
+                    <form id="" class="d-flex compas-searchbox" action="../../search.html" method="get">
+                        <input class="form-control" type="text" name="q" placeholder="Search docs" />
+                        <input type="hidden" name="check_keywords" value="yes" />
+                        <input type="hidden" name="area" value="default" />
+
+                        <button class="navbar-toggler d-md-none compas-navigation-toggler" type="button" data-toggle="collapse" data-target="#compas-navigation" aria-controls="compas-navigation" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                    </form>
+
+                    
+                    
+
+                        <div class="navbar-expand-md">
+                            <div id="compas-navigation" class="collapse navbar-collapse compas-navigation">
+
+                            <ul class="nav flex-column active">
+<li class="nav-item"><a class="nav-link reference internal" href="../../00_introduction.html">Introduction</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="../../01_getting_started.html">Getting started</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="../../02_overview.html">Overview</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="../../03_examples.html">Examples</a></li>
+<li class="nav-item active"><a class="nav-link reference internal" href="../../04_api.html">API</a><ul class="nav active">
+<li class="nav-item active"><a class="nav-link reference internal" href="../singular.html">singular</a><ul class="nav active">
+<li class="nav-item"><a class="nav-link reference internal" href="../singular.algorithms.html">singular.algorithms</a></li>
+<li class="nav-item active"><a class="nav-link reference internal" href="../singular.datastructures.html">singular.datastructures</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="../singular.rhino.html">singular.rhino</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="../singular.geometry.html">singular.geometry</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="../singular.topology.html">singular.topology</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="../singular.utilities.html">singular.utilities</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="nav-item"><a class="nav-link reference internal" href="../../05_license.html">License</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="../../06_citing.html">Citing</a></li>
+<li class="nav-item"><a class="nav-link reference internal" href="../../07_publications.html">Publications</a></li>
+</ul>
+
+
+                            </div>
+                        </div>
+
+                    
+
+                </div>
+            </div>
+
+            <!-- table of contents of main content -->
+            
+            <div class="d-none d-xl-block col-xl-2 compas-toc" role="toc">
+
+                
+
+                <ul class="nav flex-column" id="compas-localnav">
+<li class="nav-item"><a class="nav-link reference internal" href="#">QuadMesh</a><ul class="nav">
+</ul>
+</li>
+</ul>
+
+
+            </div>
+
+        </div>
+    </div>
+
+    <footer class="bg-dark pb-5">
+        <div class="container text-center pt-5 pb-5 text-muted">
+            
+                Last updated on May 12, 2020.
+            
+
+            
+                Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.4.4.
+            
+        </div>
+    </footer>
+
+    
+        <script type="text/javascript">
+            var DOCUMENTATION_OPTIONS = {
+            URL_ROOT          : '',
+            VERSION           : '0.1.0',
+            COLLAPSE_INDEX    : false,
+            FILE_SUFFIX       : '.html',
+            HAS_SOURCE        : 'false',
+            SOURCELINK_SUFFIX : '.txt'
+            };
+        </script>
+
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.0.0/anchor.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.9/highlight.min.js"></script>
+
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/js/searchtools_.js"></script>
+        <!-- <script src="../../_static/js/prism.js"></script> -->
+
+        <script>
+        $(document).ready(function() {
+        $(".language-default code").addClass("python");
+        $(".language-python code").addClass("python");
+        $(".language-bash code").addClass("bash");
+        $(".language-cpp code").addClass("cpp");
+        $(".language-json code").addClass("json");
+        $(".language-none code").addClass("plaintext");
+
+        hljs.initHighlighting();
+        anchors.add();
+        });
+        </script>
+    
+</body>
+</html>
