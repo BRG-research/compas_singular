@@ -16,7 +16,7 @@ With the desired virtual environment activated, do
 
 ::
 
-    $ pip install compas-pattern
+    $ pip install singular
 
 
 You can also install directly from the GitHub repo.
@@ -33,7 +33,7 @@ If you already have :mod:`singular` installed and you want to upgrade it to the 
 
 ::
 
-    $ pip install compas-pattern --upgrade
+    $ pip install singular --upgrade
 
 |
 
