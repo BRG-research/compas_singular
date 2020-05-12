@@ -1,7 +1,7 @@
 import json
 
-from compas_pattern.algorithms import boundary_triangulation
-from compas_pattern.algorithms import SkeletonDecomposition
+from singular.algorithms import boundary_triangulation
+from singular.algorithms import SkeletonDecomposition
 
 from compas_plotters.meshplotter import MeshPlotter
 

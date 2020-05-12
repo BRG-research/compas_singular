@@ -2,7 +2,7 @@
 Overview
 ********************************************************************************
 
-The online documentation of ``compas_pattern`` provides...
+The online documentation of ``singular`` provides...
 
 |
 

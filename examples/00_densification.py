@@ -1,6 +1,6 @@
 import json
 
-from compas_pattern.datastructures import CoarseQuadMesh
+from singular.datastructures import CoarseQuadMesh
 
 from compas_plotters.meshplotter import MeshPlotter
 

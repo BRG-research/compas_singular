@@ -1,4 +1,3 @@
-# COMPAS_PATTERN
+# singular
 
-Topology finding of patterns
-
+topology finding of singularities in quad meshes

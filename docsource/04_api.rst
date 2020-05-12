@@ -5,4 +5,4 @@ API
 .. toctree::
     :maxdepth: 1
 
-    api/compas_pattern
+    api/singular

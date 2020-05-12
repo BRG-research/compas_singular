@@ -6,11 +6,11 @@ Introduction
 About
 =====
 
-Hello and welcome to the documentation of ``compas_pattern``, a Python library developed for the topological design of the singularities in quad-mesh patterns.
+Hello and welcome to the documentation of ``singular``, a Python library developed for the topological design of the singularities in quad-mesh patterns.
 
-``compas_pattern`` is a Package of the `COMPAS <https://compas-dev.github.io/>` framework.
+``singular`` is a Package of the `COMPAS <https://compas-dev.github.io/>` framework.
 
-``compas_pattern``stems from the doctoral research of Robin Oval at Université Paris-Est in a collaboration between Laboratoire Navier and ETH Zurich, funded by l'École des Ponts ParisTech and the Block Research Group, under the supervision of Prof Olivier Baverel and Prof Philippe Block, as well as Dr Romain Mesnil, Dr Matthias Rippmann and Dr Tom Van Mele.
+``singular``stems from the doctoral research of Robin Oval at Université Paris-Est in a collaboration between Laboratoire Navier and ETH Zurich, funded by l'École des Ponts ParisTech and the Block Research Group, under the supervision of Prof Olivier Baverel and Prof Philippe Block, as well as Dr Romain Mesnil, Dr Matthias Rippmann and Dr Tom Van Mele.
 
 .. image:: ../docsource/_images/01_front.jpg
     :width: 100%

@@ -95,7 +95,7 @@ def clean(ctx, docs=True, bytecode=True, builds=True):
 
         if builds:
             folders.append('build/')
-            folders.append('src/compas_pattern.egg-info/')
+            folders.append('src/singular.egg-info/')
 
         for folder in folders:
             rmtree(os.path.join(BASE_FOLDER, folder), ignore_errors=True)
@@ -132,8 +132,8 @@ def check(ctx):
         log.write('Checking metadata...')
         ctx.run('python setup.py check --strict --metadata')
 
-        # log.write('Running flake8 python linter...')
-        # ctx.run('flake8 src tests setup.py')
+        log.write('Running flake8 python linter...')
+        ctx.run('flake8 --count --statistics src tests')
 
         # log.write('Checking python imports...')
         # ctx.run('isort --check-only --diff --recursive src tests setup.py')
