@@ -5,10 +5,10 @@ except ImportError:
 	import compas
 	compas.raise_if_ironpython()
 
-from singular.algorithms import surface_discrete_mapping
-from singular.algorithms import boundary_triangulation
-from singular.algorithms import SkeletonDecomposition
-from singular.rhino.objects.surface import RhinoSurface
+from compas_singular.algorithms import surface_discrete_mapping
+from compas_singular.algorithms import boundary_triangulation
+from compas_singular.algorithms import SkeletonDecomposition
+from compas_singular.rhino.objects.surface import RhinoSurface
 from compas_rhino.artists import MeshArtist
 
 # draw your own surfaces, curves and points or get them from examples/data/01_decomposition.3dm

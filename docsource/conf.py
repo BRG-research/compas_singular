@@ -12,7 +12,7 @@ import sphinx_compas_theme
 
 # -- General configuration ------------------------------------------------
 
-project = 'singular'
+project = 'COMPAS Singular'
 copyright = 'Block Research Group - ETH Zurich'
 author = 'Robin Oval'
 release = '0.1.0'
@@ -88,7 +88,7 @@ plot_html_show_formats = False
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/', None),
-    'compas': ('https://compas-dev.github.io/main', 'https://compas-dev.github.io/main/objects.inv'),
+    # 'compas': ('https://compas-dev.github.io/main', 'https://compas-dev.github.io/main/objects.inv'),
 }
 
 
@@ -98,9 +98,13 @@ html_theme = 'compaspkg'
 html_theme_path = sphinx_compas_theme.get_html_theme_path()
 
 html_theme_options = {
-    'package_name'    : 'singular',
-    'package_title'   : project,
+    'package_name' : 'compas_singular',
+    'package_title' : project,
     'package_version' : release,
+    'package_author' : author,
+    'package_description' : '',
+    'package_docs' : 'https://blockresearchgroup.github.io/compas_singular',
+    'package_repo' : 'https://github.com/blockresearchgroup/compas_singular.git',
 }
 
 html_context = {}

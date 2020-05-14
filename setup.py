@@ -27,9 +27,9 @@ requirements = read("requirements.txt").split("\n")
 optional_requirements = {}
 
 setup(
-    name="singular",
+    name="compas_singular",
     version="0.1.0",
-    description="topology finding of singularities in quad meshes",
+    description="topology finding of compas_singularities in quad meshes",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="",
@@ -55,7 +55,7 @@ setup(
     ],
     keywords=[],
     project_urls={},
-    packages=["singular"],
+    packages=["compas_singular"],
     package_dir={"": "src"},
     package_data={},
     data_files=[],
