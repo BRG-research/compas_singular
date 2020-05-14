@@ -43,7 +43,7 @@
   <header id="header" class="compas-header d-flex align-items-center">
     <nav class="navbar navbar-expand navbar-dark col flex-column flex-md-row text-center">
       <!-- brand -->
-      <a class="navbar-brand" href="/index.html">
+      <a class="navbar-brand" href="https://blockresearchgroup.github.io/compas_singular">
         <img src="_static/images/compas_icon_white.png" alt="COMPAS Singular" width="48px" height="48px" />
       </a>
       <!-- brand -->
@@ -82,18 +82,18 @@
 <h2>Installation</h2>
 <p>Released versions of <a class="reference internal" href="api/compas_singular.html#module-compas_singular" title="compas_singular"><code class="xref py py-mod docutils literal notranslate"><span class="pre">compas_singular</span></code></a> can be installed with <em>pip</em>.
 With the desired virtual environment activated, do</p>
-<div class="language-bash notranslate"><div class="highlight"><pre><code><span></span>$ pip install compas_singular
+<div class="language-bash notranslate"><div class="highlight"><pre><code><span></span>pip install compas_singular
 </code></pre></div>
 </div>
 <p>You can also install directly from the GitHub repo.</p>
-<div class="language-bash notranslate"><div class="highlight"><pre><code><span></span>$ pip install git+https://github.com/BlockResearchGroup/compas_singular.git
+<div class="language-bash notranslate"><div class="highlight"><pre><code><span></span>pip install git+https://github.com/BlockResearchGroup/compas_singular.git
 </code></pre></div>
 </div>
 </div>
 <div class="section" id="updates">
 <h2>Updates</h2>
 <p>If you already have <a class="reference internal" href="api/compas_singular.html#module-compas_singular" title="compas_singular"><code class="xref py py-mod docutils literal notranslate"><span class="pre">compas_singular</span></code></a> installed and you want to upgrade it to the latest version, do</p>
-<div class="language-bash notranslate"><div class="highlight"><pre><code><span></span>$ pip install compas_singular --upgrade
+<div class="language-bash notranslate"><div class="highlight"><pre><code><span></span>pip install compas_singular --upgrade
 </code></pre></div>
 </div>
 <div class="line-block">
@@ -108,9 +108,9 @@ However, CAD software is still necessary in a computational design environment f
 For the examples presented in this documentation, <a class="reference external" href="https://www.rhino3d.com/">Rhinoceros</a> is chosen as the CAD software for user interaction and visualisation of script results.
 For a more detailed information on how to install COMPAS and its packages for Rhino, please refer to <a class="reference external" href="https://compas-dev.github.io/main/renvironments/rhino.html">Working in Rhino</a> page of the COMPAS documentation.</p>
 <p>In order to install <a class="reference internal" href="api/compas_singular.html#module-compas_singular" title="compas_singular"><code class="xref py py-mod docutils literal notranslate"><span class="pre">compas_singular</span></code></a> for Rhino, do</p>
-<div class="language-bash notranslate"><div class="highlight"><pre><code><span></span>$ python -m compas_rhino.uninstall
-$ python -m compas_rhino.install
-$ python -m compas_rhino.install -p compas_singular
+<div class="language-bash notranslate"><div class="highlight"><pre><code><span></span>python -m compas_rhino.uninstall
+python -m compas_rhino.install
+python -m compas_rhino.install -p compas_singular
 </code></pre></div>
 </div>
 <p>Every time a new file is opened in Rhino, be sure to reset the Python Scritp Engine before running scripts.</p>

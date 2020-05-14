@@ -16,14 +16,14 @@ With the desired virtual environment activated, do
 
 ::
 
-    $ pip install compas_singular
+    pip install compas_singular
 
 
 You can also install directly from the GitHub repo.
 
 ::
 
-    $ pip install git+https://github.com/BlockResearchGroup/compas_singular.git
+    pip install git+https://github.com/BlockResearchGroup/compas_singular.git
 
 
 Updates
@@ -33,7 +33,7 @@ If you already have :mod:`compas_singular` installed and you want to upgrade it 
 
 ::
 
-    $ pip install compas_singular --upgrade
+    pip install compas_singular --upgrade
 
 |
 
@@ -52,9 +52,9 @@ In order to install :mod:`compas_singular` for Rhino, do
 
 ::
 
-    $ python -m compas_rhino.uninstall
-    $ python -m compas_rhino.install
-    $ python -m compas_rhino.install -p compas_singular
+    python -m compas_rhino.uninstall
+    python -m compas_rhino.install
+    python -m compas_rhino.install -p compas_singular
 
 Every time a new file is opened in Rhino, be sure to reset the Python Scritp Engine before running scripts.
 

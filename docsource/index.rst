@@ -5,11 +5,11 @@ Docs of COMPAS Singular
 Introduction
 ============
 
-Hello and welcome to the documentation of ``compas_singular``, a Python library developed for the topological design of the compas_singularities in quad-mesh patterns.
+Hello and welcome to the documentation of :mod:`compas_singular`, a Python library developed for the topological design of the compas_singularities in quad-mesh patterns.
 
-``compas_singular`` is a Package of the `COMPAS <https://compas-dev.github.io/>` framework.
+:mod:`compas_singular` is a Package of the `COMPAS <https://compas-dev.github.io/>`_ framework.
 
-``compas_singular`` stems from the doctoral research of Robin Oval at Université Paris-Est in a collaboration between Laboratoire Navier and ETH Zurich, funded by l'École des Ponts ParisTech and the Block Research Group, under the supervision of Prof Olivier Baverel and Prof Philippe Block, as well as Dr Romain Mesnil, Dr Matthias Rippmann and Dr Tom Van Mele.
+:mod:`compas_singular` stems from the doctoral research of Robin Oval at Université Paris-Est in a collaboration between Laboratoire Navier and ETH Zurich, funded by l'École des Ponts ParisTech and the Block Research Group, under the supervision of Prof Olivier Baverel and Prof Philippe Block, as well as Dr Romain Mesnil, Dr Matthias Rippmann and Dr Tom Van Mele.
 
 .. image:: ../docsource/_images/01_front.jpg
     :width: 100%

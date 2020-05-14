@@ -2,7 +2,7 @@
 Citing
 ********************************************************************************
 
-If you use the library of ``compas_singular`` for a project or research, please refer to the GitHub repository and cite:
+If you use the library of :mod:`compas_singular` for a project or research, please refer to the GitHub repository and cite:
 
 .. code-block:: latex
 
