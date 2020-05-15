@@ -13,23 +13,27 @@ Regular quad mesh
 
 .. literalinclude:: ../../examples/00_densification.py
 
-.. figure:: ../_images/00_densification_0.png
-    :width: 50%
+.. figure:: /_images/00_densification_0.png
+    :figclass: figure
+    :class: figure-img img-fluid
 
     Initial coarse quad mesh.
 
-.. figure:: ../_images/00_densification_1.png
-    :width: 50%
+.. figure:: /_images/00_densification_1.png
+    :figclass: figure
+    :class: figure-img img-fluid
 
     First densification with a uniform subdivision value.
 
-.. figure:: ../_images/00_densification_2.png
-    :width: 50%
+.. figure:: /_images/00_densification_2.png
+    :figclass: figure
+    :class: figure-img img-fluid
 
     Second densification with a uniform target length.
 
-.. figure:: ../_images/00_densification_3.png
-    :width: 50%
+.. figure:: /_images/00_densification_3.png
+    :figclass: figure
+    :class: figure-img img-fluid
 
     Edited second densification with a specific subvidision value.
 
@@ -43,13 +47,15 @@ Quad mesh with pseudo-quads
 
 .. literalinclude:: ../../examples/00_densification_poles.py
 
-.. figure:: ../_images/00_densification_poles_0.png
-    :width: 50%
+.. figure:: /_images/00_densification_poles_0.png
+    :figclass: figure
+    :class: figure-img img-fluid
 
     Initial coarse quad mesh.
 
-.. figure:: ../_images/00_densification_poles_1.png
-    :width: 50%
+.. figure:: /_images/00_densification_poles_1.png
+    :figclass: figure
+    :class: figure-img img-fluid
 
     Densification with a uniform target length.
 

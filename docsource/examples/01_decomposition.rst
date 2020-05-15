@@ -28,8 +28,9 @@ Feature-based topology finding of patterns for shell structures
 From planar discrete polylines
 ==============================
 
-.. figure:: ../_images/01_decomposition_1.png
-    :width: 100%
+.. figure:: /_images/01_decomposition_1.png
+    :figclass: figure
+    :class: figure-img img-fluid
 
     Skeleton-based decomposition of a set of planar discrete polylines.
 
@@ -43,13 +44,15 @@ From planar discrete polylines
 From curved continuous objects (in Rhino)
 =========================================
 
-.. figure:: ../_images/01_decomposition_2.png
-    :width: 100%
+.. figure:: /_images/01_decomposition_2.png
+    :figclass: figure
+    :class: figure-img img-fluid
 
     Input surface with features in Rhino.
 
-.. figure:: ../_images/01_decomposition_3.png
-    :width: 100%
+.. figure:: /_images/01_decomposition_3.png
+    :figclass: figure
+    :class: figure-img img-fluid
 
     Skeleton-based decomposition of the curved surface with features.
 
