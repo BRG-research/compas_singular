@@ -243,12 +243,13 @@ class SkeletonDecomposition(Skeleton):
 			List of polylines as list of point XYZ-coordinates.
 
 		"""
-
+		for bdry in self.boundaries():
+			print('bd:', bdry)
 		new_branches = []
 
 		all_splits = set(list(self.corner_vertices()) + list(self.split_vertices()))
 
-		for polyedge in [bdry + bdry[0 :] for bdry in self.boundaries()]:
+		for polyedge in [bdry + bdry[:1] for bdry in self.boundaries()]:
 
 			splits = set([vkey for vkey in polyedge if vkey in all_splits])
 			new_splits = []
@@ -261,6 +262,7 @@ class SkeletonDecomposition(Skeleton):
 				new_splits += list(itemgetter(i - int(floor(len(polyedge) * 2 / 3)), i - int(floor(len(polyedge) / 3)))(polyedge))
 
 			elif len(splits) == 2:
+				print(polyedge, splits, list_split(polyedge, [polyedge.index(vkey) for vkey in splits]))
 				one, two = list_split(polyedge, [polyedge.index(vkey) for vkey in splits])
 				half = one if len(one) > len(two) else two
 				new_splits.append(half[int(floor(len(half) / 2))])
