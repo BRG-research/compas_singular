@@ -10,19 +10,21 @@ except ImportError:
 
 from copy import deepcopy
 
-from singular.datastructures import QuadMesh, CoarseQuadMesh, CoarsePseudoQuadMesh
+from compas.utilities import pairwise
 
-from singular.algorithms import surface_discrete_mapping, boundary_triangulation, SkeletonDecomposition
+from compas_singular.datastructures import QuadMesh, CoarseQuadMesh, CoarsePseudoQuadMesh
 
-from singular.datastructures.mesh_quad.grammar.add_strip import add_strips
-from singular.datastructures.mesh_quad.grammar.delete_strip import delete_strips
+from compas_singular.algorithms import surface_discrete_mapping, boundary_triangulation, SkeletonDecomposition
 
-from singular.datastructures import mesh_move_vertices_by
-from singular.datastructures import constrained_smoothing
+from compas_singular.datastructures.mesh_quad.grammar.add_strip import add_strips
+from compas_singular.datastructures.mesh_quad.grammar.delete_strip import delete_strips
+
+from compas_singular.datastructures import mesh_move_vertices_by
+from compas_singular.datastructures import constrained_smoothing
 
 from compas.datastructures.mesh.conway import *
 
-from singular.rhino import RhinoSurface
+from compas_singular.rhino import RhinoSurface
 from compas_rhino.geometry import RhinoMesh
 from compas_rhino.artists import MeshArtist
 
@@ -38,11 +40,19 @@ __all__ = []
 # ==============================================================================
 
 
-def gh_from_rhino_mesh(mesh_guid, pole_point_guid):
+def gh_from_rhino_mesh(mesh_guid, pole_guids):
 	rhino_mesh = RhinoMesh.from_guid(mesh_guid)
 	vertices, faces = rhino_mesh.vertices, rhino_mesh.faces
+	face_no_dup = []
+	for face in faces:
+		fv = []
+		for vertex in face:
+			if vertex not in fv:
+				fv.append(vertex)
+		face_no_dup.append(fv)
+	poles = [rs.PointCoordinates(point) for point in pole_guids]
 	# warning if ambiguous selection of poles
-	return CoarseQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, poles)
+	return CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, face_no_dup, poles)
 
 
 def gh_to_rhino_mesh(mesh):
@@ -57,7 +67,7 @@ def gh_from_rhino_lines(mesh, max):
     network = Network.from_lines(lines, precision=precision)
     vertices = network.to_points()
     faces = [face_vertices for face_vertices in network_find_cycles(network) if len(face_vertices) <=4]
-    mesh = CoarseQuadMesh.from_vertices_and_faces(vertices, faces)
+    mesh = CoarsePseudoQuadMesh.from_vertices_and_faces(vertices, faces)
     if delete_boundary_face:
         mesh.delete_face(0)
         mesh.cull_vertices()
@@ -71,19 +81,26 @@ def gh_from_rhino_lines(mesh, max):
 
 
 def gh_mesh_vertices(mesh):
-	return [rs.AddPoint(mesh.vertex_coordinates(vkey)) for vkey in mesh.vertices()]
+	vertex_coordinates = [rs.AddPoint(mesh.vertex_coordinates(vkey)) for vkey in mesh.vertices()]
+	vertex_normals = [rs.AddPoint(mesh.vertex_normal(vkey)) for vkey in mesh.vertices()]
+	vertex_areas = [mesh.vertex_area(vkey)for vkey in mesh.vertices()]
+	return vertex_coordinates, vertex_normals, vertex_areas
 
 
 def gh_mesh_faces(mesh):
 	key_to_index = mesh.key_index()
 	face_vertices = DataTree[object]()
 	face_polylines = DataTree[object]()
+	face_normals = DataTree[object]()
+	face_areas = DataTree[object]()
 	for fkey in mesh.faces():
 		path = GH_Path(fkey)
 		face_vertices.AddRange([key_to_index[vkey] for vkey in mesh.face_vertices(fkey)], path)
 		face_coordinates = mesh.face_coordinates(fkey)
 		face_polylines.Add(rs.AddPolyline(face_coordinates + face_coordinates[:1]), path)
-	return face_vertices
+		face_normals.Add(mesh.face_normal(fkey), path)
+		face_areas.Add(mesh.face_area(fkey), path)
+	return face_vertices, face_polylines, face_normals, face_areas
 
 
 def gh_mesh_edges(mesh):
@@ -94,7 +111,7 @@ def gh_mesh_edges(mesh):
 		path = GH_Path(i)
 		edge_vertices.AddRange([key_to_index[vkey] for vkey in (u, v)], path)
 		edge_lines.Add(rs.AddLine(mesh.vertex_coordinates(u), mesh.vertex_coordinates(v)), path)
-	return edge_vertices
+	return edge_vertices, edge_lines
 
 
 def gh_mesh_is_element_on_boundary(mesh):
@@ -102,11 +119,6 @@ def gh_mesh_is_element_on_boundary(mesh):
 	face_on_boundary = [mesh.is_face_on_boundary(fkey) for fkey in mesh.faces()]
 	edge_on_boundary = [mesh.is_edge_on_boundary(u, v) for u, v in mesh.edges()]
 	return vertex_on_boundary, face_on_boundary, edge_on_boundary
-
-def gh_mesh_normals(mesh):
-	vertex_normals = [mesh.vertex_normals(vkey) for vkey in mesh.vertices()]
-	face_normals = [mesh.face_normals(fkey) for fkey in mesh.faces()]
-	return vertex_normals, face_normals
 
 
 # ==============================================================================
@@ -117,7 +129,7 @@ def gh_mesh_normals(mesh):
 def gh_quad_mesh_singularities(quad_mesh):
 	key_to_index = quad_mesh.key_index()
 	singularity_indices = [key_to_index[vkey] for vkey in quad_mesh.singularities()]
-	singularity_coordinates = [quad_mesh.vertex_coordinates(vkey) for vkey in quad_mesh.singularities()]
+	singularity_coordinates = [rs.AddPoint(quad_mesh.vertex_coordinates(vkey)) for vkey in quad_mesh.singularities()]
 	return singularity_indices, singularity_coordinates
 
 
@@ -131,7 +143,7 @@ def gh_quad_mesh_strips(quad_mesh):
 		for i, (u, v) in enumerate(edges):
 			path = GH_Path(skey, i)
 			strip_edges.AddRange([key_to_index[vkey] for vkey in (u, v)], path)
-			strip_lines.Add(rs.AddLine(mesh.vertex_coordinates(u), mesh.vertex_coordinates(v)), path)
+			strip_lines.Add(rs.AddLine(quad_mesh.vertex_coordinates(u), quad_mesh.vertex_coordinates(v)), path)
 		path = GH_Path(skey)
 		strip_closed.Add(quad_mesh.is_strip_closed(skey), path)
 	return strip_edges, strip_lines, strip_closed
@@ -141,14 +153,14 @@ def gh_quad_mesh_polyedges(quad_mesh):
 	quad_mesh.collect_polyedges()
 	key_to_index = quad_mesh.key_index()
 	polyedge_vertices = DataTree[object]()
-	polyedge_polyline = DataTree[object]()
+	polyedge_polylines = DataTree[object]()
 	polyedge_closed = DataTree[object]()
 	for pkey, polyedge in quad_mesh.polyedges(data=True):
 		path = GH_Path(pkey)
 		polyedge_vertices.AddRange([key_to_index[vkey] for vkey in polyedge], path)
-		polyedge_polyline.Add(rs.AddPolyline([quad_mesh.vertex_coordinates(vkey) for vkey in polyedge]), path)
+		polyedge_polylines.Add(rs.AddPolyline([quad_mesh.vertex_coordinates(vkey) for vkey in polyedge]), path)
 		polyedge_closed.Add(quad_mesh.is_polyedge_closed(pkey), path)
-	return polyedge_vertices, polyedge_closed
+	return polyedge_vertices, polyedge_polylines, polyedge_closed
 
 
 def gh_store_quad_mesh_strips(quad_mesh):
@@ -161,14 +173,22 @@ def gh_store_quad_mesh_edge_polyedge(quad_mesh, u, v):
 	polyline = rs.AddPolyline([quad_mesh.vertex_coordinates(vkey) for vkey in polyedge])
 	return polyedge, polyline
 
-def gh_get_quad_mesh_edge_strip(quad_mesh, u, v):
+
+def gh_get_quad_mesh_edge_elements(quad_mesh, u, v):
 	strip_edges = DataTree[object]()
 	strip_lines = DataTree[object]()
 	for i, (w, x) in enumerate(quad_mesh.collect_strip(u, v)):
 		path = GH_Path(i)
 		strip_edges.AddRange([w, x], path)
 		strip_lines.Add(rs.AddLine(quad_mesh.vertex_coordinates(w), quad_mesh.vertex_coordinates(x)))
-	return strip_edges, strip_lines
+	polyedge_edges = DataTree[object]()
+	polyedge_lines = DataTree[object]()
+	for i, (w, x) in enumerate(pairwise(quad_mesh.collect_polyedge(u, v))):
+		path = GH_Path(i)
+		polyedge_edges.AddRange([w, x], path)
+		polyedge_lines.Add(rs.AddLine(quad_mesh.vertex_coordinates(w), quad_mesh.vertex_coordinates(x)))
+	return strip_edges, strip_lines, polyedge_edges, polyedge_lines
+
 
 # ==============================================================================
 # Topology
@@ -221,7 +241,7 @@ def gh_surface_decomposition(surface_guid, accuracy_value, point_guids, curve_gu
 
 
 def gh_coarsening(quad_mesh):
-	return CoarseQuadMesh.from_quad_mesh(quad_mesh)
+	return CoarsePseudoQuadMesh.from_quad_mesh(quad_mesh)
 
 
 def gh_densifiying(coarse_quad_mesh, strips_subdivision):

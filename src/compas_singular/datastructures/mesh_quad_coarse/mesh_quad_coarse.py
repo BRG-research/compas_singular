@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
+from copy import deepcopy
+
 from math import floor
 from math import ceil
 
@@ -59,7 +61,7 @@ class CoarseQuadMesh(QuadMesh):
 			A coarse quad mesh with density data.
 		"""
 
-		polyedges = quad_mesh.compas_singularity_polyedge_decomposition()
+		polyedges = quad_mesh.singularity_polyedge_decomposition()
 
 		# vertex data
 		vertices = {vkey: quad_mesh.vertex_coordinates(vkey) for vkey in quad_mesh.vertices()}
@@ -68,11 +70,11 @@ class CoarseQuadMesh(QuadMesh):
 
 		# edge data
 		coarse_edges_children = {(polyedge[0], polyedge[-1]): polyedge for polyedge in polyedges}
-		compas_singularity_edges = [(x, y) for polyedge in polyedges for u, v in pairwise(polyedge) for x, y in [(u, v), (v, u)]]
+		singularity_edges = [(x, y) for polyedge in polyedges for u, v in pairwise(polyedge) for x, y in [(u, v), (v, u)]]
 
 		# face data
 		faces = {fkey: quad_mesh.face_vertices(fkey) for fkey in quad_mesh.faces()}
-		adj_edges = {(f1, f2) for f1 in quad_mesh.faces() for f2 in quad_mesh.face_neighbors(f1) if f1 < f2 and quad_mesh.face_adjacency_halfedge(f1, f2) not in compas_singularity_edges}
+		adj_edges = {(f1, f2) for f1 in quad_mesh.faces() for f2 in quad_mesh.face_neighbors(f1) if f1 < f2 and quad_mesh.face_adjacency_halfedge(f1, f2) not in singularity_edges}
 		coarse_faces_children = {}
 		for i, connected_faces in enumerate(connected_components(adjacency_from_edges(adj_edges))):
 			mesh = Mesh.from_vertices_and_faces(vertices, [faces[face] for face in connected_faces])
@@ -103,7 +105,7 @@ class CoarseQuadMesh(QuadMesh):
 
 		# store quad mesh and use as polygonal mesh
 		coarse_quad_mesh.set_quad_mesh(quad_mesh)
-		coarse_quad_mesh.set_polygonal_mesh(quad_mesh.copy())
+		coarse_quad_mesh.set_polygonal_mesh(deepcopy(quad_mesh))
 		
 		return coarse_quad_mesh
 

@@ -12,7 +12,7 @@ class PatternArtist(MeshArtist):
 		self.mesh = pattern
 
 
-	# def draw_compas_singularity_mesh(self):
+	# def draw_singularity_mesh(self):
 
 	# 	self.clear()
 	# 	self.

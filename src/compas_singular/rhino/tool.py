@@ -61,8 +61,8 @@ def clean_faces(faces):
                 face.remove(u)
                 break
 
-def compas_singular():
-    """Explore a pattern, its topology (compas_singularities, densities and symmetries) and its geoemtry (via smoothing).
+def singular():
+    """Explore a pattern, its topology (singularities, densities and symmetries) and its geoemtry (via smoothing).
 
     """
 
@@ -160,7 +160,7 @@ def compas_singular():
 
 
 def editing_topology(coarse_pseudo_quad_mesh):
-    """Edit the topology of a pattern, i.e. its compas_singularities, via its strips.
+    """Edit the topology of a pattern, i.e. its singularities, via its strips.
 
     Parameters
     ----------

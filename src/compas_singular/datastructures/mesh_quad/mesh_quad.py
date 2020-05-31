@@ -78,11 +78,11 @@ class QuadMesh(Mesh):
 		-------
 		hashable, None
 			The opposite vertex.
-			None if v is a compas_singularity or if (u, v) leads outwards.
+			None if v is a singularity or if (u, v) leads outwards.
 
 		"""
 
-		if self.is_vertex_compas_singular(v):
+		if self.is_vertex_singular(v):
 			return None
 
 		elif self.is_vertex_on_boundary(v):
@@ -98,11 +98,11 @@ class QuadMesh(Mesh):
 			return nbrs[nbrs.index(u) - 2]
 		
 	# --------------------------------------------------------------------------
-	# compas_singularities
+	# singularities
 	# --------------------------------------------------------------------------
 
-	def is_vertex_compas_singular(self, vkey):
-		"""Output whether a vertex is quad mesh compas_singularity.
+	def is_vertex_singular(self, vkey):
+		"""Output whether a vertex is quad mesh singularity.
 
 		Parameters
 		----------
@@ -112,7 +112,7 @@ class QuadMesh(Mesh):
 		Returns
 		-------
 		bool
-			True if the vertex is a quad mesh compas_singularity. False otherwise.
+			True if the vertex is a quad mesh singularity. False otherwise.
 
 		"""
 
@@ -122,16 +122,16 @@ class QuadMesh(Mesh):
 		else:
 			return False
 
-	def compas_singularities(self):
-		"""Returns all the compas_singularity indices in the quad mesh.
+	def singularities(self):
+		"""Returns all the singularity indices in the quad mesh.
 
 		Returns
 		-------
 		list
-			The list of vertex indices that are quad mesh compas_singularities.
+			The list of vertex indices that are quad mesh singularities.
 
 		"""
-		return [vkey for vkey in self.vertices() if self.is_vertex_compas_singular(vkey)]
+		return [vkey for vkey in self.vertices() if self.is_vertex_singular(vkey)]
 
 	def vertex_index(self, vkey):
 		"""Compute vertex index.
@@ -200,7 +200,7 @@ class QuadMesh(Mesh):
 		return polyedge
 
 	def collect_polyedges(self):
-		"""Collect the polyedges accross four-valent vertices between boundaries and/or compas_singularities and store it in the mesh data attributes.
+		"""Collect the polyedges accross four-valent vertices between boundaries and/or singularities and store it in the mesh data attributes.
 
 		Parameters
 		----------
@@ -248,28 +248,28 @@ class QuadMesh(Mesh):
 
 		return self.data['attributes']['polyedges'][pkey][0] == self.data['attributes']['polyedges'][pkey][-1]
 
-	def compas_singularity_polyedges(self):
-		"""Collect the polyedges connected to compas_singularities.
+	def singularity_polyedges(self):
+		"""Collect the polyedges connected to singularities.
 
 		Returns
 		-------
 		list
-			The polyedges connected to compas_singularities.
+			The polyedges connected to singularities.
 
 		"""
 
-		# keep only polyedges connected to compas_singularities or along the boundary		
-		polyedges = [polyedge for key, polyedge in self.polyedges(data=True) if self.is_vertex_compas_singular(polyedge[0]) or self.is_vertex_compas_singular(polyedge[-1]) or self.is_edge_on_boundary(polyedge[0], polyedge[1])]									
+		# keep only polyedges connected to singularities or along the boundary		
+		polyedges = [polyedge for key, polyedge in self.polyedges(data=True) if self.is_vertex_singular(polyedge[0]) or self.is_vertex_singular(polyedge[-1]) or self.is_edge_on_boundary(polyedge[0], polyedge[1])]									
 
 		# get intersections between polyedges for split
 		vertices = [vkey for polyedge in polyedges for vkey in set(polyedge)]
 		split_vertices = [vkey for vkey in self.vertices() if vertices.count(vkey) > 1]
 		
-		# split compas_singularity polyedges
+		# split singularity polyedges
 		return [split_polyedge for polyedge in polyedges for split_polyedge in list_split(polyedge, [polyedge.index(vkey) for vkey in split_vertices if vkey in polyedge])]
 
-	def compas_singularity_polyedge_decomposition(self):
-		"""Returns a quad patch decomposition of the mesh based on the compas_singularity polyedges, including boundaries and additionnal splits on the boundaries.
+	def singularity_polyedge_decomposition(self):
+		"""Returns a quad patch decomposition of the mesh based on the singularity polyedges, including boundaries and additionnal splits on the boundaries.
 
 		Returns
 		-------
@@ -280,10 +280,10 @@ class QuadMesh(Mesh):
 		if self.data['attributes']['polyedges'] == {}:
 			self.collect_polyedges()
 
-		polyedges = [polyedge for key, polyedge in self.polyedges(data=True) if (self.is_vertex_compas_singular(polyedge[0]) or self.is_vertex_compas_singular(polyedge[-1])) and not self.is_edge_on_boundary(polyedge[0], polyedge[1])]									
+		polyedges = [polyedge for key, polyedge in self.polyedges(data=True) if (self.is_vertex_singular(polyedge[0]) or self.is_vertex_singular(polyedge[-1])) and not self.is_edge_on_boundary(polyedge[0], polyedge[1])]									
 
 		# split boundaries
-		all_splits = list(set([vkey for polyedge in polyedges for vkey in polyedge] + self.compas_singularities()))
+		all_splits = list(set([vkey for polyedge in polyedges for vkey in polyedge] + self.singularities()))
 
 		for boundary in self.boundaries():
 			splits = [vkey for vkey in boundary if vkey in all_splits]
@@ -316,7 +316,7 @@ class QuadMesh(Mesh):
 		vertices = [vkey for polyedge in polyedges for vkey in set(polyedge)]
 		split_vertices = [vkey for vkey in self.vertices() if vertices.count(vkey) > 1]
 		
-		# split compas_singularity polyedges
+		# split singularity polyedges
 		return [split_polyedge for polyedge in polyedges for split_polyedge in list_split(polyedge, [polyedge.index(vkey) for vkey in split_vertices if vkey in polyedge])]
 
 	# --------------------------------------------------------------------------
@@ -325,7 +325,7 @@ class QuadMesh(Mesh):
 
 	def polyedge_graph(self):
 		"""Compute the vertices and edges of the graph representing the polyedge connectivity, where each graph vertex is a mesh polyedge and each graph edge a non-compas_singular mesh vertex representing the crossing of two polyedges.
-		Polyedges connected by their extremities, which are compas_singularities, do not count as overlapping.
+		Polyedges connected by their extremities, which are singularities, do not count as overlapping.
 		Potentially includes loop edges (u, u) or multiple arallel edges (u, v) and/or (v, u).
 
 		Returns
@@ -338,7 +338,7 @@ class QuadMesh(Mesh):
 		edges = []
 		for key, polyedge in self.polyedges(data=True):
 			for vkey in polyedge:
-				if not self.is_vertex_compas_singular(vkey):
+				if not self.is_vertex_singular(vkey):
 					for key_2, polyedge_2 in self.polyedges(data=True):
 						if vkey in polyedge_2:
 							edges.append((key, key_2))
@@ -361,27 +361,27 @@ class QuadMesh(Mesh):
 		return [[self.vertex_coordinates(vkey) for vkey in polyedge] for key, polyedge in self.polyedges(data=True)]
 
 
-	def compas_singularity_polylines(self):
-		"""Return the polylines connected to compas_singularities.
+	def singularity_polylines(self):
+		"""Return the polylines connected to singularities.
 
 		Returns
 		-------
 		list
-			The polylines connected to compas_singularities.
+			The polylines connected to singularities.
 
 		"""
-		return [[self.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in self.compas_singularity_polyedges()]
+		return [[self.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in self.singularity_polyedges()]
 
-	def compas_singularity_polyline_decomposition(self):
+	def singularity_polyline_decomposition(self):
 		"""Return the polylines forming a quad patch decomposition of the mesh.
 
 		Returns
 		-------
 		list
-			The polylines connected to compas_singularities.
+			The polylines connected to singularities.
 
 		"""
-		return [[self.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in self.compas_singularity_polyedge_decomposition()]
+		return [[self.vertex_coordinates(vkey) for vkey in polyedge] for polyedge in self.singularity_polyedge_decomposition()]
 
 	# --------------------------------------------------------------------------
 	# strips
@@ -704,11 +704,11 @@ if __name__ == '__main__':
 	#mesh.collect_strips()
 	#mesh.collect_polyedges()
 
-	#print(mesh.compas_singularities())
+	#print(mesh.singularities())
 	#print(len(list(mesh.strips())))
 	#print(len(list(mesh.polyedges())))
 
-	#print(len(mesh.compas_singularity_polyedge_decomposition()))
+	#print(len(mesh.singularity_polyedge_decomposition()))
 
 	#print(mesh.strip_graph())
 	#print(mesh.polyedge_graph())

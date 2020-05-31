@@ -8,15 +8,15 @@ except ImportError:
 
 
 
-def change_display(compas_singularity_mesh):
+def change_display(singularity_mesh):
 
-	display_mesh = rs.GetString('display...', strings=['compas_singularity_mesh', 'density_mesh', 'pattern'])
+	display_mesh = rs.GetString('display...', strings=['singularity_mesh', 'density_mesh', 'pattern'])
 
-	if display_mesh == 'compas_singularity_mesh':
-		draw_mesh(compas_singularity_mesh)
+	if display_mesh == 'singularity_mesh':
+		draw_mesh(singularity_mesh)
 
 	elif display_mesh == 'density_mesh':
-		draw_mesh(compas_singularity_mesh.quad_mesh)
+		draw_mesh(singularity_mesh.quad_mesh)
 
 	elif display_mesh == 'pattern':
-		draw_mesh(compas_singularity_mesh.polygonal_mesh)
+		draw_mesh(singularity_mesh.polygonal_mesh)

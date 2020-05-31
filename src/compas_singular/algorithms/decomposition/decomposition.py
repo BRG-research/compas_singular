@@ -45,7 +45,7 @@ from compas_singular.utilities import list_split
 __all__ = ['SkeletonDecomposition']
 
 class SkeletonDecomposition(Skeleton):
-	"""SkeletonDecomposition class for the generate a coarse quad mesh based on a topological skeleton and its compas_singularities.
+	"""SkeletonDecomposition class for the generate a coarse quad mesh based on a topological skeleton and its singularities.
 
 	"""
 
@@ -127,8 +127,8 @@ class SkeletonDecomposition(Skeleton):
 	# branches
 	# --------------------------------------------------------------------------
 
-	def branches_compas_singularity_to_compas_singularity(self):
-		"""Get the branch polylines of the topological skeleton between compas_singularities only, not corners.
+	def branches_singularity_to_singularity(self):
+		"""Get the branch polylines of the topological skeleton between singularities only, not corners.
 
 		Returns
 		-------
@@ -140,8 +140,8 @@ class SkeletonDecomposition(Skeleton):
 		map_corners = [geometric_key(trimesh_face_circle(self, corner)[0]) for corner in self.corner_faces()]
 		return [branch for branch in self.branches() if geometric_key(branch[0]) not in map_corners and geometric_key(branch[-1]) not in map_corners]
 
-	def branches_compas_singularity_to_boundary(self):
-		"""Get new branch polylines between compas_singularities and boundaries, at the location fo the split vertices. Not part of the topological skeleton.
+	def branches_singularity_to_boundary(self):
+		"""Get new branch polylines between singularities and boundaries, at the location fo the split vertices. Not part of the topological skeleton.
 
 		Returns
 		-------
@@ -173,7 +173,7 @@ class SkeletonDecomposition(Skeleton):
 
 	def decomposition_polylines(self):
 		"""Get all the branch polylines to form a decomposition of the Delaunay mesh.
-		These branches include the ones between compas_singularities, between compas_singularities and boundaries and along boundaries.
+		These branches include the ones between singularities, between singularities and boundaries and along boundaries.
 		Additional branches for some fixes: the ones to further split boundaries that only have two splits.
 
 		Returns
@@ -182,7 +182,7 @@ class SkeletonDecomposition(Skeleton):
 			List of polylines as list of point XYZ-coordinates.
 
 		"""
-		branches = self.branches_compas_singularity_to_compas_singularity() + self.branches_compas_singularity_to_boundary() + self.branches_boundary()
+		branches = self.branches_singularity_to_singularity() + self.branches_singularity_to_boundary() + self.branches_boundary()
 		branches += self.branches_splitting_boundary_kinks()
 		branches += self.branches_splitting_collapsed_boundaries()
 		branches += self.branches_splitting_flipped_faces()
@@ -289,7 +289,7 @@ class SkeletonDecomposition(Skeleton):
 		centre_to_fkey = {geometric_key(trimesh_face_circle(self, fkey)[0]): fkey for fkey in self.faces()}
 
 		# compute total rotation of polyline
-		for polyline in self.branches_compas_singularity_to_compas_singularity():
+		for polyline in self.branches_singularity_to_singularity():
 			angles = [angle_vectors_signed(subtract_vectors(v, u), subtract_vectors(w, v), [0., 0., 1.]) for u, v, w in window(polyline, n = 3)]
 			# subdivide once per angle limit in rotation
 			if abs(sum(angles)) > self.flip_angle_limit:
@@ -319,7 +319,7 @@ class SkeletonDecomposition(Skeleton):
 	def branches_splitting_boundary_kinks(self):
 		"""Add new branches to fix the problem of boundary kinks not marked by the skeleton
 		Due to a low density that did not spot the change of curvature at the kink.
-		Does not modify the compas_singularites on the contrarty to increasing the density.
+		Does not modify the singularites on the contrarty to increasing the density.
 
 		Returns
 		-------
@@ -382,7 +382,7 @@ class SkeletonDecomposition(Skeleton):
 
 				elif case == 2:
 					# remove triangular face and merge the two boundary vertices
-					# due to compas_singularities at the same location
+					# due to singularities at the same location
 					polyline = Polyline(self.decomposition_polyline(*map(lambda x: geometric_key(mesh.vertex_coordinates(x)), boundary_vertices)))
 					point = polyline.point(t = .5, snap = True)
 					new_vkey = mesh.add_vertex(attr_dict = {'x': point.x, 'y': point.y , 'z': point.z})

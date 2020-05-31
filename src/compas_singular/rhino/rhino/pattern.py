@@ -7,7 +7,7 @@ except ImportError:
 	compas.raise_if_ironpython()
 
 
-def apply_conway_operator(compas_singularity_mesh):
+def apply_conway_operator(singularity_mesh):
 	conway_operators = {
 		'back_to_seed',
 		'conway_dual',
@@ -30,10 +30,10 @@ def apply_conway_operator(compas_singularity_mesh):
 	operator = rs.GetString('select Conway operator', strings=conway.keys() + ['exit'])
 
 	if operator == 'back_to_seed':
-		compas_singularity_mesh.polygonal_mesh = compas_singularity_mesh.quad_mesh.copy()
+		singularity_mesh.polygonal_mesh = singularity_mesh.quad_mesh.copy()
 
 	elif operator in conway and conway[operator] in globals() and str(conway[operator])[: 6] == 'conway':
-		compas_singularity_mesh.polygonal_mesh = globals()[conway[operator]](compas_singularity_mesh.polygonal_mesh)
+		singularity_mesh.polygonal_mesh = globals()[conway[operator]](singularity_mesh.polygonal_mesh)
 
-	return compas_singularity_mesh
+	return singularity_mesh
 	

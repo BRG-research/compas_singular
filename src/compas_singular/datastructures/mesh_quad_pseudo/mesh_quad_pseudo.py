@@ -238,8 +238,8 @@ class PseudoQuadMesh(QuadMesh):
 
         return not self.has_strip_poles(skey) and not self.is_edge_on_boundary(*self.data['attributes']['strips'][skey][0])
 
-    def is_vertex_compas_singular(self, vkey):
-        """Output whether a vertex is quad mesh compas_singularity.
+    def is_vertex_singular(self, vkey):
+        """Output whether a vertex is quad mesh singularity.
 
         Parameters
         ----------
@@ -249,7 +249,7 @@ class PseudoQuadMesh(QuadMesh):
         Returns
         -------
         bool
-            True if the vertex is a quad mesh compas_singularity. False otherwise.
+            True if the vertex is a quad mesh singularity. False otherwise.
 
         """
 
@@ -364,25 +364,25 @@ class PseudoQuadMesh(QuadMesh):
         self.data['attributes']['strips'] = {skey: [(u, v) for u, v in self.strip_edges(skey) if u == v or (self.halfedge[u][v] != fkey and self.halfedge[v][u] != fkey)] for skey in self.strips()}
 
 
-    def compas_singularity_polyedges(self):
-        """Collect the polyedges connected to compas_singularities.
+    def singularity_polyedges(self):
+        """Collect the polyedges connected to singularities.
 
         Returns
         -------
         list
-            The polyedges connected to compas_singularities.
+            The polyedges connected to singularities.
 
         """
 
         poles = set(self.poles())
-        # keep only polyedges connected to compas_singularities or along the boundary      
-        polyedges = [polyedge for key, polyedge in self.polyedges(data=True) if (self.is_vertex_compas_singular(polyedge[0]) and not self.is_pole(polyedge[0])) or (self.is_vertex_compas_singular(polyedge[-1]) and not self.is_pole(polyedge[-1])) or self.is_edge_on_boundary(polyedge[0], polyedge[1])]                                    
+        # keep only polyedges connected to singularities or along the boundary      
+        polyedges = [polyedge for key, polyedge in self.polyedges(data=True) if (self.is_vertex_singular(polyedge[0]) and not self.is_pole(polyedge[0])) or (self.is_vertex_singular(polyedge[-1]) and not self.is_pole(polyedge[-1])) or self.is_edge_on_boundary(polyedge[0], polyedge[1])]                                    
 
         # get intersections between polyedges for split
         vertices = [vkey for polyedge in polyedges for vkey in set(polyedge)]
         split_vertices = [vkey for vkey in self.vertices() if vertices.count(vkey) > 1]
         
-        # split compas_singularity polyedges
+        # split singularity polyedges
         return [split_polyedge for polyedge in polyedges for split_polyedge in list_split(polyedge, [polyedge.index(vkey) for vkey in split_vertices if vkey in polyedge])]
 
     # def add_face(self, vertices, fkey=None, attr_dict=None, **kwattr):

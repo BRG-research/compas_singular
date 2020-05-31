@@ -23,8 +23,8 @@ def clean_faces(faces):
 				break
 
 
-def get_compas_singularity_mesh():
-	guid = rs.GetObject('get compas_singularity mesh', filter=32)
+def get_singularity_mesh():
+	guid = rs.GetObject('get singularity mesh', filter=32)
 	vertices, faces = RhinoMesh.from_guid(guid).get_vertices_and_faces()
 	clean_faces(faces)
 	poles = []
@@ -32,11 +32,11 @@ def get_compas_singularity_mesh():
 		if len(face) != 4:
 			poles = [rs.PointCoordinates(point) for point in rs.GetObjects('get pole points', filter=1)]
 			break
-	compas_singularity_mesh = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, poles)
-	compas_singularity_mesh.init_strip_density()
-	compas_singularity_mesh.quad_mesh = compas_singularity_mesh.copy()
-	compas_singularity_mesh.polygonal_mesh = compas_singularity_mesh.copy()
-	return compas_singularity_mesh
+	singularity_mesh = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, poles)
+	singularity_mesh.init_strip_density()
+	singularity_mesh.quad_mesh = singularity_mesh.copy()
+	singularity_mesh.polygonal_mesh = singularity_mesh.copy()
+	return singularity_mesh
 
 
 def get_dense_mesh():
@@ -48,6 +48,6 @@ def get_dense_mesh():
 		if len(face) != 4:
 			poles = [rs.PointCoordinates(point) for point in rs.GetObjects('get pole points', filter=1)]
 			break
-	compas_singularity_mesh = CoarsePseudoQuadMesh.from_quad_mesh(PseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, poles))
-	return compas_singularity_mesh
+	singularity_mesh = CoarsePseudoQuadMesh.from_quad_mesh(PseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, poles))
+	return singularity_mesh
 	

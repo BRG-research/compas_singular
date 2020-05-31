@@ -138,13 +138,13 @@ class Kagome(Mesh):
 			vertices, faces = node.to_vertices_and_faces()
 			meshes.append(rs.AddMesh(vertices, faces))
 
-	def compas_singularities(self):
+	def singularities(self):
 
 		return [vkey for vkey in self.vertices() if (self.is_vertex_on_boundary(vkey) and self.vertex_degree(vkey) != 4) or (not self.is_vertex_on_boundary(vkey) and self.vertex_degree(vkey) != 6)]
 
-	def compas_singularity_points(self):
+	def singularity_points(self):
 
-		return [self.vertex_coordinates(vkey) for vkey in self.compas_singularities()]
+		return [self.vertex_coordinates(vkey) for vkey in self.singularities()]
 
 	def densification(self, k = 1, fixed_boundary = True):
 
@@ -163,7 +163,7 @@ class Kagome(Mesh):
 
 		self.kagome_polyedge_data = self.kagome_polyedges()
 
-	def kagome_compas_singularities(self):
+	def kagome_singularities(self):
 
 		compas_singular_faces = []
 		for fkey in self.kagome.faces():
@@ -173,13 +173,13 @@ class Kagome(Mesh):
 				compas_singular_faces.append([self.kagome.vertex_coordinates(vkey) for vkey in self.kagome.face_vertices(fkey) + self.kagome.face_vertices(fkey)[: 1]])
 		return compas_singular_faces
 
-	def kagome_negative_compas_singularities(self):
+	def kagome_negative_singularities(self):
 
 		return [fkey for fkey in self.kagome.faces() if all([len(self.kagome.face_vertices(nbr)) == 3 for nbr in self.kagome.face_neighbors(fkey)]) and len(self.kagome.face_vertices(fkey)) > 6]
 
 	def kagome_negative_polygons(self):
 
-		return [[self.kagome.vertex_coordinates(vkey) for vkey in self.kagome.face_vertices(fkey)] for fkey in self.kagome_negative_compas_singularities()]
+		return [[self.kagome.vertex_coordinates(vkey) for vkey in self.kagome.face_vertices(fkey)] for fkey in self.kagome_negative_singularities()]
 
 	def kagome_vertex_opposite_vertex(self, u, v):
 
@@ -427,8 +427,8 @@ if __name__ == '__main__':
 	plotter.draw_faces()
 	plotter.show()
 
-	#print kagome.kagome_negative_compas_singularities()
-	#print kagome.kagome_compas_singularities()
+	#print kagome.kagome_negative_singularities()
+	#print kagome.kagome_singularities()
 	#print kagome.kagome_polyline_frames()
 	#kagome.kagome_polyedges()
 	#kagome.kagome_polyline_colouring()

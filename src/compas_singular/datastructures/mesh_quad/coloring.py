@@ -54,7 +54,7 @@ def quad_mesh_strip_n_coloring(quad_mesh):
 
 def quad_mesh_polyedge_2_coloring(quad_mesh):
     """Try to color the polyedges of a quad mesh with two colors only without overlapping polyedges with the same color.
-    Polyedges connected by their extremities, which are compas_singularities, do not count as overlapping.
+    Polyedges connected by their extremities, which are singularities, do not count as overlapping.
 
     Parameters
     ----------
@@ -74,7 +74,7 @@ def quad_mesh_polyedge_2_coloring(quad_mesh):
 
 def quad_mesh_polyedge_n_coloring(quad_mesh):
     """Color the polyedges of a quad mesh with a minimum number of colors without overlapping polyedges with the same color.
-    Polyedges connected by their extremities, which are compas_singularities, do not count as overlapping.
+    Polyedges connected by their extremities, which are singularities, do not count as overlapping.
 
     Parameters
     ----------

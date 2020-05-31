@@ -57,7 +57,7 @@ def add_and_delete_strips(mesh, strips_to_add=[], strips_to_delete=[], preserve_
     strips_to_delete : list
         A list of strip keys to delete.
     preserve_boundaries : bool
-        A boolean whether to preserve boundaries that would be collapsed by refining strips without adding compas_singularities.
+        A boolean whether to preserve boundaries that would be collapsed by refining strips without adding singularities.
 
     Returns
     -------
@@ -275,7 +275,7 @@ def delete_strip(mesh, skey, preserve_boundaries=False):
     skey : hashable
         A strip key.
     preserve_boundaries : bool
-        A boolean whether to preserve boundaries that would be collapsed by refining strips without adding compas_singularities.
+        A boolean whether to preserve boundaries that would be collapsed by refining strips without adding singularities.
 
     Returns
     -------
@@ -391,7 +391,7 @@ def delete_strips(mesh, skeys, preserve_boundaries=False):
     skey : set
         Strip keys.
     preserve_boundaries : bool
-        A boolean whether to preserve boundaries that would be collapsed by refining strips without adding compas_singularities.
+        A boolean whether to preserve boundaries that would be collapsed by refining strips without adding singularities.
 
     Returns
     -------
