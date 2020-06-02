@@ -14,7 +14,7 @@ from compas.utilities import pairwise
 
 from compas_singular.datastructures import QuadMesh, CoarseQuadMesh, CoarsePseudoQuadMesh
 
-from compas_singular.algorithms import surface_discrete_mapping, boundary_triangulation, SkeletonDecomposition
+from compas_singular.algorithms import surface_discrete_mapping, boundary_triangulation, Skeleton, SkeletonDecomposition
 
 from compas_singular.datastructures.mesh_quad.grammar.add_strip import add_strips
 from compas_singular.datastructures.mesh_quad.grammar.delete_strip import delete_strips
@@ -233,6 +233,20 @@ def gh_surface_decomposition(surface_guid, accuracy_value, point_guids, curve_gu
 	quad_mesh = decomposition.decomposition_mesh(point_features)
 	RhinoSurface.from_guid(surface_guid).mesh_uv_to_xyz(quad_mesh)
 	return quad_mesh
+
+def gh_surface_skeleton(surface_guid, accuracy_value, point_guids, curve_guids):
+
+	if point_guids == [None]:
+		point_guids = []
+	if curve_guids == [None]:
+		curve_guids = []
+
+	outer_boundary, inner_boundaries, polyline_features, point_features = surface_discrete_mapping(surface_guid, accuracy_value, crv_guids = curve_guids, pt_guids = point_guids)
+	tri_mesh = boundary_triangulation(outer_boundary, inner_boundaries, polyline_features, point_features)
+	skeleton = Skeleton.from_mesh(tri_mesh)
+	branches = skeleton.branches()
+	polylines = [rs.AddPolyline(RhinoSurface.from_guid(surface_guid).polyline_uv_to_xyz([point[:2] for point in branch])) for branch in branches]
+	return polylines
 
 
 # ==============================================================================
