@@ -65,7 +65,6 @@ class PseudoQuadMesh(QuadMesh):
 
         data_face_pole = {}
         for fkey, vkey in iter(data['attributes']['face_pole'].items()):
-            print(fkey, type(fkey))
             data_face_pole[literal_eval(fkey)] = vkey
         self.data['attributes']['face_pole'] = data_face_pole
 
@@ -135,9 +134,6 @@ class PseudoQuadMesh(QuadMesh):
                 return (w, x)
             #if pseudo quad
             if len(self.face_vertices(fkey)) == 3:
-                print(self.face_vertices(fkey))
-                print(fkey, self.data['attributes']['face_pole'])
-
                 pole = self.data['attributes']['face_pole'][fkey]
                 w = self.face_vertex_descendant(fkey, v)
                 if u == pole:

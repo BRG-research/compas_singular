@@ -8,7 +8,7 @@ from compas_plotters.meshplotter import MeshPlotter
 # read input data
 filepath = 'data/01_decomposition.json'
 with open(filepath, 'r') as fp:
-        data = json.load(fp)
+    data = json.load(fp)
 
 # get outer boundary polyline, inner boundary polylines, polyline features and point features
 outer_boundary, inner_boundaries, polyline_features, point_features = data

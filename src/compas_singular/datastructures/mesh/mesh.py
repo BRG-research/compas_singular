@@ -136,9 +136,9 @@ if __name__ == '__main__':
 	import compas
 
 	mesh = Mesh.from_obj(compas.get('faces.obj'))
-	print(mesh.number_of_vertices(), len(mesh.vertices_on_boundary()), mesh.boundaries())
+	#print(mesh.number_of_vertices(), len(mesh.vertices_on_boundary()), mesh.boundaries())
 	for fkey in mesh.faces():
 		if not mesh.is_face_on_boundary(fkey):
 			mesh.delete_face(fkey)
 			break
-	print(mesh.number_of_vertices(), len(mesh.vertices_on_boundary()), mesh.boundaries())
+	#print(mesh.number_of_vertices(), len(mesh.vertices_on_boundary()), mesh.boundaries())
