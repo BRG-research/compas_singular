@@ -68,10 +68,9 @@ def surface_discrete_mapping(srf_guid, discretisation, minimum_discretisation = 
 
 	for crv_guid in crv_guids:
 
-		curve = RhinoCurve.from_guid(crv_guid)
-		points = [list(srf.point_xyz_to_uv(pt)) + [0.0] for pt in curve.divide(max(int(curve.length() / discretisation) + 1, minimum_discretisation))]
+		points = [list(srf.point_xyz_to_uv(pt)) + [0.0] for pt in rs.DivideCurve(crv_guid, max(int(rs.CurveLength(crv_guid) / discretisation) + 1, minimum_discretisation))]
 		
-		if curve.is_closed():
+		if rs.IsCurveClosed(crv_guid):
 			points.append(points[0])
 		
 		mapped_curves.append(points)
