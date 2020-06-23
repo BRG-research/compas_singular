@@ -38,8 +38,8 @@ def automated_smoothing_surface_constraints(mesh, surface):
 	----------
 	mesh : Mesh
 		The mesh to apply the constraints to for smoothing.
-	surface : RhinoSurface
-		A RhinoSurface object on which to constrain mesh vertices.
+	surface : Rhino surface guid
+		A Rhino surface guid on which to constrain mesh vertices.
 
 	Returns
 	-------
@@ -48,6 +48,7 @@ def automated_smoothing_surface_constraints(mesh, surface):
 
 	"""
 
+	surface = RhinoSurface.from_guid(surface)
 	constraints = {}
 
 	points = [rs.AddPoint(point) for point in surface.kinks()]
@@ -77,11 +78,11 @@ def automated_smoothing_constraints(mesh, points = None, curves = None, surface 
 	points : list
 		List of XYZ coordinates on which to constrain mesh vertices. Default is None.
 	curves : list
-		List of RhinoCurve objects on which to constrain mesh vertices. Default is None.
-	surface : RhinoSurface
-		A RhinoSurface object on which to constrain mesh vertices. Default is None.
-	mesh2 : RhinoMesh
-		A RhinoMesh object on which to constrain mesh vertices. Default is None.
+		List of Rhino curve guids on which to constrain mesh vertices. Default is None.
+	surface : Rhino surface guid
+		A Rhino surface guid on which to constrain mesh vertices. Default is None.
+	mesh2 : Rhino mesh guid
+		A Rhino mesh guid on which to constrain mesh vertices. Default is None.
 
 	Returns
 	-------
@@ -89,6 +90,13 @@ def automated_smoothing_constraints(mesh, points = None, curves = None, surface 
 		A dictionary of mesh constraints for smoothing as vertex keys pointing to point, curve or surface objects.
 
 	"""
+
+	if surface:
+		surface = RhinoSurface.from_guid(surface)
+	if curves:
+		curves = [RhinoCurve.from_guid(curve) for curve in curves]
+	if mesh2:
+		mesh2 = RhinoMesh.from_guid(mesh2)
 
 	constraints = {}
 	constrained_vertices = {}
@@ -100,17 +108,17 @@ def automated_smoothing_constraints(mesh, points = None, curves = None, surface 
 		constrained_vertices.update({vertices[closest_point_in_cloud(rs.PointCoordinates(point), vertex_coordinates)[2]]: point for point in points})
 
 	if mesh2 is not None:
-		constraints.update({vkey: mesh2 for vkey in mesh.vertices()})
+		constraints.update({vkey: mesh2.guid for vkey in mesh.vertices()})
 
 	if surface is not None:
-		constraints.update({vkey: surface for vkey in mesh.vertices()})
+		constraints.update({vkey: surface.guid for vkey in mesh.vertices()})
 	
 	if curves is not None and len(curves) != 0:
 		boundaries = [split_boundary for boundary in mesh.boundaries() for split_boundary in list_split(boundary, [boundary.index(vkey) for vkey in constrained_vertices.keys() if vkey in boundary])]
 		boundary_midpoints = [Polyline([mesh.vertex_coordinates(vkey) for vkey in boundary]).point(t = .5) for boundary in boundaries]
 		curve_midpoints = [rs.EvaluateCurve(curve, rs.CurveParameter(curve, .5)) for curve in curves]
 		midpoint_map = {i: closest_point_in_cloud(boundary_midpoint, curve_midpoints)[2] for i, boundary_midpoint in enumerate(boundary_midpoints)}
-		constraints.update({vkey: curves[midpoint_map[i]] for i, boundary in enumerate(boundaries) for vkey in boundary})
+		constraints.update({vkey: curves[midpoint_map[i]].guid for i, boundary in enumerate(boundaries) for vkey in boundary})
 	
 	if points is not None:
 		constraints.update(constrained_vertices)
