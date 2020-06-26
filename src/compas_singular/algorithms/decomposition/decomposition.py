@@ -186,7 +186,7 @@ class SkeletonDecomposition(Skeleton):
 		branches += self.branches_splitting_boundary_kinks()
 		branches += self.branches_splitting_collapsed_boundaries()
 		branches += self.branches_splitting_flipped_faces()
-		self.polylines =  network_polylines(Network.from_lines([(u, v) for polyline in branches for u, v in pairwise(polyline)]), splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
+		self.polylines = network_polylines(Network.from_lines([(u, v) for polyline in branches for u, v in pairwise(polyline)]), splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices()])
 		return self.polylines
 
 	def decomposition_polyline(self, geom_key_1, geom_key_2):
@@ -450,16 +450,25 @@ class SkeletonDecomposition(Skeleton):
 
 	def split_quads_with_poles(self, poles):
 
+		new_lines = []
+
 		mesh = self.mesh
 		pole_map = tuple([geometric_key(pole) for pole in poles])
 
 		faces = list(mesh.faces())
 		for fkey in faces:
-			if len(mesh.face_vertices(fkey)) == 4:
-				for vkey in mesh.face_vertices(fkey):
+			fv = mesh.face_vertices(fkey)
+			if len(fv) == 4:
+				for vkey in fv:
 					if geometric_key(mesh.vertex_coordinates(vkey)) in pole_map:
+						idx = fv.index(vkey)
+						xkey = fv[idx + 2 - len(fv)]
+						new_lines.append([mesh.vertex_coordinates(vkey), mesh.vertex_coordinates(xkey)])
 						split_quad_in_pseudo_quads(mesh, fkey, vkey)
 						break
+
+		self.polylines += new_lines
+		return new_lines
 
 	def store_pole_data(self, poles):
 		

@@ -56,7 +56,6 @@ class Mesh(Mesh):
 				boundary_edges[v] = u
 
 		boundaries = []
-		u, v
 		boundary = list(boundary_edges.popitem())
 		while len(boundary_edges) > 0:
 			w = boundary_edges.pop(boundary[-1])

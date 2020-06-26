@@ -114,7 +114,7 @@ def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features =
 	elif src == 'numpy':
 		faces = delaunay_numpy(vertices)
 	else:
-		delaunay_compas(vertices)
+		faces = delaunay_compas(vertices)
 	
 	delaunay_mesh = Mesh.from_vertices_and_faces(vertices, faces)
 	

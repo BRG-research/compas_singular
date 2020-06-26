@@ -5,6 +5,7 @@ from __future__ import division
 from compas_singular.datastructures.mesh_quad_coarse.mesh_quad_coarse import CoarseQuadMesh
 from compas_singular.datastructures.mesh_quad_pseudo.mesh_quad_pseudo import PseudoQuadMesh
 
+from compas.geometry import Polyline
 from compas.geometry import discrete_coons_patch
 from compas.datastructures import meshes_join_and_weld
 
@@ -21,7 +22,7 @@ class CoarsePseudoQuadMesh(PseudoQuadMesh, CoarseQuadMesh):
 		super(CoarsePseudoQuadMesh, self).__init__()
 
 	
-	def densification(self):
+	def densification(self, edges_to_curves=None):
 		"""Generate a denser quad mesh from the coarse quad mesh and its strip densities.
 
 		Returns
@@ -41,7 +42,28 @@ class CoarsePseudoQuadMesh(PseudoQuadMesh, CoarseQuadMesh):
 
 		meshes = []
 		for fkey in self.faces():
-			polylines = [[self.edge_point(u, v, float(i) / float(self.get_strip_density(edge_strip[(u, v)]))) for i in range(0, self.get_strip_density(edge_strip[(u, v)]) + 1)] for u, v in self.face_halfedges(fkey)]
+			#polylines = [[self.edge_point(u, v, float(i) / float(self.get_strip_density(edge_strip[(u, v)]))) for i in range(0, self.get_strip_density(edge_strip[(u, v)]) + 1)] for u, v in self.face_halfedges(fkey)]
+			polylines = []
+			for u, v in self.face_halfedges(fkey):
+				polyline = []
+
+				if edges_to_curves is None:
+					curve = Polyline([self.vertex_coordinates(u), self.vertex_coordinates(v)])
+				else:
+					if (u, v) in edges_to_curves:
+						curve = Polyline(edges_to_curves[(u, v)])
+					elif (v, u) in edges_to_curves:
+						curve = Polyline(list(reversed(edges_to_curves[(v, u)])))
+					else:
+						curve = None
+				
+				d = self.get_strip_density(edge_strip[(u, v)])
+				for i in range(0, d + 1):
+					point = curve.point(float(i) / float(d))
+					polyline.append(point)
+			
+				polylines.append(polyline)
+
 			if self.is_face_pseudo_quad(fkey):
 				pole = self.data['attributes']['face_pole'][fkey]
 				idx = self.face_vertices(fkey).index(pole)
