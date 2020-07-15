@@ -84,7 +84,7 @@ def delaunay_numpy(vertices):
 	return delaunay_from_points_numpy(vertices)
 
 
-def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features = [], point_features = [], src='numpy_rpc'):
+def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features = [], point_features = [], delaunay=None):
 	"""Generate Delaunay triangulation between a planar outer boundary and planar inner boundaries. All vertices lie the boundaries.
 
 	Parameters
@@ -97,8 +97,8 @@ def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features =
 		List of planar polyline_features as lists of vertex coordinates.
 	point_features : list
 		List of planar point_features as lists of vertex coordinates.
-	src : str
-		Source of Delaunay triangulation. Default is NumPy via RPC.
+	delaunay : callable or proxy
+		Delaunay triangulation function.
 
 	Returns
 	-------
@@ -109,15 +109,21 @@ def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features =
 
 	# generate planar Delaunay triangulation
 	vertices = [pt for boundary in [outer_boundary] + inner_boundaries + polyline_features for pt in boundary] + point_features
-	if src == 'numpy_rpc':
-		faces = delaunay_numpy_rpc(vertices)
-	elif src == 'numpy':
-		faces = delaunay_numpy(vertices)
-	else:
-		faces = delaunay_compas(vertices)
-	
+
+	# if src == 'numpy_rpc':
+	# 	faces = delaunay_numpy_rpc(vertices)
+	# elif src == 'numpy':
+	# 	faces = delaunay_numpy(vertices)
+	# else:
+	# 	faces = delaunay_compas(vertices)
+
+    if not delaunay:
+        delaunay = delaunay_compas
+
+    faces = delaunay(vertices)
+
 	delaunay_mesh = Mesh.from_vertices_and_faces(vertices, faces)
-	
+
 	# delete false faces with aligned vertices
 	for fkey in list(delaunay_mesh.faces()):
 		a, b, c = [delaunay_mesh.vertex_coordinates(vkey) for vkey in delaunay_mesh.face_vertices(fkey)]
