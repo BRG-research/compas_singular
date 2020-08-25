@@ -1,10 +1,7 @@
 import compas
 
-try:
+if compas.RHINO:
 	import rhinoscriptsyntax as rs
-
-except ImportError:
-	compas.raise_if_ironpython()
 
 
 def apply_conway_operator(singularity_mesh):
@@ -36,4 +33,4 @@ def apply_conway_operator(singularity_mesh):
 		singularity_mesh.polygonal_mesh = globals()[conway[operator]](singularity_mesh.polygonal_mesh)
 
 	return singularity_mesh
-	
+

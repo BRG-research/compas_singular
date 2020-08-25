@@ -1,11 +1,7 @@
 import compas
 
-try:
+if compas.RHINO:
     import rhinoscriptsyntax as rs
-
-except ImportError:
-    compas.raise_if_ironpython()
-
 
 
 def change_display(singularity_mesh):

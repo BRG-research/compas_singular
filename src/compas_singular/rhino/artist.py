@@ -1,10 +1,7 @@
-try:
-	import rhinoscriptsyntax as rs
+import compas
 
-except ImportError:
-	import platform
-	if platform.python_implementation() == 'IronPython':
-		raise
+if compas.RHINO:
+	import rhinoscriptsyntax as rs
 
 import compas_rhino as rhino
 import compas_rhino.artists as rhino_artist
@@ -35,7 +32,7 @@ def select_mesh_polyedge(mesh):
 	polyedge : list
 		The list of polyedge vertices.
 	"""
-	
+
 	# add layer
 	artist = rhino_artist.MeshArtist(mesh, layer='mesh_artist')
 	artist.clear_layer()
@@ -50,7 +47,7 @@ def select_mesh_polyedge(mesh):
 			vkey_candidates = mesh.vertices()
 		else:
 			vkey_candidates = mesh.vertex_neighbors(polyedge[-1])
-		
+
 		# get vertex among candidates
 		artist.draw_vertexlabels(text = {key: str(key) for key in vkey_candidates})
 		artist.redraw()
@@ -59,7 +56,7 @@ def select_mesh_polyedge(mesh):
 
 		artist.clear_layer()
 		artist.redraw()
-		
+
 		# stop if no vertex is added
 		if vkey is None:
 			break
@@ -73,7 +70,7 @@ def select_mesh_polyedge(mesh):
 			guid = rs.AddLine(u, v)
 			rs.ObjectColor(guid, [255, 255, 0])
 			lines.append(guid)
-		
+
 	rs.DeleteLayer('mesh_artist')
 	rs.DeleteObjects(lines)
 
@@ -123,7 +120,7 @@ def select_quad_mesh_strip(mesh, text='key'):
 	hashable
 		The strip key.
 	"""
-	
+
 	n = mesh.number_of_strips()
 
 	# different colors per strip
@@ -155,7 +152,7 @@ def select_quad_mesh_strip(mesh, text='key'):
 	rs.DeleteObjects(guids_to_strip.keys())
 	if text == 'key' or text == 'density':
 		rs.DeleteObjects(guids_to_dot.values())
-	
+
 	return skey
 
 
@@ -179,7 +176,7 @@ def select_quad_mesh_strips(mesh, text='key'):
 	skeys = []
 
 	while True:
-		
+
 		skey = select_quad_mesh_strip(mesh, text=text)
 
 		if skey is None:

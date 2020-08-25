@@ -3,7 +3,7 @@ import compas
 if compas.RHINO:
 	import rhinoscriptsyntax as rs
 
-from compas_rhino.geometry.curve import RhinoCurve
+from compas_rhino.geometry import RhinoCurve
 
 
 __all__ = [

@@ -1,10 +1,8 @@
 import compas
 
-try:
+if compas.RHINO:
 	import rhinoscriptsyntax as rs
 
-except ImportError:
-	compas.raise_if_ironpython()
 from compas_singular.rhino.artist import select_quad_mesh_strips
 
 
@@ -34,4 +32,3 @@ def update_density(singularity_mesh):
 	singularity_mesh.densification()
 
 	return singularity_mesh
-	

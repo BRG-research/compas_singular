@@ -2,11 +2,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-try:
+if compas.RHINO:
 	import rhinoscriptsyntax as rs
-except ImportError:
-	import compas
-	compas.raise_if_ironpython()
 
 from copy import deepcopy
 
@@ -218,7 +215,7 @@ def gh_delete_strips(mesh, strips_to_delete):
 	mesh_2 = deepcopy(mesh)
 	delete_strips(mesh_2, [strip_index_to_key[index] for index in strips_to_delete])
 	return mesh_2
-	
+
 
 def gh_surface_decomposition(surface_guid, accuracy_value, point_guids, curve_guids):
 

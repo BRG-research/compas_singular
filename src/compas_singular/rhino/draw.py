@@ -5,12 +5,8 @@ from math import tan
 
 import compas
 
-try:
+if compas.RHINO:
 	import rhinoscriptsyntax as rs
-
-except ImportError:
-	import compas
-	compas.raise_if_ironpython()
 
 import compas_rhino as rhino
 
@@ -96,7 +92,7 @@ def draw_graph(vertices, edges, loop_size=1.0, spindle_size=1.0, node_radius=0.0
 				k = (float(i) / float(n) * spindle_size) - spindle_size / 2.0 * (float(n) - 1.0) / float(n)
 				dir_mid = add_vectors(mid, scale_vector(direction, k))
 				crvs.append(rs.AddInterpCurve([start, dir_mid, end], degree=3))
-		
+
 		# if loop edge
 		else:
 			xyz0 = vertices[u0]

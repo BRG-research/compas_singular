@@ -1,4 +1,6 @@
 from compas_rhino.artists import MeshArtist
+
+
 __all__ = [
 	'PatternArtist'
 ]

@@ -1,10 +1,7 @@
 import compas
 
-try:
+if compas.RHINO:
     import rhinoscriptsyntax as rs
-
-except ImportError:
-    compas.raise_if_ironpython()
 
 from compas_rhino.geometry import RhinoMesh
 
@@ -50,4 +47,3 @@ def get_dense_mesh():
 			break
 	singularity_mesh = CoarsePseudoQuadMesh.from_quad_mesh(PseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, poles))
 	return singularity_mesh
-	
