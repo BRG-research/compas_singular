@@ -19,7 +19,7 @@ from compas.geometry import distance_point_point
 from compas.geometry import closest_point_in_cloud
 
 from compas_rhino.artists import MeshArtist
-from compas_rhino.objects.selectors import mesh_select_vertices
+from compas_rhino.objects import mesh_select_vertices
 
 from compas_singular.utilities import list_split
 
@@ -64,7 +64,7 @@ def automated_smoothing_surface_constraints(mesh, surface):
 	key_to_index = {i: vkey for i, vkey in enumerate(mesh.vertices_on_boundary())}
 	vertex_coordinates = tuple(mesh.vertex_coordinates(vkey) for vkey in mesh.vertices_on_boundary())
 	constraints.update({key_to_index[closest_point_in_cloud(rs.PointCoordinates(point), vertex_coordinates)[2]]: point for point in points})
-	
+
 	return constraints
 
 
@@ -103,7 +103,7 @@ def automated_smoothing_constraints(mesh, points = None, curves = None, surface 
 
 	vertices = list(mesh.vertices())
 	vertex_coordinates = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
-	
+
 	if points is not None and len(points) != 0:
 		constrained_vertices.update({vertices[closest_point_in_cloud(rs.PointCoordinates(point), vertex_coordinates)[2]]: point for point in points})
 
@@ -112,14 +112,14 @@ def automated_smoothing_constraints(mesh, points = None, curves = None, surface 
 
 	if surface is not None:
 		constraints.update({vkey: surface.guid for vkey in mesh.vertices()})
-	
+
 	if curves is not None and len(curves) != 0:
 		boundaries = [split_boundary for boundary in mesh.boundaries() for split_boundary in list_split(boundary, [boundary.index(vkey) for vkey in constrained_vertices.keys() if vkey in boundary])]
 		boundary_midpoints = [Polyline([mesh.vertex_coordinates(vkey) for vkey in boundary]).point(t = .5) for boundary in boundaries]
 		curve_midpoints = [rs.EvaluateCurve(curve, rs.CurveParameter(curve, .5)) for curve in curves]
 		midpoint_map = {i: closest_point_in_cloud(boundary_midpoint, curve_midpoints)[2] for i, boundary_midpoint in enumerate(boundary_midpoints)}
 		constraints.update({vkey: curves[midpoint_map[i]].guid for i, boundary in enumerate(boundaries) for vkey in boundary})
-	
+
 	if points is not None:
 		constraints.update(constrained_vertices)
 
@@ -150,10 +150,10 @@ def customized_smoothing_constraints(mesh, constraints):
 		if len(vkeys) == 2 and rs.GetString('get all polyedge?', strings = ['True', 'False']) == 'True':
 			u, v = vkeys
 			vkeys = mesh.polyedge(u, v)
-		
+
 		if vkeys is None:
 			break
-	
+
 		constraint = rs.GetString('edit smoothing constraints?', strings = ['point', 'curve', 'surface', 'exit'])
 
 		rs.DeleteObjects(guids)
@@ -192,7 +192,7 @@ def display_smoothing_constraints(mesh, constraints):
 		Guid of Rhino points coloured according to the type of constraint applied.
 
 	"""
-	
+
 	#color = {vkey: (255, 0, 0) if vkey in constraints and rs.ObjectType(constraints[vkey]) == 1
 	#			  else (0, 255, 0) if vkey in constraints and rs.ObjectType(constraints[vkey]) == 4
 	#			  else (0, 0, 255) if vkey in constraints and rs.ObjectType(constraints[vkey]) == 8

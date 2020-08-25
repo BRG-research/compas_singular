@@ -10,7 +10,7 @@ from compas.geometry import distance_point_point
 from compas.geometry import angle_vectors
 
 from compas_singular.rhino.objects.curve import RhinoCurve
-from compas_rhino.geometry.surface import RhinoSurface
+from compas_rhino.geometry import RhinoSurface
 
 
 __author__     = ['Robin Oval']
@@ -198,7 +198,7 @@ class RhinoSurface(RhinoSurface):
 			mesh.vertex[vkey]['y'] = y
 			mesh.vertex[vkey]['z'] = z
 		return mesh
-	
+
 
 # ==============================================================================
 # Main
