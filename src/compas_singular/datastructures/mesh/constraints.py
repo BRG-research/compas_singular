@@ -2,12 +2,10 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
-try:
-	import rhinoscriptsyntax as rs
+import compas
 
-except ImportError:
-	import compas
-	compas.raise_if_ironpython()
+if compas.RHINO:
+	import rhinoscriptsyntax as rs
 
 from compas.geometry import Polyline
 

@@ -1,10 +1,7 @@
 import compas
 
-try:
+if compas.RHINO:
 	import rhinoscriptsyntax as rs
-
-except ImportError:
-	compas.raise_if_ironpython()
 
 from compas_rhino.geometry.curve import RhinoCurve
 
@@ -20,7 +17,7 @@ __all__ = [
 class RhinoCurve(RhinoCurve):
 
 	def __init__(self):
-		super(RhinoCurve, self).__init__() 
+		super(RhinoCurve, self).__init__()
 
 	def divide(self, number_of_segments, over_space=False):
 		points = []
@@ -44,7 +41,7 @@ class RhinoCurve(RhinoCurve):
 			The curve's length.
 		"""
 		return rs.CurveLength(self.guid)
-		
+
 	def tangents(self, points):
 		tangents = []
 		if rs.IsPolyCurve(self.guid):
@@ -57,7 +54,7 @@ class RhinoCurve(RhinoCurve):
 		else:
 			raise Exception('Object is not a curve.')
 		return tangents
-	
+
 
 # ==============================================================================
 # Main

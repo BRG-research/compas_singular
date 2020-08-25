@@ -1,10 +1,7 @@
 import compas
 
-try:
+if compas.RHINO:
 	import rhinoscriptsyntax as rs
-
-except ImportError:
-	compas.raise_if_ironpython()
 
 from compas.geometry import distance_point_point
 from compas.geometry import angle_vectors
