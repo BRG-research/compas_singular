@@ -112,3 +112,5 @@ temp/**
 !temp/PLACEHOLDER
 
 .DS_Store
+
+.vscode

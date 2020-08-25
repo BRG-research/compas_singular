@@ -1,4 +1,10 @@
 from math import ceil
+
+import compas
+
+if compas.RHINO:
+    import rhinoscriptsyntax as rs
+
 from compas.utilities import average
 from compas.utilities import standard_deviation
 
@@ -36,13 +42,6 @@ from compas_singular.rhino.artist import select_mesh_polyedge
 
 from compas.utilities import pairwise
 
-import compas
-
-try:
-    import rhinoscriptsyntax as rs
-
-except ImportError:
-    compas.raise_if_ironpython()
 
 __author__ = ['Robin Oval']
 __copyright__ = 'Copyright 2018, Block Research Group - ETH Zurich'
@@ -526,7 +525,7 @@ def save_design(coarse_pseudo_quad_mesh, layer):
 
     mesh_to_save = rs.GetString('mesh to save?', strings=[
                                   'coarse_pseudo_quad_mesh', 'pseudo_quad_mesh', 'polygonal_mesh'])
-    
+
     guid = None
     if mesh_to_save == 'coarse_pseudo_quad_mesh':
         artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh)
@@ -537,7 +536,7 @@ def save_design(coarse_pseudo_quad_mesh, layer):
     elif mesh_to_save == 'polygonal_mesh':
         artist = rhino_artist.MeshArtist(coarse_pseudo_quad_mesh.get_polygonal_mesh())
         guid = artist.draw_mesh()
-    
+
     if guid is not None:
         layer = rs.GetLayer(layer=layer)
         rs.ObjectLayer(guid, layer)

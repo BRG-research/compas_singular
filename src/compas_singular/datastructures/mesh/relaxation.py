@@ -2,13 +2,10 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
-try:
-    import rhinoscriptsyntax as rs
+import compas
 
-except ImportError:
-    import platform
-    if platform.python_implementation() == 'IronPython':
-        raise
+if compas.RHINO:
+    import rhinoscriptsyntax as rs
 
 from compas.datastructures import mesh_smooth_centroid
 from compas.datastructures import mesh_smooth_area
@@ -69,7 +66,7 @@ def constrained_smoothing(mesh, kmax=100, damping=0.5, constraints={}, algorithm
 
     if algorithm not in func:
         algorithm = 'centroid'
-        
+
     func[algorithm](mesh, kmax=kmax, damping=damping, callback=callback, callback_args=[mesh, constraints])
 
 
@@ -101,7 +98,7 @@ def surface_constrained_smoothing(mesh, srf, kmax = 100, damping = 0.5, algorith
                 x, y, z = srf.closest_point_on_boundaries(mesh.vertex_coordinates(vkey))
             else:
                 x, y, z = srf.closest_point(mesh.vertex_coordinates(vkey))
-    
+
             attr['x'] = x
             attr['y'] = y
             attr['z'] = z
@@ -112,7 +109,7 @@ def surface_constrained_smoothing(mesh, srf, kmax = 100, damping = 0.5, algorith
 
     if algorithm not in func:
         algorithm = 'centroid'
-        
+
     func[algorithm](mesh, fixed, kmax, damping, callback, callback_args)
 
 

@@ -32,7 +32,7 @@ class Mesh(Mesh):
 			vertices = [self.vertex_coordinates(key) for key in self.vertices()]
 			faces = [[key_index[key] for key in self.face_vertices(fkey)] for fkey in self.faces()]
 		return vertices, faces
-	
+
 	def boundaries(self):
 		"""Collect the mesh boundaries as lists of vertices.
 
@@ -82,8 +82,8 @@ class Mesh(Mesh):
 		-------
 		bool
 			True if vertex is on the boundary and has an angle larger than the threshold angle. False otherwise.
-		"""	
-		
+		"""
+
 		# check if vertex is on boundary
 		if not self.is_vertex_on_boundary(vkey):
 			return False
@@ -124,20 +124,21 @@ class Mesh(Mesh):
 		"""
 
 		return centroid_points([self.vertex_coordinates(vkey) for vkey in self.vertices()])
-		
+
 
 # ==============================================================================
 # Main
 # ==============================================================================
 
 if __name__ == '__main__':
+    pass
 
-	import compas
+	# import compas
 
-	mesh = Mesh.from_obj(compas.get('faces.obj'))
-	#print(mesh.number_of_vertices(), len(mesh.vertices_on_boundary()), mesh.boundaries())
-	for fkey in mesh.faces():
-		if not mesh.is_face_on_boundary(fkey):
-			mesh.delete_face(fkey)
-			break
-	#print(mesh.number_of_vertices(), len(mesh.vertices_on_boundary()), mesh.boundaries())
+	# mesh = Mesh.from_obj(compas.get('faces.obj'))
+	# #print(mesh.number_of_vertices(), len(mesh.vertices_on_boundary()), mesh.boundaries())
+	# for fkey in mesh.faces():
+	# 	if not mesh.is_face_on_boundary(fkey):
+	# 		mesh.delete_face(fkey)
+	# 		break
+	# #print(mesh.number_of_vertices(), len(mesh.vertices_on_boundary()), mesh.boundaries())
