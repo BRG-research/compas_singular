@@ -41,8 +41,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from .lists import *
-from .pareto import *
+from .lists import *  # noqa: F401 F403
+from .pareto import *  # noqa: F401 F403
 
 __all__ = [name for name in dir() if not name.startswith('_')]
-

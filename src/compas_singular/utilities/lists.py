@@ -2,6 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+
 __all__ = [
     'list_split',
     'sublist_from_to_items_in_closed_list',
@@ -138,7 +139,7 @@ def remove_isomorphism_in_integer_list(l):
 
     if len(l) < 2:
         return l
-        
+
     # if closed: min value first, and its minimum neighbour value second
     if l[0] == l[-1]:
         l = l[:-1]
@@ -147,7 +148,7 @@ def remove_isomorphism_in_integer_list(l):
         start = min(l)
         for i, key in enumerate(l):
             # collect all candidates, there may be multiple minimum values and multiple minimum neighbours
-            if key == start:        
+            if key == start:
                 candidate = l[i:] + l[:i] + [l[i]]
                 candidates.append(candidate)
                 candidates.append(list(reversed(candidate)))
@@ -181,9 +182,10 @@ def remove_isomorphism_in_integer_list(l):
 # ==============================================================================
 
 if __name__ == '__main__':
+    pass
 
-    import compas
+    # import compas
 
-    print(list_split(list(range(20)) + [0], [0, 8, 9, 12, 13]))
+    # print(list_split(list(range(20)) + [0], [0, 8, 9, 12, 13]))
 
-    print(sublist_from_to_items_in_closed_list(range(20), 13, 13))
+    # print(sublist_from_to_items_in_closed_list(range(20), 13, 13))
