@@ -1,13 +1,13 @@
-import json
+import os
 
 from compas_singular.datastructures import CoarseQuadMesh
-
 from compas_plotters.meshplotter import MeshPlotter
 
-# read input data
-json_data = 'data/coarse_quad_mesh_british_museum.json'
+HERE = os.path.dirname(__file__)
+FILE = os.path.join(HERE, 'data/coarse_quad_mesh_british_museum.json')
 
-coarse_quad_mesh = CoarseQuadMesh.from_json(json_data)
+# read input data
+coarse_quad_mesh = CoarseQuadMesh.from_json(FILE)
 
 # plot coarse quad mesh
 plotter = MeshPlotter(coarse_quad_mesh, figsize=(5, 5))
