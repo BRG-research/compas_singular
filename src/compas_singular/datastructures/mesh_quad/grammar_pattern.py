@@ -4,30 +4,24 @@ from __future__ import division
 
 from math import pi
 
-from compas_singular.datastructures.mesh.mesh import Mesh
-from compas_singular.datastructures.network.network import Network
-
 from compas.datastructures import mesh_substitute_vertex_in_faces
-
-from compas.datastructures import mesh_unweld_vertices
-
-from compas.topology import shortest_path
-
-from compas.topology import connected_components
+# from compas.datastructures import mesh_unweld_vertices
 from compas.datastructures import network_disconnected_nodes
-from compas.topology import breadth_first_paths
-
-from compas.datastructures.mesh import mesh_smooth_centroid
-
+from compas.datastructures import mesh_smooth_centroid
 from compas.geometry import centroid_points
-from compas.geometry import project_point_line
-
-from compas_singular.geometry import closest_point_on_polyline
-
+# from compas.geometry import project_point_line
+# from compas.topology import shortest_path
+# from compas.topology import connected_components
+from compas.topology import breadth_first_paths
 from compas.utilities import geometric_key
 from compas.utilities import pairwise
+
+from compas_singular.geometry import closest_point_on_polyline
 from compas_singular.utilities import sublist_from_to_items_in_closed_list
 from compas_singular.utilities import list_split
+
+# from ..mesh import Mesh
+from ..network import Network
 
 
 __all__ = [
@@ -194,7 +188,7 @@ def func_1(mesh, fix_xyz, kmax, damping):
     def callback(k, args):
 
         mesh, fixed, split_boundaries, split_boundaries_geom = args
-        
+
         for vkey in mesh.vertices_on_boundary():
             if vkey not in fixed:
                 for i, boundary in enumerate(split_boundaries):
@@ -223,7 +217,7 @@ def func_1(mesh, fix_xyz, kmax, damping):
                 fixed += corner_vertices
             else:
                 pass
-                #print('not generalised yet')
+                # print('not generalised yet')
 
     split_boundaries = []
     for boundary in mesh.boundaries():
@@ -298,14 +292,14 @@ def delete_strip(mesh, skey, preserve_boundaries=False):
 
     # collateral strip deletions
     collateral_deleted_strips = []
-    #print('strip_faces: ', strip_faces)
+    # print('strip_faces: ', strip_faces)
     for skey_2 in mesh.strips():
         if skey_2 == skey:
             continue
-        #print('strip_faces_2: ', mesh.strip_faces(skey_2), [mesh.strip_faces(skey_2) in strip_faces])
+        # print('strip_faces_2: ', mesh.strip_faces(skey_2), [mesh.strip_faces(skey_2) in strip_faces])
         if all([fkey in strip_faces for fkey in mesh.strip_faces(skey_2)]):
             collateral_deleted_strips.append(skey_2)
-    #print('collateral_deleted_strips: ', collateral_deleted_strips)
+    # print('collateral_deleted_strips: ', collateral_deleted_strips)
 
     # build network between vertices of the edges of the strip to delete to
     # get the disconnect parts of vertices to merge
@@ -368,12 +362,12 @@ def delete_strip(mesh, skey, preserve_boundaries=False):
     del mesh.data['attributes']['strips'][skey]
     for skey_2 in collateral_deleted_strips:
         del mesh.data['attributes']['strips'][skey_2]
-    #print(old_vkeys_to_new_vkeys)
-    #print(mesh.data['attributes']['face_pole'])
+    # print(old_vkeys_to_new_vkeys)
+    # print(mesh.data['attributes']['face_pole'])
     if 'face_pole' in mesh.data['attributes']:
         for fkey, pole in mesh.data['attributes']['face_pole'].items():
             if fkey in mesh.data['attributes']['face_pole']:
-                #print(fkey, pole, mesh.data['attributes']['face_pole'])
+                # print(fkey, pole, mesh.data['attributes']['face_pole'])
                 if pole == mesh.data['attributes']['face_pole'][fkey]:
                     if pole in old_vkeys_to_new_vkeys:
                         mesh.data['attributes']['face_pole'][fkey] = old_vkeys_to_new_vkeys[pole]
@@ -567,6 +561,7 @@ def strip_polyedge_update(mesh, polyedge, vertex_modifications):
 
     return shortest_polyedge
 
+
 def collateral_strip_deletions(mesh, skeys):
     """Return the strips that would be deleted from the deletion of other strips.
     """
@@ -594,62 +589,63 @@ def total_boundary_deletions(mesh, skeys):
 # ==============================================================================
 
 if __name__ == '__main__':
+    pass
 
-    import compas
-    from compas_plotters.meshplotter import MeshPlotter
+    # import compas
+    # from compas_plotters.meshplotter import MeshPlotter
 
-    from compas_singular.datastructures.mesh_quad.mesh_quad import QuadMesh
+    # from compas_singular.datastructures.mesh_quad.mesh_quad import QuadMesh
 
-    #mesh = QuadMesh.from_obj(compas.get('quadmesh.obj'))
+    # #mesh = QuadMesh.from_obj(compas.get('quadmesh.obj'))
 
-    #adjacency = {0: {1: None, 3: None}, 1: {2: None, 0: None}, 2: {3: None, 1: None}, 3: {0: None, 2: None}}
-    #for i, path in enumerate(breadth_first_paths(adjacency, 0, 0)):
-    #    print path
-    #    if i == 1:
-    #        break
-    # add_strip(mesh, [26,22,69,67])
+    # #adjacency = {0: {1: None, 3: None}, 1: {2: None, 0: None}, 2: {3: None, 1: None}, 3: {0: None, 2: None}}
+    # # for i, path in enumerate(breadth_first_paths(adjacency, 0, 0)):
+    # #    print path
+    # #    if i == 1:
+    # #        break
+    # # add_strip(mesh, [26,22,69,67])
+
+    # # vertices = [
+    # #     [0.0, 0.0, 0.0],
+    # #     [1.0, 0.0, 0.0],
+    # #     [2.0, 0.0, 0.0],
+    # #     [0.0, 1.0, 0.0],
+    # #     [1.0, 1.0, 0.0],
+    # #     [2.0, 1.0, 0.0],
+    # #     [0.0, 2.0, 0.0],
+    # #     [1.0, 2.0, 0.0],
+    # #     [2.0, 2.0, 0.0]
+    # # ]
+
+    # # faces = [
+    # #     [0, 1, 4, 3],
+    # #     [1, 2, 5, 4],
+    # #     [3, 4, 7, 6],
+    # #     [4, 5, 8, 7]
+    # # ]
+
+    # # mesh = QuadMesh.from_vertices_and_faces(vertices, faces)
+    # # add_strip_wip(mesh, [3, 4, 5])
+
+    # # plotter = MeshPlotter(mesh, figsize=(5.0, 5.0))
+    # # plotter.draw_vertices(text='key')
+    # # plotter.draw_edges()
+    # # plotter.draw_faces()
+    # # plotter.show()
 
     # vertices = [
     #     [0.0, 0.0, 0.0],
     #     [1.0, 0.0, 0.0],
-    #     [2.0, 0.0, 0.0],
-    #     [0.0, 1.0, 0.0],
     #     [1.0, 1.0, 0.0],
-    #     [2.0, 1.0, 0.0],
-    #     [0.0, 2.0, 0.0],
-    #     [1.0, 2.0, 0.0],
-    #     [2.0, 2.0, 0.0]
+    #     [0.0, 1.0, 0.0],
     # ]
 
     # faces = [
-    #     [0, 1, 4, 3],
-    #     [1, 2, 5, 4],
-    #     [3, 4, 7, 6],
-    #     [4, 5, 8, 7]
+    #     [0, 1, 2, 3],
     # ]
 
     # mesh = QuadMesh.from_vertices_and_faces(vertices, faces)
-    # add_strip_wip(mesh, [3, 4, 5])
+    # mesh.collect_strips()
 
-    # plotter = MeshPlotter(mesh, figsize=(5.0, 5.0))
-    # plotter.draw_vertices(text='key')
-    # plotter.draw_edges()
-    # plotter.draw_faces()
-    # plotter.show()
-
-    vertices = [
-        [0.0, 0.0, 0.0],
-        [1.0, 0.0, 0.0],
-        [1.0, 1.0, 0.0],
-        [0.0, 1.0, 0.0],
-    ]
-
-    faces = [
-        [0, 1, 2, 3],
-    ]
-
-    mesh = QuadMesh.from_vertices_and_faces(vertices, faces)
-    mesh.collect_strips()
-
-    print(total_boundary_deletions(mesh, [0, 1]))
-    print(collateral_strip_deletions(mesh,[0]))
+    # print(total_boundary_deletions(mesh, [0, 1]))
+    # print(collateral_strip_deletions(mesh, [0]))

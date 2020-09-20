@@ -9,9 +9,10 @@ from compas.geometry import distance_point_point
 __all__ = [
     'add_opening',
     'add_handle',
-    #'close_opening',
-    #'close_handle'
+    # 'close_opening',
+    # 'close_handle'
 ]
+
 
 def add_opening(mesh, fkey):
     """Add an opening to a mesh face.
@@ -30,9 +31,12 @@ def add_opening(mesh, fkey):
     """
 
     initial_vertices = mesh.face_vertices(fkey)
-    new_vertices = [mesh.add_vertex(attr_dict = {i: xyz for i, xyz in zip(['x', 'y', 'z'], centroid_points([mesh.face_centroid(fkey), mesh.vertex_coordinates(vkey)]))}) for vkey in initial_vertices]
+    new_vertices = [mesh.add_vertex(attr_dict={i: xyz for i, xyz in zip(['x', 'y', 'z'], centroid_points(
+        [mesh.face_centroid(fkey), mesh.vertex_coordinates(vkey)]))}) for vkey in initial_vertices]
     mesh.delete_face(fkey)
-    new_faces = [mesh.add_face([initial_vertices[i - 1], initial_vertices[i], new_vertices[i], new_vertices[i - 1]]) for i in range(len(initial_vertices))]
+    _ = [
+        mesh.add_face([initial_vertices[i - 1], initial_vertices[i], new_vertices[i], new_vertices[i - 1]])
+        for i in range(len(initial_vertices))]
     return new_vertices
 
 
@@ -59,9 +63,10 @@ def add_handle(mesh, fkey_1, fkey_2):
     new_vertices_2 = add_opening(mesh, fkey_2)
 
     # get offset between new openings as to minimise the twist of the handle
-    offset_distance = {k: sum([distance_point_point(mesh.vertex_coordinates(new_vertices_1[(i - 1) % 4]), mesh.vertex_coordinates(new_vertices_2[(- i - k) % 4])) for i in range(4)]) for k in range(4)}
-    k = min(offset_distance, key = offset_distance.get)
-    
+    offset_distance = {k: sum([distance_point_point(mesh.vertex_coordinates(new_vertices_1[(i - 1) % 4]),
+                                                    mesh.vertex_coordinates(new_vertices_2[(- i - k) % 4])) for i in range(4)]) for k in range(4)}
+    k = min(offset_distance, key=offset_distance.get)
+
     # add handle
     return [mesh.add_face([new_vertices_1[(i - 1) % 4], new_vertices_1[i], new_vertices_2[(- i - 1 - k) % 4], new_vertices_2[(- i - k) % 4]]) for i in range(4)]
 
@@ -84,7 +89,7 @@ def add_handle(mesh, fkey_1, fkey_2):
 #         key_to_index[vkey] = i
 #     faces = [[key_to_index[vkey] for vkey in mesh.face_vertices(fkey)] for fkey in fkeys]
 #     strip_mesh = Mesh.from_vertices_and_faces(vertices, faces)
-    
+
 #     boundaries = strip_mesh.polyedge_boundaries(strip_mesh)
 
 #     for fkey in fkeys:
@@ -128,7 +133,7 @@ def add_handle(mesh, fkey_1, fkey_2):
 #         key_to_index[vkey] = i
 #     faces = [[key_to_index[vkey] for vkey in mesh.face_vertices(fkey)] for fkey in parts[index]]
 #     strip_mesh = Mesh.from_vertices_and_faces(vertices, faces)
-    
+
 #     boundaries = strip_mesh.polyedge_boundaries()
 
 #     # remove faces of the selected band
@@ -139,7 +144,7 @@ def add_handle(mesh, fkey_1, fkey_2):
 #     new_fkeys = []
 #     for bdry in boundaries:
 #         new_fkeys += close_opening(mesh, list(reversed(bdry)))
-        
+
 #     return new_fkeys
 
 
@@ -148,5 +153,4 @@ def add_handle(mesh, fkey_1, fkey_2):
 # ==============================================================================
 
 if __name__ == '__main__':
-
-    import compas
+    pass

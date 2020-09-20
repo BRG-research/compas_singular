@@ -4,10 +4,9 @@ from __future__ import division
 
 from ast import literal_eval
 
-from compas_singular.datastructures.mesh_quad.mesh_quad import QuadMesh
-
 from compas.utilities import geometric_key
 
+from ..mesh_quad import QuadMesh
 from compas_singular.utilities import list_split
 
 
@@ -110,39 +109,38 @@ class PseudoQuadMesh(QuadMesh):
         return [fkey for fkey, pole in self.data['attributes']['face_pole'].items() if pole == vkey]
 
     def face_opposite_edge(self, u, v):
-            """Returns the opposite edge in the quad face.
+        """Returns the opposite edge in the quad face.
 
-            Parameters
-            ----------
-            u : int
-                The identifier of the edge start.
-            v : int
-                The identifier of the edge end.
+        Parameters
+        ----------
+        u : int
+            The identifier of the edge start.
+        v : int
+            The identifier of the edge end.
 
-            Returns
-            -------
-            (w, x) : tuple
-                The opposite edge.
+        Returns
+        -------
+        (w, x) : tuple
+            The opposite edge.
 
-            """
+        """
 
-            fkey = self.halfedge[u][v]
-            # if quad
-            if len(self.face_vertices(fkey)) == 4:
-                w = self.face_vertex_descendant(fkey, v)
-                x = self.face_vertex_descendant(fkey, w)
-                return (w, x)
-            #if pseudo quad
-            if len(self.face_vertices(fkey)) == 3:
-                pole = self.data['attributes']['face_pole'][fkey]
-                w = self.face_vertex_descendant(fkey, v)
-                if u == pole:
-                    return (w, u)
-                if v == pole:
-                    return (v, w)
-                else:
-                    return (pole, pole)
-
+        fkey = self.halfedge[u][v]
+        # if quad
+        if len(self.face_vertices(fkey)) == 4:
+            w = self.face_vertex_descendant(fkey, v)
+            x = self.face_vertex_descendant(fkey, w)
+            return (w, x)
+        # if pseudo quad
+        if len(self.face_vertices(fkey)) == 3:
+            pole = self.data['attributes']['face_pole'][fkey]
+            w = self.face_vertex_descendant(fkey, v)
+            if u == pole:
+                return (w, u)
+            if v == pole:
+                return (v, w)
+            else:
+                return (pole, pole)
 
     def collect_strip(self, u0, v0):
         """Returns all the edges in the strip of the input edge.
@@ -162,7 +160,7 @@ class PseudoQuadMesh(QuadMesh):
 
         if self.halfedge[u0][v0] is None:
             u0, v0 = v0, u0
-            
+
         edges = [(u0, v0)]
 
         count = self.number_of_edges()
@@ -171,13 +169,13 @@ class PseudoQuadMesh(QuadMesh):
 
             u, v = edges[-1]
             w, x = self.face_opposite_edge(u, v)
-            
+
             if (x, w) == edges[0]:
                 break
-            
+
             edges.append((x, w))
 
-            if w == x or w not in self.halfedge[x] or self.halfedge[x][w] is None:    
+            if w == x or w not in self.halfedge[x] or self.halfedge[x][w] is None:
                 edges = [(v, u) for u, v in reversed(edges)]
                 u, v = edges[-1]
                 if u == v or v not in self.halfedge[u] or self.halfedge[u][v] is None:
@@ -215,7 +213,8 @@ class PseudoQuadMesh(QuadMesh):
         return self.strips(data=True)
 
     def has_strip_poles(self, skey):
-        return self.data['attributes']['strips'][skey][0][0] == self.data['attributes']['strips'][skey][0][1] or self.data['attributes']['strips'][skey][-1][0] == self.data['attributes']['strips'][skey][-1][1]
+        return self.data['attributes']['strips'][skey][0][0] == self.data['attributes']['strips'][skey][0][1] \
+            or self.data['attributes']['strips'][skey][-1][0] == self.data['attributes']['strips'][skey][-1][1]
 
     def is_strip_closed(self, skey):
         """Output whether a strip is closed.
@@ -249,15 +248,14 @@ class PseudoQuadMesh(QuadMesh):
 
         """
 
-
         if self.is_vertex_pole(vkey):
             return True
-        elif (self.is_vertex_on_boundary(vkey) and self.vertex_degree(vkey) != 3) or (not self.is_vertex_on_boundary(vkey) and self.vertex_degree(vkey) != 4):
+        elif (self.is_vertex_on_boundary(vkey) and self.vertex_degree(vkey) != 3) \
+                or (not self.is_vertex_on_boundary(vkey) and self.vertex_degree(vkey) != 4):
             return True
 
         else:
             return False
-
 
     def vertex_index(self, vkey):
         """Compute vertex index.
@@ -293,7 +291,6 @@ class PseudoQuadMesh(QuadMesh):
             regular_valency = 4.0 if not self.is_vertex_on_boundary(vkey) else 3.0
             return (regular_valency - self.vertex_degree(vkey)) / 4.0
 
-
     def strip_faces(self, skey):
         """Return the faces of a strip.
 
@@ -301,7 +298,7 @@ class PseudoQuadMesh(QuadMesh):
         ----------
         skey : hashable
             A strip key.
-        
+
         Returns
         -------
         list
@@ -322,7 +319,6 @@ class PseudoQuadMesh(QuadMesh):
                     faces.append(self.halfedge[u][v])
         return faces
 
-
     def face_strips(self, fkey):
         """Return the two strips of a face.
 
@@ -338,7 +334,7 @@ class PseudoQuadMesh(QuadMesh):
 
         if self.is_face_pseudo_quad(fkey):
             pole = self.data['attributes']['face_pole'][fkey]
-            #print(pole, fkey, self.face_vertices(fkey))
+            # print(pole, fkey, self.face_vertices(fkey))
             u = self.face_vertex_descendant(fkey, pole)
             v = self.face_vertex_descendant(fkey, u)
             return [self.edge_strip((pole, u)), self.edge_strip((u, v))]
@@ -357,8 +353,8 @@ class PseudoQuadMesh(QuadMesh):
 
         """
 
-        self.data['attributes']['strips'] = {skey: [(u, v) for u, v in self.strip_edges(skey) if u == v or (self.halfedge[u][v] != fkey and self.halfedge[v][u] != fkey)] for skey in self.strips()}
-
+        self.data['attributes']['strips'] = {skey: [(u, v) for u, v in self.strip_edges(skey) if u == v or (
+            self.halfedge[u][v] != fkey and self.halfedge[v][u] != fkey)] for skey in self.strips()}
 
     def singularity_polyedges(self):
         """Collect the polyedges connected to singularities.
@@ -370,16 +366,20 @@ class PseudoQuadMesh(QuadMesh):
 
         """
 
-        poles = set(self.poles())
-        # keep only polyedges connected to singularities or along the boundary      
-        polyedges = [polyedge for key, polyedge in self.polyedges(data=True) if (self.is_vertex_singular(polyedge[0]) and not self.is_pole(polyedge[0])) or (self.is_vertex_singular(polyedge[-1]) and not self.is_pole(polyedge[-1])) or self.is_edge_on_boundary(polyedge[0], polyedge[1])]                                    
+        # poles = set(self.poles())
+        # keep only polyedges connected to singularities or along the boundary
+        polyedges = [polyedge for key, polyedge in self.polyedges(data=True)
+                     if (self.is_vertex_singular(polyedge[0]) and not self.is_pole(polyedge[0]))
+                     or (self.is_vertex_singular(polyedge[-1]) and not self.is_pole(polyedge[-1]))
+                     or self.is_edge_on_boundary(polyedge[0], polyedge[1])]
 
         # get intersections between polyedges for split
         vertices = [vkey for polyedge in polyedges for vkey in set(polyedge)]
         split_vertices = [vkey for vkey in self.vertices() if vertices.count(vkey) > 1]
-        
+
         # split singularity polyedges
-        return [split_polyedge for polyedge in polyedges for split_polyedge in list_split(polyedge, [polyedge.index(vkey) for vkey in split_vertices if vkey in polyedge])]
+        return [split_polyedge for polyedge in polyedges
+                for split_polyedge in list_split(polyedge, [polyedge.index(vkey) for vkey in split_vertices if vkey in polyedge])]
 
     # def add_face(self, vertices, fkey=None, attr_dict=None, **kwattr):
     #     """Add a face to the mesh object. Allow [a, b, c, c] faces.
@@ -495,7 +495,6 @@ class PseudoQuadMesh(QuadMesh):
     #             del self.halfedge[u][v]
     #             del self.halfedge[v][u]
     #     del self.face[fkey]
-
 
     # def delete_vertex(self, key):
     #     """Delete a vertex from the mesh and everything that is attached to it.
@@ -765,7 +764,7 @@ class PseudoQuadMesh(QuadMesh):
 #         return None
 #     if len(mesh.vertex_neighbors(vkey)) == 0:
 #         return None
-        
+
 #     valency = float(len(mesh.vertex_neighbors(vkey)))
 #     boundary = mesh.is_vertex_on_boundary(vkey)
 #     if vkey in mesh.vertex_neighbors(vkey):
@@ -816,5 +815,4 @@ class PseudoQuadMesh(QuadMesh):
 # ==============================================================================
 
 if __name__ == '__main__':
-
-    import compas
+    pass
