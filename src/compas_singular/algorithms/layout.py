@@ -5,7 +5,7 @@ from __future__ import division
 from math import pi
 
 from compas.geometry import subtract_vectors
-from compas.geometry import weighted_centroid_points
+from compas.geometry import centroid_points_weighted
 from compas.geometry import circle_evaluate
 
 from ..datastructures import mesh_move_by
@@ -52,7 +52,7 @@ def interpolation_layout_primary(meshes, interpolated_meshes, radius):
     # map interpolating meshes in the circle
     for mesh in int_meshes:
         weights = [ext_meshes[i].number_of_strips() - d for i, d in enumerate(interpolated_meshes[mesh])]
-        mesh_to_xyz[mesh] = weighted_centroid_points(ext_points, weights)
+        mesh_to_xyz[mesh] = centroid_points_weighted(ext_points, weights)
 
     # move meshes
     for mesh in interpolated_meshes.keys():

@@ -7,16 +7,12 @@ from math import floor
 from math import ceil
 
 from compas.datastructures import meshes_join_and_weld
-# from compas.datastructures import meshes_join
 from compas.topology import adjacency_from_edges
 from compas.topology import connected_components
-# from compas.geometry import Polyline
 from compas.geometry import discrete_coons_patch
+from compas.geometry import vector_average
 from compas.utilities import pairwise
-# from compas.utilities import reverse_geometric_key
-from compas.utilities import average
 
-# from ..network import Network
 from ..mesh import Mesh
 from ..mesh_quad import QuadMesh
 
@@ -196,7 +192,7 @@ class CoarseQuadMesh(QuadMesh):
         t : float
             A target length.
         """
-        self.set_strip_density(skey, int(ceil(average([self.edge_length(u, v) for u, v in self.strip_edges(skey) if u != v]) / t)))
+        self.set_strip_density(skey, int(ceil(vector_average([self.edge_length(u, v) for u, v in self.strip_edges(skey) if u != v]) / t)))
 
     def set_strip_density_func(self, skey, func, func_args):
         """Set the strip densities based on a function.

@@ -29,7 +29,6 @@ class CoarsePseudoQuadMesh(PseudoQuadMesh, CoarseQuadMesh):
             A denser quad mesh.
 
         """
-
         edge_strip = {}
         for skey, edges in self.strips(data=True):
             for edge in edges:
@@ -40,9 +39,6 @@ class CoarsePseudoQuadMesh(PseudoQuadMesh, CoarseQuadMesh):
 
         meshes = []
         for fkey in self.faces():
-            # polylines = [
-            # [self.edge_point(u, v, float(i) / float(self.get_strip_density(edge_strip[(u, v)])))
-            # for i in range(0, self.get_strip_density(edge_strip[(u, v)]) + 1)] for u, v in self.face_halfedges(fkey)]
             polylines = []
             for u, v in self.face_halfedges(fkey):
                 polyline = []

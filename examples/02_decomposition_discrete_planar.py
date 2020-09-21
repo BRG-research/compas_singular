@@ -16,17 +16,23 @@ with open(FILE, 'r') as f:
 outer_boundary, inner_boundaries, polyline_features, point_features = data
 
 # Delaunay triangulation of the surface formed by the planar polylines using the points as Delaunay vertices
-mesh = boundary_triangulation(outer_boundary, inner_boundaries, polyline_features, point_features)
+trimesh = boundary_triangulation(outer_boundary, inner_boundaries, polyline_features, point_features)
 
 # start instance for skeleton-based decomposition
-decomposition = SkeletonDecomposition.from_mesh(mesh)
+decomposition = SkeletonDecomposition.from_mesh(trimesh)
 
 # build decomposition mesh
-mesh = decomposition.decomposition_mesh(point_features)
+coarsemesh = decomposition.decomposition_mesh(point_features)
+
+# densify
+coarsemesh.collect_strips()
+coarsemesh.set_strips_density_target(0.5)
+coarsemesh.densification()
+densemesh = coarsemesh.get_quad_mesh()
 
 # plot decomposition mesh
-plotter = MeshPlotter(mesh, figsize=(5, 5))
+plotter = MeshPlotter(densemesh, figsize=(5, 5))
 plotter.draw_edges()
-plotter.draw_vertices()
+plotter.draw_vertices(radius=0.03)
 plotter.draw_faces()
 plotter.show()
