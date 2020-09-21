@@ -54,8 +54,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from .array import *
-from .polyline import *
-from .projection import *
+from .array import *  # noqa: F401 F403
+from .polyline import *  # noqa: F401 F403
+from .projection import *  # noqa: F401 F403
 
 __all__ = [name for name in dir() if not name.startswith('_')]

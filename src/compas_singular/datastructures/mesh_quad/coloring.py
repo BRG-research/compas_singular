@@ -3,8 +3,9 @@ from __future__ import print_function
 from __future__ import division
 
 from compas.topology import adjacency_from_edges
-from compas_singular.topology import is_adjacency_two_colorable
 from compas.topology import vertex_coloring
+
+from compas_singular.topology import is_adjacency_two_colorable
 
 
 __all__ = [
@@ -89,26 +90,27 @@ def quad_mesh_polyedge_n_coloring(quad_mesh):
 
     vertices, edges = quad_mesh.polyedge_graph()
     return vertex_coloring(adjacency_from_edges(edges))
-    
+
 
 # ==============================================================================
 # Main
 # ==============================================================================
 
 if __name__ == '__main__':
+    pass
 
-    import time
-    import compas
-    from compas_singular.datastructures.mesh_quad.mesh_quad import QuadMesh
+    # import time
+    # import compas
+    # from compas_singular.datastructures.mesh_quad.mesh_quad import QuadMesh
 
-    mesh = QuadMesh.from_json('/Users/Robin/Desktop/cnit2.json')
-    
-    mesh.collect_strips()
-    mesh.collect_polyedges()
-    t0 = time.time()
-    result = quad_mesh_strip_2_coloring(mesh)
-    t1 = time.time()
-    print(t1 - t0, result)
-    #print(quad_mesh_strip_n_coloring(mesh))
-    #print(quad_mesh_polyedge_2_coloring(mesh))
-    #print(quad_mesh_polyedge_n_coloring(mesh))
+    # mesh = QuadMesh.from_json('/Users/Robin/Desktop/cnit2.json')
+
+    # mesh.collect_strips()
+    # mesh.collect_polyedges()
+    # t0 = time.time()
+    # result = quad_mesh_strip_2_coloring(mesh)
+    # t1 = time.time()
+    # print(t1 - t0, result)
+    # # print(quad_mesh_strip_n_coloring(mesh))
+    # # print(quad_mesh_polyedge_2_coloring(mesh))
+    # # print(quad_mesh_polyedge_n_coloring(mesh))

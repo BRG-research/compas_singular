@@ -38,11 +38,11 @@ Operations
     :toctree: generated/
     :nosignatures:
 
-	mesh_move_vertex_by
-	mesh_move_by
-	mesh_move_vertices_by
-	mesh_move_vertex_to
-	mesh_move_vertices_to
+    mesh_move_vertex_by
+    mesh_move_by
+    mesh_move_vertices_by
+    mesh_move_vertex_to
+    mesh_move_vertices_to
 
 Coloring
 --------
@@ -51,32 +51,10 @@ Coloring
     :toctree: generated/
     :nosignatures:
 
-	mesh_vertex_2_coloring
-	mesh_vertex_n_coloring
-	mesh_face_2_coloring
-	mesh_face_n_coloring
-
-Relaxation
-----------
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-    constrained_smoothing
-    surface_constrained_smoothing
-
-Constraints
------------
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-	automated_smoothing_surface_constraints
-	automated_smoothing_constraints
-	customized_smoothing_constraints
-	display_smoothing_constraints
+    mesh_vertex_2_coloring
+    mesh_vertex_n_coloring
+    mesh_face_2_coloring
+    mesh_face_n_coloring
 
 
 Quad Mesh
@@ -188,8 +166,8 @@ Pole grammar
     :toctree: generated/
     :nosignatures:
 
-	split_quad_in_pseudo_quads
-	merge_pseudo_quads_in_quad
+    split_quad_in_pseudo_quads
+    merge_pseudo_quads_in_quad
 
 Coarse Pseudo Quad Mesh
 =======================
@@ -208,13 +186,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from .mesh import *
-from .mesh_quad import *
-from .mesh_quad_coarse import *
-from .mesh_quad_pseudo import *
-from .mesh_quad_pseudo_coarse import *
-from .network import *
-from .lizard import *
-from .kagome import *
+from .mesh import *  # noqa: F401 F403
+from .mesh_quad import *  # noqa: F401 F403
+from .mesh_quad_coarse import *  # noqa: F401 F403
+from .mesh_quad_pseudo import *  # noqa: F401 F403
+from .mesh_quad_pseudo_coarse import *  # noqa: F401 F403
+from .network import *  # noqa: F401 F403
+from .skeleton import *  # noqa: F401 F403
 
 __all__ = [name for name in dir() if not name.startswith('_')]

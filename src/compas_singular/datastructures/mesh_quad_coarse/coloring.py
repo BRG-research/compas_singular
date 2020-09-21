@@ -2,9 +2,11 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
-from compas_singular.datastructures.mesh_quad_coarse.mesh_quad_coarse import CoarseQuadMesh
-from compas_singular.datastructures.mesh_quad.coloring import quad_mesh_strip_2_coloring
 from compas.utilities import pairwise
+
+from .mesh_quad_coarse import CoarseQuadMesh
+from ..mesh_quad.coloring import quad_mesh_strip_2_coloring
+
 
 __all__ = [
     'dense_quad_mesh_polyedge_2_coloring'
@@ -16,7 +18,7 @@ def dense_quad_mesh_polyedge_2_coloring(quad_mesh):
 
     # get coarse quad mesh
     coarse_quad_mesh = CoarseQuadMesh.from_quad_mesh(quad_mesh)
-    
+
     # get coarse strip color
     coarse_skey_to_color = quad_mesh_strip_2_coloring(coarse_quad_mesh)
 
@@ -25,7 +27,7 @@ def dense_quad_mesh_polyedge_2_coloring(quad_mesh):
 
     # get dense polyedge color
     dense_polyedge_to_color = {tuple(coarse_quad_mesh.data['attributes']['edge_coarse_to_dense'][u][v]): color for (u, v), color in coarse_edge_to_color.items()}
-   
+
     # get some dense edge color
     some_dense_edge_to_color = {edge: color for polyedge, color in dense_polyedge_to_color.items() for edge in pairwise(polyedge)}
 
@@ -40,7 +42,7 @@ def dense_quad_mesh_polyedge_2_coloring(quad_mesh):
 
     # get edge color
     all_dense_edge_to_color = {edge: color for skey, color in dense_strip_to_color.items() for edge in quad_mesh.strip_edges(skey)}
-    
+
     # get polyedge color
     dense_polyedge_to_color = {}
     for pkey, polyedge in quad_mesh.polyedges(data=True):
@@ -56,18 +58,19 @@ def dense_quad_mesh_polyedge_2_coloring(quad_mesh):
 # ==============================================================================
 
 if __name__ == '__main__':
+    pass
 
-    import time
-    import compas
-    from compas_singular.datastructures.mesh_quad.mesh_quad import QuadMesh
+    # import time
+    # import compas
+    # from compas_singular.datastructures.mesh_quad.mesh_quad import QuadMesh
 
-    mesh = QuadMesh.from_json('/Users/Robin/Desktop/json/debug.json')
+    # mesh = QuadMesh.from_json('/Users/Robin/Desktop/json/debug.json')
 
-    t0 = time.time()
-    mesh.collect_strips()
-    mesh.collect_polyedges()
-    t1 = time.time()
-    dense_polyedge_to_color = dense_quad_mesh_polyedge_2_coloring(mesh)
-    t2 = time.time()
-    print(t2 - t1, t1 - t0)
-    print(dense_polyedge_to_color)
+    # t0 = time.time()
+    # mesh.collect_strips()
+    # mesh.collect_polyedges()
+    # t1 = time.time()
+    # dense_polyedge_to_color = dense_quad_mesh_polyedge_2_coloring(mesh)
+    # t2 = time.time()
+    # print(t2 - t1, t1 - t0)
+    # print(dense_polyedge_to_color)
