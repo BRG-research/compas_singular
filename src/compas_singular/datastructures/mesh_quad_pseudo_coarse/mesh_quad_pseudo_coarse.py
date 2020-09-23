@@ -7,6 +7,7 @@ from compas.geometry import discrete_coons_patch
 from compas.datastructures import meshes_join_and_weld
 from compas.utilities import geometric_key
 from compas.utilities import pairwise
+from compas.utilities import linspace
 
 from ..mesh_quad_coarse import CoarseQuadMesh
 from ..mesh_quad_pseudo import PseudoQuadMesh
@@ -29,34 +30,40 @@ class CoarsePseudoQuadMesh(PseudoQuadMesh, CoarseQuadMesh):
             A denser quad mesh.
 
         """
-        edge_strip = {}
-        for skey, edges in self.strips(data=True):
-            for edge in edges:
-                edge_strip[edge] = skey
-                edge_strip[tuple(reversed(edge))] = skey
+        if edges_to_curves:
+            import compas_rhino
+            EvaluateCurve = compas_rhino.rs.EvaluateCurve
+            CurveParameter = compas_rhino.rs.CurveParameter
 
-        pole_map = tuple([geometric_key(self.vertex_coordinates(pole)) for pole in self.poles()])
+        edge_strip = {}
+        for strip, edges in self.strips(data=True):
+            for u, v in edges:
+                edge_strip[u, v] = strip
+                edge_strip[v, u] = strip
+
+        pole_map = [geometric_key(self.vertex_coordinates(pole)) for pole in self.poles()]
 
         meshes = []
         for fkey in self.faces():
             polylines = []
             for u, v in self.face_halfedges(fkey):
-                polyline = []
+                d = self.get_strip_density(edge_strip[u, v])
 
-                if edges_to_curves is None:
-                    curve = Polyline([self.vertex_coordinates(u), self.vertex_coordinates(v)])
-                else:
+                if edges_to_curves:
+                    polyline = []
                     if (u, v) in edges_to_curves:
-                        curve = Polyline(edges_to_curves[(u, v)])
-                    elif (v, u) in edges_to_curves:
-                        curve = Polyline(list(reversed(edges_to_curves[(v, u)])))
+                        curve = edges_to_curves[u, v]
+                        polyline = [list(EvaluateCurve(curve, CurveParameter(curve, t))) for t in linspace(0, 1, d)]
                     else:
-                        curve = None
-
-                d = self.get_strip_density(edge_strip[(u, v)])
-                for i in range(0, d + 1):
-                    point = curve.point(float(i) / float(d))
-                    polyline.append(point)
+                        curve = edges_to_curves[v, u]
+                        polyline = [list(EvaluateCurve(curve, CurveParameter(curve, t))) for t in linspace(0, 1, d)]
+                        polyline[:] = polyline[::-1]
+                else:
+                    polyline = []
+                    curve = Polyline([self.vertex_coordinates(u), self.vertex_coordinates(v)])
+                    for i in range(0, d + 1):
+                        point = curve.point(float(i) / float(d))
+                        polyline.append(point)
 
                 polylines.append(polyline)
 
@@ -64,15 +71,19 @@ class CoarsePseudoQuadMesh(PseudoQuadMesh, CoarseQuadMesh):
                 pole = self.data['attributes']['face_pole'][fkey]
                 idx = self.face_vertices(fkey).index(pole)
                 polylines.insert(idx, None)
+
             ab, bc, cd, da = polylines
-            if cd is not None:
-                dc = list(reversed(cd))
+
+            if cd:
+                dc = cd[::-1]
             else:
                 dc = None
-            if da is not None:
-                ad = list(reversed(da))
+
+            if da:
+                ad = da[::-1]
             else:
                 ad = None
+
             vertices, faces = discrete_coons_patch(ab, bc, dc, ad)
             faces = [[u for u, v in pairwise(face + face[:1]) if u != v] for face in faces]
             mesh = PseudoQuadMesh.from_vertices_and_faces_with_face_poles(vertices, faces)
@@ -95,6 +106,7 @@ class CoarsePseudoQuadMesh(PseudoQuadMesh, CoarseQuadMesh):
                     if geometric_key(self.get_quad_mesh().vertex_coordinates(vkey)) == face_pole_map[geometric_key(self.get_quad_mesh().face_center(fkey))]:
                         face_pole[fkey] = vkey
                         break
+
         self.get_quad_mesh().data['attributes']['face_pole'] = face_pole
         return self.get_quad_mesh()
 
