@@ -17,7 +17,7 @@ from compas.geometry import distance_point_point
 from compas.geometry import closest_point_in_cloud
 
 from compas_rhino.artists import MeshArtist
-from compas_rhino.objects import mesh_select_vertices
+# from compas_rhino.objects import mesh_select_vertices
 
 from compas_singular.utilities import list_split
 

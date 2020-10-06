@@ -50,22 +50,22 @@ class PseudoQuadMesh(QuadMesh):
         self.edgedata = {}
 
         for key, attr in iter(vertex.items()):
-            self.add_vertex(literal_eval(key), attr_dict=attr)
+            self.add_vertex(literal_eval(key) if not isinstance(key, int) else key, attr_dict=attr)
 
         for fkey, vertices in iter(face.items()):
             attr = facedata.get(fkey) or {}
-            vertices = [literal_eval(k) for k in vertices]
-            self.add_face(vertices, fkey=literal_eval(fkey), attr_dict=attr)
+            vertices = [literal_eval(k) if not isinstance(k, int) else k for k in vertices]
+            self.add_face(vertices, fkey=literal_eval(fkey) if not isinstance(fkey, int) else fkey, attr_dict=attr)
 
         for uv, attr in iter(edgedata.items()):
-            self.edgedata[literal_eval(uv)] = attr or {}
+            self.edgedata[literal_eval(uv) if isinstance(uv, str) else uv] = attr or {}
 
         self._max_int_key = max_int_key
         self._max_int_fkey = max_int_fkey
 
         data_face_pole = {}
         for fkey, vkey in iter(data['attributes']['face_pole'].items()):
-            data_face_pole[literal_eval(fkey)] = vkey
+            data_face_pole[literal_eval(fkey) if isinstance(fkey, str) else fkey] = vkey
         self.data['attributes']['face_pole'] = data_face_pole
 
     @classmethod
