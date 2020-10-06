@@ -96,8 +96,8 @@ if __name__ == '__main__':
     # mesh.collect_polyedges()
 
     # polyedge_key_to_colour = dense_quad_mesh_polyedge_2_coloring(mesh)
-    # polyedges_0 = [mesh.data['data']['attributes']['polyedges'][key] for key, colour in polyedge_key_to_colour.items() if colour == 0]
-    # polyedges_1 = [mesh.data['data']['attributes']['polyedges'][key] for key, colour in polyedge_key_to_colour.items() if colour == 1]
+    # polyedges_0 = [mesh.data['attributes']['polyedges'][key] for key, colour in polyedge_key_to_colour.items() if colour == 0]
+    # polyedges_1 = [mesh.data['attributes']['polyedges'][key] for key, colour in polyedge_key_to_colour.items() if colour == 1]
 
     # vkey_to_group = fold_vertex_group(mesh, polyedges_1)
     # # fold(mesh, vkey_to_group, func0, func1)

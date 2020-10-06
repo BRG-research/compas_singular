@@ -304,12 +304,12 @@ if __name__ == '__main__':
     mesh_1 = PseudoQuadMesh.from_json('/Users/Robin/Desktop/distance_validation/50.json')
     mesh_2 = PseudoQuadMesh.from_json('/Users/Robin/Desktop/distance_validation/51.json')
 
-    # new_face_pole_1 = {int(fkey): vkey for fkey, vkey in mesh_1.data['data']['attributes']['face_pole'].items()}
-    # mesh_1.data['data']['attributes']['face_pole'] = new_face_pole_1
+    # new_face_pole_1 = {int(fkey): vkey for fkey, vkey in mesh_1.data['attributes']['face_pole'].items()}
+    # mesh_1.data['attributes']['face_pole'] = new_face_pole_1
     mesh_1.collect_strips()
 
-    # new_face_pole_2 = {int(fkey): vkey for fkey, vkey in mesh_2.data['data']['attributes']['face_pole'].items()}
-    # mesh_2.data['data']['attributes']['face_pole'] = new_face_pole_2
+    # new_face_pole_2 = {int(fkey): vkey for fkey, vkey in mesh_2.data['attributes']['face_pole'].items()}
+    # mesh_2.data['attributes']['face_pole'] = new_face_pole_2
     mesh_2.collect_strips()
 
     #n1 > n2

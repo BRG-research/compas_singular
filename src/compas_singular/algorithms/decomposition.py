@@ -465,7 +465,7 @@ class SkeletonDecomposition(Skeleton):
                 if fkey not in face_poles:
                     print('pole missing')
 
-        mesh.data['data']['attributes']['face_pole'] = face_poles
+        mesh.data['attributes']['face_pole'] = face_poles
 
 # ==============================================================================
 # Main
