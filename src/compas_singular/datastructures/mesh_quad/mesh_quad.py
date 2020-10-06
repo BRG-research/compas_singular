@@ -20,21 +20,22 @@ class QuadMesh(Mesh):
 
     def __init__(self):
         super(QuadMesh, self).__init__()
-        self.data['attributes']['strips'] = {}
-        self.data['attributes']['polyedges'] = {}
+        print(self.data.keys())
+        self.data['data']['attributes']['strips'] = {}
+        self.data['data']['attributes']['polyedges'] = {}
 
     def strips(self, data=False):
 
-        for skey in self.data['attributes']['strips']:
+        for skey in self.data['data']['attributes']['strips']:
             if data:
-                yield skey, self.data['attributes']['strips'][skey]
+                yield skey, self.data['data']['attributes']['strips'][skey]
             else:
                 yield skey
 
     def polyedges(self, data=False):
-        for key in self.data['attributes']['polyedges']:
+        for key in self.data['data']['attributes']['polyedges']:
             if data:
-                yield key, self.data['attributes']['polyedges'][key]
+                yield key, self.data['data']['attributes']['polyedges'][key]
             else:
                 yield key
 
@@ -221,7 +222,7 @@ class QuadMesh(Mesh):
             # collect new polyedge
             u0, v0 = edges.pop()
             polyedge = self.collect_polyedge(u0, v0)
-            self.data['attributes']['polyedges'].update({nb_polyedges: polyedge})
+            self.data['data']['attributes']['polyedges'].update({nb_polyedges: polyedge})
 
             # remove collected edges
             for u, v in pairwise(polyedge):
@@ -246,7 +247,7 @@ class QuadMesh(Mesh):
             True if the polyedge is closed. False otherwise.
         """
 
-        return self.data['attributes']['polyedges'][pkey][0] == self.data['attributes']['polyedges'][pkey][-1]
+        return self.data['data']['attributes']['polyedges'][pkey][0] == self.data['data']['attributes']['polyedges'][pkey][-1]
 
     def singularity_polyedges(self):
         """Collect the polyedges connected to singularities.
@@ -278,7 +279,7 @@ class QuadMesh(Mesh):
             The polyedges forming the decomposition.
 
         """
-        if self.data['attributes']['polyedges'] == {}:
+        if self.data['data']['attributes']['polyedges'] == {}:
             self.collect_polyedges()
 
         polyedges = [polyedge for key, polyedge in self.polyedges(data=True) if (self.is_vertex_singular(
@@ -453,7 +454,7 @@ class QuadMesh(Mesh):
 
             u0, v0 = edges.pop()
             strip_edges = self.collect_strip(u0, v0)
-            self.data['attributes']['strips'].update({nb_strip: strip_edges})
+            self.data['data']['attributes']['strips'].update({nb_strip: strip_edges})
             for u, v in strip_edges:
                 if (u, v) in edges:
                     edges.remove((u, v))
@@ -492,7 +493,7 @@ class QuadMesh(Mesh):
 
         """
 
-        return self.data['attributes']['strips'][skey]
+        return self.data['data']['attributes']['strips'][skey]
 
     def edge_strip(self, edge):
         """Return the strip of an edge.
@@ -564,7 +565,7 @@ class QuadMesh(Mesh):
 
         if strips is None:
             strips = list(self.strips())
-        self.data['attributes']['strips'].update({skey: [tuple([new_vkey if vkey == old_vkey else vkey for vkey in list(edge)])
+        self.data['data']['attributes']['strips'].update({skey: [tuple([new_vkey if vkey == old_vkey else vkey for vkey in list(edge)])
                                                          for edge in self.strip_edges(skey)] for skey in strips})
 
     def delete_face_in_strips(self, fkey):
@@ -579,7 +580,7 @@ class QuadMesh(Mesh):
 
         """
 
-        self.data['attributes']['strips'] = {skey: [(u, v) for u, v in self.strip_edges(skey) if self.halfedge[u][v] != fkey] for skey in self.strips()}
+        self.data['data']['attributes']['strips'] = {skey: [(u, v) for u, v in self.strip_edges(skey) if self.halfedge[u][v] != fkey] for skey in self.strips()}
 
     # --------------------------------------------------------------------------
     # strip graph
