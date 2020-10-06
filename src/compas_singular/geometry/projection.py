@@ -8,13 +8,11 @@ from math import sin
 from math import atan
 
 from compas.geometry import distance_point_point
-
 from compas.geometry import add_vectors
 from compas.geometry import scale_vector
 from compas.geometry import length_vector
 from compas.geometry import dot_vectors
 from compas.geometry import subtract_vectors
-
 from compas.utilities import pairwise
 
 
@@ -44,7 +42,6 @@ def closest_point_on_circle(x0, y0, r):
     [x, y] : list
         The xy coordinates of the projected point.
     """
-
 
     if x0 == 0.0 and y0 == 0.0:
         return r, 0.0
@@ -88,7 +85,7 @@ def closest_point_on_line(a, b, c):
 
     if length_vector(ab) == 0:
         return a, distance_point_point(c, a)
-        
+
     p = add_vectors(a, scale_vector(ab, dot_vectors(ab, ac) / length_vector(ab) ** 2))
     distance = distance_point_point(c, p)
     return p, distance
@@ -185,16 +182,17 @@ def closest_point_on_polylines(polylines, c):
 # ==============================================================================
 
 if __name__ == '__main__':
+    pass
 
-    import compas
+    # import compas
 
-    a, b = [0.0, 0.0, 0.0], [2.0, 2.0, 0.0]
-    for c in [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [-1.0, 0.0, 0.0], [2.0, 3.0, 0.0]]:
-        print(closest_point_on_line(a, b, c))
-        print(closest_point_on_segment(a, b, c))
+    # a, b = [0.0, 0.0, 0.0], [2.0, 2.0, 0.0]
+    # for c in [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [-1.0, 0.0, 0.0], [2.0, 3.0, 0.0]]:
+    #     print(closest_point_on_line(a, b, c))
+    #     print(closest_point_on_segment(a, b, c))
 
-    polyline = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]
-    c = [0.75, 0.75, 0]
-    print(closest_point_on_polyline(polyline, c))
+    # polyline = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]
+    # c = [0.75, 0.75, 0]
+    # print(closest_point_on_polyline(polyline, c))
 
-    print(closest_point_on_circle(2.0, -1.0, 2.0))
+    # print(closest_point_on_circle(2.0, -1.0, 2.0))
