@@ -79,14 +79,14 @@ def strip_edge_network(mesh, skey):
 
 
 def update_strip_data(mesh, old_vkeys_to_new_vkeys):
-    strip_data = mesh.data['attributes']['strips'].copy()
+    strip_data = mesh.data['data']['attributes']['strips'].copy()
 
     for skey, edges in strip_data.items():
         new_edges = [tuple([old_vkeys_to_new_vkeys.get(vkey, vkey) for vkey in edge]) for edge in edges]
 
         # remove collapsed strips
         if all([u == v for u, v in new_edges]):
-            del mesh.data['attributes']['strips'][skey]
+            del mesh.data['data']['attributes']['strips'][skey]
             continue
 
         # remove collapsed faces
@@ -97,11 +97,11 @@ def update_strip_data(mesh, old_vkeys_to_new_vkeys):
                     duplicates.append(i)
         for i in reversed(duplicates):
             del new_edges[i]
-        mesh.data['attributes']['strips'][skey] = new_edges
+        mesh.data['data']['attributes']['strips'][skey] = new_edges
 
         # remove collateral collapsed strips
         if len(new_edges) < 2:
-            del mesh.data['attributes']['strips'][skey]
+            del mesh.data['data']['attributes']['strips'][skey]
 
 
 def strips_to_split_to_prevent_boundary_collapse(mesh, skeys):
