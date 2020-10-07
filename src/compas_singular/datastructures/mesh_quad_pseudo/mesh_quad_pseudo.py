@@ -57,7 +57,7 @@ class PseudoQuadMesh(QuadMesh):
             self.add_face(vertices, fkey=literal_eval(fkey) if not isinstance(fkey, int) else fkey, attr_dict=attr)
 
         for uv, attr in iter(edgedata.items()):
-            self.edgedata[literal_eval(uv) if isinstance(uv, str) else uv] = attr or {}
+            self.edgedata[uv] = attr or {}
 
         self._max_int_key = max_int_key
         self._max_int_fkey = max_int_fkey
