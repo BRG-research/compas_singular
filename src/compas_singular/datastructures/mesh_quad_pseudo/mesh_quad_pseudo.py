@@ -25,7 +25,7 @@ class PseudoQuadMesh(QuadMesh):
 
     @data.setter
     def data(self, data):
-
+        data = data['data']
         attributes = data['attributes']
         dva = data.get('dva') or {}
         dfa = data.get('dfa') or {}
