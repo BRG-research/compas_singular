@@ -24,11 +24,11 @@ class CoarseQuadMesh(QuadMesh):
 
     def __init__(self):
         super(CoarseQuadMesh, self).__init__()
-        self.data['attributes']['strips_density'] = {}
-        self.data['attributes']['vertex_coarse_to_dense'] = {}
-        self.data['attributes']['edge_coarse_to_dense'] = {}
-        self.data['attributes']['quad_mesh'] = None
-        self.data['attributes']['polygonal_mesh'] = None
+        self.attributes['strips_density'] = {}
+        self.attributes['vertex_coarse_to_dense'] = {}
+        self.attributes['edge_coarse_to_dense'] = {}
+        self.attributes['quad_mesh'] = None
+        self.attributes['polygonal_mesh'] = None
 
     # --------------------------------------------------------------------------
     # constructors
@@ -72,11 +72,11 @@ class CoarseQuadMesh(QuadMesh):
         coarse_quad_mesh = cls.from_vertices_and_faces(coarse_vertices, coarse_faces_children)
 
         # attribute relation child-parent element between coarse and dense quad meshes
-        coarse_quad_mesh.data['attributes']['vertex_coarse_to_dense'] = coarse_vertices_children
-        coarse_quad_mesh.data['attributes']['edge_coarse_to_dense'] = {u: {} for u in coarse_quad_mesh.vertices()}
+        coarse_quad_mesh.attributes['vertex_coarse_to_dense'] = coarse_vertices_children
+        coarse_quad_mesh.attributes['edge_coarse_to_dense'] = {u: {} for u in coarse_quad_mesh.vertices()}
         for (u, v), polyedge in coarse_edges_children.items():
-            coarse_quad_mesh.data['attributes']['edge_coarse_to_dense'][u][v] = polyedge
-            coarse_quad_mesh.data['attributes']['edge_coarse_to_dense'][v][u] = list(reversed(polyedge))
+            coarse_quad_mesh.attributes['edge_coarse_to_dense'][u][v] = polyedge
+            coarse_quad_mesh.attributes['edge_coarse_to_dense'][v][u] = list(reversed(polyedge))
 
         # collect strip and polyedge attributes
         if collect_strips:
@@ -103,16 +103,16 @@ class CoarseQuadMesh(QuadMesh):
     # --------------------------------------------------------------------------
 
     def get_quad_mesh(self):
-        return self.data['attributes']['quad_mesh']
+        return self.attributes['quad_mesh']
 
     def set_quad_mesh(self, quad_mesh):
-        self.data['attributes']['quad_mesh'] = quad_mesh
+        self.attributes['quad_mesh'] = quad_mesh
 
     def get_polygonal_mesh(self):
-        return self.data['attributes']['polygonal_mesh']
+        return self.attributes['polygonal_mesh']
 
     def set_polygonal_mesh(self, polygonal_mesh):
-        self.data['attributes']['polygonal_mesh'] = polygonal_mesh
+        self.attributes['polygonal_mesh'] = polygonal_mesh
 
     # --------------------------------------------------------------------------
     # element child-parent relation getters
@@ -120,7 +120,7 @@ class CoarseQuadMesh(QuadMesh):
 
     def coarse_edge_dense_edges(self, u, v):
         """Return the child edges, or polyedge, in the dense quad mesh from a parent edge in the coarse quad mesh."""
-        return self.data['attributes']['edge_coarse_to_dense'][u][v]
+        return self.attributes['edge_coarse_to_dense'][u][v]
 
     # --------------------------------------------------------------------------
     # density getters and setters
@@ -139,7 +139,7 @@ class CoarseQuadMesh(QuadMesh):
         int
             The strip density.
         """
-        return self.data['attributes']['strips_density'][skey]
+        return self.attributes['strips_density'][skey]
 
     def get_strip_densities(self):
         """Get the density of a strip.
@@ -149,7 +149,7 @@ class CoarseQuadMesh(QuadMesh):
         dict
             The dictionary of the strip densities.
         """
-        return self.data['attributes']['strips_density']
+        return self.attributes['strips_density']
 
     # --------------------------------------------------------------------------
     # density setters
@@ -165,7 +165,7 @@ class CoarseQuadMesh(QuadMesh):
         d : int
             A density parameter.
         """
-        self.data['attributes']['strips_density'][skey] = d
+        self.attributes['strips_density'][skey] = d
 
     def set_strips_density(self, d, skeys=None):
         """Set the same density to all strips.
@@ -401,8 +401,8 @@ if __name__ == '__main__':
     # # mesh_0.collect_polyedges()
 
     # # print(mesh_0.number_of_strips())
-    # # print(mesh_0.data['attributes']['vertex_coarse_to_dense'])
-    # # print(mesh_0.data['attributes']['edge_coarse_to_dense'])
+    # # print(mesh_0.attributes['vertex_coarse_to_dense'])
+    # # print(mesh_0.attributes['edge_coarse_to_dense'])
 
     # # mesh_0.set_strips_density(1)
     # # mesh_0.set_strip_density(0, 6)

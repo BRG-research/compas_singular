@@ -26,7 +26,7 @@ def dense_quad_mesh_polyedge_2_coloring(quad_mesh):
     coarse_edge_to_color = {edge: coarse_skey_to_color[skey] for skey in coarse_quad_mesh.strips() for edge in coarse_quad_mesh.strip_edges(skey)}
 
     # get dense polyedge color
-    dense_polyedge_to_color = {tuple(coarse_quad_mesh.data['attributes']['edge_coarse_to_dense'][u][v]): color for (u, v), color in coarse_edge_to_color.items()}
+    dense_polyedge_to_color = {tuple(coarse_quad_mesh.attributes['edge_coarse_to_dense'][u][v]): color for (u, v), color in coarse_edge_to_color.items()}
 
     # get some dense edge color
     some_dense_edge_to_color = {edge: color for polyedge, color in dense_polyedge_to_color.items() for edge in pairwise(polyedge)}

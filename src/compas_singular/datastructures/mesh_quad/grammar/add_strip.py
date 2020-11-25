@@ -167,11 +167,11 @@ def update_strip_data(mesh, full_updated_polyedge, old_vkeys_to_new_vkeys):
         edges = mesh.collect_strip(new_u, new_v)
         orth_to_update[skey] = edges
     for skey, edges in orth_to_update.items():
-        mesh.data['attributes']['strips'][skey] = edges
+        mesh.attributes['strips'][skey] = edges
 
     # parallel strips
     paral_to_update = {}
-    for skey, edges in mesh.data['attributes']['strips'].items():
+    for skey, edges in mesh.attributes['strips'].items():
         if skey not in orth_to_update:
             for u, v in edges:
                 if u in old_vkeys_to_new_vkeys:
@@ -185,12 +185,12 @@ def update_strip_data(mesh, full_updated_polyedge, old_vkeys_to_new_vkeys):
                 paral_to_update[skey] = new_edges
                 break
     for skey, edges in paral_to_update.items():
-        mesh.data['attributes']['strips'][skey] = edges
+        mesh.attributes['strips'][skey] = edges
 
     # self strip
-    n = max(mesh.data['attributes']['strips']) + 1
+    n = max(mesh.attributes['strips']) + 1
     strip_edges = [tuple(old_vkeys_to_new_vkeys[vkey]) for vkey in full_updated_polyedge]
-    mesh.data['attributes']['strips'][n] = strip_edges
+    mesh.attributes['strips'][n] = strip_edges
 
     return n
 
@@ -351,7 +351,7 @@ if __name__ == '__main__':
     # mesh.collect_strips()
     # polyedge = [0, 1, 2, 3, 0]
     # add_strip(mesh, polyedge)
-    # print(mesh.data['attributes']['strips'])
+    # print(mesh.attributes['strips'])
     # print('boundary: ', mesh.vertices_on_boundary())
     # mesh_smooth_centroid(mesh, kmax=2, fixed=mesh.vertices_on_boundary())
     # plotter = MeshPlotter(mesh, figsize=(20, 20))

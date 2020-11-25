@@ -23,7 +23,7 @@ __all__ = [
 def strip_graph(mesh, close_strip_data=False):
     # graph of quad mesh strips: one graph vertex <-> one mesh strip and one graph <-> edge one mesh face
     # graph vertices have an attribute whether the corresponding strip is closed or not
-    if mesh.data['attributes']['strips'] is None or mesh.data['attributes']['strips'] == {}:
+    if mesh.attributes['strips'] is None or mesh.attributes['strips'] == {}:
         mesh.collect_strips()
     graph = nx.MultiGraph([tuple(mesh.face_strips(fkey)) for fkey in mesh.faces()])
     if close_strip_data:

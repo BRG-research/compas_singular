@@ -162,12 +162,12 @@ def add_strip(mesh, polyedge):
 
     # update transverse strip data
     for skey, i in update.items():
-        mesh.data['attributes']['strips'][skey] = mesh.collect_strip(
+        mesh.attributes['strips'][skey] = mesh.collect_strip(
             *list(pairwise(left_polyedge))[i])
 
     # add new strip data
     new_skey = list(mesh.strips())[-1] + 1
-    mesh.data['attributes']['strips'][new_skey] = mesh.collect_strip(
+    mesh.attributes['strips'][new_skey] = mesh.collect_strip(
         left_polyedge[0], right_polyedge[0])
 
     # update adjacent strips
@@ -359,18 +359,18 @@ def delete_strip(mesh, skey, preserve_boundaries=False):
             mesh.delete_vertex(old_vkey)
 
     # delete data of deleted strip and collateral deleted strips
-    del mesh.data['attributes']['strips'][skey]
+    del mesh.attributes['strips'][skey]
     for skey_2 in collateral_deleted_strips:
-        del mesh.data['attributes']['strips'][skey_2]
+        del mesh.attributes['strips'][skey_2]
     # print(old_vkeys_to_new_vkeys)
-    # print(mesh.data['attributes']['face_pole'])
-    if 'face_pole' in mesh.data['attributes']:
-        for fkey, pole in mesh.data['attributes']['face_pole'].items():
-            if fkey in mesh.data['attributes']['face_pole']:
-                # print(fkey, pole, mesh.data['attributes']['face_pole'])
-                if pole == mesh.data['attributes']['face_pole'][fkey]:
+    # print(mesh.attributes['face_pole'])
+    if 'face_pole' in mesh.attributes:
+        for fkey, pole in mesh.attributes['face_pole'].items():
+            if fkey in mesh.attributes['face_pole']:
+                # print(fkey, pole, mesh.attributes['face_pole'])
+                if pole == mesh.attributes['face_pole'][fkey]:
                     if pole in old_vkeys_to_new_vkeys:
-                        mesh.data['attributes']['face_pole'][fkey] = old_vkeys_to_new_vkeys[pole]
+                        mesh.attributes['face_pole'][fkey] = old_vkeys_to_new_vkeys[pole]
 
     return old_vkeys_to_new_vkeys
 

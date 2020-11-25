@@ -68,7 +68,7 @@ class CoarsePseudoQuadMesh(PseudoQuadMesh, CoarseQuadMesh):
                 polylines.append(polyline)
 
             if self.is_face_pseudo_quad(fkey):
-                pole = self.data['attributes']['face_pole'][fkey]
+                pole = self.attributes['face_pole'][fkey]
                 idx = self.face_vertices(fkey).index(pole)
                 polylines.insert(idx, None)
 
@@ -107,7 +107,7 @@ class CoarsePseudoQuadMesh(PseudoQuadMesh, CoarseQuadMesh):
                         face_pole[fkey] = vkey
                         break
 
-        self.get_quad_mesh().data['attributes']['face_pole'] = face_pole
+        self.get_quad_mesh().attributes['face_pole'] = face_pole
         return self.get_quad_mesh()
 
 
@@ -131,10 +131,10 @@ if __name__ == '__main__':
     # # # plotter.show()
 
     # data = {}
-    # for key, value in mesh.data['attributes']['face_pole'].items():
+    # for key, value in mesh.attributes['face_pole'].items():
     #     data[int(key)] = value
-    # mesh.data['attributes']['face_pole'] = data
-    # # #print(mesh.data['attributes']['face_pole'][str(4)])
+    # mesh.attributes['face_pole'] = data
+    # # #print(mesh.attributes['face_pole'][str(4)])
 
     # mesh.collect_strips()
     # mesh.set_strips_density(2)
