@@ -28,12 +28,10 @@ class CoarsePseudoQuadMesh(PseudoQuadMesh, CoarseQuadMesh):
         -------
         QuadMesh
             A denser quad mesh.
+        edges_to_curves : dict, optional
+            A dictionary with edges (u, v) pointing to curve for densification. The curves are lists of XYZ points.
 
         """
-        if edges_to_curves:
-            import compas_rhino
-            EvaluateCurve = compas_rhino.rs.EvaluateCurve
-            CurveParameter = compas_rhino.rs.CurveParameter
 
         edge_strip = {}
         for strip, edges in self.strips(data=True):
@@ -52,11 +50,11 @@ class CoarsePseudoQuadMesh(PseudoQuadMesh, CoarseQuadMesh):
                 if edges_to_curves:
                     polyline = []
                     if (u, v) in edges_to_curves:
-                        curve = edges_to_curves[u, v]
-                        polyline = [list(EvaluateCurve(curve, CurveParameter(curve, t))) for t in linspace(0, 1, d)]
+                        curve = Polyline(edges_to_curves[u, v])
+                        polyline = [curve.point(t) for t in linspace(0, 1, d)]
                     else:
-                        curve = edges_to_curves[v, u]
-                        polyline = [list(EvaluateCurve(curve, CurveParameter(curve, t))) for t in linspace(0, 1, d)]
+                        curve = Polyline(edges_to_curves[v, u])
+                        polyline = [curve.point(t) for t in linspace(0, 1, d)]
                         polyline[:] = polyline[::-1]
                 else:
                     polyline = []
