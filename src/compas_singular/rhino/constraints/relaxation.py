@@ -81,7 +81,7 @@ def surface_constrained_smoothing(mesh, srf, kmax=100, damping=0.5, algorithm='c
             attr['y'] = y
             attr['z'] = z
 
-    fixed = [vertex for vertex in mesh.vertices_on_boundary() if mesh.vertex_degree(vertex) == 2]
+    fixed = [vertex for bdry in mesh.vertices_on_boundaries() for vertex in bdry if mesh.vertex_degree(vertex) == 2]
 
     if algorithm == 'area':
         return mesh_smooth_area(mesh, fixed, kmax, damping, callback, [mesh, srf])

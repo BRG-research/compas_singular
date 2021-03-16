@@ -104,7 +104,7 @@ class Mesh(Mesh):
 
         """
 
-        return [vkey for vkey in self.vertices_on_boundary() if self.is_boundary_vertex_kink(vkey, threshold_angle)]
+        return [vkey for bdry in self.vertices_on_boundaries() for vkey in bdry if self.is_boundary_vertex_kink(vkey, threshold_angle)]
 
     def vertex_centroid(self):
         """Calculate the centroid of the mesh vertices.
@@ -127,13 +127,3 @@ class Mesh(Mesh):
 
 if __name__ == '__main__':
     pass
-
-    # import compas
-
-    # mesh = Mesh.from_obj(compas.get('faces.obj'))
-    # #print(mesh.number_of_vertices(), len(mesh.vertices_on_boundary()), mesh.boundaries())
-    # for fkey in mesh.faces():
-    # 	if not mesh.is_face_on_boundary(fkey):
-    # 		mesh.delete_face(fkey)
-    # 		break
-    # #print(mesh.number_of_vertices(), len(mesh.vertices_on_boundary()), mesh.boundaries())

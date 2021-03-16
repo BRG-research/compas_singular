@@ -50,13 +50,13 @@ def automated_smoothing_surface_constraints(mesh, surface):
 
     constraints.update({vertex: surface for vertex in mesh.vertices()})
 
-    for vertex in mesh.vertices_on_boundary():
+    for vertex in [vkey for bdry in mesh.vertices_on_boundaries() for vkey in bdry]:
         xyz = mesh.vertex_coordinates(vertex)
         projections = [(curve, distance_point_point(xyz, curve.closest_point(xyz))) for curve in curves]
         constraints[vertex] = min(projections, key=lambda x: x[1])[0]
 
-    index_vertex = {index: vertex for index, vertex in enumerate(mesh.vertices_on_boundary())}
-    boundary = [mesh.vertex_coordinates(vertex) for vertex in mesh.vertices_on_boundary()]
+    index_vertex = {index: vertex for index, vertex in enumerate([vkey for bdry in mesh.vertices_on_boundaries() for vkey in bdry])}
+    boundary = [mesh.vertex_coordinates(vertex) for bdry in mesh.vertices_on_boundaries() for vertex in bdry]
     constraints.update({index_vertex[closest_point_in_cloud(point.xyz, boundary)[2]]: point for point in points})
 
     return constraints

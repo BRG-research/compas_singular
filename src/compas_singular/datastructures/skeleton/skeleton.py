@@ -41,8 +41,8 @@ class Skeleton(Mesh):
         """
         return cls.from_vertices_and_faces(*mesh.to_vertices_and_faces())
 
-    def compas_singular_faces(self):
-        """Get the indices of the compas_singular faces in the Delaunay mesh, i.e. the ones with three neighbours.
+    def singular_faces(self):
+        """Get the indices of the singular faces in the Delaunay mesh, i.e. the ones with three neighbours.
 
         Returns
         -------
@@ -52,8 +52,8 @@ class Skeleton(Mesh):
         """
         return [fkey for fkey in self.faces() if len(self.face_neighbors(fkey)) == 3]
 
-    def compas_singular_points(self):
-        """Get the XYZ-coordinates of the compas_singular points of the topological skeleton, i.e. the face circumcentre of the compas_singular faces.
+    def singular_points(self):
+        """Get the XYZ-coordinates of the singular points of the topological skeleton, i.e. the face circumcentre of the singular faces.
 
         Returns
         -------
@@ -62,7 +62,7 @@ class Skeleton(Mesh):
 
         """
         return [
-            trimesh_face_circle(self, fkey)[0] for fkey in self.compas_singular_faces()
+            trimesh_face_circle(self, fkey)[0] for fkey in self.singular_faces()
         ]
 
     def lines(self):
@@ -84,7 +84,7 @@ class Skeleton(Mesh):
         ]
 
     def branches(self):
-        """Get the branch polylines of the topological skeleton as polylines connecting compas_singular points.
+        """Get the branch polylines of the topological skeleton as polylines connecting singular points.
 
         Returns
         -------

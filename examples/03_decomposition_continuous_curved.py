@@ -76,8 +76,14 @@ for polyline in decomposition.polylines:
 # Densify the coarse mesh
 coarsemesh.collect_strips()
 coarsemesh.set_strips_density_target(L)
+edge_curve = None
 coarsemesh.densification(edges_to_curves=edge_curve)
 densemesh = coarsemesh.get_quad_mesh()
+
+# Remap the meshes back onto the surface
+surface.mesh_uv_to_xyz(trimesh)
+surface.mesh_uv_to_xyz(coarsemesh)
+surface.mesh_uv_to_xyz(densemesh)
 
 # ==============================================================================
 # Postprocess the result
@@ -100,20 +106,16 @@ constrained_smoothing(
 
 artist = MeshArtist(trimesh, layer="Singular::Triangulation")
 artist.clear_layer()
-artist.draw_edges()
-
-# Remap the coarse mesh back onto the surface
-surface.mesh_uv_to_xyz(coarsemesh)
+artist.draw_mesh()
 
 artist = MeshArtist(coarsemesh, layer="Singular::CoarseMesh")
 artist.clear_layer()
-artist.draw_vertices()
-artist.draw_edges()
+artist.draw_mesh()
 
 artist = MeshArtist(densemesh, layer="Singular::DenseMesh")
 artist.clear_layer()
-artist.draw_faces()
+artist.draw_mesh()
 
 artist = MeshArtist(mesh, layer="Singular::SmoothMesh")
 artist.clear_layer()
-artist.draw_faces()
+artist.draw_mesh()

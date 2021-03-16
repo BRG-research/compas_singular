@@ -98,10 +98,10 @@ class SkeletonDecomposition(Skeleton):
             List of vertex keys.
 
         """
-        return [vkey for vkey in self.vertices_on_boundary() if len(self.vertex_neighbors(vkey)) == 2]
+        return [vkey for bdry in self.vertices_on_boundaries() for vkey in bdry if len(self.vertex_neighbors(vkey)) == 2]
 
     def split_vertices(self):
-        """Get the indices of the boundary split vertices, i.e. the vertices of the compas_singular faces.
+        """Get the indices of the boundary split vertices, i.e. the vertices of the singular faces.
 
         Returns
         -------
@@ -109,7 +109,7 @@ class SkeletonDecomposition(Skeleton):
             List of vertex keys.
 
         """
-        return [vkey for fkey in self.compas_singular_faces() for vkey in self.face_vertices(fkey)]
+        return [vkey for fkey in self.singular_faces() for vkey in self.face_vertices(fkey)]
 
     # --------------------------------------------------------------------------
     # branches
@@ -140,7 +140,7 @@ class SkeletonDecomposition(Skeleton):
         """
         return [
             [trimesh_face_circle(self, fkey)[0], self.vertex_coordinates(vkey)]
-            for fkey in self.compas_singular_faces() for vkey in self.face_vertices(fkey)]
+            for fkey in self.singular_faces() for vkey in self.face_vertices(fkey)]
 
     def branches_boundary(self):
         """Get new branch polylines from the Delaunay mesh boundaries split at the corner and plit vertices. Not part of the topological skeleton.
@@ -208,12 +208,12 @@ class SkeletonDecomposition(Skeleton):
 
         """
         polylines = self.decomposition_polylines()
-        boundary_keys = set([geometric_key(self.vertex_coordinates(vkey)) for vkey in self.vertices_on_boundary()])
+        boundary_keys = set([geometric_key(self.vertex_coordinates(vkey)) for bdry in self.vertices_on_boundaries() for vkey in bdry])
         boundary_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) in boundary_keys and geometric_key(polyline[1]) in boundary_keys]
         other_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) not in boundary_keys or geometric_key(polyline[1]) not in boundary_keys]
         self.mesh = CoarsePseudoQuadMesh.from_polylines(boundary_polylines, other_polylines)
         self.solve_triangular_faces()
-        self.quadrangulate_polygonal_faces()
+        #self.quadrangulate_polygonal_faces()
         self.split_quads_with_poles(poles)
         self.store_pole_data(poles)
         return self.mesh
@@ -280,7 +280,7 @@ class SkeletonDecomposition(Skeleton):
             # subdivide once per angle limit in rotation
             if abs(sum(angles)) > self.flip_angle_limit:
                 # the step between subdivision points in polylines (+ 2 for the extremities, which will be discarded)
-                alone = len(self.compas_singular_faces()) == 0
+                alone = len(self.singular_faces()) == 0
                 n = floor(abs(sum(angles)) / self.flip_angle_limit) + 1
                 step = int(floor(len(polyline) / n))
                 # add new branches from corresponding face in Delaunay mesh
@@ -315,7 +315,7 @@ class SkeletonDecomposition(Skeleton):
         """
         new_branches = []
 
-        compas_singular_faces = set(self.compas_singular_faces())
+        singular_faces = set(self.singular_faces())
         for boundary in self.boundaries():
             angles = {(u, v, w): angle_vectors(subtract_vectors(self.vertex_coordinates(v), self.vertex_coordinates(u)), subtract_vectors(
                 self.vertex_coordinates(w), self.vertex_coordinates(v))) for u, v, w in window(boundary + boundary[: 2], n=3)}
@@ -329,8 +329,8 @@ class SkeletonDecomposition(Skeleton):
                 adjacent_angles = (angles[(u, v, w)] + angles[(w, x, y)]) / 2
 
                 if angle - adjacent_angles > self.relative_kink_angle_limit:
-                    # check if not already marked via an adjacent compas_singular face
-                    if all([fkey not in compas_singular_faces for fkey in self.vertex_faces(w)]):
+                    # check if not already marked via an adjacent singular face
+                    if all([fkey not in singular_faces for fkey in self.vertex_faces(w)]):
                         fkeys = list(self.vertex_faces(w, ordered=True))
                         fkey = fkeys[int(floor(len(fkeys) / 2))]
                         for edge in self.face_halfedges(fkey):
@@ -353,7 +353,7 @@ class SkeletonDecomposition(Skeleton):
 
                 if case == 1:
                     # convert triangular face to quad by duplicating the boundary vertex
-                    # due to compas_singular face vertices at the same location
+                    # due to singular face vertices at the same location
                     u = boundary_vertices[0]
                     v = mesh.add_vertex(attr_dict={attr: xyz for attr, xyz in zip(['x', 'y', 'z'], mesh.vertex_coordinates(u))})
 
@@ -409,7 +409,7 @@ class SkeletonDecomposition(Skeleton):
 
         for mesh in meshes:
             candidate_map = {geometric_key(mesh.vertex_coordinates(vkey)): [] for vkey in mesh.vertices()}
-            for vkey in mesh.vertices_on_boundary():
+            for vkey in mesh.vertices_on_boundaries():
                 candidate_map[geometric_key(mesh.vertex_coordinates(vkey))].append(mesh.vertex_degree(vkey))
 
             source_map = tuple([geom_key for geom_key, valencies in candidate_map.items() if len(list(set(valencies))) > 1])
