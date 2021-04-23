@@ -32,7 +32,7 @@ setup(
     description="topology finding of compas_singularities in quad meshes",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="",
+    url="https://blockresearchgroup.github.io/compas_singular",
     author="Robin Oval",
     author_email="rpho2@cam.ac.uk",
     license="MIT license",
