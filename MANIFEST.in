@@ -5,6 +5,7 @@ prune .github
 prune data
 prune docs
 prune examples
+prune scripts
 prune temp
 prune tests
 
