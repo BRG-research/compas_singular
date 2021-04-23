@@ -29,7 +29,7 @@ __copyright__ = 'Copyright 2019 - Block Research Group, ETH Zurich'
 __license__ = 'MIT License'
 __email__ = 'rpho2@cam.ac.uk'
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 
 HERE = os.path.dirname(__file__)
