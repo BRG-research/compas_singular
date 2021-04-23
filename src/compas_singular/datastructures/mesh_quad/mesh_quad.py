@@ -564,8 +564,9 @@ class QuadMesh(Mesh):
 
         if strips is None:
             strips = list(self.strips())
-        self.attributes['strips'].update({skey: [tuple([new_vkey if vkey == old_vkey else vkey for vkey in list(edge)])
-                                                         for edge in self.strip_edges(skey)] for skey in strips})
+        self.attributes['strips'].update({
+            skey: [tuple([new_vkey if vkey == old_vkey else vkey for vkey in list(edge)]) for edge in self.strip_edges(skey)] for skey in strips
+        })
 
     def delete_face_in_strips(self, fkey):
         """Delete face in strips.

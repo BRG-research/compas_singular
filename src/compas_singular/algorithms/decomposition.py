@@ -213,7 +213,7 @@ class SkeletonDecomposition(Skeleton):
         other_polylines = [polyline for polyline in polylines if geometric_key(polyline[0]) not in boundary_keys or geometric_key(polyline[1]) not in boundary_keys]
         self.mesh = CoarsePseudoQuadMesh.from_polylines(boundary_polylines, other_polylines)
         self.solve_triangular_faces()
-        #self.quadrangulate_polygonal_faces()
+        # self.quadrangulate_polygonal_faces()
         self.split_quads_with_poles(poles)
         self.store_pole_data(poles)
         return self.mesh

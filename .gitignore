@@ -114,3 +114,5 @@ temp/**
 .DS_Store
 
 .vscode
+
+__temp

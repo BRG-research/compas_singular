@@ -150,7 +150,7 @@ def closest_point_on_polyline(polyline, c):
     return proj_p, min_distance
 
 
-def closest_point_on_polylines(polylines, c):
+def closest_point_on_polylines(polylines, p):
     """Closest point on polylines.
     If there are multiple closest points, the one from the first polyline segment is yielded.
 
@@ -170,7 +170,7 @@ def closest_point_on_polylines(polylines, c):
     proj_p = None
     min_distance = None
     for polyline in polylines:
-        proj_p, distance = closest_point_on_polyline(polyline, c)
+        proj_p, distance = closest_point_on_polyline(polyline, p)
         if proj_p is None or min_distance > distance:
             proj_p = p
             min_distance = distance
@@ -183,16 +183,3 @@ def closest_point_on_polylines(polylines, c):
 
 if __name__ == '__main__':
     pass
-
-    # import compas
-
-    # a, b = [0.0, 0.0, 0.0], [2.0, 2.0, 0.0]
-    # for c in [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [-1.0, 0.0, 0.0], [2.0, 3.0, 0.0]]:
-    #     print(closest_point_on_line(a, b, c))
-    #     print(closest_point_on_segment(a, b, c))
-
-    # polyline = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]
-    # c = [0.75, 0.75, 0]
-    # print(closest_point_on_polyline(polyline, c))
-
-    # print(closest_point_on_circle(2.0, -1.0, 2.0))

@@ -281,8 +281,8 @@ def delete_strip(mesh, skey, preserve_boundaries=False):
     if skey not in list(mesh.strips()):
         return 0
 
-    if preserve_boundaries:
-        skey_to_skeys = split_strips(mesh, boundary_strip_preserve(mesh, [skey]))
+    # if preserve_boundaries:
+    #     skey_to_skeys = split_strips(mesh, boundary_strip_preserve(mesh, [skey]))
 
     old_boundary_vertices = list(mesh.vertices_on_boundary())
 

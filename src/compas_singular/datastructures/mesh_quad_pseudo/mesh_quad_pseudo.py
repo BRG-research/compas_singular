@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
-from ast import literal_eval
+# from ast import literal_eval
 
 from compas.utilities import geometric_key
 
@@ -19,89 +19,89 @@ class PseudoQuadMesh(QuadMesh):
         super(PseudoQuadMesh, self).__init__()
         self.attributes['face_pole'] = {}
 
-    @property
-    def data(self):
-        return super(QuadMesh, self).data
+    # @property
+    # def data(self):
+    #     return super(QuadMesh, self).data
 
-    @data.setter
-    def data(self, data):
+    # @data.setter
+    # def data(self, data):
 
-        if 'compas' in data:
-            version = LooseVersion(compas.__version__)
-            if version < LooseVersion('0.16.5'):
-                raise Exception('The data was generated with an incompatible newer version of COMPAS: {}'.format(version.vstring.split('-')[0]))
-            # dtype = data['dtype']
-            data = data['data']
-            attributes = data['attributes']
-            dva = data.get('dva') or {}
-            dfa = data.get('dfa') or {}
-            dea = data.get('dea') or {}
-            vertex = data.get('vertex') or {}
-            face = data.get('face') or {}
-            facedata = data.get('facedata') or {}
-            edgedata = data.get('edgedata') or {}
-            max_vertex = data.get('max_vertex', -1)
-            max_face = data.get('max_face', -1)
-            self.attributes.update(attributes)
-            self.default_vertex_attributes.update(dva)
-            self.default_face_attributes.update(dfa)
-            self.default_edge_attributes.update(dea)
-            self.vertex = {}
-            self.face = {}
-            self.halfedge = {}
-            self.facedata = {}
-            self.edgedata = {}
-            # this could be handled by the schema
-            # but will not work in IronPython
-            for key, attr in iter(vertex.items()):
-                self.add_vertex(int(key), attr_dict=attr)
-            for fkey, vertices in iter(face.items()):
-                attr = facedata.get(fkey) or {}
-                self.add_face(vertices, fkey=int(fkey), attr_dict=attr)
-            for uv, attr in iter(edgedata.items()):
-                self.edgedata[uv] = attr or {}
-            self._max_vertex = max_vertex
-            self._max_face = max_face
-        else:
-            attributes = data['attributes']
-            dva = data.get('dva') or {}
-            dfa = data.get('dfa') or {}
-            dea = data.get('dea') or {}
-            vertex = data.get('vertex') or {}
-            face = data.get('face') or {}
-            facedata = data.get('facedata') or {}
-            edgedata = data.get('edgedata') or {}
-            max_vertex = data.get('max_int_key', -1)
-            max_face = data.get('max_int_fkey', -1)
-            self.attributes.update(attributes)
-            self.default_vertex_attributes.update(dva)
-            self.default_face_attributes.update(dfa)
-            self.default_edge_attributes.update(dea)
-            self.vertex = {}
-            self.face = {}
-            self.halfedge = {}
-            self.facedata = {}
-            self.edgedata = {}
-            # this could be handled by the schema
-            # but will not work in IronPython
-            for key, attr in iter(vertex.items()):
-                self.add_vertex(int(key), attr_dict=attr)
-            for fkey, vertices in iter(face.items()):
-                attr = facedata.get(fkey) or {}
-                self.add_face(vertices, fkey=int(fkey), attr_dict=attr)
-            for edge, attr in iter(edgedata.items()):
-                key = "-".join(map(str, sorted(literal_eval(edge))))
-                if key not in self.edgedata:
-                    self.edgedata[key] = {}
-                if attr:
-                    self.edgedata[key].update(attr)
-            self._max_vertex = max_vertex
-            self._max_face = max_face
+    #     if 'compas' in data:
+    #         version = LooseVersion(compas.__version__)
+    #         if version < LooseVersion('0.16.5'):
+    #             raise Exception('The data was generated with an incompatible newer version of COMPAS: {}'.format(version.vstring.split('-')[0]))
+    #         # dtype = data['dtype']
+    #         data = data['data']
+    #         attributes = data['attributes']
+    #         dva = data.get('dva') or {}
+    #         dfa = data.get('dfa') or {}
+    #         dea = data.get('dea') or {}
+    #         vertex = data.get('vertex') or {}
+    #         face = data.get('face') or {}
+    #         facedata = data.get('facedata') or {}
+    #         edgedata = data.get('edgedata') or {}
+    #         max_vertex = data.get('max_vertex', -1)
+    #         max_face = data.get('max_face', -1)
+    #         self.attributes.update(attributes)
+    #         self.default_vertex_attributes.update(dva)
+    #         self.default_face_attributes.update(dfa)
+    #         self.default_edge_attributes.update(dea)
+    #         self.vertex = {}
+    #         self.face = {}
+    #         self.halfedge = {}
+    #         self.facedata = {}
+    #         self.edgedata = {}
+    #         # this could be handled by the schema
+    #         # but will not work in IronPython
+    #         for key, attr in iter(vertex.items()):
+    #             self.add_vertex(int(key), attr_dict=attr)
+    #         for fkey, vertices in iter(face.items()):
+    #             attr = facedata.get(fkey) or {}
+    #             self.add_face(vertices, fkey=int(fkey), attr_dict=attr)
+    #         for uv, attr in iter(edgedata.items()):
+    #             self.edgedata[uv] = attr or {}
+    #         self._max_vertex = max_vertex
+    #         self._max_face = max_face
+    #     else:
+    #         attributes = data['attributes']
+    #         dva = data.get('dva') or {}
+    #         dfa = data.get('dfa') or {}
+    #         dea = data.get('dea') or {}
+    #         vertex = data.get('vertex') or {}
+    #         face = data.get('face') or {}
+    #         facedata = data.get('facedata') or {}
+    #         edgedata = data.get('edgedata') or {}
+    #         max_vertex = data.get('max_int_key', -1)
+    #         max_face = data.get('max_int_fkey', -1)
+    #         self.attributes.update(attributes)
+    #         self.default_vertex_attributes.update(dva)
+    #         self.default_face_attributes.update(dfa)
+    #         self.default_edge_attributes.update(dea)
+    #         self.vertex = {}
+    #         self.face = {}
+    #         self.halfedge = {}
+    #         self.facedata = {}
+    #         self.edgedata = {}
+    #         # this could be handled by the schema
+    #         # but will not work in IronPython
+    #         for key, attr in iter(vertex.items()):
+    #             self.add_vertex(int(key), attr_dict=attr)
+    #         for fkey, vertices in iter(face.items()):
+    #             attr = facedata.get(fkey) or {}
+    #             self.add_face(vertices, fkey=int(fkey), attr_dict=attr)
+    #         for edge, attr in iter(edgedata.items()):
+    #             key = "-".join(map(str, sorted(literal_eval(edge))))
+    #             if key not in self.edgedata:
+    #                 self.edgedata[key] = {}
+    #             if attr:
+    #                 self.edgedata[key].update(attr)
+    #         self._max_vertex = max_vertex
+    #         self._max_face = max_face
 
-        data_face_pole = {}
-        for fkey, vkey in iter(attributes['face_pole'].items()):
-            data_face_pole[literal_eval(fkey)] = vkey
-        self.attributes['face_pole'] = data_face_pole
+    #     data_face_pole = {}
+    #     for fkey, vkey in iter(attributes['face_pole'].items()):
+    #         data_face_pole[literal_eval(fkey)] = vkey
+    #     self.attributes['face_pole'] = data_face_pole
 
     @classmethod
     def from_vertices_and_faces_with_poles(cls, vertices, faces, poles=[]):

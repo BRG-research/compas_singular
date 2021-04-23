@@ -12,7 +12,7 @@ __all__ = [
 ]
 
 
-def list_split(l, indices):
+def list_split(thelist, indices):
     """Split list at given indices.
     Closed lists have the same first and last elements.
     If the list is closed, splitting wraps around if the first or last index is not in the indices to split.
@@ -20,7 +20,7 @@ def list_split(l, indices):
 
     Parameters
     ----------
-    l : list
+    thelist : list
             A list.
     indices : list
             A list of indices to split.
@@ -32,9 +32,9 @@ def list_split(l, indices):
 
     """
 
-    n = len(l)
+    n = len(thelist)
 
-    if l[0] == l[-1]:
+    if thelist[0] == thelist[-1]:
         closed = True
         if n - 1 in indices:
             indices.remove(n - 1)
@@ -47,7 +47,7 @@ def list_split(l, indices):
 
     split_lists = []
     current_list = []
-    for index, item in enumerate(l):
+    for index, item in enumerate(thelist):
         current_list.append(item)
         if (index in indices and index != 0) or index == n - 1:
             split_lists.append(current_list)
@@ -61,12 +61,12 @@ def list_split(l, indices):
     return split_lists
 
 
-def sublist_from_to_items_in_closed_list(l, from_item, to_item):
+def sublist_from_to_items_in_closed_list(thelist, from_item, to_item):
     """Return sublist between oe item to another.
 
     Parameters
     ----------
-    l : list
+    thelist : list
             A list.
     from_item
             An item to be found in the list. The beginning of the sublist.
@@ -81,25 +81,25 @@ def sublist_from_to_items_in_closed_list(l, from_item, to_item):
 
     if from_item == to_item:
         return [from_item]
-    if l[0] != l[-1]:
-        l.append(l[0])
-    from_idx = l.index(from_item)
-    to_idx = l.index(to_item)
-    sublists = list_split(l, [from_idx, to_idx])
+    if thelist[0] != thelist[-1]:
+        thelist.append(thelist[0])
+    from_idx = thelist.index(from_item)
+    to_idx = thelist.index(to_item)
+    sublists = list_split(thelist, [from_idx, to_idx])
 
     for sublist in sublists:
         if sublist[0] == from_item:
             return sublist
 
 
-def are_items_in_list(items, l):
+def are_items_in_list(items, thelist):
     """Check if items are in a list.
 
     Parameters
     ----------
     items : list
             A list of items (order does not matter).
-    l : list
+    thelist : list
             A list.
 
     Returns
@@ -109,7 +109,7 @@ def are_items_in_list(items, l):
     """
 
     for i in items:
-        if i not in l:
+        if i not in thelist:
             return False
     return True
 
@@ -133,26 +133,26 @@ def common_items(l1, l2):
     return [item for item in l1 if item in l2]
 
 
-def remove_isomorphism_in_integer_list(l):
+def remove_isomorphism_in_integer_list(thelist):
     # remove isomorphisms in list (open or closed)
     # interpreted as a polyedge
 
-    if len(l) < 2:
-        return l
+    if len(thelist) < 2:
+        return thelist
 
     # if closed: min value first, and its minimum neighbour value second
-    if l[0] == l[-1]:
-        l = l[:-1]
+    if thelist[0] == thelist[-1]:
+        thelist = thelist[:-1]
         candidates = []
 
-        start = min(l)
-        for i, key in enumerate(l):
+        start = min(thelist)
+        for i, key in enumerate(thelist):
             # collect all candidates, there may be multiple minimum values and multiple minimum neighbours
             if key == start:
-                candidate = l[i:] + l[:i] + [l[i]]
+                candidate = thelist[i:] + thelist[:i] + [thelist[i]]
                 candidates.append(candidate)
                 candidates.append(list(reversed(candidate)))
-        for k in range(1, len(l) + 1):
+        for k in range(1, len(thelist) + 1):
             n = len(candidates)
             if n == 1:
                 break
@@ -167,14 +167,14 @@ def remove_isomorphism_in_integer_list(l):
                 if sum(candidate[:k]) > min_x:
                     del candidates[n - i - 1]
         # potentially multiple canidates left due to symmetry in list, but no isomorphism left
-        l = candidates[0]
+        thelist = candidates[0]
 
     # if open: minimum value extremmity at the start
     else:
-        if l[0] > l[-1]:
-            l = list(reversed(l))
+        if thelist[0] > thelist[-1]:
+            thelist = list(reversed(thelist))
 
-    return l
+    return thelist
 
 
 # ==============================================================================
