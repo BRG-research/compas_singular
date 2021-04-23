@@ -28,7 +28,7 @@ optional_requirements = {}
 
 setup(
     name="compas_singular",
-    version="0.1.0",
+    version="version='0.1.1'",
     description="topology finding of compas_singularities in quad meshes",
     long_description=long_description,
     long_description_content_type="text/markdown",
