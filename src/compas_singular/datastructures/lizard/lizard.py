@@ -118,7 +118,7 @@ if __name__ == '__main__':
 	from compas.numerical import fd_numpy
 	
 	def fix_boundaries(mesh):
-		n = len(mesh.vertices_on_boundary())
+		n = len(mesh.vertices_on_boundaries())
 		for i, vkey in enumerate(mesh.boundaries()[0]):
 			xyz = add_vectors(mesh.vertex_centroid(), circle_evaluate(2.0 * pi * i / n, 10))
 			mesh_move_vertex_to(mesh, xyz, vkey)
@@ -126,7 +126,7 @@ if __name__ == '__main__':
 	def find_form(mesh, total_load):
 		vertices = [mesh.vertex_coordinates(vkey) for vkey in mesh.vertices()]
 		edges = list(mesh.edges())
-		fixed = mesh.vertices_on_boundary()
+		fixed = mesh.vertices_on_boundaries()
 		q = [1.0] * len(edges)
 		#total_area = mesh.area()
 		loads = [[0.0, 0.0, total_load / mesh.number_of_vertices()]] * mesh.number_of_vertices() 
