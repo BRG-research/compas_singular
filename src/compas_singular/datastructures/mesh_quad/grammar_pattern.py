@@ -189,7 +189,7 @@ def func_1(mesh, fix_xyz, kmax, damping):
 
         mesh, fixed, split_boundaries, split_boundaries_geom = args
 
-        for vkey in mesh.vertices_on_boundary():
+        for vkey in mesh.vertices_on_boundaries():
             if vkey not in fixed:
                 for i, boundary in enumerate(split_boundaries):
                     if vkey in boundary:
@@ -284,7 +284,7 @@ def delete_strip(mesh, skey, preserve_boundaries=False):
     # if preserve_boundaries:
     #     skey_to_skeys = split_strips(mesh, boundary_strip_preserve(mesh, [skey]))
 
-    old_boundary_vertices = list(mesh.vertices_on_boundary())
+    old_boundary_vertices = list(mesh.vertices_on_boundaries())
 
     # get strip data
     strip_edges = mesh.strip_edges(skey)

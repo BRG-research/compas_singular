@@ -9,6 +9,9 @@ from compas.utilities import geometric_key
 from ..mesh_quad import QuadMesh
 from compas_singular.utilities import list_split
 
+import compas
+from distutils.version import LooseVersion
+
 
 __all__ = ['PseudoQuadMesh']
 
