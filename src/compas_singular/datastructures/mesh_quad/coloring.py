@@ -7,6 +7,8 @@ from compas.topology import vertex_coloring
 
 from compas_singular.topology import is_adjacency_two_colorable
 
+from compas.utilities import pairwise
+
 
 __all__ = [
     'quad_mesh_strip_2_coloring',
@@ -53,7 +55,7 @@ def quad_mesh_strip_n_coloring(quad_mesh):
     return vertex_coloring(adjacency_from_edges(edges))
 
 
-def quad_mesh_polyedge_2_coloring(quad_mesh):
+def quad_mesh_polyedge_2_coloring(quad_mesh, edge_output=False):
     """Try to color the polyedges of a quad mesh with two colors only without overlapping polyedges with the same color.
     Polyedges connected by their extremities, which are singularities, do not count as overlapping.
 
@@ -61,19 +63,29 @@ def quad_mesh_polyedge_2_coloring(quad_mesh):
     ----------
     quad_mesh : QuadMesh
         A quad mesh.
+    edge_output : bool, optional
+        Optional to output coloring per edge keys instead of polyedge key.
 
     Returns
     -------
     dict, None
-        A dictionary with polyedge keys pointing to colors, if two-colorable.
+        A dictionary with polyedge keys pointing to colors, if two-colorable. If edge_output, edge keys pointing to colors.
         None if not two-colorable.
     """
 
     vertices, edges = quad_mesh.polyedge_graph()
-    return is_adjacency_two_colorable(adjacency_from_edges(edges))
+    polyedge_coloring = is_adjacency_two_colorable(adjacency_from_edges(edges))
+    if not polyedge_coloring or not edge_output:
+        return polyedge_coloring
+    else:
+        edge_coloring = {}
+        for pkey, group in polyedge_coloring.items():
+            for u, v in pairwise(quad_mesh.attributes['polyedges'][pkey]):
+                edge_coloring.update({(u, v): group, (v, u): group})
+        return edge_coloring
 
 
-def quad_mesh_polyedge_n_coloring(quad_mesh):
+def quad_mesh_polyedge_n_coloring(quad_mesh, edge_output=False):
     """Color the polyedges of a quad mesh with a minimum number of colors without overlapping polyedges with the same color.
     Polyedges connected by their extremities, which are singularities, do not count as overlapping.
 
@@ -81,15 +93,25 @@ def quad_mesh_polyedge_n_coloring(quad_mesh):
     ----------
     quad_mesh : QuadMesh
         A quad mesh.
+    edge_output : bool, optional
+        Optional to output coloring per edge keys instead of polyedge key.
 
     Returns
     -------
     dict
-        A dictionary with polyedge keys pointing to colors.
+        A dictionary with polyedge keys pointing to colors. If edge_output, edge keys pointing to colors.
     """
 
     vertices, edges = quad_mesh.polyedge_graph()
-    return vertex_coloring(adjacency_from_edges(edges))
+    polyedge_coloring = vertex_coloring(adjacency_from_edges(edges))
+    if not polyedge_coloring or not edge_output:
+        return polyedge_coloring
+    else:
+        edge_coloring = {}
+        for pkey, group in polyedge_coloring.items():
+            for u, v in pairwise(quad_mesh.attributes['polyedges'][pkey]):
+                edge_coloring.update({(u, v): group, (v, u): group})
+        return edge_coloring
 
 
 # ==============================================================================
