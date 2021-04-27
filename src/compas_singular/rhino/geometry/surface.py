@@ -181,7 +181,7 @@ class RhinoSurface(RhinoSurface):
             The list of (x, y, z) coordinates of the inverse-mapped polyline.
 
         """
-        return [self.point_uv_to_xyz(vertex) for vertex in polyline]
+        return [self.point_uv_to_xyz(vertex[:2]) for vertex in polyline]
 
     def mesh_uv_to_xyz(self, mesh):
         """Return the mesh from the inverse mapping of a UV mesh based on the UV parameterisation of the surface.
