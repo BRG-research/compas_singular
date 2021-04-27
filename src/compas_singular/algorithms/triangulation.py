@@ -2,15 +2,16 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
-from compas.geometry import is_point_in_polygon_xy
-from compas.geometry import length_vector
-from compas.geometry import subtract_vectors
-from compas.geometry import cross_vectors
+# from compas.geometry import is_point_in_polygon_xy
+# from compas.geometry import length_vector
+# from compas.geometry import subtract_vectors
+# from compas.geometry import cross_vectors
 from compas.geometry import delaunay_from_points
-from compas.datastructures import trimesh_face_circle
+# from compas.datastructures import trimesh_face_circle
 from compas.datastructures import mesh_unweld_edges
 from compas.utilities import pairwise
 from compas.utilities import geometric_key
+# from numpy import inner
 
 from ..datastructures import Mesh
 
@@ -45,32 +46,39 @@ def boundary_triangulation(outer_boundary, inner_boundaries, polyline_features=[
     if not delaunay:
         delaunay = delaunay_from_points
 
-    # generate planar Delaunay triangulation
-    vertices = [pt for boundary in [outer_boundary] + inner_boundaries + polyline_features for pt in boundary] + point_features
-    faces = delaunay(vertices)
+    # # generate planar Delaunay triangulation
+    # vertices = [pt for boundary in [outer_boundary] + inner_boundaries + polyline_features for pt in boundary] + point_features
+    # faces = delaunay(vertices)
 
-    delaunay_mesh = Mesh.from_vertices_and_faces(vertices, faces)
+    # delaunay_mesh = Mesh.from_vertices_and_faces(vertices, faces)
 
-    # delete false faces with aligned vertices
-    for fkey in list(delaunay_mesh.faces()):
-        a, b, c = [delaunay_mesh.vertex_coordinates(vkey) for vkey in delaunay_mesh.face_vertices(fkey)]
-        ab = subtract_vectors(b, a)
-        ac = subtract_vectors(c, a)
-        if length_vector(cross_vectors(ab, ac)) == 0:
-            delaunay_mesh.delete_face(fkey)
+    # # delete false faces with aligned vertices
+    # for fkey in list(delaunay_mesh.faces()):
+    #     a, b, c = [delaunay_mesh.vertex_coordinates(vkey) for vkey in delaunay_mesh.face_vertices(fkey)]
+    #     ab = subtract_vectors(b, a)
+    #     ac = subtract_vectors(c, a)
+    #     if length_vector(cross_vectors(ab, ac)) == 0:
+    #         delaunay_mesh.delete_face(fkey)
 
-    # delete faces outisde the borders
-    for fkey in list(delaunay_mesh.faces()):
-        centre = trimesh_face_circle(delaunay_mesh, fkey)[0]
-        if not is_point_in_polygon_xy(centre, outer_boundary) or any([is_point_in_polygon_xy(centre, inner_boundary) for inner_boundary in inner_boundaries]):
-            delaunay_mesh.delete_face(fkey)
+    # # delete faces outisde the borders
+    # for fkey in list(delaunay_mesh.faces()):
+    #     centre = trimesh_face_circle(delaunay_mesh, fkey)[0]
+    #     if not is_point_in_polygon_xy(centre, outer_boundary) or any([is_point_in_polygon_xy(centre, inner_boundary) for inner_boundary in inner_boundaries]):
+    #         delaunay_mesh.delete_face(fkey)
 
-    # topological cut along the feature polylines through unwelding
-    vertex_map = {geometric_key(delaunay_mesh.vertex_coordinates(vkey)): vkey for vkey in delaunay_mesh.vertices()}
-    edges = [edge for polyline in polyline_features for edge in pairwise([vertex_map[geometric_key(point)] for point in polyline])]
-    mesh_unweld_edges(delaunay_mesh, edges)
+    vertices, faces = delaunay(outer_boundary, polylines=polyline_features, polygons=inner_boundaries)
+    mesh = Mesh.from_vertices_and_faces(vertices, faces)
+    if polyline_features:
+        gkey_key = mesh.gkey_key()
+        edges = [edge for polyline in polyline_features for edge in pairwise([gkey_key[geometric_key(point)] for point in polyline])]
+        mesh_unweld_edges(mesh, edges)
 
-    return delaunay_mesh
+    # # topological cut along the feature polylines through unwelding
+    # vertex_map = {geometric_key(mesh.vertex_coordinates(vkey)): vkey for vkey in mesh.vertices()}
+    # edges = [edge for polyline in polyline_features for edge in pairwise([vertex_map[geometric_key(point)] for point in polyline])]
+    # mesh_unweld_edges(mesh, edges)
+
+    return mesh
 
 
 # ==============================================================================
