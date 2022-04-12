@@ -57,7 +57,7 @@ def automated_smoothing_surface_constraints(mesh, surface):
 
     index_vertex = {index: vertex for index, vertex in enumerate([vkey for bdry in mesh.vertices_on_boundaries() for vkey in bdry])}
     boundary = [mesh.vertex_coordinates(vertex) for bdry in mesh.vertices_on_boundaries() for vertex in bdry]
-    constraints.update({index_vertex[closest_point_in_cloud(point.xyz, boundary)[2]]: point for point in points})
+    constraints.update({index_vertex[closest_point_in_cloud(point.geometry, boundary)[2]]: point for point in points})
 
     return constraints
 
