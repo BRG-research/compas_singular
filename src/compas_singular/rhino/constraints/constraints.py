@@ -95,7 +95,7 @@ def automated_smoothing_constraints(mesh, rhinopoints=None, rhinocurves=None, rh
     cloud = [mesh.vertex_coordinates(vertex) for vertex in mesh.vertices()]
 
     if rhinopoints:
-        constrained_vertices.update({vertices[closest_point_in_cloud(point.xyz, cloud)[2]]: point for point in rhinopoints})
+        constrained_vertices.update({vertices[closest_point_in_cloud(point.geometry, cloud)[2]]: point for point in rhinopoints})
 
     if rhinomesh:
         constraints.update({vertex: rhinomesh for vertex in mesh.vertices()})

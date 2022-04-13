@@ -133,7 +133,7 @@ class QuadMesh(Mesh):
         """
         return [vkey for vkey in self.vertices() if self.is_vertex_singular(vkey)]
 
-    def vertex_index(self, vkey):
+    def vertex_topo_index(self, vkey):
         """Compute vertex index.
 
         Parameters

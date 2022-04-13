@@ -296,7 +296,7 @@ class PseudoQuadMesh(QuadMesh):
         else:
             return False
 
-    def vertex_index(self, vkey):
+    def vertex_topo_index(self, vkey):
         """Compute vertex index.
 
         Parameters
@@ -778,7 +778,7 @@ class PseudoQuadMesh(QuadMesh):
 
 #     return False
 
-# def vertex_index(mesh, vkey):
+# def vertex_topo_index(mesh, vkey):
 #     """Return the index of a vertex in a coarse quad mesh with potential poles stored in pseudo-quad faces.
 
 #     Parameters
