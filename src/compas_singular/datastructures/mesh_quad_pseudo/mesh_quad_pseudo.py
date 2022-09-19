@@ -103,7 +103,7 @@ class PseudoQuadMesh(QuadMesh):
 
         data_face_pole = {}
         for fkey, vkey in iter(attributes['face_pole'].items()):
-            data_face_pole[literal_eval(fkey)] = vkey
+            data_face_pole[literal_eval(str(fkey))] = vkey
         self.attributes['face_pole'] = data_face_pole
 
     @classmethod
