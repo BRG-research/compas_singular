@@ -20,6 +20,7 @@ class QuadMesh(Mesh):
 
     def __init__(self):
         super(QuadMesh, self).__init__()
+        
         self.data['data']['attributes']['strips'] = {}
         self.data['data']['attributes']['polyedges'] = {}
 

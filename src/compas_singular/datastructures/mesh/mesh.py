@@ -17,6 +17,12 @@ class Mesh(Mesh):
     def __init__(self):
         super(Mesh, self).__init__()
 
+    @property
+    def data(self):
+        return {'data': super(Mesh, self).data}
+
+
+
     def to_vertices_and_faces(self, keep_keys=True):
 
         if keep_keys:
