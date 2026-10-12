@@ -6,7 +6,6 @@ funded by l'École des Ponts ParisTech and the Block Research Group,
 under the supervision of Prof Olivier Baverel and Prof Philippe Block,
 as well as Dr Romain Mesnil, Dr Matthias Rippmann and Dr Tom Van Mele.
 
-This version is a fork of [BRG-research/compas_singular](https://github.com/BRG-research/compas_singular),
-maintained by Casper Bladt.
+The COMPAS 2 version (2026) is maintained by Casper Bladt.
 
 `compas_singular` is built on the [COMPAS](https://compas.dev) framework.
