@@ -1,6 +1,7 @@
 #! python3
 # r: compas
 # r: pydantic
+# r: compas_singular
 """**Attach this document to the standalone MCP server. Toggle on, toggle off.**
 
     reads   Outer / Inner / Guides / PointFeatures    the domain

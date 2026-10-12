@@ -1,6 +1,7 @@
 #! python3
 # r: compas
 # r: pydantic
+# r: compas_singular
 
 """Step 8 -- the dual of a dense quad mesh.
 

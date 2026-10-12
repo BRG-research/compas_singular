@@ -3,6 +3,7 @@
 # r: compas
 # r: pydantic
 # r: compas_rui
+# r: compas_singular
 
 """Step 5 -- set the density of each strip.
 

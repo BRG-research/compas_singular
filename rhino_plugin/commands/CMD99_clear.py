@@ -1,6 +1,7 @@
 #! python3
 # r: compas
 # r: pydantic
+# r: compas_singular
 
 """Utility -- clear chosen project layers.
 

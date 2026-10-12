@@ -2,6 +2,7 @@
 
 # r: compas
 # r: pydantic
+# r: compas_singular
 
 """Utility -- export one picked mesh to a JSON file.
 

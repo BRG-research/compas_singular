@@ -3,6 +3,7 @@
 # r: compas
 # r: pydantic
 # r: compas_rui
+# r: compas_singular
 
 """Step 4 -- edit the coarse layout by hand.
 

@@ -3,6 +3,7 @@
 # r: compas
 # r: pydantic
 # r: compas_rui
+# r: compas_singular
 
 """Optional, after step 6 -- edit the final mesh by hand.
 

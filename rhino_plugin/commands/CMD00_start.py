@@ -2,6 +2,7 @@
 
 # r: compas
 # r: pydantic
+# r: compas_singular
 
 """Step 1 -- reset the project.
 

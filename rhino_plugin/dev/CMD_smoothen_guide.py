@@ -1,6 +1,7 @@
 #! python3
 # r: compas
 # r: pydantic
+# r: compas_singular
 
 """Smooth a dense quad mesh with chains of vertices attached to guide curves.
 

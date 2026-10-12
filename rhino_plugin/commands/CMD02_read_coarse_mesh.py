@@ -2,6 +2,7 @@
 
 # r: compas
 # r: pydantic
+# r: compas_singular
 
 """Step 3 (alternative) -- read a coarse layout drawn over the domain boundaries.
 

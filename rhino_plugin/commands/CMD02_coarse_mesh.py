@@ -2,6 +2,7 @@
 
 # r: compas
 # r: pydantic
+# r: compas_singular
 
 """Step 3 -- generate the coarse layout, by the skeleton or the frame-field route.
 

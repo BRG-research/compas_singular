@@ -2,6 +2,7 @@
 
 # r: compas
 # r: pydantic
+# r: compas_singular
 
 """Utility -- open a project JSON into this document.
 

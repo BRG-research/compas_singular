@@ -1,3 +1,4 @@
+# r: compas_singular
 """Why the symmetry of the drawing was or was not detected. READ-ONLY.
 
 ``Symmetry.detect`` answers one bit per element -- match or no match at 1e-6,

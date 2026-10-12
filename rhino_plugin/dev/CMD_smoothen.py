@@ -1,6 +1,7 @@
 #! python3
 # r: compas
 # r: pydantic
+# r: compas_singular
 
 from compas_singular.rhino.project import get_settings
 

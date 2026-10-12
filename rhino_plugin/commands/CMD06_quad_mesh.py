@@ -2,6 +2,7 @@
 
 # r: compas
 # r: pydantic
+# r: compas_singular
 
 """Step 6 -- densify the coarse layout into the quad mesh.
 

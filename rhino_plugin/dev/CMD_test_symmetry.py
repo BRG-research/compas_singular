@@ -1,6 +1,7 @@
 #! python3
 # r: compas
 # r: pydantic
+# r: compas_singular
 
 """**TEST -- the whole symmetry workflow on this document, in one command.**
 

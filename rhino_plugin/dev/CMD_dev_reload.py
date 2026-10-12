@@ -1,4 +1,5 @@
 #! python3
+# r: compas_singular
 
 """Development only: make the next command import compas_singular afresh.
 

@@ -2,6 +2,7 @@
 # r: compas
 # r: pydantic
 # r: compas_fd
+# r: compas_singular
 """Step 7 -- smooth a dense quad mesh, whole or a region, optionally held to guide curves.
 
 Input: a mesh picked from TopologyProblem::QuadMesh or a sublayer. Output: the smoothed mesh on QuadMesh::Smoothed::<algorithm or Relaxed>.
