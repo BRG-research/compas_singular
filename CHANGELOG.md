@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-First release of the fork. It picks up from upstream commit `66024561` (April 2022).
+First release on PyPI. It picks up from commit `66024561` (April 2022), the last commit before this rewrite.
 
 ### Added
 

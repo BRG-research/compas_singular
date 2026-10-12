@@ -82,12 +82,11 @@ rhino = ["compas_rui >=0.6"]
 viewer = ["compas_viewer >=2.0", "PyOpenGL >=3.1"]
 
 [project.urls]
-Homepage = "https://bladtcasper.github.io/compas_singular"
-Documentation = "https://bladtcasper.github.io/compas_singular"
-Repository = "https://github.com/bladtcasper/compas_singular.git"
-Issues = "https://github.com/bladtcasper/compas_singular/issues"
-Changelog = "https://github.com/bladtcasper/compas_singular/blob/main/CHANGELOG.md"
-Upstream = "https://github.com/BRG-research/compas_singular"
+Homepage = "https://brg-research.github.io/compas_singular"
+Documentation = "https://brg-research.github.io/compas_singular"
+Repository = "https://github.com/BRG-research/compas_singular.git"
+Issues = "https://github.com/BRG-research/compas_singular/issues"
+Changelog = "https://github.com/BRG-research/compas_singular/blob/main/CHANGELOG.md"
 
 # The MCP server, also runnable as `python -m compas_singular.mcp`.
 [project.scripts]
