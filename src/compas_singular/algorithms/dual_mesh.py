@@ -44,8 +44,12 @@ def dual_mesh(mesh: Mesh, redistribute: bool = True) -> Mesh:
     """
     dual = mesh_conway_dual(mesh)
 
-    # renumbers the keys 0..n-1, which is what from_vertices_and_faces wants
-    vertices, faces = dual.to_vertices_and_faces()
+    # renumbers the keys 0..n-1, which is what from_vertices_and_faces wants -- done by
+    # hand, as compas_singular's Mesh.to_vertices_and_faces returns dicts by default
+    keys = list(dual.vertices())
+    index_of = {vkey: i for i, vkey in enumerate(keys)}
+    vertices = [dual.vertex_coordinates(vkey) for vkey in keys]
+    faces = [[index_of[vkey] for vkey in dual.face_vertices(fkey)] for fkey in dual.faces()]
 
     index = {TOL.geometric_key(xyz): i for i, xyz in enumerate(vertices)}
 

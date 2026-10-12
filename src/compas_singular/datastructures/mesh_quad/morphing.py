@@ -30,7 +30,7 @@ def fold_vertex_group(quad_mesh: QuadMesh, polyedges: list[list[int]]) -> dict[i
             is_edge_in_polyedges[edge] = True
 
     n = quad_mesh.number_of_vertices() * 2
-    vkey0 = quad_mesh.get_any_vertex()
+    vkey0 = next(iter(quad_mesh.vertices()))
     vkey_to_group = {vkey0: 0}
     to_visit = quad_mesh.vertex_neighbors(vkey0)
 
