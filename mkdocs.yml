@@ -1,14 +1,14 @@
 site_name: COMPAS Singular
-site_url: https://brg-research.github.io/compas_singular/
+site_url: https://blockresearchgroup.github.io/compas_singular/
 
-repo_name: BRG-research/compas_singular
-repo_url: https://github.com/BRG-research/compas_singular/
+repo_name: BlockResearchGroup/compas_singular
+repo_url: https://github.com/BlockResearchGroup/compas_singular/
 edit_uri: edit/dev/docs/
 
 copyright: Copyright &copy; 2019 - 2026, ETH Zurich - Block Research Group
 
 extra:
-  homepage: https://brg-research.github.io/compas_singular/
+  homepage: https://blockresearchgroup.github.io/compas_singular/
 
 theme:
   name: material

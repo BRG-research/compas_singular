@@ -18,7 +18,7 @@ pip install compas_singular
 For the latest development version, install from GitHub:
 
 ```bash
-pip install "compas_singular @ git+https://github.com/BRG-research/compas_singular.git@dev"
+pip install "compas_singular @ git+https://github.com/BlockResearchGroup/compas_singular.git@dev"
 ```
 
 Optional extras: `[viewer]` for the 3D viewer used by the examples, `[fd]` for
@@ -87,7 +87,7 @@ mesh = decomposition.quad_mesh(target_length=0.5)
 print(mesh.number_of_faces(), 'quads on route', decomposition.route())
 ```
 
-[`examples/`](https://github.com/BRG-research/compas_singular/tree/dev/examples) has thirteen worked examples, from this workflow to layout
+[`examples/`](https://github.com/BlockResearchGroup/compas_singular/tree/dev/examples) has thirteen worked examples, from this workflow to layout
 editing, patterns, guides, symmetry and dual blocks.
 
 ### Rhino 8
@@ -98,31 +98,31 @@ and need `compas_singular` installed in Rhino's Python. Until the package is
 published, install it with Rhino's interpreter (Rhino closed):
 
 ```bash
-%USERPROFILE%\.rhinocode\py39-rh8\python.exe -m pip install "compas_singular[rhino,fd] @ git+https://github.com/BRG-research/compas_singular.git@dev"
+%USERPROFILE%\.rhinocode\py39-rh8\python.exe -m pip install "compas_singular[rhino,fd] @ git+https://github.com/BlockResearchGroup/compas_singular.git@dev"
 ```
 
-The [Rhino page](https://brg-research.github.io/compas_singular/tutorial/rhino/) of the documentation describes the workflow and lists the commands.
+The [Rhino page](https://blockresearchgroup.github.io/compas_singular/tutorial/rhino/) of the documentation describes the workflow and lists the commands.
 
 ## First Steps
 
-The [documentation](https://brg-research.github.io/compas_singular/) has an [overview](https://brg-research.github.io/compas_singular/tutorial/overview/) of the workflow, the [examples](https://brg-research.github.io/compas_singular/examples/) with pictures, and the [API reference](https://brg-research.github.io/compas_singular/reference/compas_singular.algorithms/).
+The [documentation](https://blockresearchgroup.github.io/compas_singular/) has an [overview](https://blockresearchgroup.github.io/compas_singular/tutorial/overview/) of the workflow, the [examples](https://blockresearchgroup.github.io/compas_singular/examples/) with pictures, and the [API reference](https://blockresearchgroup.github.io/compas_singular/reference/compas_singular.algorithms/).
 
 ## Questions and feedback
 
-Open an issue on the [issue tracker](https://github.com/BRG-research/compas_singular/issues).
+Open an issue on the [issue tracker](https://github.com/BlockResearchGroup/compas_singular/issues).
 
 ## Issue tracker
 
-Bugs and feature requests: <https://github.com/BRG-research/compas_singular/issues>.
+Bugs and feature requests: <https://github.com/BlockResearchGroup/compas_singular/issues>.
 Please include a script that reproduces the problem.
 
 ## Contributing
 
-See [CONTRIBUTING.md](https://github.com/BRG-research/compas_singular/blob/dev/CONTRIBUTING.md).
+See [CONTRIBUTING.md](https://github.com/BlockResearchGroup/compas_singular/blob/dev/CONTRIBUTING.md).
 
 ## Changelog
 
-See [CHANGELOG.md](https://github.com/BRG-research/compas_singular/blob/dev/CHANGELOG.md), which also lists what changed since the
+See [CHANGELOG.md](https://github.com/BlockResearchGroup/compas_singular/blob/dev/CHANGELOG.md), which also lists what changed since the
 2022 version (commit `66024561`).
 
 ## License

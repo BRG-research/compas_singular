@@ -23,7 +23,7 @@ pip install "compas_singular[viewer]"
 Install the latest development version from GitHub.
 
 ```bash
-pip install "compas_singular @ git+https://github.com/BRG-research/compas_singular.git@dev"
+pip install "compas_singular @ git+https://github.com/BlockResearchGroup/compas_singular.git@dev"
 ```
 
 ## Development
@@ -32,7 +32,7 @@ To work on the code, clone the repository and install it editable from local sou
 with the `viewer` extra to run the examples.
 
 ```bash
-git clone https://github.com/BRG-research/compas_singular.git
+git clone https://github.com/BlockResearchGroup/compas_singular.git
 cd compas_singular
 pip install -e ".[viewer]"
 ```
@@ -73,7 +73,7 @@ They run on Rhino 8's CPython 3.9 and need `compas_singular` installed in Rhino'
 Close Rhino, then install the package with Rhino's own interpreter.
 
 ```bash
-%USERPROFILE%\.rhinocode\py39-rh8\python.exe -m pip install "compas_singular[rhino,fd] @ git+https://github.com/BRG-research/compas_singular.git@dev"
+%USERPROFILE%\.rhinocode\py39-rh8\python.exe -m pip install "compas_singular[rhino,fd] @ git+https://github.com/BlockResearchGroup/compas_singular.git@dev"
 ```
 
 The modules under `compas_singular.rhino` need `compas_rhino` and are only importable inside Rhino.

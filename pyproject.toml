@@ -82,11 +82,11 @@ rhino = ["compas_rui >=0.6"]
 viewer = ["compas_viewer >=2.0", "PyOpenGL >=3.1"]
 
 [project.urls]
-Homepage = "https://brg-research.github.io/compas_singular"
-Documentation = "https://brg-research.github.io/compas_singular"
-Repository = "https://github.com/BRG-research/compas_singular.git"
-Issues = "https://github.com/BRG-research/compas_singular/issues"
-Changelog = "https://github.com/BRG-research/compas_singular/blob/main/CHANGELOG.md"
+Homepage = "https://blockresearchgroup.github.io/compas_singular"
+Documentation = "https://blockresearchgroup.github.io/compas_singular"
+Repository = "https://github.com/BlockResearchGroup/compas_singular.git"
+Issues = "https://github.com/BlockResearchGroup/compas_singular/issues"
+Changelog = "https://github.com/BlockResearchGroup/compas_singular/blob/main/CHANGELOG.md"
 
 # The MCP server, also runnable as `python -m compas_singular.mcp`.
 [project.scripts]
@@ -142,9 +142,9 @@ doctest_optionflags = [
 # replace bumpversion.cfg
 # ============================================================================
 
-# bump-my-version (run by `invoke release`) only dates the CHANGELOG heading and makes the commit and
-# the tag; setuptools-scm turns the tag into the package version. current_version is the last release
-# number: nothing is released yet, so the first release is `invoke release minor`, which tags v0.2.0.
+# bump-my-version only dates the CHANGELOG heading and updates current_version; setuptools-scm turns the
+# git tag into the package version. Release with `bump-my-version bump <part> --no-tag` in a PR, then tag
+# the merge commit. Not `invoke release`: it runs ruff format over src and tests and pushes every local tag.
 [tool.bumpversion]
 current_version = "0.1.0"
 message = "Bump version to {new_version}"
