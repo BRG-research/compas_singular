@@ -183,8 +183,8 @@ nav:
       - topology: reference/compas_singular.topology.md
       - utilities: reference/compas_singular.utilities.md
   - Other:
-      - publications.md
-      - citing.md
-      - changelog.md
-      - license.md
-      - acknowledgements.md
+      - other/publications.md
+      - other/citing.md
+      - other/changelog.md
+      - other/license.md
+      - other/acknowledgements.md
