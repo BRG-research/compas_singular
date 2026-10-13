@@ -142,9 +142,9 @@ doctest_optionflags = [
 # replace bumpversion.cfg
 # ============================================================================
 
-# bump-my-version only dates the CHANGELOG heading and updates current_version; setuptools-scm turns the
-# git tag into the package version. Release with `bump-my-version bump <part> --no-tag` in a PR, then tag
-# the merge commit. Not `invoke release`: it runs ruff format over src and tests and pushes every local tag.
+# bump-my-version (run by `invoke release`) dates the CHANGELOG heading, updates current_version, commits
+# and tags; setuptools-scm turns the tag into the package version. `invoke release` ends with
+# `git push --tags`, so only tags that belong on the remote may exist locally when it runs.
 [tool.bumpversion]
 current_version = "0.1.0"
 message = "Bump version to {new_version}"
