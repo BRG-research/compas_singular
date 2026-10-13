@@ -1,4 +1,5 @@
 """The MCP spool: round trip, atomic claim, ordering, timeouts, crash litter."""
+
 import json
 import os
 
@@ -59,7 +60,7 @@ def test_crash_litter_is_pruned_but_the_heartbeat_is_not():
     spool.heartbeat("plate.3dm", force=True)
     spool.post("ping")
     spool.post("ping")
-    spool.take()                                    # leave a .req.taken behind
+    spool.take()  # leave a .req.taken behind
     assert spool.prune(max_age=-1) >= 2
     assert spool.link_state() is not None
     spool.clear_link()
@@ -90,7 +91,7 @@ def test_a_timed_out_request_is_withdrawn_so_it_cannot_fire_late():
 
 def test_a_request_rhino_already_took_cannot_be_withdrawn_and_says_so():
     rid = spool.post("push", ttl=0.2)
-    spool.take()                                    # Rhino has it, and is slow
+    spool.take()  # Rhino has it, and is slow
     out = spool.wait(rid, timeout=0.2)
     assert out.get("in_progress") is True
     assert "ALREADY TAKEN" in out["reason"]
@@ -101,7 +102,7 @@ def test_an_expired_request_is_dropped_by_take_never_served(mcp_spool):
     path = os.path.join(mcp_spool, rid + ".req.json")
     with open(path) as stream:
         stale = json.load(stream)
-    stale["expires"] = stale["created"] - 1.0       # a server that died mid-wait
+    stale["expires"] = stale["created"] - 1.0  # a server that died mid-wait
     spool._write_json(path, stale)
     fresh = spool.post("ping", ttl=30)
     job = spool.take()

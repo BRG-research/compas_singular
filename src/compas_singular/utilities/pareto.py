@@ -5,11 +5,7 @@ from __future__ import print_function
 
 from typing import Iterable
 
-__all__ = [
-    'extract_pareto_indices',
-    'is_dominating'
-
-]
+__all__ = ["extract_pareto_indices", "is_dominating"]
 
 
 def extract_pareto_indices(data: list[Iterable[float]], k: float = 1.0) -> list[int]:
@@ -34,7 +30,7 @@ def extract_pareto_indices(data: list[Iterable[float]], k: float = 1.0) -> list[
            Available at: https://en.wikipedia.org/wiki/Multi-objective_optimization.
     """
 
-    return [i for i, Xi in enumerate(data) if len([Xj for Xj in data if is_dominating(Xj, Xi, 1/k)]) == 0]
+    return [i for i, Xi in enumerate(data) if len([Xj for Xj in data if is_dominating(Xj, Xi, 1 / k)]) == 0]
 
 
 def is_dominating(X1: Iterable[float], X2: Iterable[float], k: float = 1.0) -> bool:

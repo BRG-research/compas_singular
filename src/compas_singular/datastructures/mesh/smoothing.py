@@ -2,6 +2,7 @@
 
 Default is ``boundary_constrained_smoothing``; prefer ``'area'`` on a graded mesh.
 """
+
 from __future__ import annotations
 
 import warnings
@@ -30,16 +31,16 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    'closest_point_on_constraint',
-    'mesh_boundary_loops',
-    'mesh_boundary_polylines',
-    'mesh_boundary_corners',
-    'constrained_smoothing',
-    'automated_boundary_constraints',
-    'boundary_constrained_smoothing',
-    'boundary_smoothing',
-    'region_smoothing',
-    'relaxation',
+    "closest_point_on_constraint",
+    "mesh_boundary_loops",
+    "mesh_boundary_polylines",
+    "mesh_boundary_corners",
+    "constrained_smoothing",
+    "automated_boundary_constraints",
+    "boundary_constrained_smoothing",
+    "boundary_smoothing",
+    "region_smoothing",
+    "relaxation",
 ]
 
 
@@ -48,20 +49,17 @@ __all__ = [
 Constraint = Any
 
 #: The smoothing algorithms accepted by the ``algorithm`` parameters.
-ALGORITHMS = ('area', 'centroid', 'centerofmass')
+ALGORITHMS = ("area", "centroid", "centerofmass")
 
 
 # ==============================================================================
 # Closest point
 # ==============================================================================
 
+
 def _is_xyz(item: Any) -> bool:
     """Return whether an item is a bare sequence of three numbers."""
-    return (
-        isinstance(item, (list, tuple))
-        and len(item) == 3
-        and all(isinstance(i, (int, float)) for i in item)
-    )
+    return isinstance(item, (list, tuple)) and len(item) == 3 and all(isinstance(i, (int, float)) for i in item)
 
 
 def closest_point_on_constraint(constraint: Constraint, xyz: list[float], discretisation: int = 128) -> list[float] | None:
@@ -122,7 +120,7 @@ def closest_point_on_constraint(constraint: Constraint, xyz: list[float], discre
         return _closest_point_on_curve(constraint, xyz, discretisation)
 
     # anything else that knows how to project a point: a GuideCurve, Rhino or OCC surfaces, ...
-    method = getattr(constraint, 'closest_point', None)
+    method = getattr(constraint, "closest_point", None)
     if callable(method):
         try:
             return list(method(Point(*xyz)))[:3]
@@ -130,11 +128,11 @@ def closest_point_on_constraint(constraint: Constraint, xyz: list[float], discre
             pass
 
     # curves without an analytical projection: discretise and project on the polyline
-    method = getattr(constraint, 'to_polyline', None)
+    method = getattr(constraint, "to_polyline", None)
     if callable(method):
         return closest_point_on_polyline(xyz, method(n=discretisation))
 
-    raise TypeError(f'Cannot compute the closest point on a constraint of type {type(constraint)}.')
+    raise TypeError(f"Cannot compute the closest point on a constraint of type {type(constraint)}.")
 
 
 #: Curve types whose missing ``closest_point`` has already been warned about by
@@ -152,9 +150,11 @@ def _closest_point_on_curve(curve: Curve, xyz: list[float], discretisation: int)
         if type(curve) not in _EXPLAINED_FALLBACKS:
             _EXPLAINED_FALLBACKS.add(type(curve))
             warnings.warn(
-                f'{type(curve).__name__} does not implement closest_point, so points are projected '
-                f'onto a {discretisation}-segment polyline of it instead -- up to a sagitta off the '
-                'curve itself. Shown once per curve type.', stacklevel=2)
+                f"{type(curve).__name__} does not implement closest_point, so points are projected "
+                f"onto a {discretisation}-segment polyline of it instead -- up to a sagitta off the "
+                "curve itself. Shown once per curve type.",
+                stacklevel=2,
+            )
         closest = None
     if closest is None:
         return closest_point_on_polyline(xyz, curve.to_polyline(n=discretisation))
@@ -174,7 +174,7 @@ class _PolylineProjector:
     def __init__(self, polyline: Polyline | Sequence[Sequence[float]], window: int = 10) -> None:
         points = [list(point) for point in polyline]
         if len(points) < 2:
-            raise ValueError('A polyline constraint needs at least two points.')
+            raise ValueError("A polyline constraint needs at least two points.")
         self.segments = list(pairwise(points))
         self.closed = distance_point_point(points[0], points[-1]) < 1e-9
         self.window = window
@@ -213,6 +213,7 @@ class _PolylineProjector:
 # ==============================================================================
 # Boundary
 # ==============================================================================
+
 
 def mesh_boundary_loops(mesh: Mesh) -> list[list[int]]:
     """Collect the boundaries of a mesh as ordered, non-repeating loops of vertices.
@@ -332,16 +333,13 @@ def closest_curve(mesh: Mesh, vertices: list[int], curves: Sequence[Constraint])
 
     closest, minimum = None, None
     for curve in curves:
-        distance = sum(
-            distance_point_point(point, closest_point_on_constraint(curve, point))
-            for point in points) / len(points)
+        distance = sum(distance_point_point(point, closest_point_on_constraint(curve, point)) for point in points) / len(points)
         if minimum is None or distance < minimum:
             closest, minimum = curve, distance
     return closest
 
 
-def automated_boundary_constraints(mesh: Mesh, curves: Sequence[Constraint] | None = None, corner_angle: float = pi / 6,
-                                   fix_corners: bool = True) -> dict[int, Constraint]:
+def automated_boundary_constraints(mesh: Mesh, curves: Sequence[Constraint] | None = None, corner_angle: float = pi / 6, fix_corners: bool = True) -> dict[int, Constraint]:
     """Constrain every boundary vertex to the boundary curve it belongs to, pinning kinks.
 
     Parameters
@@ -389,6 +387,7 @@ def automated_boundary_constraints(mesh: Mesh, curves: Sequence[Constraint] | No
 # Smoothing
 # ==============================================================================
 
+
 def _smoothers(algorithm: str | Sequence[str]) -> list[Any]:
     """The smoothing functions for one algorithm name or a sequence of them, in order.
 
@@ -399,23 +398,28 @@ def _smoothers(algorithm: str | Sequence[str]) -> list[Any]:
     """
     names = [algorithm] if isinstance(algorithm, str) else list(algorithm)
     if not names:
-        raise ValueError(f'No smoothing algorithm given. Pick one or more of {", ".join(ALGORITHMS)}.')
+        raise ValueError(f"No smoothing algorithm given. Pick one or more of {', '.join(ALGORITHMS)}.")
     unknown = [name for name in names if name not in ALGORITHMS]
     if unknown:
-        raise ValueError(f'{", ".join(map(repr, unknown))} is not a recognised smoothing algorithm. '
-                         f'Pick one or more of {", ".join(ALGORITHMS)}.')
+        raise ValueError(f"{', '.join(map(repr, unknown))} is not a recognised smoothing algorithm. Pick one or more of {', '.join(ALGORITHMS)}.")
 
     smoothers = {
-        'area': lambda mesh, **kwargs: mesh.smooth_area(**kwargs),
-        'centroid': lambda mesh, **kwargs: mesh.smooth_centroid(**kwargs),
-        'centerofmass': mesh_smooth_centerofmass,
+        "area": lambda mesh, **kwargs: mesh.smooth_area(**kwargs),
+        "centroid": lambda mesh, **kwargs: mesh.smooth_centroid(**kwargs),
+        "centerofmass": mesh_smooth_centerofmass,
     }
     return [smoothers[name] for name in names]
 
 
-def constrained_smoothing(mesh: Mesh, kmax: int = 100, damping: float = 0.5, constraints: dict[int, Constraint] | None = None,
-                          algorithm: str | Sequence[str] = 'centroid', fixed: Sequence[int] | None = None,
-                          symmetric: bool | None = None) -> None:
+def constrained_smoothing(
+    mesh: Mesh,
+    kmax: int = 100,
+    damping: float = 0.5,
+    constraints: dict[int, Constraint] | None = None,
+    algorithm: str | Sequence[str] = "centroid",
+    fixed: Sequence[int] | None = None,
+    symmetric: bool | None = None,
+) -> None:
     """Smooth a mesh in place, moving each constrained vertex back onto its constraint after every iteration.
 
     Parameters
@@ -455,11 +459,12 @@ def constrained_smoothing(mesh: Mesh, kmax: int = 100, damping: float = 0.5, con
     constraints = constraints or {}
 
     if symmetric is None:
-        symmetric = bool(mesh.attributes.get('orbits'))
+        symmetric = bool(mesh.attributes.get("orbits"))
     orbit_maps = None
     if symmetric:
         from compas_singular.symmetry.replicate import orbit_maps as mesh_orbit_maps
         from compas_singular.symmetry.replicate import symmetrise_positions
+
         orbit_maps = mesh_orbit_maps(mesh)
 
     # polylines get a projector that only searches around the previous result
@@ -486,16 +491,22 @@ def constrained_smoothing(mesh: Mesh, kmax: int = 100, damping: float = 0.5, con
             xyz = project(vertex, constraint, mesh.vertex_coordinates(vertex))
             if xyz is None:
                 continue
-            mesh.vertex_attributes(vertex, 'xyz', xyz)
+            mesh.vertex_attributes(vertex, "xyz", xyz)
 
     for smooth in smoothers:
         smooth(mesh, fixed=fixed, kmax=kmax, damping=damping, callback=callback, callback_args=[mesh, constraints])
 
 
-def boundary_constrained_smoothing(mesh: Mesh, curves: Sequence[Constraint] | None = None, kmax: int = 100, damping: float = 0.5,
-                                   algorithm: str | Sequence[str] = 'centroid', corner_angle: float = pi / 6,
-                                   fix_corners: bool = True,
-                                   constraints: dict[int, Constraint] | None = None) -> dict[int, Constraint]:
+def boundary_constrained_smoothing(
+    mesh: Mesh,
+    curves: Sequence[Constraint] | None = None,
+    kmax: int = 100,
+    damping: float = 0.5,
+    algorithm: str | Sequence[str] = "centroid",
+    corner_angle: float = pi / 6,
+    fix_corners: bool = True,
+    constraints: dict[int, Constraint] | None = None,
+) -> dict[int, Constraint]:
     """Smooth a mesh with its boundary vertices sliding along the boundary and corners fixed.
 
     Parameters
@@ -528,21 +539,25 @@ def boundary_constrained_smoothing(mesh: Mesh, curves: Sequence[Constraint] | No
         The constraints that were applied, as vertex keys pointing to point, polyline or
         curve objects. The mesh itself is modified in place.
     """
-    boundary_constraints = automated_boundary_constraints(
-        mesh, curves=curves, corner_angle=corner_angle, fix_corners=fix_corners)
+    boundary_constraints = automated_boundary_constraints(mesh, curves=curves, corner_angle=corner_angle, fix_corners=fix_corners)
 
     if constraints:
         boundary_constraints.update(constraints)
 
-    constrained_smoothing(
-        mesh, kmax=kmax, damping=damping, constraints=boundary_constraints, algorithm=algorithm)
+    constrained_smoothing(mesh, kmax=kmax, damping=damping, constraints=boundary_constraints, algorithm=algorithm)
 
     return boundary_constraints
 
 
-def boundary_smoothing(mesh: Mesh, curves: Sequence[Constraint] | None = None, kmax: int = 100, damping: float = 0.5,
-                       algorithm: str | Sequence[str] = 'area', corner_angle: float = pi / 6,
-                       fix_corners: bool = True) -> dict[int, Constraint]:
+def boundary_smoothing(
+    mesh: Mesh,
+    curves: Sequence[Constraint] | None = None,
+    kmax: int = 100,
+    damping: float = 0.5,
+    algorithm: str | Sequence[str] = "area",
+    corner_angle: float = pi / 6,
+    fix_corners: bool = True,
+) -> dict[int, Constraint]:
     """Smooth only the boundary of a mesh, sliding its vertices along the boundary.
 
     Unlike ``boundary_constrained_smoothing``, every interior vertex is fixed: the
@@ -579,17 +594,16 @@ def boundary_smoothing(mesh: Mesh, curves: Sequence[Constraint] | None = None, k
     boundary = set(flatten(mesh.vertices_on_boundaries()))
     fixed = [vertex for vertex in mesh.vertices() if vertex not in boundary]
 
-    constraints = automated_boundary_constraints(
-        mesh, curves=curves, corner_angle=corner_angle, fix_corners=fix_corners)
+    constraints = automated_boundary_constraints(mesh, curves=curves, corner_angle=corner_angle, fix_corners=fix_corners)
 
-    constrained_smoothing(
-        mesh, kmax=kmax, damping=damping, constraints=constraints, algorithm=algorithm, fixed=fixed)
+    constrained_smoothing(mesh, kmax=kmax, damping=damping, constraints=constraints, algorithm=algorithm, fixed=fixed)
 
     return constraints
 
 
-def region_smoothing(mesh: Mesh, vertices: Sequence[int] | dict[int, float], kmax: int = 50, damping: float = 0.5,
-                     blend: int = 3, constraints: dict[int, Constraint] | None = None) -> dict[int, float]:
+def region_smoothing(
+    mesh: Mesh, vertices: Sequence[int] | dict[int, float], kmax: int = 50, damping: float = 0.5, blend: int = 3, constraints: dict[int, Constraint] | None = None
+) -> dict[int, float]:
     """Area-weighted smoothing of one region, with damping tapered to zero over ``blend`` rings.
 
     Everything outside the region is fixed; the taper avoids a crease at its edge.
@@ -626,6 +640,7 @@ def region_smoothing(mesh: Mesh, vertices: Sequence[int] | dict[int, float], kma
         The damping weights that were applied, as vertex keys pointing to a weight
         between 0 and 1. The mesh itself is modified in place.
     """
+
     def taper(core: set[int], rings: int) -> dict[int, float]:
         """Per-vertex damping weight: 1 in the core, falling to 0 outside the blend.
 
@@ -660,8 +675,7 @@ def region_smoothing(mesh: Mesh, vertices: Sequence[int] | dict[int, float], kma
 
     if constraints is None:
         constraints = automated_boundary_constraints(mesh)
-    constraints = {vertex: constraint for vertex, constraint in constraints.items()
-                   if weights.get(vertex, 0.0) > 0.0}
+    constraints = {vertex: constraint for vertex, constraint in constraints.items() if weights.get(vertex, 0.0) > 0.0}
 
     for _ in range(kmax):
         # every target is collected before any vertex moves, so the result does not
@@ -677,14 +691,13 @@ def region_smoothing(mesh: Mesh, vertices: Sequence[int] | dict[int, float], kma
         for vertex, target in targets.items():
             xyz = mesh.vertex_coordinates(vertex)
             step = damping * weights[vertex]
-            mesh.vertex_attributes(vertex, 'xyz', [
-                xyz[i] + step * (target[i] - xyz[i]) for i in range(3)])
+            mesh.vertex_attributes(vertex, "xyz", [xyz[i] + step * (target[i] - xyz[i]) for i in range(3)])
 
         # a region touching the outline must slide along it, not be dragged inward
         for vertex, constraint in constraints.items():
             moved = closest_point_on_constraint(constraint, mesh.vertex_coordinates(vertex))
             if moved is not None:
-                mesh.vertex_attributes(vertex, 'xyz', moved)
+                mesh.vertex_attributes(vertex, "xyz", moved)
 
     return weights
 
@@ -692,6 +705,7 @@ def region_smoothing(mesh: Mesh, vertices: Sequence[int] | dict[int, float], kma
 # ==============================================================================
 # Relaxation
 # ==============================================================================
+
 
 @lru_cache(maxsize=None)
 def _fd_polyline_constraint_class() -> type:
@@ -745,13 +759,13 @@ def _fd_constraint(constraint: Constraint) -> Any:
         return FDConstraint(constraint)
     except Exception as exc:
         raise TypeError(
-            f'relaxation cannot hold a vertex on a {type(constraint).__name__}. Use a point, a '
-            'polyline, a compas Vector, Frame, Line, Plane, Circle, NurbsCurve or NurbsSurface, '
-            'or a compas_fd Constraint.') from exc
+            f"relaxation cannot hold a vertex on a {type(constraint).__name__}. Use a point, a "
+            "polyline, a compas Vector, Frame, Line, Plane, Circle, NurbsCurve or NurbsSurface, "
+            "or a compas_fd Constraint."
+        ) from exc
 
 
-def relaxation(mesh: Mesh, fixed: str | Sequence[int] = 'corners', constraints: dict[int, Constraint] | None = None,
-               q_factor: float = 100.0) -> None:
+def relaxation(mesh: Mesh, fixed: str | Sequence[int] = "corners", constraints: dict[int, Constraint] | None = None, q_factor: float = 100.0) -> None:
     """Force-density relaxation of a mesh with ``compas_fd``, boundary edges ``q_factor`` times stiffer.
 
     Parameters
@@ -787,13 +801,12 @@ def relaxation(mesh: Mesh, fixed: str | Sequence[int] = 'corners', constraints: 
     """
     from compas_fd.solvers import fd_constrained_numpy
 
-    if fixed == 'corners':
+    if fixed == "corners":
         fixed = mesh_boundary_corners(mesh)
-    elif fixed == 'boundary':
+    elif fixed == "boundary":
         fixed = list(flatten(mesh_boundary_loops(mesh)))
     elif isinstance(fixed, str):
-        raise ValueError(f"{fixed!r} is not a recognised set of fixed vertices. "
-                         "Pick 'corners', 'boundary', or give the vertex keys.")
+        raise ValueError(f"{fixed!r} is not a recognised set of fixed vertices. Pick 'corners', 'boundary', or give the vertex keys.")
     fixed = set(fixed)
 
     # compas_fd works on indices, which match the keys only on a mesh that never lost a vertex
@@ -824,4 +837,4 @@ def relaxation(mesh: Mesh, fixed: str | Sequence[int] = 'corners', constraints: 
     )
 
     for vertex, index in vertex_index.items():
-        mesh.vertex_attributes(vertex, 'xyz', [float(x) for x in result.vertices[index]])
+        mesh.vertex_attributes(vertex, "xyz", [float(x) for x in result.vertices[index]])

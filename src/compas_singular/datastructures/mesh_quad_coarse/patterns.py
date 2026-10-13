@@ -19,12 +19,12 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    'PATTERNS',
-    'create_pattern',
-    'pattern_morph',
-    'pattern_morph_triangle',
-    'patch_divisions',
-    'reconcile_strip_densities',
+    "PATTERNS",
+    "create_pattern",
+    "pattern_morph",
+    "pattern_morph_triangle",
+    "patch_divisions",
+    "reconcile_strip_densities",
 ]
 
 
@@ -34,9 +34,9 @@ __all__ = [
 
 
 PATTERNS = [
-    'ortho',
-    'diagonal',
-    'fan',
+    "ortho",
+    "diagonal",
+    "fan",
 ]
 
 
@@ -63,22 +63,24 @@ def create_pattern(type: str, nu: int, nw: int) -> tuple[list[tuple[float, float
         If ``kind`` is not a known pattern, or the divisions do not suit it.
     """
     PATTERNS = {
-        'ortho': _pattern_ortho,
-        'diagonal': _pattern_diagonal,
-        'fan': _pattern_fan,
+        "ortho": _pattern_ortho,
+        "diagonal": _pattern_diagonal,
+        "fan": _pattern_fan,
         # internal: what 'fan' becomes on a triangular patch. Its parameters
         # are barycentric, so it pairs with pattern_morph_triangle, not
         # pattern_morph -- which is why it is not in the public PATTERNS.
-        'fan_triangle': _pattern_fan_triangle,
+        "fan_triangle": _pattern_fan_triangle,
     }
 
     if type not in PATTERNS:
-        raise ValueError('unknown pattern {!r} -- pick one of {}'.format(type, sorted(PATTERNS)))
+        raise ValueError("unknown pattern {!r} -- pick one of {}".format(type, sorted(PATTERNS)))
     return PATTERNS[type](max(1, nu), max(1, nw))
+
 
 # ==============================================================================
 # patterns
 # ==============================================================================
+
 
 def _pattern_ortho(nu: int, nw: int) -> tuple[list[tuple[float, float]], list[list[int]]]:
     """The plain grid: ``nu`` by ``nw`` quads on the unit square, ordered as ``discrete_coons_patch``.
@@ -95,11 +97,7 @@ def _pattern_ortho(nu: int, nw: int) -> tuple[list[tuple[float, float]], list[li
     uw = [(i / nu, j / nw) for i in range(nu + 1) for j in range(nw + 1)]
 
     m = nw + 1
-    faces = [
-        [i * m + j, i * m + j + 1, (i + 1) * m + j + 1, (i + 1) * m + j]
-        for i in range(nu)
-        for j in range(nw)
-    ]
+    faces = [[i * m + j, i * m + j + 1, (i + 1) * m + j + 1, (i + 1) * m + j] for i in range(nu) for j in range(nw)]
     return uw, faces
 
 
@@ -124,9 +122,7 @@ def _pattern_diagonal(nu: int, nw: int) -> tuple[list[tuple[float, float]], list
     """
     if nu != nw or nu % 2:
         raise ValueError(
-            'the diagonal pattern needs the same even number of divisions on '
-            'all four sides of a patch, got {} by {} -- run '
-            'reconcile_strip_densities() first'.format(nu, nw)
+            "the diagonal pattern needs the same even number of divisions on all four sides of a patch, got {} by {} -- run reconcile_strip_densities() first".format(nu, nw)
         )
 
     uw, quads = _pattern_ortho(nu, nw)
@@ -153,10 +149,10 @@ def _pattern_diagonal(nu: int, nw: int) -> tuple[list[tuple[float, float]], list
 # (u, w). Ordered so the angular sweep runs the same way around every pole,
 # which keeps the face winding consistent with the grid templates.
 _FAN_QUADRANTS = [
-    ((0.0, 0.0), (0.5, 0.0), (0.0, 0.5)),   # at a, between sides ab and ad
-    ((1.0, 0.0), (1.0, 0.5), (0.5, 0.0)),   # at b, between sides bc and ab
-    ((1.0, 1.0), (0.5, 1.0), (1.0, 0.5)),   # at c, between sides dc and bc
-    ((0.0, 1.0), (0.0, 0.5), (0.5, 1.0)),   # at d, between sides ad and dc
+    ((0.0, 0.0), (0.5, 0.0), (0.0, 0.5)),  # at a, between sides ab and ad
+    ((1.0, 0.0), (1.0, 0.5), (0.5, 0.0)),  # at b, between sides bc and ab
+    ((1.0, 1.0), (0.5, 1.0), (1.0, 0.5)),  # at c, between sides dc and bc
+    ((0.0, 1.0), (0.0, 0.5), (0.5, 1.0)),  # at d, between sides ad and dc
 ]
 
 _FAN_CENTRE = (0.5, 0.5)
@@ -183,14 +179,12 @@ def _pattern_fan(nu: int, nw: int) -> tuple[list[tuple[float, float]], list[list
     """
     if nu != nw or nu % 2:
         raise ValueError(
-            'the fan pattern needs the same even number of divisions on all '
-            'four sides of a patch, got {} by {} -- run '
-            'reconcile_strip_densities() first'.format(nu, nw)
+            "the fan pattern needs the same even number of divisions on all four sides of a patch, got {} by {} -- run reconcile_strip_densities() first".format(nu, nw)
         )
 
-    rings = nu // 2      # radial steps, pole -> L
-    rays = nu            # angular steps across the whole L
-    half = rays // 2     # angular steps per leg of the L
+    rings = nu // 2  # radial steps, pole -> L
+    rays = nu  # angular steps across the whole L
+    half = rays // 2  # angular steps per leg of the L
 
     uw = []
     index = {}
@@ -230,9 +224,9 @@ def _pattern_fan(nu: int, nw: int) -> tuple[list[tuple[float, float]], list[list
 # counter-clockwise, V0 the pole. A cyclic shift of the corners maps the table
 # onto itself -- that is what makes every corner, the pole included, the same.
 _FAN_TRIANGLE_REGIONS = [
-    ((1.0, 0.0, 0.0), (0.5, 0.5, 0.0), (0.5, 0.0, 0.5)),   # at V0, between sides V0V1 and V2V0
-    ((0.0, 1.0, 0.0), (0.0, 0.5, 0.5), (0.5, 0.5, 0.0)),   # at V1, between sides V1V2 and V0V1
-    ((0.0, 0.0, 1.0), (0.5, 0.0, 0.5), (0.0, 0.5, 0.5)),   # at V2, between sides V2V0 and V1V2
+    ((1.0, 0.0, 0.0), (0.5, 0.5, 0.0), (0.5, 0.0, 0.5)),  # at V0, between sides V0V1 and V2V0
+    ((0.0, 1.0, 0.0), (0.0, 0.5, 0.5), (0.5, 0.5, 0.0)),  # at V1, between sides V1V2 and V0V1
+    ((0.0, 0.0, 1.0), (0.5, 0.0, 0.5), (0.0, 0.5, 0.5)),  # at V2, between sides V2V0 and V1V2
 ]
 
 _FAN_TRIANGLE_CENTRE = (1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0)
@@ -262,14 +256,14 @@ def _pattern_fan_triangle(nu: int, nw: int) -> tuple[list[tuple[float, float, fl
     """
     if nu != nw or nu % 2:
         raise ValueError(
-            'the fan pattern needs the same even number of divisions on all '
-            'three sides of a triangular patch, got {} by {} -- run '
-            'reconcile_strip_densities() first'.format(nu, nw)
+            "the fan pattern needs the same even number of divisions on all three sides of a triangular patch, got {} by {} -- run reconcile_strip_densities() first".format(
+                nu, nw
+            )
         )
 
-    rings = nu // 2      # radial steps, corner -> L
-    rays = nu            # angular steps across the whole L
-    half = rays // 2     # angular steps per leg of the L
+    rings = nu // 2  # radial steps, corner -> L
+    rays = nu  # angular steps across the whole L
+    half = rays // 2  # angular steps per leg of the L
 
     lam = []
     index = {}
@@ -294,7 +288,7 @@ def _pattern_fan_triangle(nu: int, nw: int) -> tuple[list[tuple[float, float, fl
             for j in range(rings + 1):
                 p = _lerp(corner, far, j, rings)
                 if n == 0 and j == 0:
-                    key = ('pole', i)
+                    key = ("pole", i)
                 else:
                     key = tuple(round(x, 12) for x in p)
                 grid[i, j] = add(key, p)
@@ -330,6 +324,7 @@ def _lerp(p: Sequence[float], q: Sequence[float], k: int, n: int) -> list[float]
 # ==============================================================================
 # morph
 # ==============================================================================
+
 
 def pattern_morph(uw: list[tuple[float, float]], faces: list[list[int]], sides: list[list[list[float]] | None]) -> tuple[list[list[float]], list[list[int]]]:
     """Map a template onto a coarse face through its four side polylines.
@@ -387,12 +382,14 @@ def pattern_morph(uw: list[tuple[float, float]], faces: list[list[int]], sides: 
             # CPython's ``sum`` compensates the rounding of a float series. A
             # hand-rolled accumulation lands a unit in the last place away
             # from it, which is enough to shift a welded vertex.
-            corner = sum((
-                a[k] * ((1 - u) * (1 - w)),
-                b[k] * (u * (1 - w)),
-                c[k] * (u * w),
-                d[k] * ((1 - u) * w),
-            ))
+            corner = sum(
+                (
+                    a[k] * ((1 - u) * (1 - w)),
+                    b[k] * (u * (1 - w)),
+                    c[k] * (u * w),
+                    d[k] * ((1 - u) * w),
+                )
+            )
             point.append(along_u + along_w - corner)
         vertices.append(point)
 
@@ -430,7 +427,7 @@ def pattern_morph_triangle(lam: list[tuple[float, float, float]], faces: list[li
     k = [side is None for side in loop].index(True)
     t0, t1, t2 = loop[(k + 1) % 4], loop[(k + 2) % 4], loop[(k + 3) % 4]
     corners = [t0[0], t1[0], t2[0]]
-    opposite = [t1, t2, t0]   # E_i, running V(i+1) -> V(i+2)
+    opposite = [t1, t2, t0]  # E_i, running V(i+1) -> V(i+2)
 
     vertices = []
     for bary in lam:
@@ -495,6 +492,7 @@ def _polyline_point_at(points: list[list[float]], t: float) -> list[float]:
 # divisions
 # ==============================================================================
 
+
 def patch_divisions(sides: list[list[list[float]] | None]) -> tuple[int, int]:
     """The number of divisions a set of side polylines asks for.
 
@@ -514,7 +512,7 @@ def patch_divisions(sides: list[list[list[float]] | None]) -> tuple[int, int]:
 
 # the patterns whose template needs a patch to be d by d with d even -- see
 # ``_pattern_diagonal`` and ``_pattern_fan`` for why
-_SQUARE_EVEN = ('diagonal', 'fan')
+_SQUARE_EVEN = ("diagonal", "fan")
 
 
 def reconcile_strip_densities(coarse: "CoarseQuadMesh", patterns: "str | dict[int, str]") -> dict[int, tuple[int, int]]:
@@ -581,10 +579,10 @@ def reconcile_strip_densities(coarse: "CoarseQuadMesh", patterns: "str | dict[in
                 changed[skey] = (old, d)
 
     if changed:
-        print('reconcile_strip_densities: {} strip(s) raised to fit the '
-              'diagonal/fan pattern(s): {}'.format(
-                  len(changed),
-                  ', '.join('{} {}->{}'.format(skey, old, new)
-                            for skey, (old, new) in sorted(changed.items()))))
+        print(
+            "reconcile_strip_densities: {} strip(s) raised to fit the diagonal/fan pattern(s): {}".format(
+                len(changed), ", ".join("{} {}->{}".format(skey, old, new) for skey, (old, new) in sorted(changed.items()))
+            )
+        )
 
     return changed

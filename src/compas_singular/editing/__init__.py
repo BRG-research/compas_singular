@@ -2,6 +2,7 @@
 
 Imports nothing from ``framefield``. Design notes: ``design_notes/editing.md``.
 """
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -31,5 +32,4 @@ import types  # noqa: E402
 
 # Never re-export the submodules themselves: ``from .foo import *`` binds ``foo``
 # here too, and a module object of the same name shadows a function further up.
-__all__ = [name for name, obj in list(globals().items())
-           if not name.startswith('_') and not isinstance(obj, types.ModuleType)]
+__all__ = [name for name, obj in list(globals().items()) if not name.startswith("_") and not isinstance(obj, types.ModuleType)]

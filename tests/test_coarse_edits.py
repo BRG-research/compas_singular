@@ -4,6 +4,7 @@ Most of this file builds layouts by hand so the geometry is known exactly and th
 opening rule can be measured rather than eyeballed; the last section runs the
 same editor against real field decompositions.
 """
+
 import subprocess
 import sys
 from math import cos
@@ -28,8 +29,7 @@ def _grid(n, size=SIZE):
         for j in range(n + 1):
             index[i, j] = len(vertices)
             vertices.append([i * step, j * step, 0.0])
-    faces = [[index[i, j], index[i + 1, j], index[i + 1, j + 1], index[i, j + 1]]
-             for i in range(n) for j in range(n)]
+    faces = [[index[i, j], index[i + 1, j], index[i + 1, j + 1], index[i, j + 1]] for i in range(n) for j in range(n)]
     return CoarsePseudoQuadMesh.from_vertices_and_faces(vertices, faces), index
 
 
@@ -39,8 +39,7 @@ def grid3():
 
 
 def _columns(mesh):
-    return sorted(set(round(mesh.vertex_coordinates(v)[0], 6)
-                      for v in mesh.vertices()))
+    return sorted(set(round(mesh.vertex_coordinates(v)[0], 6) for v in mesh.vertices()))
 
 
 def _all_quad(mesh):
@@ -51,6 +50,7 @@ def _all_quad(mesh):
 # add_strip -- thesis 5.3.1
 # ==============================================================================
 
+
 def test_add_strip_unzips_a_wall_to_wall_polyedge(grid3):
     mesh, index = grid3
     editor = CoarseEditor(mesh, loops=[WALL])
@@ -59,10 +59,10 @@ def test_add_strip_unzips_a_wall_to_wall_polyedge(grid3):
     ok, notes = editor.add_strip(polyedge)
 
     assert ok, editor.last_reason
-    assert notes['skey'] is not None
-    assert notes['opened'] == 4
-    assert editor.mesh.number_of_faces() == 12      # 9 + one quad per span
-    assert editor.mesh.number_of_vertices() == 20   # 16 + one copy per corner
+    assert notes["skey"] is not None
+    assert notes["opened"] == 4
+    assert editor.mesh.number_of_faces() == 12  # 9 + one quad per span
+    assert editor.mesh.number_of_vertices() == 20  # 16 + one copy per corner
     assert not _all_quad(editor.mesh)
 
 
@@ -73,8 +73,7 @@ def test_the_new_strip_redivides_the_two_quads_in_three(grid3):
     editor.add_strip([index[1, 0], index[1, 1], index[1, 2], index[1, 3]])
 
     # the span 0..2 was two quads of width 1; it now carries three edges
-    assert _columns(editor.mesh) == pytest.approx(
-        [0.0, 2.0 / 3.0, 4.0 / 3.0, 2.0, 3.0], abs=1e-6)
+    assert _columns(editor.mesh) == pytest.approx([0.0, 2.0 / 3.0, 4.0 / 3.0, 2.0, 3.0], abs=1e-6)
 
 
 def test_add_strip_keeps_the_strip_data_valid(grid3):
@@ -84,7 +83,7 @@ def test_add_strip_keeps_the_strip_data_valid(grid3):
     editor.add_strip([index[1, 0], index[1, 1], index[1, 2], index[1, 3]])
 
     ok, counted, expected = editor.check_strip_count()
-    assert ok, 'S_open=%d but E-2F=%d' % (counted, expected)
+    assert ok, "S_open=%d but E-2F=%d" % (counted, expected)
 
 
 def test_a_commit_after_add_strip_keeps_the_densities(grid3):
@@ -92,17 +91,18 @@ def test_a_commit_after_add_strip_keeps_the_densities(grid3):
     mesh, index = grid3
     editor = CoarseEditor(mesh, loops=[WALL])
     editor.mesh.collect_strips()
-    editor.mesh.attributes['strips_density'] = {0: 7}
+    editor.mesh.attributes["strips_density"] = {0: 7}
 
     editor.add_strip([index[1, 0], index[1, 1], index[1, 2], index[1, 3]])
     layout, notes = editor.commit()
 
     assert layout is mesh
-    assert notes['path'] == 'moves', 'a grammar edit should not need the rebuild'
-    assert mesh.attributes['strips_density'] == {0: 7}
+    assert notes["path"] == "moves", "a grammar edit should not need the rebuild"
+    assert mesh.attributes["strips_density"] == {0: 7}
 
 
 # ------------------------------------------------------------------ refusals
+
 
 def test_a_polyedge_with_an_interior_end_is_refused(grid3):
     """A strip runs the full width: wall to wall, or all the way round."""
@@ -110,8 +110,8 @@ def test_a_polyedge_with_an_interior_end_is_refused(grid3):
     editor = CoarseEditor(mesh, loops=[WALL])
     ok, notes = editor.add_strip([index[1, 0], index[1, 1], index[1, 2]])
     assert not ok
-    assert 'full width' in notes['error']
-    assert notes['error'] == editor.last_reason
+    assert "full width" in notes["error"]
+    assert notes["error"] == editor.last_reason
 
 
 def test_a_list_of_picks_that_is_not_a_chain_is_refused(grid3):
@@ -119,7 +119,7 @@ def test_a_list_of_picks_that_is_not_a_chain_is_refused(grid3):
     editor = CoarseEditor(mesh, loops=[WALL])
     ok, notes = editor.add_strip([index[0, 0], index[2, 2], index[3, 3]])
     assert not ok
-    assert 'not joined by a coarse edge' in notes['error']
+    assert "not joined by a coarse edge" in notes["error"]
 
 
 def test_two_corners_are_not_a_polyedge(grid3):
@@ -127,7 +127,7 @@ def test_two_corners_are_not_a_polyedge(grid3):
     editor = CoarseEditor(mesh, loops=[WALL])
     ok, notes = editor.add_strip([index[0, 0], index[1, 0]])
     assert not ok
-    assert 'more than two corners' in notes['error']
+    assert "more than two corners" in notes["error"]
 
 
 def test_an_unknown_corner_is_refused(grid3):
@@ -135,7 +135,7 @@ def test_an_unknown_corner_is_refused(grid3):
     editor = CoarseEditor(mesh, loops=[WALL])
     ok, notes = editor.add_strip([9999, index[1, 1], index[1, 2]])
     assert not ok
-    assert '9999' in notes['error']
+    assert "9999" in notes["error"]
 
 
 def test_a_refusal_leaves_the_layout_untouched(grid3):
@@ -151,10 +151,10 @@ def test_a_refusal_leaves_the_layout_untouched(grid3):
 def test_a_polyedge_through_a_pole_is_refused_rather_than_guessed():
     """Thesis Fig 5.15 allows a pole END; crossing a pole would tear it in two."""
     editor = _two_triangle_pole()
-    assert 2 in editor.mesh.poles(), 'this fixture no longer has its pole at 2'
+    assert 2 in editor.mesh.poles(), "this fixture no longer has its pole at 2"
     ok, notes = editor.add_strip([1, 2, 3])
     assert not ok
-    assert 'through the pole' in notes['error']
+    assert "through the pole" in notes["error"]
 
 
 def _square_centre_pole():
@@ -167,7 +167,7 @@ def _square_centre_pole():
 
 
 def _assert_pseudo_quad_layout(mesh):
-    face_pole = mesh.attributes['face_pole']
+    face_pole = mesh.attributes["face_pole"]
     for fkey in mesh.faces():
         vertices = mesh.face_vertices(fkey)
         assert len(vertices) == 4 or face_pole.get(fkey) in vertices, (fkey, vertices)
@@ -205,30 +205,25 @@ def test_dividing_the_ring_around_a_pole_keeps_the_pole_fan():
 # move_pole -- a relabel of the collapsed corner
 # ==============================================================================
 
+
 def _one_triangle_pole():
     """A quad and a pseudo-quad ``[1, 2, 4]`` collapsed at corner 2."""
-    vertices = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [2.0, 1.0, 0.0]]
+    vertices = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [2.0, 1.0, 0.0]]
     faces = [[0, 1, 4, 3], [1, 2, 4]]
-    mesh = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(
-        vertices, faces, [[2.0, 0.0, 0.0]])
+    mesh = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, [[2.0, 0.0, 0.0]])
     return CoarseEditor(mesh, loops=[[[0, 0, 0], [2, 0, 0], [2, 1, 0], [0, 1, 0]]])
 
 
 def _two_triangle_pole():
     """Two quads and two pseudo-quads collapsed at corner 2, sharing edge 2-5."""
-    vertices = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.5, 0.0],
-                [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [1.0, 0.5, 0.0], [0.0, 0.5, 0.0]]
+    vertices = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.5, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [1.0, 0.5, 0.0], [0.0, 0.5, 0.0]]
     faces = [[0, 1, 5, 6], [6, 5, 3, 4], [1, 2, 5], [5, 2, 3]]
-    mesh = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(
-        vertices, faces, [[2.0, 0.5, 0.0]])
+    mesh = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, [[2.0, 0.5, 0.0]])
     return CoarseEditor(mesh, loops=[[[0, 0, 0], [1, 0, 0], [2, 0.5, 0], [1, 1, 0], [0, 1, 0]]])
 
 
 def _pole_digest(mesh):
-    return (sorted(mesh.attributes['face_pole'].items()),
-            [mesh.face_vertices(f) for f in mesh.faces()],
-            [mesh.vertex_coordinates(v) for v in mesh.vertices()])
+    return (sorted(mesh.attributes["face_pole"].items()), [mesh.face_vertices(f) for f in mesh.faces()], [mesh.vertex_coordinates(v) for v in mesh.vertices()])
 
 
 def test_pole_targets_are_the_corners_every_pole_patch_shares():
@@ -243,24 +238,27 @@ def test_move_pole_relabels_and_moves_nothing_else():
     xyz = [editor.mesh.vertex_coordinates(v) for v in editor.mesh.vertices()]
     ok, notes = editor.move_pole(2, 5)
     assert ok, notes
-    assert notes['faces'] == 2
+    assert notes["faces"] == 2
     assert editor.mesh.poles() == [5]
     assert [editor.mesh.face_vertices(f) for f in editor.mesh.faces()] == faces
     assert [editor.mesh.vertex_coordinates(v) for v in editor.mesh.vertices()] == xyz
 
 
-@pytest.mark.parametrize('pkey, vkey, word', [
-    (2, 0, 'not a corner of the pole patch'),
-    (0, 1, 'not a pole'),
-    (2, 99, 'not part of the layout'),
-    (2, 2, 'already'),
-])
+@pytest.mark.parametrize(
+    "pkey, vkey, word",
+    [
+        (2, 0, "not a corner of the pole patch"),
+        (0, 1, "not a pole"),
+        (2, 99, "not part of the layout"),
+        (2, 2, "already"),
+    ],
+)
 def test_an_illegal_pole_move_is_refused_and_changes_nothing(pkey, vkey, word):
     editor = _one_triangle_pole()
     before = _pole_digest(editor.mesh)
     ok, notes = editor.move_pole(pkey, vkey)
     assert not ok
-    assert word in notes['error']
+    assert word in notes["error"]
     assert _pole_digest(editor.mesh) == before
 
 
@@ -285,9 +283,9 @@ def test_reset_puts_the_preferred_poles_back():
 
 def test_unify_counts_the_faces_it_flipped():
     from compas_singular.editing.repair import _unify
-    vertices = [[0, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0],
-                [0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0]]
-    faces = [[0, 1, 5, 4], [5, 6, 2, 1], [2, 3, 7, 6]]      # the middle one clockwise
+
+    vertices = [[0, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0], [0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0]]
+    faces = [[0, 1, 5, 4], [5, 6, 2, 1], [2, 3, 7, 6]]  # the middle one clockwise
     mesh = CoarsePseudoQuadMesh.from_vertices_and_faces(vertices, faces)
     _out, flipped = _unify(mesh, CoarsePseudoQuadMesh)
     assert flipped == 1
@@ -299,14 +297,14 @@ def test_a_commit_after_move_pole_keeps_keys_and_drops_the_strip_data():
     editor = _two_triangle_pole()
     target = editor.target
     target.collect_strips()
-    target.attributes['strips_density'] = {skey: 3 for skey in target.attributes['strips']}
+    target.attributes["strips_density"] = {skey: 3 for skey in target.attributes["strips"]}
     editor = CoarseEditor(target, loops=editor.loops)
     assert editor.move_pole(2, 5)[0]
     layout, notes = editor.commit()
     assert layout is target, notes
-    assert notes['path'] == 'moves+pole'
+    assert notes["path"] == "moves+pole"
     assert target.poles() == [5]
-    assert not target.attributes.get('strips_density')
+    assert not target.attributes.get("strips_density")
 
 
 # ==============================================================================
@@ -318,6 +316,7 @@ def test_a_commit_after_move_pole_keeps_keys_and_drops_the_strip_data():
 # this 3x3 layout: of five drawn cuts, the four that are accepted match a strip
 # exactly and the fifth -- a diagonal -- is refused.
 
+
 def test_divide_by_strip_needs_no_drawing(grid3):
     mesh, index = grid3
     editor = CoarseEditor(mesh, loops=[WALL])
@@ -326,7 +325,7 @@ def test_divide_by_strip_needs_no_drawing(grid3):
     ok, notes = editor.divide(skey=skey)
 
     assert ok, editor.last_reason
-    assert notes['skey'] == skey
+    assert notes["skey"] == skey
     assert editor.mesh.number_of_faces() == 12
     assert not _all_quad(editor.mesh)
     assert editor.check_strip_count()[0]
@@ -355,8 +354,8 @@ def test_a_drawn_cut_reports_the_strip_it_followed(grid3):
     editor = CoarseEditor(mesh, loops=[WALL])
     ok, notes = editor.divide([[0.0, 1.5, 0.0], [SIZE, 1.5, 0.0]], extend=True)
     assert ok
-    assert notes['skey'] is not None
-    assert notes['faces'] == 3
+    assert notes["skey"] is not None
+    assert notes["faces"] == 3
 
 
 def test_strip_of_cut_previews_the_band_before_the_curve_is_finished(grid3):
@@ -365,7 +364,7 @@ def test_strip_of_cut_previews_the_band_before_the_curve_is_finished(grid3):
     editor = CoarseEditor(mesh, loops=[WALL])
     drawn = editor.strip_of_cut([[0.0, 1.5, 0.0], [SIZE, 1.5, 0.0]])
     ok, notes = editor.divide([[0.0, 1.5, 0.0], [SIZE, 1.5, 0.0]], extend=True)
-    assert drawn is not None and drawn == notes['skey']
+    assert drawn is not None and drawn == notes["skey"]
 
 
 def test_a_diagonal_is_refused_structurally_not_by_a_side_count(grid3):
@@ -374,24 +373,24 @@ def test_a_diagonal_is_refused_structurally_not_by_a_side_count(grid3):
     editor = CoarseEditor(mesh, loops=[WALL])
     ok, notes = editor.divide([[0.0, 0.5, 0.0], [SIZE, 2.5, 0.0]], extend=True)
     assert not ok
-    assert 'does not follow a single line of patches' in notes['error']
-    assert editor.mesh.number_of_faces() == 9, 'a refusal changed the layout'
+    assert "does not follow a single line of patches" in notes["error"]
+    assert editor.mesh.number_of_faces() == 9, "a refusal changed the layout"
 
 
 def test_divide_needs_something_to_go_on(grid3):
     mesh, _ = grid3
     editor = CoarseEditor(mesh, loops=[WALL])
     ok, notes = editor.divide()
-    assert not ok and 'either a drawn curve or a strip' in notes['error']
+    assert not ok and "either a drawn curve or a strip" in notes["error"]
 
 
 def test_an_unknown_strip_and_a_degenerate_parameter_are_refused(grid3):
     mesh, _ = grid3
     editor = CoarseEditor(mesh, loops=[WALL])
     assert not editor.divide(skey=9999)[0]
-    assert 'no strip' in editor.last_reason
+    assert "no strip" in editor.last_reason
     assert not editor.divide(skey=0, t=0.0)[0]
-    assert 'between 0 and 1' in editor.last_reason
+    assert "between 0 and 1" in editor.last_reason
 
 
 def test_divide_takes_the_rebuild_path_at_commit(grid3):
@@ -401,7 +400,7 @@ def test_divide_takes_the_rebuild_path_at_commit(grid3):
     editor.divide(skey=editor.strip_through((index[0, 1], index[1, 1])))
     layout, notes = editor.commit()
     assert layout is mesh
-    assert notes['path'] == 'rebuild'
+    assert notes["path"] == "rebuild"
 
 
 # ==============================================================================
@@ -448,7 +447,7 @@ def _split_and_measure(cls, mesh):
     work = editor.mesh.copy()
     work.collect_strips()
     before = {v: work.vertex_coordinates(v) for v in work.vertices()}
-    skey = sorted(work.attributes['strips'])[0]
+    skey = sorted(work.attributes["strips"])[0]
 
     editor._split_strips(work, {skey: 2})
 
@@ -470,8 +469,8 @@ def test_the_coarse_pre_split_moves_no_existing_corner(grid3):
     mesh, _ = grid3
     work, moved, drift = _split_and_measure(CoarseEditor, mesh)
 
-    assert moved == 0, '%d corner(s) moved, worst %.4f' % (moved, drift)
-    assert work.number_of_faces() == 12, 'the strip was not actually split'
+    assert moved == 0, "%d corner(s) moved, worst %.4f" % (moved, drift)
+    assert work.number_of_faces() == 12, "the strip was not actually split"
 
 
 def test_the_base_pre_split_leaves_the_new_strip_closed(grid3):
@@ -490,12 +489,8 @@ def test_the_base_pre_split_leaves_the_new_strip_closed(grid3):
     base_pairs = _coincident_corner_pairs(base)
     opened_pairs = _coincident_corner_pairs(opened)
 
-    assert base_pairs > 0, (
-        'the base pre-split no longer leaves the strip closed -- re-check '
-        'whether the coarse override is still needed')
-    assert opened_pairs < base_pairs, (
-        'the override opened nothing (base %d, override %d)'
-        % (base_pairs, opened_pairs))
+    assert base_pairs > 0, "the base pre-split no longer leaves the strip closed -- re-check whether the coarse override is still needed"
+    assert opened_pairs < base_pairs, "the override opened nothing (base %d, override %d)" % (base_pairs, opened_pairs)
 
 
 def test_the_plan_reports_whether_a_boundary_can_be_saved(grid3):
@@ -505,8 +500,8 @@ def test_the_plan_reports_whether_a_boundary_can_be_saved(grid3):
     editor = CoarseEditor(mesh, loops=[WALL])
     plan = editor.plan_strip_deletion(edge=list(editor.mesh.edges())[0])
 
-    assert plan['can_preserve'] is True
-    assert plan['to_split'] == {}, 'nothing is at risk on a plain grid'
+    assert plan["can_preserve"] is True
+    assert plan["to_split"] == {}, "nothing is at risk on a plain grid"
 
 
 def test_preserve_boundaries_is_a_no_op_when_nothing_is_at_risk(grid3):
@@ -518,7 +513,7 @@ def test_preserve_boundaries_is_a_no_op_when_nothing_is_at_risk(grid3):
     ok, notes = editor.remove_strip(edge=edge, preserve_boundaries=True)
 
     assert ok, editor.last_reason
-    assert notes['to_split'] == {}
+    assert notes["to_split"] == {}
     assert editor.mesh.number_of_faces() < faces
 
 
@@ -526,20 +521,18 @@ def test_preserve_boundaries_is_a_no_op_when_nothing_is_at_risk(grid3):
 # drawn cuts through pseudo-quads: along the pole side, or into the pole
 # ==============================================================================
 
+
 def _ringed_pole():
     """A pole at (5, 5) in four pseudo-quads, inside a ring of four quads."""
-    vertices = [[0.0, 0.0, 0.0], [10.0, 0.0, 0.0], [10.0, 10.0, 0.0], [0.0, 10.0, 0.0],
-                [3.0, 3.0, 0.0], [7.0, 3.0, 0.0], [7.0, 7.0, 0.0], [3.0, 7.0, 0.0], [5.0, 5.0, 0.0]]
-    faces = [[0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7],
-             [8, 4, 5], [8, 5, 6], [8, 6, 7], [8, 7, 4]]
+    vertices = [[0.0, 0.0, 0.0], [10.0, 0.0, 0.0], [10.0, 10.0, 0.0], [0.0, 10.0, 0.0], [3.0, 3.0, 0.0], [7.0, 3.0, 0.0], [7.0, 7.0, 0.0], [3.0, 7.0, 0.0], [5.0, 5.0, 0.0]]
+    faces = [[0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7], [8, 4, 5], [8, 5, 6], [8, 6, 7], [8, 7, 4]]
     mesh = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, [[5.0, 5.0, 0.0]])
     return CoarseEditor(mesh, loops=[[[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]]])
 
 
 def _corner_pole():
     """Four pseudo-quads fanned from a pole at corner (0, 0) of a 10 x 10 square."""
-    vertices = [[0.0, 0.0, 0.0], [10.0, 0.0, 0.0], [10.0, 5.0, 0.0], [10.0, 10.0, 0.0],
-                [5.0, 10.0, 0.0], [0.0, 10.0, 0.0]]
+    vertices = [[0.0, 0.0, 0.0], [10.0, 0.0, 0.0], [10.0, 5.0, 0.0], [10.0, 10.0, 0.0], [5.0, 10.0, 0.0], [0.0, 10.0, 0.0]]
     faces = [[0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 5]]
     mesh = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, [[0.0, 0.0, 0.0]])
     return CoarseEditor(mesh, loops=[[[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]]])
@@ -553,10 +546,13 @@ def _commits_and_densifies(editor):
     assert len(layout.get_quad_mesh().poles()) == 1
 
 
-@pytest.mark.parametrize('points', [
-    [[5.0, 0.0, 0.0], [5.0, 5.0, 0.0]],                    # drawn to the pole
-    [[5.0, 0.0, 0.0], [5.0, 2.0, 0.0], [5.3, 4.0, 0.0]],   # stops loosely inside the pseudo-quad
-])
+@pytest.mark.parametrize(
+    "points",
+    [
+        [[5.0, 0.0, 0.0], [5.0, 5.0, 0.0]],  # drawn to the pole
+        [[5.0, 0.0, 0.0], [5.0, 2.0, 0.0], [5.3, 4.0, 0.0]],  # stops loosely inside the pseudo-quad
+    ],
+)
 def test_a_cut_across_the_pole_side_ends_at_the_pole(points):
     editor = _ringed_pole()
     ok, notes = editor.divide(points=points)
@@ -571,7 +567,7 @@ def test_a_cut_that_passes_the_pole_divides_the_strips_on_both_sides():
     editor = _ringed_pole()
     ok, notes = editor.divide(points=[[4.0, 0.0, 0.0], [4.4, 10.0, 0.0]])
     assert ok, notes
-    assert len(notes['skey']) == 2
+    assert len(notes["skey"]) == 2
     assert len(editor.mesh.vertex_pole_faces(8)) == 6
     _assert_pseudo_quad_layout(editor.mesh)
     _commits_and_densifies(editor)
@@ -586,6 +582,7 @@ def test_an_extended_cut_stops_at_the_pole():
 
 def test_a_cut_along_the_pole_side_splits_each_pseudo_quad_in_a_quad_and_a_pseudo_quad():
     import math
+
     arc = [[5.0 * math.cos(t), 5.0 * math.sin(t), 0.0] for t in [i * math.pi / 24 for i in range(13)]]
     editor = _corner_pole()
     ok, notes = editor.divide(points=arc)
@@ -608,6 +605,7 @@ def test_a_cut_through_two_sides_of_a_pseudo_quad_that_meet_is_refused():
 # add_strip along a wall, and through itself -- the thesis's strip-addition figures
 # ==============================================================================
 
+
 def _area(mesh, fkey):
     points = [mesh.vertex_coordinates(vkey) for vkey in mesh.face_vertices(fkey)]
     return 0.5 * sum(p[0] * q[1] - q[0] * p[1] for p, q in zip(points, points[1:] + points[:1]))
@@ -622,7 +620,7 @@ def _assert_flat_and_consistent(mesh):
     fresh.collect_strips()
 
     def table(m):
-        return sorted(sorted(tuple(sorted(e)) for e in edges) for edges in m.attributes['strips'].values())
+        return sorted(sorted(tuple(sorted(e)) for e in edges) for edges in m.attributes["strips"].values())
 
     assert table(mesh) == table(fresh)
 
@@ -637,7 +635,7 @@ def test_a_ring_along_the_whole_boundary_of_one_quad():
     editor = CoarseEditor(mesh, loops=[WALL])
     ok, notes = editor.add_strip([index[0, 1], index[1, 1], index[1, 0], index[0, 0], index[0, 1]])
     assert ok, editor.last_reason
-    assert notes['opened'] == 4
+    assert notes["opened"] == 4
     assert editor.mesh.number_of_faces() == 5
     assert _points(editor.mesh) == {(0, 0), (3, 0), (3, 3), (0, 3), (1, 1), (2, 1), (2, 2), (1, 2)}
     _assert_flat_and_consistent(editor.mesh)
@@ -646,11 +644,10 @@ def test_a_ring_along_the_whole_boundary_of_one_quad():
 def test_a_ring_along_the_outer_wall_of_a_grid(grid3):
     mesh, index = grid3
     editor = CoarseEditor(mesh, loops=[WALL])
-    ring = ([index[0, j] for j in (3, 2, 1, 0)] + [index[i, 0] for i in (1, 2, 3)]
-            + [index[3, j] for j in (1, 2, 3)] + [index[i, 3] for i in (2, 1, 0)])
+    ring = [index[0, j] for j in (3, 2, 1, 0)] + [index[i, 0] for i in (1, 2, 3)] + [index[3, j] for j in (1, 2, 3)] + [index[i, 3] for i in (2, 1, 0)]
     ok, notes = editor.add_strip(ring)
     assert ok, editor.last_reason
-    assert notes['opened'] == 12
+    assert notes["opened"] == 12
     _assert_flat_and_consistent(editor.mesh)
 
 
@@ -671,9 +668,9 @@ def test_a_self_crossing_polyedge_adds_one_strip_through_itself():
     assert ok, editor.last_reason
     assert editor.mesh.number_of_vertices() == 17
     assert editor.mesh.number_of_faces() == 11
-    assert len(editor.mesh.attributes['strips']) == 5
+    assert len(editor.mesh.attributes["strips"]) == 5
     # one strip of seven faces, walked through its middle face twice: nine rungs
-    assert len(editor.mesh.strip_edges(notes['skey'])) == 9
+    assert len(editor.mesh.strip_edges(notes["skey"])) == 9
     assert {(1, 1), (2, 1), (2, 2), (1, 2)} <= _points(editor.mesh)
     _assert_flat_and_consistent(editor.mesh)
 
@@ -682,8 +679,7 @@ def test_a_loop_that_closes_on_a_vertex_it_passed(grid3):
     """A closed polyedge whose last vertex repeats is re-started where it passes once."""
     mesh, index = _grid(4, size=4.0)
     editor = CoarseEditor(mesh, loops=[[[0, 0, 0], [4, 0, 0], [4, 4, 0], [0, 4, 0]]])
-    loop = [index[2, 0], index[1, 0], index[1, 1], index[2, 1], index[3, 1], index[3, 2],
-            index[2, 2], index[2, 1], index[2, 0]]
+    loop = [index[2, 0], index[1, 0], index[1, 1], index[2, 1], index[3, 1], index[3, 2], index[2, 2], index[2, 1], index[2, 0]]
     ok, _ = editor.add_strip(loop)
     assert ok, editor.last_reason
     _assert_flat_and_consistent(editor.mesh)
@@ -709,8 +705,7 @@ def test_a_polyedge_that_runs_next_to_itself():
 
 def test_a_strip_starting_at_a_hole_corner():
     mesh, index = _grid(4, size=4.0)
-    mesh.delete_face(next(f for f in mesh.faces()
-                          if set(mesh.face_vertices(f)) == {index[2, 2], index[3, 2], index[3, 3], index[2, 3]}))
+    mesh.delete_face(next(f for f in mesh.faces() if set(mesh.face_vertices(f)) == {index[2, 2], index[3, 2], index[3, 3], index[2, 3]}))
     hole = [[2, 2, 0], [3, 2, 0], [3, 3, 0], [2, 3, 0]]
     editor = CoarseEditor(mesh, loops=[[[0, 0, 0], [4, 0, 0], [4, 4, 0], [0, 4, 0]], hole])
     ok, _ = editor.add_strip([index[2, 2], index[1, 2], index[1, 3], index[1, 4]])
@@ -725,7 +720,7 @@ def test_a_strip_that_would_fold_a_face_is_refused(grid3):
     faces, vertices = editor.mesh.number_of_faces(), editor.mesh.number_of_vertices()
     ok, notes = editor.add_strip([9, 10, 6, 7, 3, 2, 6, 5, 9])
     assert not ok
-    assert 'opened flat' in notes['error']
+    assert "opened flat" in notes["error"]
     assert editor.mesh.number_of_faces() == faces
     assert editor.mesh.number_of_vertices() == vertices
 
@@ -756,9 +751,7 @@ def _field_editor(inners=None):
 def _bad_patches(mesh):
     """Faces that are neither a quad nor a 3-sided pseudo-quad with a pole."""
     face_pole = mesh.attributes.get("face_pole") or {}
-    return [f for f in mesh.faces()
-            if not ((len(mesh.face_vertices(f)) == 4 and f not in face_pole)
-                    or (len(mesh.face_vertices(f)) == 3 and f in face_pole))]
+    return [f for f in mesh.faces() if not ((len(mesh.face_vertices(f)) == 4 and f not in face_pole) or (len(mesh.face_vertices(f)) == 3 and f in face_pole))]
 
 
 def _half_square():
@@ -770,15 +763,14 @@ def _half_square():
 
 def _mesh_digest(mesh):
     """Enough of a mesh to prove a refusal changed nothing."""
-    return (mesh.number_of_vertices(), mesh.number_of_faces(),
-            sorted(tuple(round(c, 9) for c in mesh.vertex_coordinates(v)) for v in mesh.vertices()))
+    return (mesh.number_of_vertices(), mesh.number_of_faces(), sorted(tuple(round(c, 9) for c in mesh.vertex_coordinates(v)) for v in mesh.vertices()))
 
 
 def _stop_on_interior_edge(editor):
     u, v = next((u, v) for u, v in editor.mesh.edges() if not editor.mesh.is_edge_on_boundary((u, v)))
     pu, pv = editor.mesh.vertex_coordinates(u), editor.mesh.vertex_coordinates(v)
     mid = [(pu[0] + pv[0]) / 2.0, (pu[1] + pv[1]) / 2.0, 0.0]
-    return [[mid[0], 0.0, 0.0], mid]          # from the bottom wall straight up to that edge
+    return [[mid[0], 0.0, 0.0], mid]  # from the bottom wall straight up to that edge
 
 
 def test_a_boundary_corner_moved_off_its_wall_lands_back_on_it():
@@ -854,7 +846,7 @@ def test_strip_deletion_on_a_holed_field_layout_is_planned_then_performed():
     editor = _field_editor([_circle(5.0, 5.0, 1.5)])
     editor.mesh.collect_strips()
     plans = [(edge, editor.plan_strip_deletion(edge)) for edge in editor.mesh.edges()]
-    assert all(plan["skey"] is not None for _, plan in plans)      # every edge resolves to a strip
+    assert all(plan["skey"] is not None for _, plan in plans)  # every edge resolves to a strip
     refused = [p for p in plans if not p[1]["ok"]]
     allowed = [p for p in plans if p[1]["ok"]]
     assert allowed and refused
@@ -865,7 +857,7 @@ def test_strip_deletion_on_a_holed_field_layout_is_planned_then_performed():
     ok, _ = editor.remove_strip(edge)
     assert not ok
     assert _mesh_digest(editor.mesh) == digest
-    assert editor.last_reason == plan["reason"]                   # plan and delete agree
+    assert editor.last_reason == plan["reason"]  # plan and delete agree
 
     edge, _ = allowed[0]
     n_in = editor.mesh.number_of_faces()
@@ -893,8 +885,6 @@ def test_reset_undoes_a_strip_deletion_topology_and_all():
 
 def test_the_editor_imports_no_rhino():
     # in a fresh interpreter: another test in this session may have stubbed Rhino
-    code = ("import sys; import compas_singular.editing; "
-            "print([m for m in sys.modules if m.split('.')[0] in "
-            "('rhinoscriptsyntax', 'Rhino', 'scriptcontext', 'System')])")
+    code = "import sys; import compas_singular.editing; print([m for m in sys.modules if m.split('.')[0] in ('rhinoscriptsyntax', 'Rhino', 'scriptcontext', 'System')])"
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
     assert out.stdout.strip() == "[]"

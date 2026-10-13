@@ -2,6 +2,7 @@
 
 Pre-splitting to save a boundary is the caller's policy, not done here.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -16,11 +17,11 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    'delete_strip',
-    'delete_strips',
-    'collateral_strip_deletions',
-    'total_boundary_deletions',
-    'strips_to_split_to_prevent_boundary_collapse',
+    "delete_strip",
+    "delete_strips",
+    "collateral_strip_deletions",
+    "total_boundary_deletions",
+    "strips_to_split_to_prevent_boundary_collapse",
 ]
 
 
@@ -97,51 +98,46 @@ def delete_strip(mesh: QuadMesh, skey: int) -> dict[int, int]:
 
     # merge strip edge vertices that are connected
     for part in parts:
-
         # move back from part vertices to mesh vertices
         vertices = [new_to_old[vkey] for vkey in part]
 
         # skip adding a vertex if all vertices of the part are disconnected
         if any(mesh.is_vertex_connected(vkey) for vkey in vertices):
-
             # get position based on disconnected vertices that used to be on
             # the boundary if any
             if any(not mesh.is_vertex_connected(vkey) for vkey in vertices):
-                points = [mesh.vertex_coordinates(
-                    vkey) for vkey in vertices if not mesh.is_vertex_connected(vkey)]
+                points = [mesh.vertex_coordinates(vkey) for vkey in vertices if not mesh.is_vertex_connected(vkey)]
             # or based on old boundary vertices if any
             elif any(vkey in old_boundary_vertices for vkey in vertices):
-                points = [mesh.vertex_coordinates(
-                    vkey) for vkey in vertices if vkey in old_boundary_vertices]
+                points = [mesh.vertex_coordinates(vkey) for vkey in vertices if vkey in old_boundary_vertices]
             else:
                 points = [mesh.vertex_coordinates(vkey) for vkey in vertices]
 
             # new vertex
             x, y, z = centroid_points(points)
-            new_vkey = mesh.add_vertex(attr_dict={'x': x, 'y': y, 'z': z})
+            new_vkey = mesh.add_vertex(attr_dict={"x": x, "y": y, "z": z})
             old_vkeys_to_new_vkeys.update({old_vkey: new_vkey for old_vkey in vertices})
 
             # replace the old vertices
             for old_vkey in vertices:
                 mesh.substitute_vertex_in_strips(old_vkey, new_vkey)
-                mesh_substitute_vertex_in_faces(
-                    mesh, old_vkey, new_vkey, mesh.vertex_faces(old_vkey))
+                mesh_substitute_vertex_in_faces(mesh, old_vkey, new_vkey, mesh.vertex_faces(old_vkey))
 
         # delete the old vertices
         for old_vkey in vertices:
             mesh.delete_vertex(old_vkey)
 
     # delete data of deleted strip and collateral deleted strips
-    del mesh.attributes['strips'][skey]
+    del mesh.attributes["strips"][skey]
     for skey_2 in collateral_deleted_strips:
-        del mesh.attributes['strips'][skey_2]
+        del mesh.attributes["strips"][skey_2]
 
-    if 'face_pole' in mesh.attributes:
-        for fkey, pole in mesh.attributes['face_pole'].items():
-            if fkey in mesh.attributes['face_pole']:
-                if pole == mesh.attributes['face_pole'][fkey]:
+    if "face_pole" in mesh.attributes:
+        for fkey, pole in mesh.attributes["face_pole"].items():
+            if fkey in mesh.attributes["face_pole"]:
+                if pole == mesh.attributes["face_pole"][fkey]:
                     if pole in old_vkeys_to_new_vkeys:
-                        mesh.attributes['face_pole'][fkey] = old_vkeys_to_new_vkeys[pole]
+                        mesh.attributes["face_pole"][fkey] = old_vkeys_to_new_vkeys[pole]
 
     return old_vkeys_to_new_vkeys
 
@@ -150,8 +146,7 @@ def collateral_strip_deletions(mesh: QuadMesh, skeys: list[int]) -> list[int]:
     """The strips that deleting ``skeys`` would delete as well. Mutates nothing."""
     deleted_fkeys = [fkey for skey in skeys for fkey in mesh.strip_faces(skey)]
     # A strip with no faces at all is not collateral -- see ``delete_strip``.
-    return [skey for skey in mesh.strips() if skey not in skeys and mesh.strip_faces(skey)
-            and all([fkey in deleted_fkeys for fkey in mesh.strip_faces(skey)])]
+    return [skey for skey in mesh.strips() if skey not in skeys and mesh.strip_faces(skey) and all([fkey in deleted_fkeys for fkey in mesh.strip_faces(skey)])]
 
 
 def total_boundary_deletions(mesh: QuadMesh, skeys: list[int]) -> list[list[int]]:

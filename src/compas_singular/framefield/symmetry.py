@@ -2,6 +2,7 @@
 
 On by default; ``symmetry=None`` turns it off, and an asymmetric domain is unaffected.
 """
+
 from __future__ import annotations
 
 from math import ceil
@@ -11,9 +12,7 @@ from compas_singular.framefield.background import _jitter
 from compas_singular.framefield.background import inside_domain
 from compas_singular.framefield.field import CrossField
 
-__all__ = ['Symmetry', 'STEPS', 'interior_points', 'symmetrise',
-           'snap_singularities', 'project_clusters', 'invariance',
-           'field_invariance', 'singularity_orbits']
+__all__ = ["Symmetry", "STEPS", "interior_points", "symmetrise", "snap_singularities", "project_clusters", "invariance", "field_invariance", "singularity_orbits"]
 
 
 #: ``(a, b, c, d, reflects, name)`` -- the linear part as a 2x2 matrix, whether
@@ -22,20 +21,20 @@ __all__ = ['Symmetry', 'STEPS', 'interior_points', 'symmetrise',
 #: conjugates it, so the field only needs the flag. **The names are stored in
 #: saved fields; do not rename them.**
 ELEMENTS = [
-    (1, 0, 0, 1, False, 'identity'),
-    (0, -1, 1, 0, False, 'rot90'),
-    (-1, 0, 0, -1, False, 'rot180'),
-    (0, 1, -1, 0, False, 'rot270'),
-    (-1, 0, 0, 1, True, 'mirror-vertical'),
-    (1, 0, 0, -1, True, 'mirror-horizontal'),
-    (0, 1, 1, 0, True, 'mirror-diagonal'),
-    (0, -1, -1, 0, True, 'mirror-antidiagonal'),
+    (1, 0, 0, 1, False, "identity"),
+    (0, -1, 1, 0, False, "rot90"),
+    (-1, 0, 0, -1, False, "rot180"),
+    (0, 1, -1, 0, False, "rot270"),
+    (-1, 0, 0, 1, True, "mirror-vertical"),
+    (1, 0, 0, -1, True, "mirror-horizontal"),
+    (0, 1, 1, 0, True, "mirror-diagonal"),
+    (0, -1, -1, 0, True, "mirror-antidiagonal"),
 ]
 
 
 #: The places the pipeline is told about the symmetry, named so they can be
 #: switched off one at a time (``24_symmetry.py`` does).
-STEPS = ('background', 'guides', 'field', 'singularities', 'network')
+STEPS = ("background", "guides", "field", "singularities", "network")
 
 
 class Symmetry(object):
@@ -68,8 +67,7 @@ class Symmetry(object):
         return len(self.elements)
 
     def __repr__(self) -> str:
-        return '<Symmetry order {} about ({:.3f}, {:.3f}): {}>'.format(
-            len(self.elements), self.centre[0], self.centre[1], ', '.join(self.names()))
+        return "<Symmetry order {} about ({:.3f}, {:.3f}): {}>".format(len(self.elements), self.centre[0], self.centre[1], ", ".join(self.names()))
 
     def names(self) -> list[str]:
         return [g[5] for g in self.elements]
@@ -117,7 +115,7 @@ class Symmetry(object):
         """
         points = [p for loop in loops for p in loop]
         if not points:
-            raise ValueError('no geometry to detect a symmetry from')
+            raise ValueError("no geometry to detect a symmetry from")
         if centre is None:
             xs = [p[0] for p in loops[0]]
             ys = [p[1] for p in loops[0]]
@@ -142,6 +140,7 @@ class Symmetry(object):
 # 1 -- interior points invariant under the group
 # ----------------------------------------------------------------------
 
+
 def interior_points(
     symmetry: Symmetry,
     target_length: float,
@@ -153,14 +152,12 @@ def interior_points(
     """Interior points as a set exactly invariant under ``symmetry``, one jitter per orbit."""
     centre = symmetry.centre
     half = target_length / 2.0
-    parity = 0 if on_axis else 1          # doubled-lattice parity
+    parity = 0 if on_axis else 1  # doubled-lattice parity
     limit = margin * target_length
 
     xs = [p[0] for p in outer]
     ys = [p[1] for p in outer]
-    reach = int(ceil(max(max(xs) - centre[0], centre[0] - min(xs),
-                         max(ys) - centre[1], centre[1] - min(ys))
-                     / target_length)) + 1
+    reach = int(ceil(max(max(xs) - centre[0], centre[0] - min(xs), max(ys) - centre[1], centre[1] - min(ys)) / target_length)) + 1
 
     def point_of(u: int, v: int, jitter: list[float]) -> list[float]:
         return [centre[0] + u * half + jitter[0], centre[1] + v * half + jitter[1], 0.0]
@@ -182,8 +179,7 @@ def interior_points(
 
             # one jitter per orbit, from the representative, projected onto
             # what the representative's stabiliser fixes
-            raw = [_jitter(rep[0], rep[1], 0.2 * target_length),
-                   _jitter(rep[1], rep[0], 0.2 * target_length), 0.0]
+            raw = [_jitter(rep[0], rep[1], 0.2 * target_length), _jitter(rep[1], rep[0], 0.2 * target_length), 0.0]
             stabiliser = [g for g in symmetry.elements if act(g, *rep) == rep]
             jitter = [0.0, 0.0, 0.0]
             for g in stabiliser:
@@ -192,8 +188,7 @@ def interior_points(
             candidates.append((rep, jitter))
 
     # the whole orbit is kept or dropped on its representative's verdict
-    keep = inside_domain([point_of(rep[0], rep[1], jitter) for rep, jitter in candidates],
-                         outer, inners, limit)
+    keep = inside_domain([point_of(rep[0], rep[1], jitter) for rep, jitter in candidates], outer, inners, limit)
     out = []
     emitted = set()
     for (rep, jitter), inside in zip(candidates, keep):
@@ -211,6 +206,7 @@ def interior_points(
 # ----------------------------------------------------------------------
 # 3 -- project the solved field onto the symmetric subspace
 # ----------------------------------------------------------------------
+
 
 def symmetrise(field: CrossField, symmetry: Symmetry, tol: float = 1e-9) -> CrossField:
     """Group-average ``u`` as a new ``CrossField``; follow with ``snap_singularities``."""
@@ -237,8 +233,7 @@ def symmetrise(field: CrossField, symmetry: Symmetry, tol: float = 1e-9) -> Cros
             orphans += 1
         values[vkey] = acc / n if n else field.u[vkey]
 
-    out = CrossField(field.background, values, relaxed=field.relaxed,
-                     iterations=field.iterations, residual=field.residual)
+    out = CrossField(field.background, values, relaxed=field.relaxed, iterations=field.iterations, residual=field.residual)
     out.symmetry_orphans = orphans
     return out
 
@@ -250,6 +245,7 @@ def _snap(value: float, tol: float) -> int:
 # ----------------------------------------------------------------------
 # 4 -- take the singularity off the arbitrary face it was reported on
 # ----------------------------------------------------------------------
+
 
 def snap_singularities(
     field: CrossField,
@@ -276,35 +272,33 @@ def snap_singularities(
         magnitudes = {v: abs(field.u[v]) for v in candidates}
         low = min(magnitudes.values())
         tied = [v for v, m in magnitudes.items() if m <= low + relative_tol * max(low, 1.0)]
-        positions[fkey] = [sum(mesh.vertex_coordinates(v)[k] for v in tied) / len(tied)
-                           for k in range(3)]
+        positions[fkey] = [sum(mesh.vertex_coordinates(v)[k] for v in tied) / len(tied) for k in range(3)]
 
     merged = {}
     for fkey, index in singular:
         key = tuple(_snap(c, 1e-9) for c in positions[fkey][:2])
-        entry = merged.setdefault(key, {'faces': [], 'index': 0, 'point': positions[fkey]})
-        entry['faces'].append(fkey)
-        entry['index'] += index
+        entry = merged.setdefault(key, {"faces": [], "index": 0, "point": positions[fkey]})
+        entry["faces"].append(fkey)
+        entry["index"] += index
 
     points, indices = {}, []
     dropped = 0
     for entry in merged.values():
-        if entry['index'] == 0:
-            dropped += len(entry['faces'])
+        if entry["index"] == 0:
+            dropped += len(entry["faces"])
             continue
-        fkey = entry['faces'][0]
-        points[fkey] = entry['point']
-        indices.append((fkey, entry['index']))
+        fkey = entry["faces"][0]
+        points[fkey] = entry["point"]
+        indices.append((fkey, entry["index"]))
 
-    out = CrossField(field.background, dict(field.u), relaxed=field.relaxed,
-                     iterations=field.iterations, residual=field.residual)
+    out = CrossField(field.background, dict(field.u), relaxed=field.relaxed, iterations=field.iterations, residual=field.residual)
     out._singularities = indices
     report = {
-        'faces_in': len(singular),
-        'singularities_out': len(indices),
-        'merged': len(singular) - len(indices) - dropped,
-        'dropped': dropped,
-        'poincare_hopf': out.poincare_hopf(),
+        "faces_in": len(singular),
+        "singularities_out": len(indices),
+        "merged": len(singular) - len(indices) - dropped,
+        "dropped": dropped,
+        "poincare_hopf": out.poincare_hopf(),
     }
     return out, points, report
 
@@ -313,6 +307,7 @@ def snap_singularities(
 # 5 -- the end-snapping in separatrix_network.build_network
 # ----------------------------------------------------------------------
 
+
 def project_clusters(
     points: list[list[float]],
     base: dict[int, list[float]],
@@ -320,6 +315,7 @@ def project_clusters(
     tol: float = 1e-6,
 ) -> dict[int, list[float]]:
     """Force an ``{index: point}`` clustering to commute with the group, keyed by position."""
+
     def key(p: list[float]) -> tuple[int, int]:
         return (_snap(p[0], tol), _snap(p[1], tol))
 
@@ -363,17 +359,15 @@ def project_clusters(
 def _inverse(g: tuple[int, int, int, int, bool, str]) -> tuple[int, int, int, int, bool, str]:
     """The inverse of a signed permutation -- its transpose."""
     for other in ELEMENTS:
-        if (other[0] * g[0] + other[1] * g[2] == 1
-                and other[0] * g[1] + other[1] * g[3] == 0
-                and other[2] * g[0] + other[3] * g[2] == 0
-                and other[2] * g[1] + other[3] * g[3] == 1):
+        if other[0] * g[0] + other[1] * g[2] == 1 and other[0] * g[1] + other[1] * g[3] == 0 and other[2] * g[0] + other[3] * g[2] == 0 and other[2] * g[1] + other[3] * g[3] == 1:
             return other
-    raise ValueError('not an element of the group: {}'.format(g))
+    raise ValueError("not an element of the group: {}".format(g))
 
 
 # ----------------------------------------------------------------------
 # measurement
 # ----------------------------------------------------------------------
+
 
 def invariance(
     points: list[list[float]],

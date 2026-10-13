@@ -2,6 +2,7 @@
 
 Nothing here imports Rhino; surfaces and curves are anything with ``closest_point``.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -25,9 +26,9 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    'automated_smoothing_surface_constraints',
-    'automated_smoothing_constraints',
-    'surface_constrained_smoothing',
+    "automated_smoothing_surface_constraints",
+    "automated_smoothing_constraints",
+    "surface_constrained_smoothing",
 ]
 
 
@@ -76,8 +77,7 @@ def automated_smoothing_surface_constraints(mesh: Mesh, surface: Any, borders: S
     boundary = [vertex for loop in mesh_boundary_loops(mesh) for vertex in loop]
     for vertex in boundary:
         xyz = mesh.vertex_coordinates(vertex)
-        constraints[vertex] = min(
-            borders, key=lambda curve: distance_point_point(xyz, closest_point_on_constraint(curve, xyz)))
+        constraints[vertex] = min(borders, key=lambda curve: distance_point_point(xyz, closest_point_on_constraint(curve, xyz)))
 
     if kinks and boundary:
         cloud = [mesh.vertex_coordinates(vertex) for vertex in boundary]
@@ -131,7 +131,7 @@ def automated_smoothing_constraints(mesh: Mesh, points: Sequence[list[float]] | 
     return constraints
 
 
-def surface_constrained_smoothing(mesh: Mesh, surface: Any, borders: Sequence[Any], kmax: int = 100, damping: float = 0.5, algorithm: str = 'centroid') -> dict[int, Any]:
+def surface_constrained_smoothing(mesh: Mesh, surface: Any, borders: Sequence[Any], kmax: int = 100, damping: float = 0.5, algorithm: str = "centroid") -> dict[int, Any]:
     """Smooth a mesh on a surface, re-projecting boundary vertices onto the nearest border every iteration.
 
     Parameters
@@ -159,10 +159,8 @@ def surface_constrained_smoothing(mesh: Mesh, surface: Any, borders: Sequence[An
     for vertex in mesh.vertices():
         constraints[vertex] = edge if mesh.is_vertex_on_boundary(vertex) else surface
 
-    fixed = [vertex for loop in mesh_boundary_loops(mesh) for vertex in loop
-             if mesh.vertex_degree(vertex) == 2]
+    fixed = [vertex for loop in mesh_boundary_loops(mesh) for vertex in loop if mesh.vertex_degree(vertex) == 2]
 
-    constrained_smoothing(
-        mesh, kmax=kmax, damping=damping, constraints=constraints, algorithm=algorithm, fixed=fixed)
+    constrained_smoothing(mesh, kmax=kmax, damping=damping, constraints=constraints, algorithm=algorithm, fixed=fixed)
 
     return constraints

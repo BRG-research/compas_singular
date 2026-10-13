@@ -2,6 +2,7 @@
 
 ``ensure_registered`` fills the scene registry, also after a reload.
 """
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -10,10 +11,10 @@ from __future__ import annotations
 from compas.plugins import plugin
 
 
-__all__ = ['register_scene_objects_rhino', 'ensure_registered']
+__all__ = ["register_scene_objects_rhino", "ensure_registered"]
 
 
-@plugin(category='factories', pluggable_name='register_scene_objects', requires=['Rhino'])
+@plugin(category="factories", pluggable_name="register_scene_objects", requires=["Rhino"])
 def register_scene_objects_rhino() -> None:
     from compas.scene.context import register
 
@@ -25,8 +26,8 @@ def register_scene_objects_rhino() -> None:
 
     # The registry follows the item's class hierarchy, nearest first: a layout
     # is a QuadMesh too, and still gets RhinoCoarseObject.
-    register(CoarsePseudoQuadMesh, RhinoCoarseObject, context='Rhino')
-    register(QuadMesh, RhinoDenseObject, context='Rhino')
+    register(CoarsePseudoQuadMesh, RhinoCoarseObject, context="Rhino")
+    register(QuadMesh, RhinoDenseObject, context="Rhino")
 
 
 def ensure_registered() -> None:

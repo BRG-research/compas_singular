@@ -1,4 +1,5 @@
 """Decomposition of a domain into a coarse quad layout along its topological skeleton, and the propagation and triangulation helpers it uses."""
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -16,5 +17,4 @@ import types  # noqa: E402
 # ``from .foo import *`` also binds ``foo`` as an attribute of this package, and
 # re-exporting that module object shadows any function or subpackage of the same
 # name further up the chain.
-__all__ = [name for name, obj in list(globals().items())
-           if not name.startswith('_') and not isinstance(obj, types.ModuleType)]
+__all__ = [name for name, obj in list(globals().items()) if not name.startswith("_") and not isinstance(obj, types.ModuleType)]

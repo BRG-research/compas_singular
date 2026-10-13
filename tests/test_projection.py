@@ -3,6 +3,7 @@
 No Rhino: the surface is a quarter cylinder that projects analytically, standing
 in for anything with a ``closest_point`` method.
 """
+
 import random
 from math import atan2
 from math import cos
@@ -63,7 +64,7 @@ def _draped_grid(nx=8, nt=6, amplitude=0.3, seed=0):
             x += rng.uniform(-amplitude, amplitude)
             t += rng.uniform(-amplitude, amplitude) / RADIUS
             r += rng.uniform(-amplitude, amplitude)
-        mesh.vertex_attributes(vertex, 'xyz', [x, r * cos(t), r * sin(t)])
+        mesh.vertex_attributes(vertex, "xyz", [x, r * cos(t), r * sin(t)])
     return mesh
 
 
@@ -96,7 +97,7 @@ def test_surface_constrained_smoothing_keeps_the_mesh_on_the_surface():
     corners = {v: mesh.vertex_coordinates(v) for v in mesh.vertices() if mesh.vertex_degree(v) == 2}
     before = {v: mesh.vertex_coordinates(v) for v in mesh.vertices()}
 
-    surface_constrained_smoothing(mesh, surface, borders, kmax=30, damping=0.5, algorithm='area')
+    surface_constrained_smoothing(mesh, surface, borders, kmax=30, damping=0.5, algorithm="area")
 
     for vertex in mesh.vertices():
         xyz = mesh.vertex_coordinates(vertex)

@@ -1,5 +1,6 @@
 """Plain-Python planar geometry the symmetry package needs. No numpy, no shapely:
 everything here must run in Rhino 8's interpreter as well."""
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -24,7 +25,7 @@ def open_loop(points: Iterable[Sequence[float]], tol: float = 1e-12) -> list[lis
 
 
 def as_points(curve: Any) -> list[list[float]]:
-    pts = getattr(curve, 'points', curve)
+    pts = getattr(curve, "points", curve)
     return [[float(p[0]), float(p[1]), 0.0] for p in pts]
 
 
@@ -137,7 +138,7 @@ def point_in_polygon(x: float, y: float, loop: Sequence[Sequence[float]]) -> boo
 
 def distance_to_loop(x: float, y: float, loop: Sequence[Sequence[float]], closed: bool = True) -> float:
     n = len(loop)
-    best = float('inf')
+    best = float("inf")
     last = n if closed else n - 1
     for i in range(last):
         a, b = loop[i], loop[(i + 1) % n]
@@ -198,10 +199,10 @@ class SegmentHash(object):
     def nearest(self, x: float, y: float, limit: float) -> tuple[float, Any]:
         """``(excess, tag)`` of the best item within ``limit``, else ``(inf, None)``; excess is distance minus slack."""
         if not self.items:
-            return float('inf'), None
+            return float("inf"), None
         cx, cy = self._key(x, y)
         reach = int(ceil(limit / self.cell)) + 1
-        best, best_tag = float('inf'), None
+        best, best_tag = float("inf"), None
         for i in range(cx - reach, cx + reach + 1):
             for j in range(cy - reach, cy + reach + 1):
                 for index in self.grid.get((i, j), ()):
@@ -210,5 +211,5 @@ class SegmentHash(object):
                     if d < best:
                         best, best_tag = d, tag
         if best > limit:
-            return float('inf'), None
+            return float("inf"), None
         return best, best_tag

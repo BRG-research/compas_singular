@@ -13,12 +13,7 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import Mesh
 
 
-__all__ = [
-    'mesh_vertex_2_coloring',
-    'mesh_vertex_n_coloring',
-    'mesh_face_2_coloring',
-    'mesh_face_n_coloring'
-]
+__all__ = ["mesh_vertex_2_coloring", "mesh_vertex_n_coloring", "mesh_face_2_coloring", "mesh_face_n_coloring"]
 
 
 def mesh_vertex_2_coloring(mesh: Mesh) -> dict[int, int] | None:
@@ -101,7 +96,7 @@ def mesh_face_n_coloring(mesh: Mesh) -> dict[int, int]:
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
 
     # import compas

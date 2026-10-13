@@ -3,6 +3,7 @@
 The chain is the longest run of one polyedge that stays near and parallel to the guide.
 Design notes: ``design_notes/editing.md``.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -28,12 +29,12 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    'GuideCurve',
-    'guide_chain',
-    'chain_quality',
-    'attach_chain',
-    'collect_polyedges',
-    'mean_edge_length',
+    "GuideCurve",
+    "guide_chain",
+    "chain_quality",
+    "attach_chain",
+    "collect_polyedges",
+    "mean_edge_length",
 ]
 
 
@@ -98,6 +99,7 @@ _TOL = 1e-9
 # The guide
 # ==============================================================================
 
+
 class GuideCurve(object):
     """A guide curve as a polyline with an arc-length table and, optionally, the curve itself.
 
@@ -137,7 +139,7 @@ class GuideCurve(object):
             if not cleaned or _distance(cleaned[-1], xyz) > _TOL:
                 cleaned.append(xyz)
         if len(cleaned) < 2:
-            raise ValueError('A guide needs at least two distinct points.')
+            raise ValueError("A guide needs at least two distinct points.")
 
         self.points = cleaned
         self.closed = _distance(cleaned[0], cleaned[-1]) <= _TOL
@@ -162,9 +164,8 @@ class GuideCurve(object):
             closest = [a[0] + abx * t, a[1] + aby * t, a[2] + abz * t]
             distance = _distance(xyz, closest)
             if best[1] is None or distance < best[1]:
-                norm = length2 ** 0.5
-                best = (closest, distance, cumulative[index] + t * norm,
-                        (abx / norm, aby / norm, abz / norm))
+                norm = length2**0.5
+                best = (closest, distance, cumulative[index] + t * norm, (abx / norm, aby / norm, abz / norm))
         return best
 
     def project(self, xyz: list[float]) -> tuple[float | None, float, tuple[float, float, float] | None]:
@@ -245,12 +246,13 @@ def _boundary_vertices(mesh: "QuadMesh") -> set[int]:
 # Choosing the chain
 # ==============================================================================
 
+
 def collect_polyedges(mesh: "QuadMesh") -> list[tuple[list[int], bool]]:
     """The polyedges of a quad mesh as vertex lists, closed ones without the repeated end.
 
     Collect once and reuse across guides; it is O(edges squared).
     """
-    mesh.attributes['polyedges'] = {}
+    mesh.attributes["polyedges"] = {}
     polyedges = []
     for _, polyedge in mesh.collect_polyedges():
         if len(polyedge) > 2 and polyedge[0] == polyedge[-1]:
@@ -277,10 +279,10 @@ def _runs(polyedge: list[int], keep: list[bool], closed: bool) -> list[list[int]
         runs.append(current)
 
     if closed and len(runs) > 1 and keep[0] and keep[-1]:
-        runs[0] = runs[-1] + runs[0]         # the last run continues into the first
+        runs[0] = runs[-1] + runs[0]  # the last run continues into the first
         runs.pop()
     elif closed and len(runs) == 1 and all(keep):
-        runs[0] = runs[0] + runs[0][:1]      # the whole loop: close it
+        runs[0] = runs[0] + runs[0][:1]  # the whole loop: close it
     return runs
 
 
@@ -303,7 +305,7 @@ def _trimmed(mesh: "QuadMesh", guide: GuideCurve, run: list[int]) -> list[int]:
         start += 1
     while end - start >= 2 and abs(parameters[end] - parameters[end - 1]) <= _TOL:
         end -= 1
-    return run[start:end + 1]
+    return run[start : end + 1]
 
 
 def _directions(mesh: "QuadMesh", polyedge: list[int], closed: bool) -> list[list[float] | None]:
@@ -333,7 +335,7 @@ def _parallel(direction: list[float] | None, tangent: tuple[float, float, float]
     way round -- but NOT cross-symmetric: the crossing family must fail this.
     """
     if direction is None or tangent is None:
-        return True                      # nothing to judge it on
+        return True  # nothing to judge it on
     return abs(sum(direction[i] * tangent[i] for i in range(3))) >= minimum_cosine
 
 
@@ -354,18 +356,18 @@ def _alignment(mesh: "QuadMesh", guide: GuideCurve, run: list[int]) -> float:
 def _span(mesh: "QuadMesh", chain: list[int], guide: GuideCurve, average: float) -> dict[str, float]:
     """Coverage and end gaps, summed step by step so a closed guide works too."""
     if len(chain) < 2 or guide.length <= 0.0:
-        return {'coverage': 0.0, 'gap_start': 0.0, 'gap_end': 0.0}
+        return {"coverage": 0.0, "gap_start": 0.0, "gap_end": 0.0}
 
     parameters = [guide.project(mesh.vertex_coordinates(vertex))[1] for vertex in chain]
     covered = sum(abs(guide.delta(b, a)) for a, b in zip(parameters, parameters[1:]))
     coverage = min(1.0, covered / guide.length)
 
     if guide.closed:
-        return {'coverage': coverage, 'gap_start': 0.0, 'gap_end': 0.0}
+        return {"coverage": coverage, "gap_start": 0.0, "gap_end": 0.0}
     return {
-        'coverage': coverage,
-        'gap_start': min(parameters) / average,
-        'gap_end': (guide.length - max(parameters)) / average,
+        "coverage": coverage,
+        "gap_start": min(parameters) / average,
+        "gap_end": (guide.length - max(parameters)) / average,
     }
 
 
@@ -374,7 +376,7 @@ def guide_chain(
     guide: "GuideCurve | Iterable[Sequence[float]]",
     tolerance: float | None = None,
     max_angle: float = DEFAULT_MAX_ANGLE,
-    boundary: str = 'anchor',
+    boundary: str = "anchor",
     polyedges: list[tuple[list[int], bool]] | None = None,
 ) -> tuple[list[int], dict[str, Any]]:
     """Choose the run of a polyedge that follows a guide curve.
@@ -428,9 +430,8 @@ def guide_chain(
             a closed guide.
 
     """
-    if boundary not in ('anchor', 'exclude', 'free'):
-        raise ValueError(
-            "boundary must be 'anchor', 'exclude' or 'free', got {!r}".format(boundary))
+    if boundary not in ("anchor", "exclude", "free"):
+        raise ValueError("boundary must be 'anchor', 'exclude' or 'free', got {!r}".format(boundary))
 
     guide = _as_guide(guide)
     average = mean_edge_length(mesh)
@@ -441,9 +442,15 @@ def guide_chain(
     boundary_vertices = _boundary_vertices(mesh)
 
     info = {
-        'reason': '', 'tolerance': tolerance, 'max_angle': max_angle,
-        'boundary': boundary, 'alignment': 0.0,
-        'candidates': 0, 'coverage': 0.0, 'gap_start': 0.0, 'gap_end': 0.0,
+        "reason": "",
+        "tolerance": tolerance,
+        "max_angle": max_angle,
+        "boundary": boundary,
+        "alignment": 0.0,
+        "candidates": 0,
+        "coverage": 0.0,
+        "gap_start": 0.0,
+        "gap_end": 0.0,
     }
 
     minimum_cosine = cos(radians(min(90.0, max(0.0, max_angle))))
@@ -451,12 +458,12 @@ def guide_chain(
     candidates, near_count, crossing = 0, 0, 0
     for polyedge, closed in polyedges:
         on_boundary = [vertex in boundary_vertices for vertex in polyedge]
-        if boundary != 'free' and all(on_boundary):
-            continue                     # this polyedge IS the outline
+        if boundary != "free" and all(on_boundary):
+            continue  # this polyedge IS the outline
         directions = _directions(mesh, polyedge, closed)
         keep = []
         for vertex, is_boundary, direction in zip(polyedge, on_boundary, directions):
-            if boundary == 'exclude' and is_boundary:
+            if boundary == "exclude" and is_boundary:
                 keep.append(False)
                 continue
             distance, _, tangent = guide.project(mesh.vertex_coordinates(vertex))
@@ -465,19 +472,19 @@ def guide_chain(
                 near_count += 1
                 if not _parallel(direction, tangent, minimum_cosine):
                     near = False
-                    crossing += 1        # near the guide, but no longer going its way
+                    crossing += 1  # near the guide, but no longer going its way
             keep.append(near)
         if not any(keep):
             continue
 
         for run in _runs(polyedge, keep, closed):
             if len(run) < 2:
-                continue                 # a single vertex is not a line
+                continue  # a single vertex is not a line
             candidates += 1
             run = _trimmed(mesh, guide, _oriented(mesh, guide, run))
             if len(run) < 2:
                 continue
-            covered = _span(mesh, run, guide, average)['coverage']
+            covered = _span(mesh, run, guide, average)["coverage"]
             distances = [guide.project(mesh.vertex_coordinates(v))[0] for v in run]
             # longest first: what is wanted is the line that follows the guide furthest,
             # and only then the one that hugs it closest
@@ -485,20 +492,19 @@ def guide_chain(
             if best_score is None or score > best_score:
                 best, best_score = run, score
 
-    info['candidates'] = candidates
+    info["candidates"] = candidates
     if best is None:
         # name the gate that actually refused it -- both can fire at once, and telling the
         # user to move the guide when the problem is its direction wastes their time
         if not near_count:
-            info['reason'] = 'no polyedge runs within {:.3g} of this guide'.format(tolerance)
+            info["reason"] = "no polyedge runs within {:.3g} of this guide".format(tolerance)
         elif crossing:
-            info['reason'] = ('no polyedge both runs within {:.3g} of this guide and stays'
-                              ' within {:.0f} degrees of it'.format(tolerance, max_angle))
+            info["reason"] = "no polyedge both runs within {:.3g} of this guide and stays within {:.0f} degrees of it".format(tolerance, max_angle)
         else:
-            info['reason'] = 'no polyedge follows this guide for more than one vertex'
+            info["reason"] = "no polyedge follows this guide for more than one vertex"
         return [], info
 
-    info['alignment'] = _alignment(mesh, guide, best)
+    info["alignment"] = _alignment(mesh, guide, best)
     info.update(_span(mesh, best, guide, average))
     return best, info
 
@@ -506,6 +512,7 @@ def guide_chain(
 # ==============================================================================
 # Attaching it
 # ==============================================================================
+
 
 def _boundary_curves(mesh: "QuadMesh") -> dict[int, Polyline]:
     """{vertex: the closed polyline of the boundary loop it is on}.
@@ -526,7 +533,7 @@ def attach_chain(
     mesh: "QuadMesh",
     chain: list[int],
     guide: "GuideCurve | Iterable[Sequence[float]]",
-    hold: str = 'fixed',
+    hold: str = "fixed",
     boundary_curves: dict[int, Polyline] | None = None,
 ) -> tuple[dict[int, list[float]], dict[int, Any]]:
     """Where each chain vertex goes and what holds it there. The mesh is not modified.
@@ -566,17 +573,18 @@ def attach_chain(
         xyz = mesh.vertex_coordinates(vertex)
         outline = boundary_curves.get(vertex)
         if outline is not None:
-            constraints[vertex] = outline        # slides along the wall, never off it
+            constraints[vertex] = outline  # slides along the wall, never off it
             continue
         target = closest_point_on_constraint(guide, xyz)
         moves[vertex] = target
-        constraints[vertex] = Point(*target) if hold == 'fixed' else guide
+        constraints[vertex] = Point(*target) if hold == "fixed" else guide
     return moves, constraints
 
 
 # ==============================================================================
 # Is it a clean, long polyedge line?
 # ==============================================================================
+
 
 def chain_quality(mesh: "QuadMesh", chain: list[int], guide: "GuideCurve | Iterable[Sequence[float]]") -> dict[str, Any]:
     """Measure a chain against a clean, long polyedge line that follows the guide.
@@ -630,30 +638,41 @@ def chain_quality(mesh: "QuadMesh", chain: list[int], guide: "GuideCurve | Itera
     boundary_vertices = _boundary_vertices(mesh)
 
     quality = {
-        'n': len(chain), 'boundary_interior': 0, 'boundary_ends': 0, 'valid_path': False,
-        'purity': 0.0, 'runs': 0, 'longest_run': 0, 'turn_max': 0.0, 'turn_mean': 0.0,
-        'alignment': 0.0, 'off_max': 0.0, 'off_mean': 0.0, 'coverage': 0.0,
-        'gap_start': 0.0, 'gap_end': 0.0, 'min_face_angle': None, 'folded_faces': 0,
-        'end_drift': 0.0,
+        "n": len(chain),
+        "boundary_interior": 0,
+        "boundary_ends": 0,
+        "valid_path": False,
+        "purity": 0.0,
+        "runs": 0,
+        "longest_run": 0,
+        "turn_max": 0.0,
+        "turn_mean": 0.0,
+        "alignment": 0.0,
+        "off_max": 0.0,
+        "off_mean": 0.0,
+        "coverage": 0.0,
+        "gap_start": 0.0,
+        "gap_end": 0.0,
+        "min_face_angle": None,
+        "folded_faces": 0,
+        "end_drift": 0.0,
     }
     if not chain:
         return quality
 
     ends = set([chain[0], chain[-1]])
     on_boundary = [vertex for vertex in chain if vertex in boundary_vertices]
-    quality['boundary_ends'] = len([vertex for vertex in on_boundary if vertex in ends])
-    quality['boundary_interior'] = len(on_boundary) - quality['boundary_ends']
+    quality["boundary_ends"] = len([vertex for vertex in on_boundary if vertex in ends])
+    quality["boundary_interior"] = len(on_boundary) - quality["boundary_ends"]
 
     closed = len(chain) > 2 and chain[0] == chain[-1]
     unique = chain[:-1] if closed else chain
-    quality['valid_path'] = (
-        len(set(unique)) == len(unique)
-        and all(b in mesh.vertex_neighbors(a) for a, b in zip(chain, chain[1:])))
+    quality["valid_path"] = len(set(unique)) == len(unique) and all(b in mesh.vertex_neighbors(a) for a, b in zip(chain, chain[1:]))
 
     distances = [guide.project(mesh.vertex_coordinates(vertex))[0] or 0.0 for vertex in chain]
-    quality['off_max'] = max(distances) / average
-    quality['off_mean'] = (sum(distances) / len(distances)) / average
-    quality['alignment'] = _alignment(mesh, guide, chain)
+    quality["off_max"] = max(distances) / average
+    quality["off_mean"] = (sum(distances) / len(distances)) / average
+    quality["alignment"] = _alignment(mesh, guide, chain)
     quality.update(_span(mesh, chain, guide, average))
 
     if len(chain) > 2:
@@ -674,19 +693,17 @@ def chain_quality(mesh: "QuadMesh", chain: list[int], guide: "GuideCurve | Itera
             xyz_a = mesh.vertex_coordinates(a)
             xyz_b = mesh.vertex_coordinates(b)
             xyz_c = mesh.vertex_coordinates(c)
-            turns.append(_angle(
-                _unit([xyz_b[i] - xyz_a[i] for i in range(3)]),
-                _unit([xyz_c[i] - xyz_b[i] for i in range(3)])))
+            turns.append(_angle(_unit([xyz_b[i] - xyz_a[i] for i in range(3)]), _unit([xyz_c[i] - xyz_b[i] for i in range(3)])))
         runs.append(run + 1)
-        quality['purity'] = straight_steps / float(len(chain) - 2)
-        quality['runs'] = len(runs)
-        quality['longest_run'] = max(runs)
-        quality['turn_max'] = max(turns)
-        quality['turn_mean'] = sum(turns) / len(turns)
+        quality["purity"] = straight_steps / float(len(chain) - 2)
+        quality["runs"] = len(runs)
+        quality["longest_run"] = max(runs)
+        quality["turn_max"] = max(turns)
+        quality["turn_mean"] = sum(turns) / len(turns)
     else:
-        quality['purity'] = 1.0
-        quality['runs'] = 1
-        quality['longest_run'] = len(chain)
+        quality["purity"] = 1.0
+        quality["runs"] = 1
+        quality["longest_run"] = len(chain)
 
     quality.update(_projection_damage(mesh, chain, guide, boundary_vertices, ends, average))
     return quality
@@ -706,19 +723,16 @@ def _projection_damage(
 
     moves, _ = attach_chain(mesh, chain, guide)
     for vertex, xyz in moves.items():
-        copy.vertex_attributes(vertex, 'xyz', xyz)
+        copy.vertex_attributes(vertex, "xyz", xyz)
 
     drift = 0.0
     for vertex in chain:
         if vertex not in boundary_vertices or not outlines:
             continue
         xyz = copy.vertex_coordinates(vertex)
-        drift = max(drift, min(
-            _distance(xyz, closest_point_on_constraint(outline, xyz))
-            for outline in outlines))
+        drift = max(drift, min(_distance(xyz, closest_point_on_constraint(outline, xyz)) for outline in outlines))
 
-    faces = set(face for vertex in chain for face in mesh.vertex_faces(vertex)
-                if face is not None)
+    faces = set(face for vertex in chain for face in mesh.vertex_faces(vertex) if face is not None)
 
     worst, folded = None, 0
     for face in faces:
@@ -732,10 +746,8 @@ def _projection_damage(
             a = copy.vertex_coordinates(vertices[index - 1])
             b = copy.vertex_coordinates(vertices[index])
             c = copy.vertex_coordinates(vertices[(index + 1) % count])
-            angle = _angle(
-                _unit([a[i] - b[i] for i in range(3)]),
-                _unit([c[i] - b[i] for i in range(3)]))
+            angle = _angle(_unit([a[i] - b[i] for i in range(3)]), _unit([c[i] - b[i] for i in range(3)]))
             if worst is None or angle < worst:
                 worst = angle
 
-    return {'min_face_angle': worst, 'folded_faces': folded, 'end_drift': drift / average}
+    return {"min_face_angle": worst, "folded_faces": folded, "end_drift": drift / average}

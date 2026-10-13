@@ -9,14 +9,7 @@ from math import sin
 
 from compas.geometry import add_vectors
 
-__all__ = [
-    'circle_evaluate',
-    'archimedean_spiral_evaluate',
-    'line_array',
-    'rectangular_array',
-    'circular_array',
-    'spiral_array'
-]
+__all__ = ["circle_evaluate", "archimedean_spiral_evaluate", "line_array", "rectangular_array", "circular_array", "spiral_array"]
 
 
 def circle_evaluate(t: float, r: float, z: float = 0) -> list[float]:
@@ -78,7 +71,7 @@ def spiral_array(n: int, d: float, anchor: list[float] = [0.0, 0.0, 0.0]) -> lis
     a, b = 0, d / (2 * pi)
     ts = [pi * b]
     for i in range(n):
-        ts.append((2 * d / b + ts[-1] ** 2) ** .5)
+        ts.append((2 * d / b + ts[-1] ** 2) ** 0.5)
     return [add_vectors(anchor, archimedean_spiral_evaluate(t, a, b, 0)) for t in ts]
 
 
@@ -86,7 +79,7 @@ def spiral_array(n: int, d: float, anchor: list[float] = [0.0, 0.0, 0.0]) -> lis
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
 
     # print(rectangular_array(4, 2, 10.0, 0.5, anchor=[1.0, -1.0, 0.0]))

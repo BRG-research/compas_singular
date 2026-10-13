@@ -2,6 +2,7 @@
 
 Sliding vertices keep their order; the result is kept only if no quality measure got worse.
 """
+
 from __future__ import annotations
 
 from math import cos
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import Mesh
 
 
-__all__ = ['relax_mesh', 'relaxation_constraints']
+__all__ = ["relax_mesh", "relaxation_constraints"]
 
 #: ``(iterations, damping)`` settings, gentlest first. The first accepted wins,
 #: so a mesh takes the least relaxation that helps it.
@@ -33,6 +34,7 @@ MIN_GAP = 0.25
 # ------------------------------------------------------------------
 # curves and parameters
 # ------------------------------------------------------------------
+
 
 class _Curve(object):
     """A polyline that reports arc-length parameters as well as closest points."""
@@ -52,7 +54,7 @@ class _Curve(object):
     def project(self, xyz: list[float]) -> tuple[list[float] | None, float]:
         """``(point, parameter)`` of the closest point, parameter as arc length."""
         index, t, q, d = closest_on_polyline(xyz, self.points)
-        if d == float('inf'):
+        if d == float("inf"):
             return None, 0.0
         return q, self._parameter(index, t)
 
@@ -69,9 +71,8 @@ class _Curve(object):
         p = np.asarray([[x[0], x[1], x[2]] for x in points], dtype=float)
         a, ab, len2 = self._a[None, :, :], self._ab[None, :, :], self._len2[None, :]
         valid = len2 != 0.0
-        with np.errstate(invalid='ignore', divide='ignore'):
-            t = ((p[:, None, 0] - a[..., 0]) * ab[..., 0] + (p[:, None, 1] - a[..., 1]) * ab[..., 1]
-                 + (p[:, None, 2] - a[..., 2]) * ab[..., 2]) / len2
+        with np.errstate(invalid="ignore", divide="ignore"):
+            t = ((p[:, None, 0] - a[..., 0]) * ab[..., 0] + (p[:, None, 1] - a[..., 1]) * ab[..., 1] + (p[:, None, 2] - a[..., 2]) * ab[..., 2]) / len2
         t = np.clip(np.where(valid, t, 0.0), 0.0, 1.0)
         q = a + ab * t[..., None]
         d = np.sqrt(((q - p[:, None, :]) ** 2).sum(axis=2))
@@ -82,8 +83,8 @@ class _Curve(object):
         for row, xyz in enumerate(points):
             best = None
             for i in np.flatnonzero(near[row]).tolist():
-                index, ti, qi, di = closest_on_polyline(xyz, self.points[i:i + 2])
-                if di != float('inf') and (best is None or di < best[3]):
+                index, ti, qi, di = closest_on_polyline(xyz, self.points[i : i + 2])
+                if di != float("inf") and (best is None or di < best[3]):
                     best = (i + index, ti, qi, di)
             if best is None:
                 out.append((None, 0.0))
@@ -111,6 +112,7 @@ def _distance(a: list[float], b: list[float]) -> float:
 # constraints
 # ------------------------------------------------------------------
 
+
 def _singularities(mesh: Mesh) -> set[int]:
     """Interior vertices whose valency is not 4, plus every pole."""
     out = set()
@@ -119,7 +121,7 @@ def _singularities(mesh: Mesh) -> set[int]:
             continue
         if len(mesh.vertex_neighbors(vertex)) != 4:
             out.add(vertex)
-    out.update(mesh.attributes.get('face_pole', {}).values())
+    out.update(mesh.attributes.get("face_pole", {}).values())
     return out
 
 
@@ -142,7 +144,7 @@ def relaxation_constraints(
     seam_edge: dict[str, tuple[int, int, int]] | None = None,
     edges_to_curves: dict[tuple[int, int], list[list[float]]] | None = None,
     corner_angle: float = 30.0,
-    seams: str = 'free',
+    seams: str = "free",
     pin_singularities: bool = False,
 ) -> tuple[dict[_Curve, list[int]], set[int]]:
     """What each vertex may do.
@@ -174,7 +176,7 @@ def relaxation_constraints(
                 pinned.add(vertex)
         chains[curve] = [v for v in keys if v not in pinned]
 
-    if seams == 'free':
+    if seams == "free":
         return chains, pinned
 
     # the patch seams: each chain in its order along its own coarse edge
@@ -197,7 +199,7 @@ def relaxation_constraints(
             ordered = [vertex for _, vertex in members if vertex not in pinned]
             if not ordered:
                 continue
-            if seams == 'fixed':
+            if seams == "fixed":
                 pinned.update(ordered)
             else:
                 chains[_Curve(points)] = ordered
@@ -209,11 +211,13 @@ def relaxation_constraints(
 # the pass
 # ------------------------------------------------------------------
 
+
 def _quality(mesh: Mesh) -> tuple[float, float, float]:
     """``(min angle, max angle, max aspect)`` -- the three the gate compares."""
     from compas_singular.framefield.quality import mesh_quality
+
     q = mesh_quality(mesh)
-    return q['min_angle'], q['max_angle'], q['aspect_max']
+    return q["min_angle"], q["max_angle"], q["aspect_max"]
 
 
 def _positions(mesh: Mesh) -> dict[int, list[float]]:
@@ -222,7 +226,7 @@ def _positions(mesh: Mesh) -> dict[int, list[float]]:
 
 def _restore(mesh: Mesh, positions: dict[int, list[float]]) -> None:
     for vertex, xyz in positions.items():
-        mesh.vertex_attributes(vertex, 'xyz', xyz)
+        mesh.vertex_attributes(vertex, "xyz", xyz)
 
 
 def _reproject(mesh: Mesh, chains: dict[_Curve, list[int]]) -> None:
@@ -245,7 +249,7 @@ def _reproject(mesh: Mesh, chains: dict[_Curve, list[int]]) -> None:
             wanted[i] = min(wanted[i], cap)
 
         for vertex, parameter in zip(ordered, wanted):
-            mesh.vertex_attributes(vertex, 'xyz', curve.point_at(parameter))
+            mesh.vertex_attributes(vertex, "xyz", curve.point_at(parameter))
 
 
 def _smooth(
@@ -275,7 +279,7 @@ def _smooth(
 
         for vertex, target in centroid.items():
             xyz = mesh.vertex_coordinates(vertex)
-            mesh.vertex_attributes(vertex, 'xyz', [xyz[i] + damping * (target[i] - xyz[i]) for i in range(3)])
+            mesh.vertex_attributes(vertex, "xyz", [xyz[i] + damping * (target[i] - xyz[i]) for i in range(3)])
 
         _reproject(mesh, chains)
 
@@ -286,7 +290,7 @@ def relax_mesh(
     edges_to_curves: dict[tuple[int, int], list[list[float]]] | None = None,
     corner_angle: float = 30.0,
     schedule: Sequence[tuple[int, float]] = SCHEDULE,
-    seams: str = 'free',
+    seams: str = "free",
     pin_singularities: bool = False,
 ) -> dict[str, Any]:
     """**Relax a dense mesh globally**, its outline sliding along itself.
@@ -322,17 +326,16 @@ def relax_mesh(
         aspect)``; ``sliding`` / ``pinned`` -- how many vertices of each kind.
     """
     chains, pinned = relaxation_constraints(
-        mesh, seam_edge=seam_edge, edges_to_curves=edges_to_curves,
-        corner_angle=corner_angle, seams=seams, pin_singularities=pin_singularities)
+        mesh, seam_edge=seam_edge, edges_to_curves=edges_to_curves, corner_angle=corner_angle, seams=seams, pin_singularities=pin_singularities
+    )
 
     before = _quality(mesh)
     original = _positions(mesh)
     sliding = sum(len(v) for v in chains.values())
 
-    report = {'accepted': None, 'before': before, 'after': before,
-              'sliding': sliding, 'pinned': len(pinned)}
+    report = {"accepted": None, "before": before, "after": before, "sliding": sliding, "pinned": len(pinned)}
 
-    done = None                 # (iterations, damping) the mesh is at right now
+    done = None  # (iterations, damping) the mesh is at right now
     for kmax, damping in schedule:
         if done is not None and done[1] == damping and done[0] <= kmax:
             # the same damping, further on: continue rather than start again
@@ -343,8 +346,8 @@ def relax_mesh(
         done = (kmax, damping)
         after = _quality(mesh)
         if after[0] >= before[0] and after[1] <= before[1] and after[2] <= before[2]:
-            report['accepted'] = (kmax, damping)
-            report['after'] = after
+            report["accepted"] = (kmax, damping)
+            report["after"] = after
             return report
 
     _restore(mesh, original)

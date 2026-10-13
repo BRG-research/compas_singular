@@ -4,6 +4,7 @@ The figures pinned here are the ones the redistribution was designed against: th
 dual's boundary sits on the primal's edge midpoints, so its outer blocks are half
 size (block area max/min 4.00) until ``redistribute_blocks`` evens them out.
 """
+
 from math import cos
 from math import pi
 from math import sin
@@ -19,20 +20,15 @@ from compas_singular.datastructures import QuadMesh
 
 def grid(n, m, fold=False):
     """An n x m grid of unit quads; ``fold`` bends it into a roof along its middle."""
-    vertices = [[float(i), float(j), abs(i - n / 2.0) if fold else 0.0]
-                for j in range(m + 1) for i in range(n + 1)]
-    faces = [[j * (n + 1) + i, j * (n + 1) + i + 1, (j + 1) * (n + 1) + i + 1, (j + 1) * (n + 1) + i]
-             for j in range(m) for i in range(n)]
+    vertices = [[float(i), float(j), abs(i - n / 2.0) if fold else 0.0] for j in range(m + 1) for i in range(n + 1)]
+    faces = [[j * (n + 1) + i, j * (n + 1) + i + 1, (j + 1) * (n + 1) + i + 1, (j + 1) * (n + 1) + i] for j in range(m) for i in range(n)]
     return vertices, faces
 
 
 def annulus(n=16, rings=3, r0=1.0, r1=3.0):
     """Rings of quads round a circular hole: two smooth boundaries, no corners."""
-    vertices = [[(r0 + (r1 - r0) * k / rings) * cos(2 * pi * i / n),
-                 (r0 + (r1 - r0) * k / rings) * sin(2 * pi * i / n), 0.0]
-                for k in range(rings + 1) for i in range(n)]
-    faces = [[k * n + i, k * n + (i + 1) % n, (k + 1) * n + (i + 1) % n, (k + 1) * n + i]
-             for k in range(rings) for i in range(n)]
+    vertices = [[(r0 + (r1 - r0) * k / rings) * cos(2 * pi * i / n), (r0 + (r1 - r0) * k / rings) * sin(2 * pi * i / n), 0.0] for k in range(rings + 1) for i in range(n)]
+    faces = [[k * n + i, k * n + (i + 1) % n, (k + 1) * n + (i + 1) % n, (k + 1) * n + i] for k in range(rings) for i in range(n)]
     return vertices, faces
 
 
@@ -54,7 +50,8 @@ def plain_grid():
 # topology
 # ----------------------------------------------------------------------------
 
-@pytest.mark.parametrize('shape', [grid(6, 4), grid(6, 4, fold=True), annulus()])
+
+@pytest.mark.parametrize("shape", [grid(6, 4), grid(6, 4, fold=True), annulus()])
 def test_the_dual_is_all_quad(shape):
     dual = dual_mesh(Mesh.from_vertices_and_faces(*shape))
     assert {len(dual.face_vertices(fkey)) for fkey in dual.faces()} == {4}
@@ -94,6 +91,7 @@ def test_is_oriented_catches_a_reversed_face():
 # ----------------------------------------------------------------------------
 # geometry: the domain is kept, the half blocks are evened out
 # ----------------------------------------------------------------------------
+
 
 def test_a_planar_dual_covers_the_primal_exactly(plain_grid):
     assert dual_mesh(plain_grid, redistribute=False).area() == pytest.approx(plain_grid.area())
@@ -141,6 +139,7 @@ def test_respaced_doubles_the_end_gaps_and_keeps_the_span():
 # ----------------------------------------------------------------------------
 # input types
 # ----------------------------------------------------------------------------
+
 
 def test_a_quad_mesh_dualises_like_a_plain_mesh():
     # compas_singular's Mesh.to_vertices_and_faces returns dicts by default,

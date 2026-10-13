@@ -2,6 +2,7 @@
 
 Solve the field, trace separatrices, build the planar network, recover and repair the coarse layout, densify.
 """
+
 from __future__ import annotations
 
 import traceback
@@ -48,11 +49,11 @@ if TYPE_CHECKING:
     from compas_singular.symmetry.unit import SymmetricUnit
 
 
-__all__ = ['FieldDecomposition']
+__all__ = ["FieldDecomposition"]
 
 
 #: The routes ``FieldDecomposition.quad_mesh`` can take, best first.
-ROUTES = ('field', 'polygon', 'triangulation')
+ROUTES = ("field", "polygon", "triangulation")
 
 
 def _on_loop(point: list[float], loop: list[list[float]], tol: float = 1e-6) -> bool:
@@ -204,19 +205,18 @@ class FieldDecomposition(object):
         self._edited = False
         # the ``poles`` ``mesh`` was built with -- decomposition_mesh's cache key
         self._mesh_poles = None
-        self._route = 'field'
+        self._route = "field"
 
     def warnings(self) -> list[str]:
         """Everything that silently degrades the layout, in words; check ``arm_mismatch`` first."""
         out = []
-        for fkey, got, expected in self.trace_report.get('arm_mismatch') or []:
-            out.append('singularity {}: found {} launch directions, expected {}'.format(
-                fkey, got, expected))
+        for fkey, got, expected in self.trace_report.get("arm_mismatch") or []:
+            out.append("singularity {}: found {} launch directions, expected {}".format(fkey, got, expected))
         out.extend(self.repair_notes)
-        for reason in ('cycle', 'lost', 'length'):
-            n = (self.trace_report.get('reasons') or {}).get(reason)
+        for reason in ("cycle", "lost", "length"):
+            n = (self.trace_report.get("reasons") or {}).get(reason)
             if n:
-                out.append('{} separatrix/ices ended with reason {!r}'.format(n, reason))
+                out.append("{} separatrix/ices ended with reason {!r}".format(n, reason))
         return out
 
     # ------------------------------------------------------------------
@@ -229,14 +229,14 @@ class FieldDecomposition(object):
         outer_boundary: Any,
         inner_boundaries: Any = None,
         guides: Any = None,
-        mode: str = 'perpendicular',
+        mode: str = "perpendicular",
         target_length: float | None = None,
         orthogonal: bool | None = None,
         guide_weight: float | None = 1.0,
         guide_band: float | None = None,
         relax: bool = False,
         tau: float | None = None,
-        symmetry: Symmetry | str | None = 'auto',
+        symmetry: Symmetry | str | None = "auto",
         solve: bool = True,
         field_tau: float | None = None,
     ) -> FieldDecomposition:
@@ -268,24 +268,39 @@ class FieldDecomposition(object):
             warnings.warn("'field_tau' is now 'tau'", DeprecationWarning, stacklevel=2)
             if tau is None:
                 tau = field_tau
-        inputs = {'outer_boundary': outer_boundary, 'inner_boundaries': inner_boundaries,
-                  'guides': guides, 'mode': mode, 'target_length': target_length,
-                  'orthogonal': orthogonal, 'guide_weight': guide_weight,
-                  'guide_band': guide_band, 'relax': relax, 'tau': tau,
-                  'symmetry': symmetry}
+        inputs = {
+            "outer_boundary": outer_boundary,
+            "inner_boundaries": inner_boundaries,
+            "guides": guides,
+            "mode": mode,
+            "target_length": target_length,
+            "orthogonal": orthogonal,
+            "guide_weight": guide_weight,
+            "guide_band": guide_band,
+            "relax": relax,
+            "tau": tau,
+            "symmetry": symmetry,
+        }
         if not solve:
             out = cls(None, None, [], None)
             out.inputs = inputs
             return out
 
         if orthogonal is False:
-            raise NotImplementedError('non-orthogonal frame fields are not implemented; '
-                                      'only cross fields are solved')
+            raise NotImplementedError("non-orthogonal frame fields are not implemented; only cross fields are solved")
 
         field = CrossField.from_boundary(
-            outer_boundary, inner_boundaries=inner_boundaries, guides=guides,
-            mode=mode, target_length=target_length, guide_weight=guide_weight,
-            guide_band=guide_band, relax=relax, tau=tau, symmetry=symmetry)
+            outer_boundary,
+            inner_boundaries=inner_boundaries,
+            guides=guides,
+            mode=mode,
+            target_length=target_length,
+            guide_weight=guide_weight,
+            guide_band=guide_band,
+            relax=relax,
+            tau=tau,
+            symmetry=symmetry,
+        )
 
         tracer = Tracer(field, singularity_points=field.singularity_points)
         separatrices, trace_report = tracer.separatrices()
@@ -303,8 +318,7 @@ class FieldDecomposition(object):
 
     def _require_solved(self) -> None:
         if self.field is None:
-            raise ValueError('this FieldDecomposition was built with solve=False and has no field '
-                             'yet -- call solve() first, or use symmetry_unit()')
+            raise ValueError("this FieldDecomposition was built with solve=False and has no field yet -- call solve() first, or use symmetry_unit()")
 
     def solve(self) -> FieldDecomposition:
         """**The solved decomposition** for the stored inputs -- a NEW object,
@@ -330,7 +344,7 @@ class FieldDecomposition(object):
     def find_symmetry(
         self,
         tol: float | None = None,
-        include: tuple[str, ...] = ('walls', 'holes', 'guides', 'poles'),
+        include: tuple[str, ...] = ("walls", "holes", "guides", "poles"),
         max_order: int = 12,
     ) -> SymmetryReport:
         """**Detect the symmetry of the domain** -- walls, holes, guides.
@@ -343,14 +357,14 @@ class FieldDecomposition(object):
         """
         from compas_singular.symmetry import find_symmetry
         from compas_singular.symmetry.routes import domain_of
-        self.symmetry_report = find_symmetry(domain=domain_of(self), tol=tol, include=include,
-                                             max_order=max_order)
+
+        self.symmetry_report = find_symmetry(domain=domain_of(self), tol=tol, include=include, max_order=max_order)
         return self.symmetry_report
 
     def symmetry_unit(
         self,
         keys: Any = None,
-        centre: str = 'route',
+        centre: str = "route",
         seam: Any = None,
         report: SymmetryReport | None = None,
     ) -> SymmetricUnit:
@@ -364,6 +378,7 @@ class FieldDecomposition(object):
         """
         from compas_singular.symmetry import build_unit
         from compas_singular.symmetry.routes import mesher_for
+
         report = report or self.symmetry_report or self.find_symmetry()
         return build_unit(report, mesher_for(self), keys=keys, centre=centre, seam=seam)
 
@@ -396,21 +411,20 @@ class FieldDecomposition(object):
         """
         self._require_solved()
         poles_key = tuple(tuple(round(float(c), 6) for c in point) for point in (poles or ()))
-        if (not force and self.mesh is not None and not self._edited
-                and self._mesh_poles == poles_key):
+        if not force and self.mesh is not None and not self._edited and self._mesh_poles == poles_key:
             return self.mesh
 
         boundary, others, _ = self._build()
         self.polylines = boundary + others
         self.repair_notes = []
-        self._route = 'field'
+        self._route = "field"
 
         if not others and self.background.inners:
             # no interior line and a hole: the wall arcs belong to two loops, and
             # no single face can be built from them
             mesh = self._triangulation_fallback(
-                'no interior separatrices and {} boundary loops -- a domain with '
-                'a hole has no single-patch layout'.format(1 + len(self.background.inners)))
+                "no interior separatrices and {} boundary loops -- a domain with a hole has no single-patch layout".format(1 + len(self.background.inners))
+            )
         elif not others:
             # nothing cuts the domain -- a square, a hexagon: one patch
             mesh = self._single_patch(boundary)
@@ -420,19 +434,19 @@ class FieldDecomposition(object):
             faces = faces_from_arrangement(boundary, others, self.background.loops)
             mesh = self._mesh_from_faces(faces)
             if mesh is None:
-                mesh = self._triangulation_fallback('a hole was cut but the arrangement yielded no face')
+                mesh = self._triangulation_fallback("a hole was cut but the arrangement yielded no face")
         else:
             mesh = CoarsePseudoQuadMesh.from_polylines(boundary, others)
             # a face visiting a vertex twice means the network was not planar
             repeated = faces_with_repeated_vertices(mesh)
             if repeated:
                 self.repair_notes.append(
-                    'ARRANGEMENT WARNING: {} recovered face(s) repeat a vertex '
-                    '({}). The polyline network is not a planar arrangement; the '
-                    'layout that follows is unreliable.'.format(len(repeated), repeated[:5]))
+                    "ARRANGEMENT WARNING: {} recovered face(s) repeat a vertex "
+                    "({}). The polyline network is not a planar arrangement; the "
+                    "layout that follows is unreliable.".format(len(repeated), repeated[:5])
+                )
 
-        mesh, note = solve_non_quad_faces(mesh, CoarsePseudoQuadMesh, self.background.loops,
-                                          poles=poles)
+        mesh, note = solve_non_quad_faces(mesh, CoarsePseudoQuadMesh, self.background.loops, poles=poles)
         if note:
             self.repair_notes.append(note)
 
@@ -444,7 +458,7 @@ class FieldDecomposition(object):
             if fallback is not None:
                 mesh = fallback
 
-        mesh.attributes['decomposition_type'] = 'field'
+        mesh.attributes["decomposition_type"] = "field"
         self.mesh = mesh
         self._mesh_poles = poles_key
         self._edited = False
@@ -495,45 +509,44 @@ class FieldDecomposition(object):
         self.polylines = boundary + others + list(self.user_curves)
 
         if poles is None:
-            poles = ([self.mesh.vertex_coordinates(v) for v in self.mesh.poles()]
-                     if self.mesh is not None and hasattr(self.mesh, 'poles') else [])
+            poles = [self.mesh.vertex_coordinates(v) for v in self.mesh.poles()] if self.mesh is not None and hasattr(self.mesh, "poles") else []
         if snap_tol is None:
             snap_tol = self.background.target_length * 0.5
 
-        mesh, notes = coarse_from_skeleton(geometry, loops=self.background.loops, poles=poles,
-                                           snap_tol=snap_tol, cls=CoarsePseudoQuadMesh)
+        mesh, notes = coarse_from_skeleton(geometry, loops=self.background.loops, poles=poles, snap_tol=snap_tol, cls=CoarsePseudoQuadMesh)
         if mesh is None:
             raise ValueError(
-                'the edited layout has no usable patch ({} face(s) in, {} '
-                'degenerate). A patch must be a closed polyline with one point '
-                'per corner.'.format(notes['faces_in'], notes['degenerate']))
+                "the edited layout has no usable patch ({} face(s) in, {} degenerate). A patch must be a closed polyline with one point per corner.".format(
+                    notes["faces_in"], notes["degenerate"]
+                )
+            )
 
         ok, why = densifiable(mesh)
         if not ok and strict:
             raise ValueError(
-                'the edited layout will not densify: {}. It is NOT being '
-                'replaced by a fallback -- fix the layout and hand it back. '
-                '({} patch(es) in, {} out, side counts {})'.format(
-                    why, notes['faces_in'], notes['faces_out'], notes['sides']))
+                "the edited layout will not densify: {}. It is NOT being "
+                "replaced by a fallback -- fix the layout and hand it back. "
+                "({} patch(es) in, {} out, side counts {})".format(why, notes["faces_in"], notes["faces_out"], notes["sides"])
+            )
 
-        note = ('EDITED coarse layout adopted: {} patch(es) in, {} out, {} '
-                'corner(s) snapped to a wall'.format(notes['faces_in'], notes['faces_out'],
-                                                     notes['snapped']))
-        if notes['off_wall']:
-            note += (', {} corner(s) on the layout edge sit on no wall (further '
-                     'than the snap tolerance from every loop) -- expected where '
-                     'a patch was deleted, a mistake otherwise'.format(notes['off_wall']))
-        if notes['degenerate']:
-            note += ', {} degenerate patch(es) dropped'.format(notes['degenerate'])
-        if notes['repair']:
-            note += '; repair: {}'.format(notes['repair'])
+        note = "EDITED coarse layout adopted: {} patch(es) in, {} out, {} corner(s) snapped to a wall".format(notes["faces_in"], notes["faces_out"], notes["snapped"])
+        if notes["off_wall"]:
+            note += (
+                ", {} corner(s) on the layout edge sit on no wall (further "
+                "than the snap tolerance from every loop) -- expected where "
+                "a patch was deleted, a mistake otherwise".format(notes["off_wall"])
+            )
+        if notes["degenerate"]:
+            note += ", {} degenerate patch(es) dropped".format(notes["degenerate"])
+        if notes["repair"]:
+            note += "; repair: {}".format(notes["repair"])
         if not ok:
-            note += '; WILL NOT DENSIFY: {}'.format(why)
+            note += "; WILL NOT DENSIFY: {}".format(why)
         self.repair_notes.append(note)
 
         self.mesh = mesh
         self._edited = True
-        self._route = 'field'
+        self._route = "field"
         self.edit_notes = notes
         return self.mesh
 
@@ -592,14 +605,15 @@ class FieldDecomposition(object):
                 coarse.collect_strips()
                 pinned = set()
                 for skey, value in (densities or {}).items():
-                    if skey in coarse.attributes['strips']:
+                    if skey in coarse.attributes["strips"]:
                         coarse.set_strip_density(skey, int(value))
                         pinned.add(skey)
                     else:
                         self.repair_notes.append(
-                            'DENSITY: strip {!r} is not a strip of this layout; '
-                            'its density was dropped. Strip keys renumber on '
-                            'every rebuild -- key them geometrically.'.format(skey))
+                            "DENSITY: strip {!r} is not a strip of this layout; its density was dropped. Strip keys renumber on every rebuild -- key them geometrically.".format(
+                                skey
+                            )
+                        )
                 if keep_preset:
                     pinned |= set(coarse.get_strip_densities())
                 todo = [skey for skey in coarse.strips() if skey not in pinned]
@@ -615,13 +629,12 @@ class FieldDecomposition(object):
                     self._note_quality(metrics)
                     self.dense = dense
                     return dense
-                why = 'densified mesh rejected: {}'.format(why)
+                why = "densified mesh rejected: {}".format(why)
             except Exception as exc:  # noqa: BLE001 -- the contract is "always a mesh"
                 if strict:
                     raise
                 self.last_error = traceback.format_exc()
-                why = '{}: {} during densification (traceback in last_error)'.format(
-                    type(exc).__name__, exc)
+                why = "{}: {} during densification (traceback in last_error)".format(type(exc).__name__, exc)
 
         # Densifying the backstop is what fails, so it is built AT the element
         # size and returned directly
@@ -630,13 +643,11 @@ class FieldDecomposition(object):
         if note:
             self.repair_notes.append(note)
         if not good:
-            self.repair_notes.append(
-                'WARNING: even the triangulation backstop is imperfect ({}). The '
-                'mesh is returned anyway -- inspect it before using it.'.format(bad_why))
+            self.repair_notes.append("WARNING: even the triangulation backstop is imperfect ({}). The mesh is returned anyway -- inspect it before using it.".format(bad_why))
         self._note_quality(metrics)
         self.mesh = mesh
-        self._edited = False          # the backstop replaced whatever layout was here
-        self._mesh_poles = None       # ... and is not the separatrix layout: rebuild next time
+        self._edited = False  # the backstop replaced whatever layout was here
+        self._mesh_poles = None  # ... and is not the separatrix layout: rebuild next time
         self.dense = mesh
         return mesh
 
@@ -661,15 +672,13 @@ class FieldDecomposition(object):
             dense, stats = self.field.densify(coarse, edges_to_curves=self.edges_to_curves(), **kwargs)
         else:
             dense, stats = field_densification(
-                coarse, self.field, self.tracer, edges_to_curves=self.edges_to_curves(),
-                field_aware=False, **dict({'spend': bool(self.guides)}, **kwargs))
+                coarse, self.field, self.tracer, edges_to_curves=self.edges_to_curves(), field_aware=False, **dict({"spend": bool(self.guides)}, **kwargs)
+            )
         self.densify_stats = stats
-        if stats.get('guarded') and self.guides:
+        if stats.get("guarded") and self.guides:
             # only news on a guided domain, where it means a guide did not reach
             # that patch's interior
-            self.repair_notes.append(
-                'DENSIFY: {} of {} patch(es) rejected the field-integrated '
-                'interior and kept the Coons one.'.format(stats['guarded'], stats['patches']))
+            self.repair_notes.append("DENSIFY: {} of {} patch(es) rejected the field-integrated interior and kept the Coons one.".format(stats["guarded"], stats["patches"]))
         return dense
 
     def route(self) -> str:
@@ -695,13 +704,13 @@ class FieldDecomposition(object):
         if mesh is None:
             mesh = self.dense if self.dense is not None else self.mesh
         if mesh is None:
-            raise ValueError('no mesh yet -- call quad_mesh() or decomposition_mesh() first')
+            raise ValueError("no mesh yet -- call quad_mesh() or decomposition_mesh() first")
 
-        kwargs = {} if low_angle is None else {'low_angle': low_angle}
+        kwargs = {} if low_angle is None else {"low_angle": low_angle}
         out = mesh_quality(mesh, **kwargs)
-        out['route'] = self.route()
-        out['coverage'] = self._coverage(mesh)
-        out['coarse_faces'] = self.mesh.number_of_faces() if self.mesh is not None else None
+        out["route"] = self.route()
+        out["coverage"] = self._coverage(mesh)
+        out["coarse_faces"] = self.mesh.number_of_faces() if self.mesh is not None else None
         return out
 
     def _coverage(self, mesh: Any) -> float:
@@ -728,27 +737,33 @@ class FieldDecomposition(object):
             a note for ``repair_notes`` or ``None``.
         """
         if not mesh.faces():
-            return False, 'no faces', {}, None
-        face_pole = mesh.attributes.get('face_pole') or {}
+            return False, "no faces", {}, None
+        face_pole = mesh.attributes.get("face_pole") or {}
         for fkey in mesh.faces():
             n = len(mesh.face_vertices(fkey))
             if n == 4 or (n == 3 and fkey in face_pole):
                 continue
-            return False, 'not all quads (face {} has {} sides)'.format(fkey, n), {}, None
+            return False, "not all quads (face {} has {} sides)".format(fkey, n), {}, None
         if not mesh.is_manifold():
-            return False, 'not manifold', {}, None
+            return False, "not manifold", {}, None
 
         metrics = mesh_quality(mesh)
 
         ratio = self._coverage(mesh)
         if not 0.97 <= ratio <= 1.03:
             if self._edited:
-                return True, '', metrics, (
-                    'EDITED layout covers {:.0%} of the domain area. Kept -- the '
-                    'area check does not overrule a hand edit. If that was not '
-                    'intended, a patch is missing or overlapping.'.format(ratio))
-            return False, 'covers {:.0%} of the domain area'.format(ratio), metrics, None
-        return True, '', metrics, None
+                return (
+                    True,
+                    "",
+                    metrics,
+                    (
+                        "EDITED layout covers {:.0%} of the domain area. Kept -- the "
+                        "area check does not overrule a hand edit. If that was not "
+                        "intended, a patch is missing or overlapping.".format(ratio)
+                    ),
+                )
+            return False, "covers {:.0%} of the domain area".format(ratio), metrics, None
+        return True, "", metrics, None
 
     def _note_quality(self, metrics: dict[str, Any]) -> None:
         """Record a hard-floor breach loudly, without changing the route."""
@@ -756,10 +771,11 @@ class FieldDecomposition(object):
         if ok:
             return
         self.repair_notes.append(
-            'QUALITY FAILURE: {}. The mesh is returned anyway -- the '
+            "QUALITY FAILURE: {}. The mesh is returned anyway -- the "
             '"always returns a mesh" contract stands -- but this element is '
-            'degenerate, not merely poor, and nothing downstream should '
-            'assume otherwise.'.format(why))
+            "degenerate, not merely poor, and nothing downstream should "
+            "assume otherwise.".format(why)
+        )
 
     def _loops(self) -> list[list[list[float]]]:
         """Every boundary loop, outer first."""
@@ -776,12 +792,13 @@ class FieldDecomposition(object):
             ok, why = densifiable(mesh)
             if ok:
                 self.repair_notes.append(
-                    'FIELD LAYOUT DISCARDED -- not densifiable ({}). Meshed the '
-                    'domain as a single {}-gon instead; the result ignores the '
-                    'field.'.format(reason, len(outer_arcs or boundary)))
-                self._route = 'polygon'
+                    "FIELD LAYOUT DISCARDED -- not densifiable ({}). Meshed the domain as a single {}-gon instead; the result ignores the field.".format(
+                        reason, len(outer_arcs or boundary)
+                    )
+                )
+                self._route = "polygon"
                 return mesh
-            reason = '{}; single-polygon fallback also failed ({})'.format(reason, why)
+            reason = "{}; single-polygon fallback also failed ({})".format(reason, why)
 
         return self._triangulation_fallback(reason)
 
@@ -789,8 +806,7 @@ class FieldDecomposition(object):
         """Last resort: quad-split a coarse triangulation of the domain, never coarser than the background."""
         spacing = (target_length * 2.0) if target_length else (self.background.diagonal / 6.0)
         spacing = min(spacing, self.background.target_length)
-        coarse_bg = BackgroundMesh.from_boundary(self.background.outer, self.background.inners,
-                                                 target_length=spacing)
+        coarse_bg = BackgroundMesh.from_boundary(self.background.outer, self.background.inners, target_length=spacing)
 
         index = {v: i for i, v in enumerate(coarse_bg.mesh.vertices())}
         vertices = [coarse_bg.mesh.vertex_coordinates(v) for v in coarse_bg.mesh.vertices()]
@@ -801,11 +817,11 @@ class FieldDecomposition(object):
 
         ok, why = densifiable(mesh)
         self.repair_notes.append(
-            'FIELD LAYOUT DISCARDED -- not densifiable ({}). Fell back to a '
-            'quad-split triangulation of the domain: {} patches that cover the '
-            'shape but follow the triangulation, not the field.{}'.format(
-                reason, mesh.number_of_faces(), '' if ok else ' STILL not densifiable: {}'.format(why)))
-        self._route = 'triangulation'
+            "FIELD LAYOUT DISCARDED -- not densifiable ({}). Fell back to a "
+            "quad-split triangulation of the domain: {} patches that cover the "
+            "shape but follow the triangulation, not the field.{}".format(reason, mesh.number_of_faces(), "" if ok else " STILL not densifiable: {}".format(why))
+        )
+        self._route = "triangulation"
         return mesh
 
     def _single_patch(self, boundary: list[list[list[float]]]) -> CoarsePseudoQuadMesh:
@@ -813,13 +829,9 @@ class FieldDecomposition(object):
         -- a hexagon is a good 6-gon that the repair turns into six quads."""
         corners = [list(arc[0]) for arc in boundary]
         if len(corners) < 3:
-            raise ValueError(
-                'domain has neither interior separatrices nor enough boundary '
-                'corners to bound a face ({} found)'.format(len(corners)))
+            raise ValueError("domain has neither interior separatrices nor enough boundary corners to bound a face ({} found)".format(len(corners)))
         if len(corners) != 4:
-            self.repair_notes.append(
-                'no interior separatrices and {} boundary corners: built as a '
-                'single {}-gon'.format(len(corners), len(corners)))
+            self.repair_notes.append("no interior separatrices and {} boundary corners: built as a single {}-gon".format(len(corners), len(corners)))
         return CoarsePseudoQuadMesh.from_vertices_and_faces(corners, [list(range(len(corners)))])
 
     def _cut_holes(self) -> list[list[list[float]]]:
@@ -841,23 +853,22 @@ class FieldDecomposition(object):
             self.decomposition_mesh()
 
         lookup = {}
-        for polyline in (self.polylines or []):
+        for polyline in self.polylines or []:
             key = (TOL.geometric_key(polyline[0]), TOL.geometric_key(polyline[-1]))
             lookup[key] = polyline
             lookup[(key[1], key[0])] = list(reversed(polyline))
 
-        tally = {'exact': 0, 'boundary': 0, 'warped': 0, 'chord': 0}
+        tally = {"exact": 0, "boundary": 0, "warped": 0, "chord": 0}
         claimed = set()
         # boundary corners only: an interior corner cannot end a boundary edge
-        corners = [self.mesh.vertex_coordinates(w) for w in self.mesh.vertices()
-                   if self.mesh.is_vertex_on_boundary(w)]
+        corners = [self.mesh.vertex_coordinates(w) for w in self.mesh.vertices() if self.mesh.is_vertex_on_boundary(w)]
         walls = [(loop, _loop_chord_tolerance(loop)) for loop in self.background.loops]
         out = {}
         for u, v in self.mesh.edges():
             pa = self.mesh.vertex_coordinates(u)
             pb = self.mesh.vertex_coordinates(v)
             curve = lookup.get((TOL.geometric_key(pa), TOL.geometric_key(pb)))
-            how = 'exact' if curve is not None else None
+            how = "exact" if curve is not None else None
 
             if curve is None:
                 for loop, wall_tol in walls:
@@ -865,24 +876,22 @@ class FieldDecomposition(object):
                         for arc in _arcs_between(loop, pa, pb):
                             if self._arc_is_one_edge(arc, pa, pb, corners):
                                 curve = arc
-                                how = 'boundary'
+                                how = "boundary"
                                 break
                         break
 
             if curve is None and self._edited:
                 curve = self._warped_curve(pa, pb, claimed)
-                how = 'warped' if curve is not None else None
+                how = "warped" if curve is not None else None
 
             # every edge needs an entry once a mapping is given at all
-            if (curve is None
-                    or distance_point_point(curve[0], pa) > 1e-6
-                    or distance_point_point(curve[-1], pb) > 1e-6):
+            if curve is None or distance_point_point(curve[0], pa) > 1e-6 or distance_point_point(curve[-1], pb) > 1e-6:
                 curve = [list(pa), list(pb)]
-                how = 'chord'
+                how = "chord"
             tally[how] += 1
             out[u, v] = curve
 
-        self.edit_notes['edges'] = tally
+        self.edit_notes["edges"] = tally
         return out
 
     def _arc_is_one_edge(
@@ -910,7 +919,7 @@ class FieldDecomposition(object):
             d, s, total = project_on_polyline(point, arc)
             if d >= tol:
                 continue
-            margin = min(tol, 0.25 * total)     # never swallowing the arc itself
+            margin = min(tol, 0.25 * total)  # never swallowing the arc itself
             if s <= margin or s >= total - margin:
                 continue
             return False
@@ -961,14 +970,9 @@ class FieldDecomposition(object):
         separatrices, report)``."""
         self._require_solved()
         if self._network is None:
-            boundary, others, info = build_network(
-                self.field, self.separatrices,
-                singularity_points=self.tracer.singularity_positions(),
-                symmetry=self.symmetry)
+            boundary, others, info = build_network(self.field, self.separatrices, singularity_points=self.tracer.singularity_positions(), symmetry=self.symmetry)
             info = dict(info)
-            boundary, others = planar_arrangement(
-                boundary, others, self.background.target_length * 0.8, info,
-                loops=self.background.loops)
+            boundary, others = planar_arrangement(boundary, others, self.background.target_length * 0.8, info, loops=self.background.loops)
             self._network = (boundary, others, info)
         return self._network
 
@@ -979,7 +983,7 @@ class FieldDecomposition(object):
         out.update(self.field.report())
         if self.mesh is not None:
             faces = [len(self.mesh.face_vertices(f)) for f in self.mesh.faces()]
-            out['faces'] = len(faces)
-            out['quads'] = sum(1 for n in faces if n == 4)
-            out['non_quads'] = sorted(set(n for n in faces if n != 4))
+            out["faces"] = len(faces)
+            out["quads"] = sum(1 for n in faces if n == 4)
+            out["non_quads"] = sorted(set(n for n in faces if n != 4))
         return out

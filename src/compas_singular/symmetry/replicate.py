@@ -2,6 +2,7 @@
 
 No vertex is matched by rounded coordinates, so the result is symmetric to floating point.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
     from compas_singular.symmetry.cut import Seam
 
 
-__all__ = ['seam_membership', 'rotation_partners', 'expand', 'orbit_maps']
+__all__ = ["seam_membership", "rotation_partners", "expand", "orbit_maps"]
 
 
 def seam_membership(mesh: PseudoQuadMesh | CoarsePseudoQuadMesh, seams: list[Seam], eps: float) -> dict[int, list[tuple[str, float]]]:
@@ -36,9 +37,7 @@ def seam_membership(mesh: PseudoQuadMesh | CoarsePseudoQuadMesh, seams: list[Sea
     return out
 
 
-def rotation_partners(
-    membership: dict[int, list[tuple[str, float]]], tol: float
-) -> tuple[dict[int, int], list[tuple[float, int]], list[tuple[float, int]]]:
+def rotation_partners(membership: dict[int, list[tuple[str, float]]], tol: float) -> tuple[dict[int, int], list[tuple[float, int]], list[tuple[float, int]]]:
     """Match vertices on seam A to vertices on seam B at the same distance ``t``.
 
     Returns
@@ -47,8 +46,8 @@ def rotation_partners(
         ``{vertex on A: vertex on B}``, then the unmatched ``(t, vkey)`` on A and
         on B. A vertex on both seams (the centre) is its own partner.
     """
-    on_a = sorted((t, v) for v, here in membership.items() for name, t in here if name == 'A')
-    on_b = sorted((t, v) for v, here in membership.items() for name, t in here if name == 'B')
+    on_a = sorted((t, v) for v, here in membership.items() for name, t in here if name == "A")
+    on_b = sorted((t, v) for v, here in membership.items() for name, t in here if name == "B")
     partners = {}
     used = set()
     unmatched_a = []
@@ -122,7 +121,7 @@ def expand(
     def rank(x: tuple[Any, str]) -> tuple[int, str, str]:
         # The identity copy is preferred as a class's representative, so a vertex
         # of the unit keeps the unit's own coordinates in the global mesh.
-        return (0 if x[1] == 'I' else 1, str(x[0]), x[1])
+        return (0 if x[1] == "I" else 1, str(x[0]), x[1])
 
     def union(x: tuple[Any, str], y: tuple[Any, str]) -> None:
         rx, ry = find(x), find(y)
@@ -131,15 +130,16 @@ def expand(
                 rx, ry = ry, rx
             parent[ry] = rx
 
-    if seams and seams[0].kind == 'rotation':
+    if seams and seams[0].kind == "rotation":
         partners, unmatched_a, unmatched_b = rotation_partners(membership, match_tol)
         if unmatched_a or unmatched_b:
             raise ValueError(
-                'the rotation seams do not match: {} vertex(es) on seam A and {} on seam B '
-                'have no partner at the same distance from the centre (A at t={}, B at t={}). '
-                'Densities across the seams must agree -- set them on the unit, not per copy.'.format(
-                    len(unmatched_a), len(unmatched_b),
-                    [round(t, 4) for t, _ in unmatched_a[:4]], [round(t, 4) for t, _ in unmatched_b[:4]]))
+                "the rotation seams do not match: {} vertex(es) on seam A and {} on seam B "
+                "have no partner at the same distance from the centre (A at t={}, B at t={}). "
+                "Densities across the seams must agree -- set them on the unit, not per copy.".format(
+                    len(unmatched_a), len(unmatched_b), [round(t, 4) for t, _ in unmatched_a[:4]], [round(t, 4) for t, _ in unmatched_b[:4]]
+                )
+            )
         rotation = group.element(seams[0].element)
         for e in elements:
             er = group.compose(e, rotation)
@@ -163,19 +163,18 @@ def expand(
             if root not in root_gid:
                 rv, re_key = root
                 root_gid[root] = len(vertices)
-                vertices.append(group.apply(group.element(re_key) if re_key != 'I' else group.identity, xyz[rv]))
+                vertices.append(group.apply(group.element(re_key) if re_key != "I" else group.identity, xyz[rv]))
             gid[(v, e.key)] = root_gid[root]
             table.append([v, e.key, root_gid[root]])
 
-    face_pole = mesh.attributes.get('face_pole') or {}
+    face_pole = mesh.attributes.get("face_pole") or {}
     faces = []
     face_poles = {}
     for e in elements:
         for fkey in mesh.faces():
             face = [gid[(v, e.key)] for v in mesh.face_vertices(fkey)]
             if len(set(face)) != len(face):
-                raise ValueError('face {} collapses in copy {} -- a unit face touches a seam at '
-                                 'two vertices glued together'.format(fkey, e.key))
+                raise ValueError("face {} collapses in copy {} -- a unit face touches a seam at two vertices glued together".format(fkey, e.key))
             if e.reflects:
                 face.reverse()
             faces.append(face)
@@ -184,9 +183,9 @@ def expand(
                 face_poles[len(faces) - 1] = gid[(pole, e.key)]
 
     out = cls.from_vertices_and_faces_with_face_poles(vertices, faces, face_poles)
-    out.attributes['orbits'] = {'group': group.to_data(), 'table': table}
+    out.attributes["orbits"] = {"group": group.to_data(), "table": table}
 
-    if curves and hasattr(out, 'set_edges_to_curves'):
+    if curves and hasattr(out, "set_edges_to_curves"):
         shapes = {}
         for e in elements:
             for (u, v), points in curves.items():
@@ -205,31 +204,29 @@ def orbit_maps(mesh: PseudoQuadMesh | CoarsePseudoQuadMesh) -> dict[str, dict[in
 
     Exact: read from the labels ``expand`` recorded, not from positions.
     """
-    orbits = mesh.attributes.get('orbits')
+    orbits = mesh.attributes.get("orbits")
     if not orbits:
-        raise ValueError('this mesh was not expanded from a symmetric unit -- it has no orbits')
-    group = SymmetryGroup.from_data(orbits['group'])
+        raise ValueError("this mesh was not expanded from a symmetric unit -- it has no orbits")
+    group = SymmetryGroup.from_data(orbits["group"])
     pair_gid = {}
     rep = {}
-    for v, key, g in orbits['table']:
+    for v, key, g in orbits["table"]:
         pair_gid[(v, key)] = g
         rep.setdefault(g, (v, key))
     maps = {}
     for h in group.elements:
         sigma = {}
         for g, (v, key) in rep.items():
-            e = group.element(key) if key != 'I' else group.identity
+            e = group.element(key) if key != "I" else group.identity
             sigma[g] = pair_gid[(v, group.compose(h, e).key)]
         maps[h.key] = sigma
     return maps
 
 
-def symmetrise_positions(
-    mesh: PseudoQuadMesh | CoarsePseudoQuadMesh, maps: dict[str, dict[int, int]] | None = None
-) -> float:
+def symmetrise_positions(mesh: PseudoQuadMesh | CoarsePseudoQuadMesh, maps: dict[str, dict[int, int]] | None = None) -> float:
     """Replace every vertex by the average of its orbit, in place. Returns the largest displacement."""
-    orbits = mesh.attributes['orbits']
-    group = SymmetryGroup.from_data(orbits['group'])
+    orbits = mesh.attributes["orbits"]
+    group = SymmetryGroup.from_data(orbits["group"])
     maps = orbit_maps(mesh) if maps is None else maps
     new = {}
     for v in mesh.vertices():
@@ -244,5 +241,5 @@ def symmetrise_positions(
     for v, (x, y) in new.items():
         p = mesh.vertex_coordinates(v)
         worst = max(worst, abs(p[0] - x), abs(p[1] - y))
-        mesh.vertex_attributes(v, 'xy', [x, y])
+        mesh.vertex_attributes(v, "xy", [x, y])
     return worst

@@ -2,6 +2,7 @@
 
 Commands edit a copy, assign it back, then call ``RhinoSession.record``.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -19,29 +20,28 @@ if TYPE_CHECKING:
     from compas.scene import Scene
 
 try:
-    import scriptcontext as sc # type: ignore  # noqa: I001
+    import scriptcontext as sc  # type: ignore  # noqa: I001
 except ImportError:
     sc = None
 
 try:
-    import rhinoscriptsyntax as rs # type: ignore  # noqa: I001
+    import rhinoscriptsyntax as rs  # type: ignore  # noqa: I001
 except ImportError:
     rs = None
 
 
-__all__ = ['RhinoSession']
+__all__ = ["RhinoSession"]
 
 
 def display_options() -> dict[str, dict[str, Any]]:
     """How the permanent display draws each item, by item name."""
     from compas_singular.rhino.project import layer_path
+
     return {
-        'coarse': dict(layer=layer_path('Mesh'), show_faces=True, joined=True,
-                       poles_layer=layer_path('Poles'),
-                       curves_layer=layer_path('EdgeCurves'),
-                       polylines_layer=layer_path('Polylines')),
-        'dense': dict(layer=layer_path('Dense'), show_faces=True, joined=True,
-                      show_vertices=False, show_edges=False),
+        "coarse": dict(
+            layer=layer_path("Mesh"), show_faces=True, joined=True, poles_layer=layer_path("Poles"), curves_layer=layer_path("EdgeCurves"), polylines_layer=layer_path("Polylines")
+        ),
+        "dense": dict(layer=layer_path("Dense"), show_faces=True, joined=True, show_vertices=False, show_edges=False),
     }
 
 
@@ -61,18 +61,18 @@ class RhinoSession(SingularSession):
     _sessions = {}
 
     #: The items that have a permanent display.
-    DISPLAYED = ('coarse', 'dense')
+    DISPLAYED = ("coarse", "dense")
 
     #: The user-text key every drawn object carries, its value the item's name.
     #: Stored in the object, so it survives saving the ``.3dm`` and Ctrl+Z.
-    ITEM_KEY = 'compas_singular.item'
+    ITEM_KEY = "compas_singular.item"
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super(RhinoSession, self).__init__(*args, **kwargs)
         self.doc = None
         self.revision = None
         self._scene = None
-        self._drawn = {}                # item name -> the object the display shows
+        self._drawn = {}  # item name -> the object the display shows
 
     @property
     def scene(self) -> Scene:
@@ -83,7 +83,7 @@ class RhinoSession(SingularSession):
             from compas_singular.rhino.scene import ensure_registered
 
             ensure_registered()
-            self._scene = Scene(context='Rhino')
+            self._scene = Scene(context="Rhino")
         return self._scene
 
     @classmethod
@@ -150,7 +150,7 @@ class RhinoSession(SingularSession):
         if item is None:
             import compas_rhino.layers
 
-            for key in ('layer', 'poles_layer', 'curves_layer', 'polylines_layer'):
+            for key in ("layer", "poles_layer", "curves_layer", "polylines_layer"):
                 if options.get(key):
                     compas_rhino.layers.clear_layer(options[key], include_children=False, purge=False)
             return

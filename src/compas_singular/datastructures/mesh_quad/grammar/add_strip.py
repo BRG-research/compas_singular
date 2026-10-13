@@ -2,6 +2,7 @@
 
 With ``open_strip=False`` the new vertex pairs stay coincident until the caller separates them. An opened strip that folds a face raises.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -21,15 +22,15 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    'add_strip',
-    'add_strips',
-    'split_strip',
-    'split_strips',
-    'strip_polyedge_update',
-    'is_polyedge_valid_for_strip_addition',
-    'pole_ends',
-    'polyedge_sides',
-    'open_added_strip',
+    "add_strip",
+    "add_strips",
+    "split_strip",
+    "split_strips",
+    "strip_polyedge_update",
+    "is_polyedge_valid_for_strip_addition",
+    "pole_ends",
+    "polyedge_sides",
+    "open_added_strip",
 ]
 
 
@@ -58,11 +59,9 @@ def add_strips(mesh: QuadMesh, polyedges: list[list[int]], open_strip: bool = Tr
     while pending:
         polyedge = pending.pop()
         # ``list(...)``: ``add_strip`` consumes the polyedge it is given.
-        new_skey, _old_to_new, copies = _add_strip(mesh, list(polyedge),
-                                                   open_strip=open_strip, project=project)
+        new_skey, _old_to_new, copies = _add_strip(mesh, list(polyedge), open_strip=open_strip, project=project)
         new_skeys.append(new_skey)
-        pending = [strip_polyedge_update(mesh, pending_polyedge, copies)
-                   for pending_polyedge in pending]
+        pending = [strip_polyedge_update(mesh, pending_polyedge, copies) for pending_polyedge in pending]
 
     return new_skeys
 
@@ -122,11 +121,11 @@ def _add_strip(
 ) -> tuple[int, dict[int, tuple[int, int]], dict[int, tuple[int, ...]]]:
     """``add_strip``, also returning ``{input vertex: every copy of it left in the mesh}``."""
     if not polyedge:
-        raise ValueError('Empty polyedge.')
+        raise ValueError("Empty polyedge.")
     start_pole, end_pole = pole_ends(mesh, polyedge)
     if start_pole and end_pole and len(polyedge) < 3:
-        raise ValueError('A strip with two pole ends needs a polyedge of at least two edges.')
-    face_pole = mesh.attributes.get('face_pole')
+        raise ValueError("A strip with two pole ends needs a polyedge of at least two edges.")
+    face_pole = mesh.attributes.get("face_pole")
 
     closed = polyedge[0] == polyedge[-1]
     seq = polyedge[:-1] if closed else list(polyedge)
@@ -136,7 +135,7 @@ def _add_strip(
         # walk cannot re-route a second pass that has nothing after it
         once = [j for j, vkey in enumerate(seq) if seq.count(vkey) == 1]
         if once:
-            seq = seq[once[0] + 1:] + seq[:once[0] + 1]
+            seq = seq[once[0] + 1 :] + seq[: once[0] + 1]
             polyedge[:] = seq + seq[:1]
     # A polyedge passing a vertex twice, or next to itself, is beyond
     # ``update_strip_data``, which follows each edge through one split only.
@@ -292,8 +291,7 @@ def _add_strip(
 
         if track:
             root[v1] = root[v2] = root.get(v, v)
-            steps.append((len(full_updated_polyedge) - 1, v1, v2,
-                          _face_roots(mesh, v1, root), _face_roots(mesh, v2, root)))
+            steps.append((len(full_updated_polyedge) - 1, v1, v2, _face_roots(mesh, v1, root), _face_roots(mesh, v2, root)))
 
         # update
         updated_polyedge = []
@@ -306,8 +304,7 @@ def _add_strip(
                 # reaches, on the wall where one is
                 from_vkey = polyedge[i - 1]
                 ends = [[c] for c in via_vkeys if c in mesh.halfedge[from_vkey]]
-                ends += [[c, d] for c, d in (via_vkeys, via_vkeys[::-1])
-                         if c in mesh.halfedge[from_vkey] and d in mesh.halfedge[c]]
+                ends += [[c, d] for c, d in (via_vkeys, via_vkeys[::-1]) if c in mesh.halfedge[from_vkey] and d in mesh.halfedge[c]]
                 ends.sort(key=lambda end: (not mesh.is_vertex_on_boundary(end[-1]), len(end)))
                 updated_polyedge += ends[0]
             else:
@@ -321,8 +318,7 @@ def _add_strip(
     if by_roots:
         n = _update_strip_data_by_roots(mesh, root, steps)
         # a pair the second pass split again is gone from the mesh
-        old_vkeys_to_new_vkeys = {u0: pair for u0, pair in old_vkeys_to_new_vkeys.items()
-                                  if pair[0] in mesh.vertex and pair[1] in mesh.vertex}
+        old_vkeys_to_new_vkeys = {u0: pair for u0, pair in old_vkeys_to_new_vkeys.items() if pair[0] in mesh.vertex and pair[1] in mesh.vertex}
         copies = {}
         for pair in old_vkeys_to_new_vkeys.values():
             for vkey in pair:
@@ -340,8 +336,7 @@ def _add_strip(
         new_vertices = set(vkey for pair in old_vkeys_to_new_vkeys.values() for vkey in pair)
         folded = _folded_faces(mesh, new_vertices, sign, tol)
         if folded:
-            raise ValueError('the new strip could not be opened flat: {} face(s) next to it '
-                             'fold over or have no area ({})'.format(len(folded), sorted(folded)))
+            raise ValueError("the new strip could not be opened flat: {} face(s) next to it fold over or have no area ({})".format(len(folded), sorted(folded)))
     return n, old_vkeys_to_new_vkeys, copies
 
 
@@ -353,9 +348,7 @@ def split_strip(mesh: QuadMesh, skey: int, n: int = 2, open_strip: bool = True, 
     list
         The existing strip key, followed by the ``n - 1`` new ones.
     """
-    return [skey] + [add_strip(mesh, list(mesh.strip_side_polyedges(skey)[0]),
-                               open_strip=open_strip, project=project)[0]
-                     for _ in range(n - 1)]
+    return [skey] + [add_strip(mesh, list(mesh.strip_side_polyedges(skey)[0]), open_strip=open_strip, project=project)[0] for _ in range(n - 1)]
 
 
 def split_strips(mesh: QuadMesh, skey_to_n: dict[int, int], open_strip: bool = True, project: Callable[[list[float]], list[float]] | None = None) -> dict[int, list[int]]:
@@ -373,8 +366,7 @@ def split_strips(mesh: QuadMesh, skey_to_n: dict[int, int], open_strip: bool = T
     dict
         Each split strip key, pointing to the keys of the strips refining it.
     """
-    return {skey: split_strip(mesh, skey, n, open_strip=open_strip, project=project)
-            for skey, n in skey_to_n.items()}
+    return {skey: split_strip(mesh, skey, n, open_strip=open_strip, project=project) for skey, n in skey_to_n.items()}
 
 
 def polyedge_sides(mesh: QuadMesh, polyedge: list[int]) -> dict[int, tuple[list[int], list[int]] | None]:
@@ -469,13 +461,12 @@ def open_added_strip(
             continue
 
         one = [a[0] + (b[0] - a[0]) / 3.0, a[1] + (b[1] - a[1]) / 3.0, 0.0]
-        two = [a[0] + 2.0 * (b[0] - a[0]) / 3.0,
-               a[1] + 2.0 * (b[1] - a[1]) / 3.0, 0.0]
+        two = [a[0] + 2.0 * (b[0] - a[0]) / 3.0, a[1] + 2.0 * (b[1] - a[1]) / 3.0, 0.0]
         if project is not None and old in on_boundary:
             one, two = project(one), project(two)
 
-        mesh.vertex_attributes(low, 'xyz', [one[0], one[1], 0.0])
-        mesh.vertex_attributes(high, 'xyz', [two[0], two[1], 0.0])
+        mesh.vertex_attributes(low, "xyz", [one[0], one[1], 0.0])
+        mesh.vertex_attributes(high, "xyz", [two[0], two[1], 0.0])
         opened += 1
     return opened
 
@@ -495,17 +486,15 @@ def _open_at_corner(
     Returns whether it applied: one wall neighbour per side, turning by more than ``min_turn`` degrees.
     """
     # ``k in halfedge[copy]``: across a hole corner a side can hold a neighbour of the other copy
-    walls = [[k for k in keys if k in mesh.halfedge[copy] and mesh.is_edge_on_boundary(copy, k)]
-             for copy, keys in ((low, left_keys), (high, right_keys))]
+    walls = [[k for k in keys if k in mesh.halfedge[copy] and mesh.is_edge_on_boundary(copy, k)] for copy, keys in ((low, left_keys), (high, right_keys))]
     if len(walls[0]) != 1 or len(walls[1]) != 1:
         return False
     here = mesh.vertex_coordinates(low)
-    move = _corner_move(here, mesh.vertex_coordinates(walls[0][0]),
-                        mesh.vertex_coordinates(walls[1][0]), project, min_turn)
+    move = _corner_move(here, mesh.vertex_coordinates(walls[0][0]), mesh.vertex_coordinates(walls[1][0]), project, min_turn)
     if move is None:
         return False
     side, point = move
-    mesh.vertex_attributes((low, high)[side], 'xyz', [point[0], point[1], 0.0])
+    mesh.vertex_attributes((low, high)[side], "xyz", [point[0], point[1], 0.0])
     return True
 
 
@@ -556,6 +545,7 @@ def _boundary_vertex_set(mesh: QuadMesh) -> set[int]:
 # opening per visit: strips along a wall, and strips that cross themselves
 # ==============================================================================
 
+
 def _legs(seq: list[int], closed: bool, j: int) -> tuple[int | None, int | None]:
     """The vertices before and after visit ``j``; None past an open end."""
     if closed:
@@ -590,7 +580,7 @@ def _sector(mesh: QuadMesh, vkey: int, start: int | None, stop: int | None) -> d
     if start is None:
         nbr = next(u for u in mesh.halfedge[vkey] if mesh.halfedge[u][vkey] is None)
         if nbr == stop:
-            return {'faces': faces, 'nbrs': nbrs, 'outside': True}
+            return {"faces": faces, "nbrs": nbrs, "outside": True}
         nbrs.append(nbr)
         outside = True
     else:
@@ -608,7 +598,7 @@ def _sector(mesh: QuadMesh, vkey: int, start: int | None, stop: int | None) -> d
         if nbr == stop:
             break
         nbrs.append(nbr)
-    return {'faces': faces, 'nbrs': nbrs, 'outside': outside}
+    return {"faces": faces, "nbrs": nbrs, "outside": outside}
 
 
 def _visit_plan(
@@ -625,16 +615,15 @@ def _visit_plan(
     here = mesh.vertex_coordinates(vkey)
     if vkey not in boundary and (prev is None or nxt is None):
         # an end at a pole: not copied, so nothing to place
-        return {'here': here, 'marks': (set(), set()), 'targets': None}
+        return {"here": here, "marks": (set(), set()), "targets": None}
     sides = (_sector(mesh, vkey, nxt, prev), _sector(mesh, vkey, prev, nxt))
     legs = {vkey, prev, nxt}
-    marks = tuple(set(k for fkey in side['faces'] for k in mesh.face_vertices(fkey)) - legs
-                  for side in sides)
+    marks = tuple(set(k for fkey in side["faces"] for k in mesh.face_vertices(fkey)) - legs for side in sides)
     if _along_wall(mesh, seq, closed, j, boundary):
         targets = tuple(_wall_target(mesh, vkey, prev, nxt, side, here, project) for side in sides)
     else:
         targets = _thirds_targets(mesh, vkey, sides, here, vkey in boundary, project)
-    return {'here': here, 'marks': marks, 'targets': targets}
+    return {"here": here, "marks": marks, "targets": targets}
 
 
 def _thirds_targets(
@@ -646,12 +635,11 @@ def _thirds_targets(
     project: Callable[[list[float]], list[float]] | None = None,
 ) -> tuple[list[float], list[float]] | None:
     """``open_added_strip``'s thirds and corner rules for one visit, read off the unsplit mesh."""
-    left_keys, right_keys = sides[0]['nbrs'], sides[1]['nbrs']
+    left_keys, right_keys = sides[0]["nbrs"], sides[1]["nbrs"]
     if on_boundary:
         walls = [[k for k in keys if mesh.is_edge_on_boundary(vkey, k)] for keys in (left_keys, right_keys)]
         if len(walls[0]) == 1 and len(walls[1]) == 1:
-            move = _corner_move(here, mesh.vertex_coordinates(walls[0][0]),
-                                mesh.vertex_coordinates(walls[1][0]), project)
+            move = _corner_move(here, mesh.vertex_coordinates(walls[0][0]), mesh.vertex_coordinates(walls[1][0]), project)
             if move is not None:
                 side, point = move
                 return (point, list(here)) if side == 0 else (list(here), point)
@@ -679,22 +667,21 @@ def _wall_target(
 
     Nothing on that side: it stays on the wall. The outside on that side: it slides along the wall.
     """
-    if not side['faces']:
+    if not side["faces"]:
         return list(here)
-    if side['outside']:
-        walls = [k for k in side['nbrs'] if mesh.is_edge_on_boundary(vkey, k)]
+    if side["outside"]:
+        walls = [k for k in side["nbrs"] if mesh.is_edge_on_boundary(vkey, k)]
         if len(walls) != 1:
             return list(here)
         wall = mesh.vertex_coordinates(walls[0])
         point = [here[0] + (wall[0] - here[0]) / 3.0, here[1] + (wall[1] - here[1]) / 3.0, 0.0]
         return project(point) if project is not None else point
-    if side['nbrs']:
-        c = _centroid([mesh.vertex_coordinates(k) for k in side['nbrs']], here)
+    if side["nbrs"]:
+        c = _centroid([mesh.vertex_coordinates(k) for k in side["nbrs"]], here)
         return [here[0] + (c[0] - here[0]) / 3.0, here[1] + (c[1] - here[1]) / 3.0, 0.0]
     # one face between the two legs: into it, a third along each leg
     a, b = mesh.vertex_coordinates(prev), mesh.vertex_coordinates(nxt)
-    return [here[0] + (a[0] - here[0] + b[0] - here[0]) / 3.0,
-            here[1] + (a[1] - here[1] + b[1] - here[1]) / 3.0, 0.0]
+    return [here[0] + (a[0] - here[0] + b[0] - here[0]) / 3.0, here[1] + (a[1] - here[1] + b[1] - here[1]) / 3.0, 0.0]
 
 
 def _face_roots(mesh: QuadMesh, vkey: int, root: dict[int, int]) -> set[int]:
@@ -720,7 +707,7 @@ def _open_by_visits(
 
     made = {}  # copy -> (step, 0 for the left copy or 1 for the right; None if unknown)
     for s, (at, v1, v2, roots1, roots2) in enumerate(steps):
-        left, right = plans[visit[at]]['marks']
+        left, right = plans[visit[at]]["marks"]
         if roots1 & left or roots2 & right:
             made[v1], made[v2] = (s, 0), (s, 1)
         elif roots2 & left or roots1 & right:
@@ -737,8 +724,8 @@ def _open_by_visits(
                 s, side = made[vkey]
                 at = steps[s][0]
                 plan = plans[visit[at]]
-                if side is not None and plan['targets'] is not None:
-                    moves.append((plan['here'], plan['targets'][side]))
+                if side is not None and plan["targets"] is not None:
+                    moves.append((plan["here"], plan["targets"][side]))
                 vkey = walked[at]
             if not moves:
                 continue
@@ -746,9 +733,8 @@ def _open_by_visits(
                 point = moves[0][1]
             else:
                 here = moves[0][0]
-                point = [here[0] + sum(t[0] - h[0] for h, t in moves),
-                         here[1] + sum(t[1] - h[1] for h, t in moves)]
-            mesh.vertex_attributes(leaf, 'xyz', [point[0], point[1], 0.0])
+                point = [here[0] + sum(t[0] - h[0] for h, t in moves), here[1] + sum(t[1] - h[1] for h, t in moves)]
+            mesh.vertex_attributes(leaf, "xyz", [point[0], point[1], 0.0])
 
 
 def _update_strip_data_by_roots(mesh: QuadMesh, root: dict[int, int], steps: list[tuple[int, int, int, set[int], set[int]]]) -> int:
@@ -758,7 +744,7 @@ def _update_strip_data_by_roots(mesh: QuadMesh, root: dict[int, int], steps: lis
         ru, rv = root.get(u, u), root.get(v, v)
         by_roots.setdefault((ru, rv), (u, v))
         by_roots.setdefault((rv, ru), (v, u))
-    strips = mesh.attributes['strips']
+    strips = mesh.attributes["strips"]
     for skey, edges in list(strips.items()):
         if all(u in mesh.vertex and v in mesh.vertex for u, v in edges):
             continue
@@ -766,8 +752,7 @@ def _update_strip_data_by_roots(mesh: QuadMesh, root: dict[int, int], steps: lis
         if seed is not None:
             strips[skey] = mesh.collect_strip(*seed)
     n = max(strips) + 1
-    rung = next((v1, v2) for _at, v1, v2, _r1, _r2 in steps
-                if v1 in mesh.halfedge and v2 in mesh.halfedge[v1])
+    rung = next((v1, v2) for _at, v1, v2, _r1, _r2 in steps if v1 in mesh.halfedge and v2 in mesh.halfedge[v1])
     strips[n] = mesh.collect_strip(*rung)
     return n
 
@@ -775,6 +760,7 @@ def _update_strip_data_by_roots(mesh: QuadMesh, root: dict[int, int], steps: lis
 # ==============================================================================
 # the flatness check
 # ==============================================================================
+
 
 def _signed_area(mesh: QuadMesh, fkey: int) -> float:
     """The face's area in XY, positive counter-clockwise."""
@@ -813,12 +799,12 @@ def update_strip_data(mesh: QuadMesh, full_updated_polyedge: list[int], old_vkey
         edges = mesh.collect_strip(new_u, new_v)
         orth_to_update[skey] = edges
     for skey, edges in orth_to_update.items():
-        mesh.attributes['strips'][skey] = edges
+        mesh.attributes["strips"][skey] = edges
 
     # parallel strips; a pole end kept its key, so it needs no update
     copied = {old for old, pair in old_vkeys_to_new_vkeys.items() if pair[0] != old}
     paral_to_update = {}
-    for skey, edges in mesh.attributes['strips'].items():
+    for skey, edges in mesh.attributes["strips"].items():
         if skey not in orth_to_update:
             for u, v in edges:
                 if u in copied:
@@ -832,16 +818,16 @@ def update_strip_data(mesh: QuadMesh, full_updated_polyedge: list[int], old_vkey
                 paral_to_update[skey] = new_edges
                 break
     for skey, edges in paral_to_update.items():
-        mesh.attributes['strips'][skey] = edges
+        mesh.attributes["strips"][skey] = edges
 
     # self strip
-    n = max(mesh.attributes['strips']) + 1
+    n = max(mesh.attributes["strips"]) + 1
     strip_edges = [tuple(old_vkeys_to_new_vkeys[vkey]) for vkey in full_updated_polyedge]
     if any(u == v for u, v in strip_edges):
         # with a pole end, face each edge forward as ``collect_strip`` does:
         # ``PseudoQuadMesh.strip_faces`` reads the pseudo-quad off that side
         strip_edges = [(v, u) for u, v in strip_edges]
-    mesh.attributes['strips'][n] = strip_edges
+    mesh.attributes["strips"][n] = strip_edges
 
     return n
 
@@ -931,7 +917,6 @@ def sort_faces(mesh: QuadMesh, u: int | None, v: int, w: int | None) -> list[lis
     vertex_faces = vertex_faces[i0:] + vertex_faces[:i0]
 
     for face in vertex_faces:
-
         if face is not None:
             sorted_faces[k].append(face)
 
@@ -991,8 +976,8 @@ def pole_ends(mesh: QuadMesh, polyedge: list[int]) -> tuple[bool, bool]:
     ----
     Thesis Sec. 8.2 also turns an interior non-pole end into a new pole; that is not done here.
     """
-    face_pole = mesh.attributes.get('face_pole')
-    if not face_pole or not hasattr(mesh, 'is_face_pseudo_quad') or polyedge[0] == polyedge[-1]:
+    face_pole = mesh.attributes.get("face_pole")
+    if not face_pole or not hasattr(mesh, "is_face_pseudo_quad") or polyedge[0] == polyedge[-1]:
         return False, False
     poles = set(face_pole.values())
     return polyedge[0] in poles, polyedge[-1] in poles

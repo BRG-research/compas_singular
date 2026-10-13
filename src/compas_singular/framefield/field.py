@@ -2,6 +2,7 @@
 
 ``relax=False`` is a linear Dirichlet solve; ``relax=True`` adds diffusion + normalisation (disc poles at ~0.85).
 """
+
 from __future__ import annotations
 
 from cmath import phase
@@ -30,7 +31,7 @@ if TYPE_CHECKING:
     from compas_singular.framefield.symmetry import Symmetry
 
 
-__all__ = ['CrossField', 'FieldInputs', 'field_provenance', 'wrap_to_period']
+__all__ = ["CrossField", "FieldInputs", "field_provenance", "wrap_to_period"]
 
 
 #: Bumped when the layout of ``CrossField.save_to_json`` changes in a way a
@@ -38,7 +39,7 @@ __all__ = ['CrossField', 'FieldInputs', 'field_provenance', 'wrap_to_period']
 JSON_VERSION = 1
 
 #: Written into every file and checked on load.
-JSON_TYPE = 'compas_singular.framefield.CrossField'
+JSON_TYPE = "compas_singular.framefield.CrossField"
 
 #: Coordinate rounding for ``CrossField.inputs``: well below anything
 #: geometric, coarse enough to absorb the last-bit noise of a CAD round trip.
@@ -62,11 +63,11 @@ def _plain(value: Any) -> Any:
     if isinstance(value, Number):
         return float(value)
     # a Symmetry: centre, elements and enabled steps are its identity
-    if hasattr(value, 'centre') and hasattr(value, 'steps'):
+    if hasattr(value, "centre") and hasattr(value, "steps"):
         return {
-            'symmetry': [round(float(c), COORDINATE_DIGITS) for c in value.centre],
-            'names': sorted(value.names()),
-            'steps': sorted(value.steps),
+            "symmetry": [round(float(c), COORDINATE_DIGITS) for c in value.centre],
+            "names": sorted(value.names()),
+            "steps": sorted(value.steps),
         }
     if isinstance(value, (list, tuple)):
         return [_plain(item) for item in value]
@@ -80,11 +81,11 @@ def _describe_difference(before: dict[str, Any] | None, after: dict[str, Any] | 
     before = before or {}
     after = after or {}
     for name in sorted(set(before) | set(after)):
-        old = before.get(name, '<unset>')
-        new = after.get(name, '<unset>')
+        old = before.get(name, "<unset>")
+        new = after.get(name, "<unset>")
         if old != new:
-            return '{} {} -> {}'.format(name, old, new)
-    return 'no visible difference'
+            return "{} {} -> {}".format(name, old, new)
+    return "no visible difference"
 
 
 @dataclass
@@ -94,13 +95,13 @@ class FieldInputs(object):
     outer_boundary: Any
     inner_boundaries: Any = None
     guides: Any = None
-    mode: str = 'perpendicular'
+    mode: str = "perpendicular"
     target_length: float | None = None
     guide_weight: float | None = 1.0
     guide_band: float | None = None
     relax: bool = False
     tau: float | None = None
-    symmetry: Any = 'auto'
+    symmetry: Any = "auto"
 
     def resolved(self) -> FieldInputs:
         """A copy with ``guides`` as a list and ``'auto'`` symmetry detected."""
@@ -109,12 +110,9 @@ class FieldInputs(object):
 
         guides = as_curve_list(self.guides)
         symmetry = self.symmetry
-        if symmetry == 'auto':
-            symmetry = Symmetry.detect(
-                [self.outer_boundary] + list(self.inner_boundaries or []) + list(guides or []))
-        return FieldInputs(self.outer_boundary, self.inner_boundaries, guides, self.mode,
-                           self.target_length, self.guide_weight, self.guide_band,
-                           self.relax, self.tau, symmetry)
+        if symmetry == "auto":
+            symmetry = Symmetry.detect([self.outer_boundary] + list(self.inner_boundaries or []) + list(guides or []))
+        return FieldInputs(self.outer_boundary, self.inner_boundaries, guides, self.mode, self.target_length, self.guide_weight, self.guide_band, self.relax, self.tau, symmetry)
 
     def provenance(self) -> dict[str, Any]:
         """The inputs canonicalised for comparison and storage, as plain JSON.
@@ -122,16 +120,22 @@ class FieldInputs(object):
         Stored in every saved field; its shape must not change.
         """
         inputs = self.resolved()
-        params = (('mode', inputs.mode), ('target_length', inputs.target_length),
-                  ('guide_weight', inputs.guide_weight), ('guide_band', inputs.guide_band),
-                  ('relax', inputs.relax), ('tau', inputs.tau), ('symmetry', inputs.symmetry))
+        params = (
+            ("mode", inputs.mode),
+            ("target_length", inputs.target_length),
+            ("guide_weight", inputs.guide_weight),
+            ("guide_band", inputs.guide_band),
+            ("relax", inputs.relax),
+            ("tau", inputs.tau),
+            ("symmetry", inputs.symmetry),
+        )
         return {
-            'geometry': {
-                'outer': _canonical_curve(inputs.outer_boundary),
-                'inners': [_canonical_curve(loop) for loop in (inputs.inner_boundaries or [])],
-                'guides': [_canonical_curve(curve) for curve in inputs.guides],
+            "geometry": {
+                "outer": _canonical_curve(inputs.outer_boundary),
+                "inners": [_canonical_curve(loop) for loop in (inputs.inner_boundaries or [])],
+                "guides": [_canonical_curve(curve) for curve in inputs.guides],
             },
-            'params': dict((name, _plain(value)) for name, value in params),
+            "params": dict((name, _plain(value)) for name, value in params),
         }
 
 
@@ -197,12 +201,12 @@ class CrossField(Data):
         self.singularity_points = {}
         self.snap_report = {}
         self.inputs = None
-        self._locator = None            # derived, never pickled or saved
+        self._locator = None  # derived, never pickled or saved
 
     def __getstate__(self) -> dict[str, Any]:
         """Everything but the point locator, for ``pickle`` and ``deepcopy``."""
         state = dict(self.__dict__)
-        state['_locator'] = None
+        state["_locator"] = None
         return state
 
     def __setstate__(self, state: dict[str, Any]) -> None:
@@ -282,7 +286,7 @@ class CrossField(Data):
 
         free = [i for i in range(n) if i not in hard]
         if not free:
-            raise ValueError('every vertex is hard-constrained; nothing to solve')
+            raise ValueError("every vertex is hard-constrained; nothing to solve")
         fixed = sorted(hard)
         x_fixed = np.array([hard[i] for i in fixed], dtype=complex)
 
@@ -294,15 +298,13 @@ class CrossField(Data):
 
         iterations = residual = None
         if relax:
-            x_free, iterations, residual = cls._relax(
-                A, b, free, fixed, x_fixed, x_free, background, tau, tol, max_iterations)
+            x_free, iterations, residual = cls._relax(A, b, free, fixed, x_fixed, x_free, background, tau, tol, max_iterations)
 
         values = np.zeros(n, dtype=complex)
         values[free] = x_free
         values[fixed] = x_fixed
 
-        return cls(background, {vkey: complex(values[index[vkey]]) for vkey in vkeys},
-                   relaxed=bool(relax), iterations=iterations, residual=residual)
+        return cls(background, {vkey: complex(values[index[vkey]]) for vkey in vkeys}, relaxed=bool(relax), iterations=iterations, residual=residual)
 
     @staticmethod
     def _relax(
@@ -324,14 +326,14 @@ class CrossField(Data):
             tau = (background.diagonal / 25.0) ** 2
 
         n = A.shape[0]
-        step = (identity(n, format='csr', dtype=complex) + tau * A).tocsr()
+        step = (identity(n, format="csr", dtype=complex) + tau * A).tocsr()
         solve_ff = factorized(step[free][:, free].tocsc())
         offset = tau * (b[free] - A[free][:, fixed].dot(x_fixed))
 
         u = np.asarray(x_start, dtype=complex).copy()
         u /= np.maximum(np.abs(u), 1e-12)
 
-        residual = float('inf')
+        residual = float("inf")
         iterations = 0
         for iterations in range(1, max_iterations + 1):
             nxt = solve_ff(u + offset)
@@ -404,9 +406,7 @@ class CrossField(Data):
             mesh = self.background.mesh
             for fkey in mesh.faces():
                 a, b, c = mesh.face_vertices(fkey)
-                total = (wrap_to_period(self.theta[b] - self.theta[a])
-                         + wrap_to_period(self.theta[c] - self.theta[b])
-                         + wrap_to_period(self.theta[a] - self.theta[c]))
+                total = wrap_to_period(self.theta[b] - self.theta[a]) + wrap_to_period(self.theta[c] - self.theta[b]) + wrap_to_period(self.theta[a] - self.theta[c])
                 k = int(round(total / PERIOD))
                 if k:
                     out.append((fkey, k))
@@ -424,10 +424,10 @@ class CrossField(Data):
         for loop in mesh.boundaries():
             area = signed_area([mesh.vertex_coordinates(v) for v in loop])
             loops.append((abs(area), area, loop))
-        loops.sort(reverse=True)                     # largest is the outer one
+        loops.sort(reverse=True)  # largest is the outer one
         out = []
         for i, (_, area, loop) in enumerate(loops):
-            want_ccw = (i == 0)
+            want_ccw = i == 0
             out.append(loop if (area > 0) == want_ccw else list(reversed(loop)))
         return out
 
@@ -449,11 +449,11 @@ class CrossField(Data):
         interior = sum(k for _, k in self.singularities())
         expected = int(round(winding / PERIOD))
         return {
-            'interior_index_sum': interior,
-            'boundary_winding': expected,
-            'residual_radians': winding - expected * PERIOD,
-            'singular_faces': len(self.singularities()),
-            'ok': interior == expected,
+            "interior_index_sum": interior,
+            "boundary_winding": expected,
+            "residual_radians": winding - expected * PERIOD,
+            "singular_faces": len(self.singularities()),
+            "ok": interior == expected,
         }
 
     def report(self) -> dict[str, Any]:
@@ -464,11 +464,11 @@ class CrossField(Data):
         """
         mags = [abs(v) for v in self.u.values()]
         info = dict(self.poincare_hopf())
-        info['min_magnitude'] = min(mags)
-        info['mean_magnitude'] = sum(mags) / len(mags)
-        info['relaxed'] = self.relaxed
-        info['iterations'] = self.iterations
-        info['residual'] = self.residual
+        info["min_magnitude"] = min(mags)
+        info["mean_magnitude"] = sum(mags) / len(mags)
+        info["relaxed"] = self.relaxed
+        info["iterations"] = self.iterations
+        info["residual"] = self.residual
         return info
 
     # ------------------------------------------------------------------
@@ -481,13 +481,13 @@ class CrossField(Data):
         outer_boundary: Any,
         inner_boundaries: Any = None,
         guides: Any = None,
-        mode: str = 'perpendicular',
+        mode: str = "perpendicular",
         target_length: float | None = None,
         guide_weight: float | None = 1.0,
         guide_band: float | None = None,
         relax: bool = False,
         tau: float | None = None,
-        symmetry: Symmetry | str | None = 'auto',
+        symmetry: Symmetry | str | None = "auto",
     ) -> CrossField:
         """A field over a domain: background, constraints, solve and symmetry, without tracing.
 
@@ -528,27 +528,24 @@ class CrossField(Data):
         from compas_singular.framefield.symmetry import snap_singularities
         from compas_singular.framefield.symmetry import symmetrise
 
-        inputs = FieldInputs(outer_boundary, inner_boundaries, guides, mode, target_length,
-                             guide_weight, guide_band, relax, tau, symmetry).resolved()
+        inputs = FieldInputs(outer_boundary, inner_boundaries, guides, mode, target_length, guide_weight, guide_band, relax, tau, symmetry).resolved()
         symmetry = inputs.symmetry
 
-        background = BackgroundMesh.from_boundary(
-            outer_boundary, inner_boundaries, target_length=target_length, symmetry=symmetry)
+        background = BackgroundMesh.from_boundary(outer_boundary, inner_boundaries, target_length=target_length, symmetry=symmetry)
 
         constraints = from_boundary(background)
         if inputs.guides:
-            constraints += from_curves(background, inputs.guides, mode=mode,
-                                       weight=guide_weight, band=guide_band)
+            constraints += from_curves(background, inputs.guides, mode=mode, weight=guide_weight, band=guide_band)
 
         field = cls.solve(background, constraints, relax=relax, tau=tau)
 
         points = {}
         snap_report = {}
-        if symmetry is not None and symmetry.enabled('field'):
+        if symmetry is not None and symmetry.enabled("field"):
             # project onto the symmetric subspace: exact, since rotations act
             # trivially on exp(i*4*theta) and reflections conjugate it
             field = symmetrise(field, symmetry)
-        if symmetry is not None and symmetry.enabled('singularities'):
+        if symmetry is not None and symmetry.enabled("singularities"):
             # take each singularity off the arbitrary face that won the winding
             # tie, onto the field's own |u| minimum
             field, points, snap_report = snap_singularities(field)
@@ -575,21 +572,18 @@ class CrossField(Data):
             The first difference, as a sentence.
         """
         if self.inputs is None:
-            return ('this field carries no record of its inputs -- it was built '
-                    'through CrossField.solve rather than from_boundary, so '
-                    'whether it matches cannot be answered')
+            return "this field carries no record of its inputs -- it was built through CrossField.solve rather than from_boundary, so whether it matches cannot be answered"
 
         other = field_provenance(*args, **kwargs)
-        mine = self.inputs.get('geometry') or {}
-        theirs = other['geometry']
-        labels = {'outer': 'outer boundary', 'inners': 'holes', 'guides': 'guide curves'}
-        for role in ('outer', 'inners', 'guides'):
+        mine = self.inputs.get("geometry") or {}
+        theirs = other["geometry"]
+        labels = {"outer": "outer boundary", "inners": "holes", "guides": "guide curves"}
+        for role in ("outer", "inners", "guides"):
             if mine.get(role) != theirs.get(role):
-                return 'the {} changed'.format(labels[role])
+                return "the {} changed".format(labels[role])
 
-        if (self.inputs.get('params') or {}) != other['params']:
-            return 'solver settings changed -- {}'.format(
-                _describe_difference(self.inputs.get('params'), other['params']))
+        if (self.inputs.get("params") or {}) != other["params"]:
+            return "solver settings changed -- {}".format(_describe_difference(self.inputs.get("params"), other["params"]))
         return None
 
     def matches(self, *args: Any, **kwargs: Any) -> bool:
@@ -633,33 +627,29 @@ class CrossField(Data):
         """The payload ``save_to_json`` writes: plain types plus one Mesh."""
         symmetry = None
         if self.symmetry is not None:
-            symmetry = {'centre': [float(c) for c in self.symmetry.centre],
-                        'names': list(self.symmetry.names()),
-                        'steps': list(self.symmetry.steps)}
+            symmetry = {"centre": [float(c) for c in self.symmetry.centre], "names": list(self.symmetry.names()), "steps": list(self.symmetry.steps)}
 
         return {
-            'type': JSON_TYPE,
-            'version': JSON_VERSION,
-            'inputs': self.inputs,
-            'background': {
-                'mesh': self.background.mesh,
-                'outer': [[float(c) for c in p] for p in self.background.outer],
-                'inners': [[[float(c) for c in p] for p in loop] for loop in self.background.inners],
-                'target_length': float(self.background.target_length),
+            "type": JSON_TYPE,
+            "version": JSON_VERSION,
+            "inputs": self.inputs,
+            "background": {
+                "mesh": self.background.mesh,
+                "outer": [[float(c) for c in p] for p in self.background.outer],
+                "inners": [[[float(c) for c in p] for p in loop] for loop in self.background.inners],
+                "target_length": float(self.background.target_length),
             },
             # re/im as floats round-trip exactly
-            'u': {str(vkey): [value.real, value.imag] for vkey, value in self.u.items()},
-            'relaxed': bool(self.relaxed),
-            'iterations': self.iterations,
-            'residual': self.residual,
+            "u": {str(vkey): [value.real, value.imag] for vkey, value in self.u.items()},
+            "relaxed": bool(self.relaxed),
+            "iterations": self.iterations,
+            "residual": self.residual,
             # stored: snap_singularities overwrites them, and u cannot recover it
-            'singularities': (None if self._singularities is None else
-                              [[int(fkey), int(index)] for fkey, index in self._singularities]),
-            'guides': [[[float(c) for c in p] for p in curve] for curve in (self.guides or [])],
-            'symmetry': symmetry,
-            'singularity_points': {str(fkey): [float(c) for c in point]
-                                   for fkey, point in (self.singularity_points or {}).items()},
-            'snap_report': self.snap_report or {},
+            "singularities": (None if self._singularities is None else [[int(fkey), int(index)] for fkey, index in self._singularities]),
+            "guides": [[[float(c) for c in p] for p in curve] for curve in (self.guides or [])],
+            "symmetry": symmetry,
+            "singularity_points": {str(fkey): [float(c) for c in point] for fkey, point in (self.singularity_points or {}).items()},
+            "snap_report": self.snap_report or {},
         }
 
     @classmethod
@@ -695,40 +685,33 @@ class CrossField(Data):
         from compas_singular.framefield.symmetry import ELEMENTS
         from compas_singular.framefield.symmetry import Symmetry
 
-        found = data.get('type') if isinstance(data, dict) else type(data).__name__
+        found = data.get("type") if isinstance(data, dict) else type(data).__name__
         if found != JSON_TYPE:
-            raise ValueError('not a CrossField file: expected type {!r}, found {!r}'.format(
-                JSON_TYPE, found))
-        version = data.get('version')
+            raise ValueError("not a CrossField file: expected type {!r}, found {!r}".format(JSON_TYPE, found))
+        version = data.get("version")
         if version is None or version > JSON_VERSION:
-            raise ValueError(
-                'this file is version {!r}; this compas_singular understands up '
-                'to {}. Re-solve the field, or update.'.format(version, JSON_VERSION))
+            raise ValueError("this file is version {!r}; this compas_singular understands up to {}. Re-solve the field, or update.".format(version, JSON_VERSION))
 
-        bg = data['background']
-        background = BackgroundMesh(bg['mesh'], bg['outer'], bg['inners'], bg['target_length'])
+        bg = data["background"]
+        background = BackgroundMesh(bg["mesh"], bg["outer"], bg["inners"], bg["target_length"])
 
         # JSON object keys are strings; vertex and face keys are ints
-        u = {int(vkey): complex(value[0], value[1]) for vkey, value in data['u'].items()}
+        u = {int(vkey): complex(value[0], value[1]) for vkey, value in data["u"].items()}
 
-        field = cls(background, u, relaxed=data.get('relaxed', False),
-                    iterations=data.get('iterations'), residual=data.get('residual'))
+        field = cls(background, u, relaxed=data.get("relaxed", False), iterations=data.get("iterations"), residual=data.get("residual"))
 
-        singularities = data.get('singularities')
+        singularities = data.get("singularities")
         if singularities is not None:
             field._singularities = [(int(fkey), int(index)) for fkey, index in singularities]
-        field.guides = [[list(p) for p in curve] for curve in data.get('guides') or []]
-        field.singularity_points = {int(fkey): list(point)
-                                    for fkey, point in (data.get('singularity_points') or {}).items()}
-        field.snap_report = data.get('snap_report') or {}
-        field.inputs = data.get('inputs')
+        field.guides = [[list(p) for p in curve] for curve in data.get("guides") or []]
+        field.singularity_points = {int(fkey): list(point) for fkey, point in (data.get("singularity_points") or {}).items()}
+        field.snap_report = data.get("snap_report") or {}
+        field.inputs = data.get("inputs")
 
-        symmetry = data.get('symmetry')
+        symmetry = data.get("symmetry")
         if symmetry is not None:
             by_name = {element[5]: element for element in ELEMENTS}
-            field.symmetry = Symmetry(symmetry['centre'],
-                                      [by_name[name] for name in symmetry['names']],
-                                      symmetry['steps'])
+            field.symmetry = Symmetry(symmetry["centre"], [by_name[name] for name in symmetry["names"]], symmetry["steps"])
         return field
 
     # ------------------------------------------------------------------
@@ -740,6 +723,7 @@ class CrossField(Data):
         never saved -- it is derived from the background alone."""
         if self._locator is None:
             from compas_singular.framefield.locator import PointLocator
+
             self._locator = PointLocator(self.background)
         return self._locator
 
@@ -776,5 +760,4 @@ class CrossField(Data):
 
         if spend is None:
             spend = bool(self.guides)
-        return field_densification(coarse, self, self.locator(), edges_to_curves=edges_to_curves,
-                                   spend=spend, **kwargs)
+        return field_densification(coarse, self, self.locator(), edges_to_curves=edges_to_curves, spend=spend, **kwargs)

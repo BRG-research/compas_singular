@@ -1,4 +1,5 @@
 """Turn traced separatrices into a network: snap ends together, drop duplicates, find wall split points."""
+
 from __future__ import annotations
 
 from math import pi
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
     from compas_singular.framefield.trace import Separatrix
 
 
-__all__ = ['build_network', 'boundary_corners', 'SHARP_TURN']
+__all__ = ["build_network", "boundary_corners", "SHARP_TURN"]
 
 # The mesh-repair half of this module lives in ``compas_singular.editing.repair``;
 # re-exported so old imports keep working. Import from there in anything new.
@@ -66,14 +67,13 @@ def boundary_corners(
         return []
     gap = spacing if spacing is not None else total / 25.0
 
-    turn = {}          # candidates
-    every_turn = {}    # every vertex, for the run-of-one test
+    turn = {}  # candidates
+    every_turn = {}  # every vertex, for the run-of-one test
     for i in range(n):
         if seg[(i - 1) % n] < 1e-12 or seg[i] < 1e-12:
             continue
         b = loop[i]
-        angle = angle_vectors(subtract_vectors(b, loop[(i - 1) % n]),
-                              subtract_vectors(loop[(i + 1) % n], b))
+        angle = angle_vectors(subtract_vectors(b, loop[(i - 1) % n]), subtract_vectors(loop[(i + 1) % n], b))
         every_turn[i] = angle
         if angle > limit:
             turn[i] = angle
@@ -99,8 +99,7 @@ def boundary_corners(
             runs[-1].append(i)
         else:
             runs.append([i])
-    wraps = ((total - cum[candidates[-1]]) + cum[candidates[0]] <= gap
-             or (candidates[-1] == n - 1 and candidates[0] == 0))
+    wraps = (total - cum[candidates[-1]]) + cum[candidates[0]] <= gap or (candidates[-1] == n - 1 and candidates[0] == 0)
     if len(runs) > 1 and wraps:
         runs[0] = runs.pop() + runs[0]
 
@@ -152,7 +151,7 @@ def _cluster(
             members[i] = {groups[i]} if groups is not None else set()
 
     out = {i: points[j] for i, j in canonical.items()}
-    if symmetry is not None and symmetry.enabled('network'):
+    if symmetry is not None and symmetry.enabled("network"):
         from compas_singular.framefield.symmetry import project_clusters
 
         out = project_clusters(points, out, symmetry)
@@ -311,8 +310,7 @@ def build_network(
     for _, pts in traces:
         ends.append(pts[0])
         ends.append(pts[-1])
-    snapped = _cluster(ends, tol, loops=loops,
-                       groups=[k // 2 for k in range(len(ends))], symmetry=symmetry)
+    snapped = _cluster(ends, tol, loops=loops, groups=[k // 2 for k in range(len(ends))], symmetry=symmetry)
 
     others = []
     landings = []
@@ -320,8 +318,8 @@ def build_network(
         pts[0] = list(snapped[2 * k])
         pts[-1] = list(snapped[2 * k + 1])
         if distance_point_point(pts[0], pts[-1]) < 1e-9:
-            continue                        # collapsed to a point
-        if s.reason == 'boundary':
+            continue  # collapsed to a point
+        if s.reason == "boundary":
             # a landing next to a corner lands ON it, or it would split off a
             # sliver arc beside the corner
             if corner_points:
@@ -329,7 +327,7 @@ def build_network(
                 if distance_point_point(nearest, pts[-1]) < tol:
                     pts[-1] = list(nearest)
             landings.append(pts[-1])
-            if s.source == 'hole':
+            if s.source == "hole":
                 # a hole cut also STARTS on a wall, which it splits too
                 landings.append(pts[0])
         others.append(pts)
@@ -350,13 +348,11 @@ def build_network(
             # the connection's length (two traces of one connection bow apart
             # in proportion to how far they run)...
             span = 0.5 * (polyline_length(other) + polyline_length(kept))
-            if distance_point_point(_arc_midpoint_of(other),
-                                    _arc_midpoint_of(kept)) >= max(tol, 0.35 * span):
+            if distance_point_point(_arc_midpoint_of(other), _arc_midpoint_of(kept)) >= max(tol, 0.35 * span):
                 continue
             # ...and leaving in the same direction: two different ARMS of one
             # singularity can share both ends, but they leave it far apart
-            if angle_vectors(_launch_direction(other, tol * 2.5),
-                             _launch_direction(kept, tol * 2.5)) > pi / 4.0:
+            if angle_vectors(_launch_direction(other, tol * 2.5), _launch_direction(kept, tol * 2.5)) > pi / 4.0:
                 continue
             match = (k, other)
             break
@@ -376,10 +372,10 @@ def build_network(
         boundary.extend([splits[k], splits[(k + 1) % len(splits)]] for k in range(len(splits)))
 
     report = {
-        'separatrices': len(others),
-        'boundary_arcs': len(boundary),
-        'landings': len(landings),
-        'duplicates_dropped': dropped,
-        'snapped': len(ends) - len({(p[0], p[1]) for p in snapped.values()}),
+        "separatrices": len(others),
+        "boundary_arcs": len(boundary),
+        "landings": len(landings),
+        "duplicates_dropped": dropped,
+        "snapped": len(ends) - len({(p[0], p[1]) for p in snapped.values()}),
     }
     return boundary, others, report

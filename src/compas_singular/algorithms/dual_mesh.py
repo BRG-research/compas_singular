@@ -3,6 +3,7 @@
 Loses some area on a curved outline; use ``Mesh.dual(include_boundary=True)`` when that matters.
 Do not dualise a mesh with poles. Design notes: ``design_notes/algorithms.md``.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -53,7 +54,7 @@ def dual_mesh(mesh: Mesh, redistribute: bool = True) -> Mesh:
 
     index = {TOL.geometric_key(xyz): i for i, xyz in enumerate(vertices)}
 
-    #Extent to the boundary
+    # Extent to the boundary
     def add(xyz: Sequence[float]) -> int:
         gkey = TOL.geometric_key(xyz)
         if gkey not in index:
@@ -68,8 +69,7 @@ def dual_mesh(mesh: Mesh, redistribute: bool = True) -> Mesh:
         if not nbrs:
             continue
         ring = [add(mesh.edge_midpoint((vkey, nbrs[0])))]
-        ring += [add(mesh.face_centroid(fkey))
-                 for fkey in mesh.vertex_faces(vkey, ordered=True)]
+        ring += [add(mesh.face_centroid(fkey)) for fkey in mesh.vertex_faces(vkey, ordered=True)]
         ring.append(add(mesh.edge_midpoint((vkey, nbrs[-1]))))
         if len(nbrs) == 2:
             ring.append(add(mesh.vertex_coordinates(vkey)))
@@ -80,7 +80,7 @@ def dual_mesh(mesh: Mesh, redistribute: bool = True) -> Mesh:
         faces.append(ring[::-1])
 
     out = type(dual).from_vertices_and_faces(vertices, faces)
-    
+
     # There is already a way to extent to the boundary in compas, but I have noticed that it gives weird corners
     # out = mesh.dual(include_boundary=True)
     # _vertices, faces = out.to_vertices_and_faces()
@@ -114,6 +114,7 @@ def _is_oriented(faces: Sequence[Sequence[int]]) -> bool:
 # evening out the block sizes
 # ----------------------------------------------------------------------------
 
+
 def redistribute_blocks(dual: Mesh, primal: Mesh, project: bool = True) -> Mesh:
     """Even out the half-size boundary blocks of a dual in place, by respacing along strips and boundary arcs.
 
@@ -135,8 +136,7 @@ def redistribute_blocks(dual: Mesh, primal: Mesh, project: bool = True) -> Mesh:
     compas.datastructures.Mesh
         ``dual``, modified in place.
     """
-    gkey_vertex = {TOL.geometric_key(dual.vertex_coordinates(v)): v
-                   for v in dual.vertices()}
+    gkey_vertex = {TOL.geometric_key(dual.vertex_coordinates(v)): v for v in dual.vertices()}
 
     def at(xyz: Sequence[float]) -> int | None:
         return gkey_vertex.get(TOL.geometric_key(xyz))
@@ -157,9 +157,7 @@ def redistribute_blocks(dual: Mesh, primal: Mesh, project: bool = True) -> Mesh:
         chains.append((chain, polyline, lengths, stops))
 
     for faces, ends in _strips(primal):
-        chain = ([at(ends[0])]
-                 + [at(primal.face_centroid(f)) for f in faces]
-                 + [at(ends[1])])
+        chain = [at(ends[0])] + [at(primal.face_centroid(f)) for f in faces] + [at(ends[1])]
         if any(vkey is None for vkey in chain):
             continue
         points = [dual.vertex_coordinates(v) for v in chain]
@@ -210,9 +208,7 @@ def redistribute_blocks(dual: Mesh, primal: Mesh, project: bool = True) -> Mesh:
             if fkey is None or fkey not in creased:
                 continue
             if fkey not in around:
-                around[fkey] = list(set(
-                    [fkey] + [g for v in primal.face_vertices(fkey)
-                              for g in primal.vertex_faces(v)]))
+                around[fkey] = list(set([fkey] + [g for v in primal.face_vertices(fkey) for g in primal.vertex_faces(v)]))
             xyz, _ = _project(dual.vertex_coordinates(vkey), primal, around[fkey])
             dual.vertex_attributes(vkey, "xyz", xyz)
 
@@ -245,9 +241,7 @@ def _point_at(polyline: Sequence[Sequence[float]], lengths: Sequence[float], dis
     return list(polyline[-1])
 
 
-def _boundary_chains(
-    primal: Mesh, gkey_vertex: dict[str, int]
-) -> list[tuple[list[int], list[Sequence[float]]]]:
+def _boundary_chains(primal: Mesh, gkey_vertex: dict[str, int]) -> list[tuple[list[int], list[Sequence[float]]]]:
     """Each primal boundary arc, as ``(dual vertices, primal outline points)``."""
     chains = []
     for ring in primal.vertices_on_boundaries():
@@ -259,22 +253,18 @@ def _boundary_chains(
 
         # dual_mesh inserts the primal vertex itself only at a valence-2 domain
         # corner, so a primal boundary vertex that IS a dual vertex is a corner
-        corner = [gkey_vertex.get(TOL.geometric_key(primal.vertex_coordinates(v)))
-                  for v in ring]
+        corner = [gkey_vertex.get(TOL.geometric_key(primal.vertex_coordinates(v))) for v in ring]
         marks = [i for i, vkey in enumerate(corner) if vkey is not None]
         if not marks:
             continue  # a smooth ring has no half block along itself
 
-        mids = [gkey_vertex.get(
-            TOL.geometric_key(primal.edge_midpoint((ring[i], ring[(i + 1) % n]))))
-            for i in range(n)]
+        mids = [gkey_vertex.get(TOL.geometric_key(primal.edge_midpoint((ring[i], ring[(i + 1) % n])))) for i in range(n)]
 
         for a, b in zip(marks, marks[1:] + marks[:1]):
             k = (b - a) % n
             chain = [corner[a]] + [mids[(a + j) % n] for j in range(k)] + [corner[b]]
             if len(chain) > 2 and all(vkey is not None for vkey in chain):
-                outline = [primal.vertex_coordinates(ring[(a + j) % n])
-                           for j in range(k + 1)]
+                outline = [primal.vertex_coordinates(ring[(a + j) % n]) for j in range(k + 1)]
                 chains.append((chain, outline))
     return chains
 
@@ -309,8 +299,7 @@ def _strips(primal: Mesh) -> list[tuple[list[int], tuple[Sequence[float], Sequen
                 continue
             seen.add(frozenset(edge))
             seen.add(frozenset(exit_edge))
-            strips.append((faces, (primal.edge_midpoint(edge),
-                                   primal.edge_midpoint(exit_edge))))
+            strips.append((faces, (primal.edge_midpoint(edge), primal.edge_midpoint(exit_edge))))
     return strips
 
 
@@ -338,8 +327,7 @@ def _creased_faces(mesh: Mesh, tol: float = 1e-9) -> set[int]:
     normals = {fkey: mesh.face_normal(fkey) for fkey in mesh.faces()}
     creased = set()
     for fkey in mesh.faces():
-        ring = set(g for vkey in mesh.face_vertices(fkey)
-                   for g in mesh.vertex_faces(vkey))
+        ring = set(g for vkey in mesh.face_vertices(fkey) for g in mesh.vertex_faces(vkey))
         for g in ring:
             if dot_vectors(normals[fkey], normals[g]) < 1.0 - tol:
                 creased.add(fkey)
@@ -365,17 +353,14 @@ def _project(point: Sequence[float], mesh: Mesh, candidates: Sequence[int]) -> t
         polygon = mesh.face_coordinates(fkey)
         centroid = mesh.face_centroid(fkey)
         for i in range(len(polygon)):
-            near = _closest_on_triangle(
-                point, polygon[i], polygon[(i + 1) % len(polygon)], centroid)
+            near = _closest_on_triangle(point, polygon[i], polygon[(i + 1) % len(polygon)], centroid)
             distance = distance_point_point(point, near)
             if best_distance is None or distance < best_distance:
                 best, best_distance, best_face = near, distance, fkey
     return best, best_face
 
 
-def _closest_on_triangle(
-    point: Sequence[float], a: Sequence[float], b: Sequence[float], c: Sequence[float]
-) -> Sequence[float]:
+def _closest_on_triangle(point: Sequence[float], a: Sequence[float], b: Sequence[float], c: Sequence[float]) -> Sequence[float]:
     """Closest point of triangle abc to point, in its interior or on an edge."""
     ab = subtract_vectors(b, a)
     ac = subtract_vectors(c, a)
@@ -397,9 +382,7 @@ def _closest_on_triangle(
     return best
 
 
-def _barycentric(
-    point: Sequence[float], a: Sequence[float], ab: Sequence[float], ac: Sequence[float]
-) -> tuple[float, float]:
+def _barycentric(point: Sequence[float], a: Sequence[float], ab: Sequence[float], ac: Sequence[float]) -> tuple[float, float]:
     d00 = dot_vectors(ab, ab)
     d01 = dot_vectors(ab, ac)
     d11 = dot_vectors(ac, ac)
@@ -410,5 +393,3 @@ def _barycentric(
     if abs(denom) < 1e-18:
         return -1.0, -1.0
     return (d11 * d20 - d01 * d21) / denom, (d00 * d21 - d01 * d20) / denom
-
-

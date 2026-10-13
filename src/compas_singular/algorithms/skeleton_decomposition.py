@@ -52,7 +52,7 @@ if TYPE_CHECKING:
     from compas_singular.symmetry.unit import SymmetricUnit
 
 
-__all__ = ['SkeletonDecomposition']
+__all__ = ["SkeletonDecomposition"]
 
 
 def _wall_spacing(outer: list[list[float]], inners: list[list[list[float]]], target_length: float | None, alpha: float | None) -> float | None:
@@ -75,15 +75,15 @@ class SkeletonDecomposition(Skeleton):
         super(SkeletonDecomposition, self).__init__(*args, **kwargs)
         self.mesh = None
         self.polylines = None
-        self.relative_kink_angle_limit = pi / 8.
-        self.flip_angle_limit = pi / 2.
+        self.relative_kink_angle_limit = pi / 8.0
+        self.flip_angle_limit = pi / 2.0
         #: How far each copy of a duplicated vertex moves toward its own
         #: neighbour centroid, as a fraction of that distance. See
         #: ``solve_triangular_faces``.
         self.collapsed_edge_opening = 0.5
         self.repair_notes = []
 
-        self.origin = None #skeleton, mesh or boundary
+        self.origin = None  # skeleton, mesh or boundary
         self.inputs = {}
         #: What ``find_symmetry`` found, or ``None``.
         self.symmetry_report = None
@@ -114,14 +114,21 @@ class SkeletonDecomposition(Skeleton):
 
         """
         skeleton = cls.from_vertices_and_faces(*mesh.to_vertices_and_faces())
-        skeleton.feature_edges = frozenset(mesh.attributes.get('feature_edges') or ())
-        skeleton.feature_points = list(mesh.attributes.get('feature_points') or ())
+        skeleton.feature_edges = frozenset(mesh.attributes.get("feature_edges") or ())
+        skeleton.feature_points = list(mesh.attributes.get("feature_points") or ())
         return skeleton
 
     @classmethod
-    def from_boundary(cls, outer_boundary: list[list[float]], inner_boundaries: list[list[list[float]]] | None = None,
-                      polyline_features: list[list[list[float]]] = [], point_features: list[list[float]] = [],
-                      target_length: float | None = None, alpha: float | None = 0.02, d_min: int | None = 5) -> SkeletonDecomposition:
+    def from_boundary(
+        cls,
+        outer_boundary: list[list[float]],
+        inner_boundaries: list[list[list[float]]] | None = None,
+        polyline_features: list[list[list[float]]] = [],
+        point_features: list[list[float]] = [],
+        target_length: float | None = None,
+        alpha: float | None = 0.02,
+        d_min: int | None = 5,
+    ) -> SkeletonDecomposition:
         """Triangulate a domain given by its walls, ready to decompose.
 
         Parameters
@@ -157,9 +164,7 @@ class SkeletonDecomposition(Skeleton):
         # the walls there is: ``edges_to_curves`` samples them again, finer, and
         # would otherwise be re-sampling this function's own approximation.
         inner_boundaries = list(inner_boundaries or [])
-        outer_dense, inners_dense = discretise_boundary(
-            outer_boundary, inner_boundaries, spacing=target_length,
-            alpha=alpha, d_min=d_min)
+        outer_dense, inners_dense = discretise_boundary(outer_boundary, inner_boundaries, spacing=target_length, alpha=alpha, d_min=d_min)
         # The features get the SAME sampling as the walls. Thesis eq. 4.1 is
         # stated for every curve, and a feature is cut into the Delaunay along
         # its OWN segments: one longer than the surrounding sampling is not a
@@ -168,15 +173,12 @@ class SkeletonDecomposition(Skeleton):
         # polyline at its own vertices -- and was triangulated as one long
         # segment the layout ignored completely.
         spacing = _wall_spacing(outer_dense, inners_dense, target_length, alpha)
-        features_dense = [discretise_line(feature, spacing)
-                          for feature in (polyline_features or [])]
-        trimesh = boundary_triangulation(
-            outer_boundary=outer_dense, inner_boundaries=inners_dense,
-            polyline_features=features_dense, point_features=point_features)
+        features_dense = [discretise_line(feature, spacing) for feature in (polyline_features or [])]
+        trimesh = boundary_triangulation(outer_boundary=outer_dense, inner_boundaries=inners_dense, polyline_features=features_dense, point_features=point_features)
 
         decomposition = cls.from_vertices_and_faces(*trimesh.to_vertices_and_faces())
-        decomposition.feature_edges = frozenset(trimesh.attributes.get('feature_edges') or ())
-        decomposition.feature_points = list(trimesh.attributes.get('feature_points') or ())
+        decomposition.feature_edges = frozenset(trimesh.attributes.get("feature_edges") or ())
+        decomposition.feature_points = list(trimesh.attributes.get("feature_points") or ())
         decomposition.origin = "boundary"
         # ``inputs``, matching ``__init__``. It used to be written as ``input``,
         # so ``coarse_mesh`` read the empty dict and every point feature was
@@ -188,9 +190,15 @@ class SkeletonDecomposition(Skeleton):
             diagonal = bounding_box_diagonal(outer_dense, *inners_dense)
             if diagonal > 0.0:
                 target_length = alpha * diagonal
-        decomposition.inputs = {"outer_boundary": outer_boundary, "inner_boundaries": inner_boundaries,
-                                "polyline_features": polyline_features, "point_features": point_features,
-                                "target_length": target_length, "alpha": alpha, "d_min": d_min}
+        decomposition.inputs = {
+            "outer_boundary": outer_boundary,
+            "inner_boundaries": inner_boundaries,
+            "polyline_features": polyline_features,
+            "point_features": point_features,
+            "target_length": target_length,
+            "alpha": alpha,
+            "d_min": d_min,
+        }
 
         return decomposition
 
@@ -198,7 +206,7 @@ class SkeletonDecomposition(Skeleton):
     # symmetry
     # --------------------------------------------------------------------------
 
-    def find_symmetry(self, tol: float | None = None, include: Iterable[str] = ('walls', 'holes', 'guides', 'poles'), max_order: int = 12) -> SymmetryReport:
+    def find_symmetry(self, tol: float | None = None, include: Iterable[str] = ("walls", "holes", "guides", "poles"), max_order: int = 12) -> SymmetryReport:
         """Detect the symmetry of the domain (walls, holes, curve and point features).
 
         The result is kept on ``symmetry_report``.
@@ -211,11 +219,11 @@ class SkeletonDecomposition(Skeleton):
         """
         from compas_singular.symmetry import find_symmetry
         from compas_singular.symmetry.routes import domain_of
-        self.symmetry_report = find_symmetry(domain=domain_of(self), tol=tol, include=include,
-                                             max_order=max_order)
+
+        self.symmetry_report = find_symmetry(domain=domain_of(self), tol=tol, include=include, max_order=max_order)
         return self.symmetry_report
 
-    def symmetry_unit(self, keys: list[str] | None = None, centre: str = 'route', seam: float | None = None, report: SymmetryReport | None = None) -> SymmetricUnit:
+    def symmetry_unit(self, keys: list[str] | None = None, centre: str = "route", seam: float | None = None, report: SymmetryReport | None = None) -> SymmetricUnit:
         """Mesh one symmetric unit of the domain with this route, cut along the seams of ``keys``.
 
         Densify with ``quad_mesh()`` and expand with ``expand_symmetrically()``.
@@ -237,6 +245,7 @@ class SkeletonDecomposition(Skeleton):
         """
         from compas_singular.symmetry import build_unit
         from compas_singular.symmetry.routes import mesher_for
+
         report = report or self.symmetry_report or self.find_symmetry()
         return build_unit(report, mesher_for(self), keys=keys, centre=centre, seam=seam)
 
@@ -296,8 +305,7 @@ class SkeletonDecomposition(Skeleton):
         list
             List of vertex keys.
         """
-        return [vkey for bdry in self.vertices_on_boundaries() for vkey in bdry
-                if self.boundary_interior_angle(vkey) > 2 * pi - 0.05]
+        return [vkey for bdry in self.vertices_on_boundaries() for vkey in bdry if self.boundary_interior_angle(vkey) > 2 * pi - 0.05]
 
     # --------------------------------------------------------------------------
     # branches
@@ -312,9 +320,7 @@ class SkeletonDecomposition(Skeleton):
             List of polylines as list of point XYZ-coordinates.
         """
         map_corners = [TOL.geometric_key(trimesh_face_circle(self, corner)[0]) for corner in self.corner_faces()]
-        return [
-            branch for branch in self.branches()
-            if TOL.geometric_key(branch[0]) not in map_corners and TOL.geometric_key(branch[-1]) not in map_corners]
+        return [branch for branch in self.branches() if TOL.geometric_key(branch[0]) not in map_corners and TOL.geometric_key(branch[-1]) not in map_corners]
 
     def branches_singularity_to_boundary(self) -> list[list[list[float]]]:
         """Get new branches from singular faces to their split vertices: GRAFTING (thesis S4.2.2).
@@ -324,8 +330,7 @@ class SkeletonDecomposition(Skeleton):
         list
             List of polylines as list of point XYZ-coordinates.
         """
-        grafts = [[trimesh_face_circle(self, fkey)[0], self.vertex_coordinates(vkey)]
-                  for fkey in self.singular_faces() for vkey in self.face_vertices(fkey)]
+        grafts = [[trimesh_face_circle(self, fkey)[0], self.vertex_coordinates(vkey)] for fkey in self.singular_faces() for vkey in self.face_vertices(fkey)]
         return self.merge_graft_targets(grafts)
 
     def merge_graft_targets(self, grafts: list[list[list[float]]]) -> list[list[list[float]]]:
@@ -423,8 +428,7 @@ class SkeletonDecomposition(Skeleton):
         # graft and the segment -- and would be merged through, losing the
         # singularity at the extremity (Fig 4.21) and cutting across the feature.
         splits = [self.vertex_coordinates(vkey) for vkey in self.corner_vertices() + self.free_tip_vertices()]
-        self.polylines = graph_polylines(Graph.from_lines([(u, v) for polyline in branches for u, v in pairwise(polyline)]),
-                                         splits=splits)
+        self.polylines = graph_polylines(Graph.from_lines([(u, v) for polyline in branches for u, v in pairwise(polyline)]), splits=splits)
         return self.polylines
 
     def decomposition_polyline(self, geom_key_1: str, geom_key_2: str) -> list[list[float]] | None:
@@ -461,7 +465,7 @@ class SkeletonDecomposition(Skeleton):
         other_polylines = [polyline for polyline in polylines if TOL.geometric_key(polyline[0]) not in boundary_keys or TOL.geometric_key(polyline[1]) not in boundary_keys]
         self.repair_notes = []
         mesh = CoarsePseudoQuadMesh.from_polylines(boundary_polylines, other_polylines)
-        mesh.attributes['decomposition_type'] = 'skeleton'
+        mesh.attributes["decomposition_type"] = "skeleton"
         self.mesh = mesh
         self.solve_triangular_faces()
         self.quadrangulate_polygonal_faces()
@@ -506,8 +510,9 @@ class SkeletonDecomposition(Skeleton):
         self._mesh_poles = poles_key
         return mesh
 
-    def edges_to_curves(self, coarse: CoarseQuadMesh | CoarsePseudoQuadMesh | None = None, wall_sampling: float | None = None,
-                        snap: bool = True) -> tuple[dict[tuple[int, int], list[list[float]]], dict[str, int]]:
+    def edges_to_curves(
+        self, coarse: CoarseQuadMesh | CoarsePseudoQuadMesh | None = None, wall_sampling: float | None = None, snap: bool = True
+    ) -> tuple[dict[tuple[int, int], list[list[float]]], dict[str, int]]:
         """The shape of every coarse edge, for ``densification``: wall piece, matching branch, or chord.
 
         Parameters
@@ -540,29 +545,26 @@ class SkeletonDecomposition(Skeleton):
         if coarse is None:
             coarse = self.mesh
         if coarse is None:
-            raise ValueError('no coarse layout -- call coarse_mesh() first')
-        if not self.inputs.get('outer_boundary'):
+            raise ValueError("no coarse layout -- call coarse_mesh() first")
+        if not self.inputs.get("outer_boundary"):
             raise ValueError(
-                'edges_to_curves needs the domain walls, which only '
-                'from_boundary records. Call '
-                'compas_singular.datastructures.coarse_edges_to_curves directly '
-                'with the loops you have.')
+                "edges_to_curves needs the domain walls, which only "
+                "from_boundary records. Call "
+                "compas_singular.datastructures.coarse_edges_to_curves directly "
+                "with the loops you have."
+            )
 
         if wall_sampling is None:
-            target = self.inputs.get('target_length')
+            target = self.inputs.get("target_length")
             wall_sampling = target * 0.25 if target else None
         # ``alpha``/``d_min`` off: this is output smoothing at an explicitly
         # given sampling, not the thesis discretisation of the input.
-        outer_wall, inner_walls = discretise_boundary(
-            self.inputs['outer_boundary'],
-            self.inputs.get('inner_boundaries') or [],
-            spacing=wall_sampling, alpha=None, d_min=None)
+        outer_wall, inner_walls = discretise_boundary(self.inputs["outer_boundary"], self.inputs.get("inner_boundaries") or [], spacing=wall_sampling, alpha=None, d_min=None)
         walls = [outer_wall] + inner_walls
 
         if snap:
             snap_corners_to_walls(coarse, loops=walls)
-        return coarse_edges_to_curves(coarse, loops=walls,
-                                      polylines=self.polylines or [])
+        return coarse_edges_to_curves(coarse, loops=walls, polylines=self.polylines or [])
 
     # --------------------------------------------------------------------------
     # corrections
@@ -583,7 +585,6 @@ class SkeletonDecomposition(Skeleton):
         all_splits = set(list(self.corner_vertices()) + list(self.split_vertices()))
 
         for polyedge in [bdry + bdry[:1] for bdry in self.boundaries()]:
-
             # In polyedge ORDER, and unique. It was a set, which is neither:
             # the ``len(splits) == 1`` branch below indexes it, and ``set[0]``
             # raises ``TypeError: 'set' object is not subscriptable`` -- hit on a
@@ -631,7 +632,7 @@ class SkeletonDecomposition(Skeleton):
 
         # compute total rotation of polyline
         for polyline in self.branches_singularity_to_singularity():
-            angles = [angle_vectors_signed(subtract_vectors(v, u), subtract_vectors(w, v), [0., 0., 1.]) for u, v, w in window(polyline, n=3)]
+            angles = [angle_vectors_signed(subtract_vectors(v, u), subtract_vectors(w, v), [0.0, 0.0, 1.0]) for u, v, w in window(polyline, n=3)]
             # subdivide once per angle limit in rotation
             if abs(sum(angles)) > self.flip_angle_limit:
                 # the step between subdivision points in polylines (+ 2 for the extremities, which will be discarded)
@@ -639,7 +640,7 @@ class SkeletonDecomposition(Skeleton):
                 n = floor(abs(sum(angles)) / self.flip_angle_limit) + 1
                 step = int(floor(len(polyline) / n))
                 # add new branches from corresponding face in Delaunay mesh
-                seams = polyline[:: step]
+                seams = polyline[::step]
                 if polyline[-1] != seams[-1]:
                     if len(seams) == n + 1:
                         del seams[-1]
@@ -662,13 +663,13 @@ class SkeletonDecomposition(Skeleton):
 
         A convex corner reads below pi, a reentrant one above, a free curve-feature tip 2 pi.
         """
-        total = 0.
+        total = 0.0
         for fkey in self.vertex_faces(vkey):
             face_vertices = self.face_vertices(fkey)
             i = face_vertices.index(vkey)
-            total += angle_points(self.vertex_coordinates(vkey),
-                                  self.vertex_coordinates(face_vertices[i - 1]),
-                                  self.vertex_coordinates(face_vertices[(i + 1) % len(face_vertices)]))
+            total += angle_points(
+                self.vertex_coordinates(vkey), self.vertex_coordinates(face_vertices[i - 1]), self.vertex_coordinates(face_vertices[(i + 1) % len(face_vertices)])
+            )
         return total
 
     def branches_splitting_boundary_kinks(self) -> list[list[list[float]]]:
@@ -683,10 +684,13 @@ class SkeletonDecomposition(Skeleton):
 
         singular_faces = set(self.singular_faces())
         for boundary in self.boundaries():
-            angles = {(u, v, w): angle_vectors(subtract_vectors(self.vertex_coordinates(v), self.vertex_coordinates(u)), subtract_vectors(
-                self.vertex_coordinates(w), self.vertex_coordinates(v))) for u, v, w in window(boundary + boundary[: 2], n=3)}
-            for u, v, w, x, y in list(window(boundary + boundary[: 4], n=5)):
-
+            angles = {
+                (u, v, w): angle_vectors(
+                    subtract_vectors(self.vertex_coordinates(v), self.vertex_coordinates(u)), subtract_vectors(self.vertex_coordinates(w), self.vertex_coordinates(v))
+                )
+                for u, v, w in window(boundary + boundary[:2], n=3)
+            }
+            for u, v, w, x, y in list(window(boundary + boundary[:4], n=5)):
                 # check if not a corner
                 if self.vertex_degree(w) == 2:
                     continue
@@ -729,7 +733,6 @@ class SkeletonDecomposition(Skeleton):
 
         for fkey in list(mesh.faces()):
             if len(mesh.face_vertices(fkey)) == 3:
-
                 boundary_vertices = [vkey for vkey in mesh.face_vertices(fkey) if mesh.is_vertex_on_boundary(vkey)]
                 case = sum(mesh.is_vertex_on_boundary(vkey) for vkey in mesh.face_vertices(fkey))
 
@@ -737,7 +740,7 @@ class SkeletonDecomposition(Skeleton):
                     # convert triangular face to quad by duplicating the boundary vertex
                     # due to singular face vertices at the same location
                     u = boundary_vertices[0]
-                    v = mesh.add_vertex(attr_dict={attr: xyz for attr, xyz in zip(['x', 'y', 'z'], mesh.vertex_coordinates(u))})
+                    v = mesh.add_vertex(attr_dict={attr: xyz for attr, xyz in zip(["x", "y", "z"], mesh.vertex_coordinates(u))})
 
                     # modify adjacent faces
                     vertex_faces = mesh.vertex_faces(u, ordered=True)
@@ -769,16 +772,13 @@ class SkeletonDecomposition(Skeleton):
                     # plate raised ``TypeError: 'NoneType' object is not
                     # iterable`` here -- and the two are coincident anyway, so
                     # their centroid is the honest fallback.
-                    branch = self.decomposition_polyline(
-                        *map(lambda x: TOL.geometric_key(mesh.vertex_coordinates(x)), boundary_vertices))
+                    branch = self.decomposition_polyline(*map(lambda x: TOL.geometric_key(mesh.vertex_coordinates(x)), boundary_vertices))
                     if branch is not None:
-                        at = Polyline(branch).point_at(t=.5, snap=True)
+                        at = Polyline(branch).point_at(t=0.5, snap=True)
                         point = [at.x, at.y, at.z]
                     else:
-                        point = centroid_points(
-                            [mesh.vertex_coordinates(vkey) for vkey in boundary_vertices])
-                    new_vkey = mesh.add_vertex(
-                        attr_dict={'x': point[0], 'y': point[1], 'z': point[2]})
+                        point = centroid_points([mesh.vertex_coordinates(vkey) for vkey in boundary_vertices])
+                    new_vkey = mesh.add_vertex(attr_dict={"x": point[0], "y": point[1], "z": point[2]})
 
                     # modify triangular face
                     mesh.delete_face(fkey)
@@ -806,14 +806,13 @@ class SkeletonDecomposition(Skeleton):
                 for vkey in edge:
                     xyz = centroid_points([mesh.vertex_coordinates(nbr) for nbr in mesh.vertex_neighbors(vkey)])
                     xyz0 = mesh.vertex_coordinates(vkey)
-                    to_move[vkey] = [self.collapsed_edge_opening * (a - a0)
-                                     for a, a0 in zip(xyz, xyz0)]
+                    to_move[vkey] = [self.collapsed_edge_opening * (a - a0) for a, a0 in zip(xyz, xyz0)]
 
         for vkey, xyz in to_move.items():
             attr = mesh.vertex[vkey]
-            attr['x'] += xyz[0]
-            attr['y'] += xyz[1]
-            attr['z'] += xyz[2]
+            attr["x"] += xyz[0]
+            attr["y"] += xyz[1]
+            attr["z"] += xyz[2]
 
     def quadrangulate_polygonal_faces(self) -> None:
         """Turn polygonal faces left by a curve feature into quads by seam propagation (thesis Fig 4.20d).
@@ -860,8 +859,7 @@ class SkeletonDecomposition(Skeleton):
             for fkey in mesh.faces():
                 face_vertices = mesh.face_vertices(fkey)
                 geom_keys = [TOL.geometric_key(mesh.vertex_coordinates(vkey)) for vkey in face_vertices]
-                flat = set(geom_key for vkey, geom_key in zip(face_vertices, geom_keys)
-                           if geom_key in source_map and mesh.vertex_degree(vkey) < max(candidate_map[geom_key]))
+                flat = set(geom_key for vkey, geom_key in zip(face_vertices, geom_keys) if geom_key in source_map and mesh.vertex_degree(vkey) < max(candidate_map[geom_key]))
                 if flat:
                     flat_by_face[frozenset(geom_keys)] = flat
 
@@ -881,7 +879,7 @@ class SkeletonDecomposition(Skeleton):
         before = mesh.copy()
         if not quadrangulate_faces(mesh, face_sources, max_faces=3 * mesh.number_of_faces()):
             self.mesh = before
-            self.repair_notes.append('seam propagation did not terminate; polygonal faces left to the fallback repair')
+            self.repair_notes.append("seam propagation did not terminate; polygonal faces left to the fallback repair")
 
     def quadrangulate_polygonal_faces_wip(self) -> None:
         pass
@@ -909,14 +907,13 @@ class SkeletonDecomposition(Skeleton):
 
         try:
             from compas_singular.editing.repair import solve_non_quad_faces
-        except Exception as exc:      # the frame-field extras are optional
-            self.repair_notes.append(
-                'polygonal faces left and the fallback repair is unavailable ({})'.format(exc))
+        except Exception as exc:  # the frame-field extras are optional
+            self.repair_notes.append("polygonal faces left and the fallback repair is unavailable ({})".format(exc))
             return
 
         self.mesh, note = solve_non_quad_faces(mesh, cls=type(mesh), poles=list(poles))
         if note:
-            self.repair_notes.append('fallback repair: {}'.format(note))
+            self.repair_notes.append("fallback repair: {}".format(note))
 
     def split_quads_with_poles(self, poles: list[list[float]]) -> list[list[list[float]]]:
         new_lines = []
@@ -962,11 +959,9 @@ class SkeletonDecomposition(Skeleton):
                         break
                 if fkey not in face_poles:
                     face_poles[fkey] = self._choose_pole(fkey)
-                    self.repair_notes.append(
-                        'face {} is a triangle with no point feature at a corner; '
-                        'pole set to vertex {}'.format(fkey, face_poles[fkey]))
+                    self.repair_notes.append("face {} is a triangle with no point feature at a corner; pole set to vertex {}".format(fkey, face_poles[fkey]))
 
-        mesh.attributes['face_pole'] = face_poles
+        mesh.attributes["face_pole"] = face_poles
 
     def _choose_pole(self, fkey: int) -> int:
         """Choose the corner of a triangle to collapse at: the one whose two edges are closest in length."""
@@ -984,10 +979,11 @@ class SkeletonDecomposition(Skeleton):
                 best = (imbalance, p)
         return best[1] if best else fv[0]
 
+
 # ==============================================================================
 # Main
 # ==============================================================================
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

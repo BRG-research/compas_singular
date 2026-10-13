@@ -2,6 +2,7 @@
 
 Writes are temp-then-rename, claims are renames, and nothing blocks past its deadline.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -15,30 +16,30 @@ import time
 from typing import Any
 
 __all__ = [
-    'SPOOL_ENVVAR',
-    'default_directory',
-    'spool_directory',
-    'new_id',
-    'post',
-    'wait',
-    'pending',
-    'take',
-    'answer',
-    'heartbeat',
-    'clear_link',
-    'link_state',
-    'prune',
+    "SPOOL_ENVVAR",
+    "default_directory",
+    "spool_directory",
+    "new_id",
+    "post",
+    "wait",
+    "pending",
+    "take",
+    "answer",
+    "heartbeat",
+    "clear_link",
+    "link_state",
+    "prune",
 ]
 
 
 #: Overrides the spool location. Unlike the solve cache's variable, an empty
 #: value is NOT meaningful -- there is no "disabled" spool, only a different one.
-SPOOL_ENVVAR = 'COMPAS_SINGULAR_MCP_SPOOL'
+SPOOL_ENVVAR = "COMPAS_SINGULAR_MCP_SPOOL"
 
-REQUEST_SUFFIX = '.req.json'
-TAKEN_SUFFIX = '.req.taken'
-RESPONSE_SUFFIX = '.resp.json'
-LINK_NAME = 'link.json'
+REQUEST_SUFFIX = ".req.json"
+TAKEN_SUFFIX = ".req.taken"
+RESPONSE_SUFFIX = ".resp.json"
+LINK_NAME = "link.json"
 
 #: How long a tool call waits for Rhino before giving up and saying so.
 DEFAULT_TIMEOUT = 30.0
@@ -73,19 +74,19 @@ def default_directory() -> str:
             return override
 
     root = None
-    if sys.platform == 'win32':
-        root = os.environ.get('LOCALAPPDATA')
+    if sys.platform == "win32":
+        root = os.environ.get("LOCALAPPDATA")
     if not root:
-        root = os.environ.get('XDG_RUNTIME_DIR')
+        root = os.environ.get("XDG_RUNTIME_DIR")
     if not root:
-        root = os.environ.get('XDG_CACHE_HOME')
+        root = os.environ.get("XDG_CACHE_HOME")
     if not root:
-        home = os.path.expanduser('~')
-        if home and home != '~':
-            root = os.path.join(home, '.cache')
+        home = os.path.expanduser("~")
+        if home and home != "~":
+            root = os.path.join(home, ".cache")
     if not root:
         root = tempfile.gettempdir()
-    return os.path.join(root, 'compas_singular', 'mcp-spool')
+    return os.path.join(root, "compas_singular", "mcp-spool")
 
 
 def spool_directory(directory: str | None = None) -> str:
@@ -116,13 +117,14 @@ def spool_directory(directory: str | None = None) -> str:
 # reading and writing, atomically
 # ==============================================================================
 
+
 def _write_json(path: str, payload: Any) -> None:
     """Write ``payload`` to ``path`` so no reader can ever see it half-written."""
     folder = os.path.dirname(path)
-    handle, temporary = tempfile.mkstemp(dir=folder, suffix='.tmp')
+    handle, temporary = tempfile.mkstemp(dir=folder, suffix=".tmp")
     try:
-        with os.fdopen(handle, 'w') as stream:
-            json.dump(payload, stream, separators=(',', ':'))
+        with os.fdopen(handle, "w") as stream:
+            json.dump(payload, stream, separators=(",", ":"))
             stream.flush()
             os.fsync(stream.fileno())
         os.replace(temporary, path)
@@ -137,7 +139,7 @@ def _write_json(path: str, payload: Any) -> None:
 def _read_json(path: str) -> Any:
     """``path`` decoded, or ``None`` if it is gone or not yet readable."""
     try:
-        with open(path, 'r') as stream:
+        with open(path, "r") as stream:
             return json.load(stream)
     except (IOError, OSError, ValueError):
         # ValueError covers a file that exists but is not valid JSON, which on a
@@ -158,14 +160,15 @@ def new_id() -> str:
     """
     _COUNTER[0] += 1
     now = time.time()
-    stamp = time.strftime('%Y%m%d%H%M%S', time.localtime(now))
+    stamp = time.strftime("%Y%m%d%H%M%S", time.localtime(now))
     micro = int((now % 1.0) * 1000000)
-    return '{}{:06d}-{:04d}'.format(stamp, micro, _COUNTER[0] % 10000)
+    return "{}{:06d}-{:04d}".format(stamp, micro, _COUNTER[0] % 10000)
 
 
 # ==============================================================================
 # the server side
 # ==============================================================================
+
 
 def post(verb: str, args: dict[str, Any] | None = None, directory: str | None = None, ttl: float | None = None) -> str:
     """Put a request on the spool and return its id.
@@ -189,10 +192,9 @@ def post(verb: str, args: dict[str, Any] | None = None, directory: str | None = 
     folder = spool_directory(directory)
     request_id = new_id()
     now = time.time()
-    payload = {'id': request_id, 'verb': verb, 'args': dict(args or {}),
-               'created': now}
+    payload = {"id": request_id, "verb": verb, "args": dict(args or {}), "created": now}
     if ttl is not None:
-        payload['expires'] = now + max(0.0, float(ttl)) + EXPIRY_GRACE
+        payload["expires"] = now + max(0.0, float(ttl)) + EXPIRY_GRACE
     _write_json(os.path.join(folder, request_id + REQUEST_SUFFIX), payload)
     return request_id
 
@@ -248,20 +250,16 @@ def wait(request_id: str, timeout: float = DEFAULT_TIMEOUT, directory: str | Non
     state = link_state(folder)
     queued = len(pending(folder))
     if state is None:
-        reason = ('Rhino is not listening: no link is attached. Run '
-                  'CMD_mcp_link in Rhino, then try again.')
+        reason = "Rhino is not listening: no link is attached. Run CMD_mcp_link in Rhino, then try again."
     else:
-        reason = ('Rhino is attached but did not answer within {:g}s. It is '
-                  'most likely inside a command -- the link waits for that to '
-                  'finish before touching the document.'.format(timeout))
+        reason = "Rhino is attached but did not answer within {:g}s. It is most likely inside a command -- the link waits for that to finish before touching the document.".format(
+            timeout
+        )
     if in_progress:
-        reason += (' Rhino had ALREADY TAKEN this request, so it could not be '
-                   'withdrawn and may still complete -- check the document '
-                   'before retrying anything that writes to it.')
+        reason += " Rhino had ALREADY TAKEN this request, so it could not be withdrawn and may still complete -- check the document before retrying anything that writes to it."
     else:
-        reason += ' The request was withdrawn; Rhino will not act on it.'
-    return {'ok': False, 'reason': reason, 'timed_out': True,
-            'in_progress': in_progress, 'link': state, 'queued': queued}
+        reason += " The request was withdrawn; Rhino will not act on it."
+    return {"ok": False, "reason": reason, "timed_out": True, "in_progress": in_progress, "link": state, "queued": queued}
 
 
 def _consume(path: str) -> Any:
@@ -287,13 +285,13 @@ def pending(directory: str | None = None) -> list[str]:
         names = os.listdir(folder)
     except OSError:
         return []
-    return sorted(name[:-len(REQUEST_SUFFIX)] for name in names
-                  if name.endswith(REQUEST_SUFFIX))
+    return sorted(name[: -len(REQUEST_SUFFIX)] for name in names if name.endswith(REQUEST_SUFFIX))
 
 
 # ==============================================================================
 # the Rhino side
 # ==============================================================================
+
 
 def take(directory: str | None = None) -> tuple[str, str, dict[str, Any]] | None:
     """Claim the oldest unexpired request by renaming it. ``(request_id, verb, args)`` or ``None``.
@@ -321,7 +319,7 @@ def take(directory: str | None = None) -> tuple[str, str, dict[str, Any]] | None
             except OSError:
                 pass
             continue
-        expires = payload.get('expires')
+        expires = payload.get("expires")
         if expires is not None and now > expires:
             # Nobody is waiting, so an answer would only be litter.
             try:
@@ -329,7 +327,7 @@ def take(directory: str | None = None) -> tuple[str, str, dict[str, Any]] | None
             except OSError:
                 pass
             continue
-        return (request_id, payload.get('verb'), payload.get('args') or {})
+        return (request_id, payload.get("verb"), payload.get("args") or {})
     return None
 
 
@@ -347,11 +345,11 @@ def answer(request_id: str, ok: bool, result: Any = None, error: str | None = No
     directory : str, optional
     """
     folder = spool_directory(directory)
-    payload = {'id': request_id, 'ok': bool(ok), 'completed': time.time()}
+    payload = {"id": request_id, "ok": bool(ok), "completed": time.time()}
     if ok:
-        payload['result'] = result
+        payload["result"] = result
     else:
-        payload['reason'] = error or 'the link refused, without saying why'
+        payload["reason"] = error or "the link refused, without saying why"
     _write_json(os.path.join(folder, request_id + RESPONSE_SUFFIX), payload)
     try:
         os.remove(os.path.join(folder, request_id + TAKEN_SUFFIX))
@@ -381,10 +379,9 @@ def heartbeat(document: str | None = None, directory: str | None = None, force: 
     path = os.path.join(folder, LINK_NAME)
     started = now
     existing = _read_json(path)
-    if existing and existing.get('pid') == os.getpid():
-        started = existing.get('started', now)
-    _write_json(path, {'pid': os.getpid(), 'document': document,
-                       'started': started, 'last_seen': now})
+    if existing and existing.get("pid") == os.getpid():
+        started = existing.get("started", now)
+    _write_json(path, {"pid": os.getpid(), "document": document, "started": started, "last_seen": now})
 
 
 def clear_link(directory: str | None = None) -> None:
@@ -412,15 +409,16 @@ def link_state(directory: str | None = None) -> dict[str, Any] | None:
     state = _read_json(os.path.join(folder, LINK_NAME))
     if not state:
         return None
-    age = max(0.0, time.time() - state.get('last_seen', 0.0))
-    state['age'] = age
-    state['stale'] = age > (HEARTBEAT_SECONDS * 10)
+    age = max(0.0, time.time() - state.get("last_seen", 0.0))
+    state["age"] = age
+    state["stale"] = age > (HEARTBEAT_SECONDS * 10)
     return state
 
 
 # ==============================================================================
 # housekeeping
 # ==============================================================================
+
 
 def prune(max_age: float = DEFAULT_MAX_AGE, directory: str | None = None) -> int:
     """Delete requests, claims and responses older than ``max_age`` seconds.
@@ -441,8 +439,7 @@ def prune(max_age: float = DEFAULT_MAX_AGE, directory: str | None = None) -> int
     cutoff = time.time() - max_age
     removed = 0
     for name in names:
-        if not (name.endswith(REQUEST_SUFFIX) or name.endswith(TAKEN_SUFFIX)
-                or name.endswith(RESPONSE_SUFFIX)):
+        if not (name.endswith(REQUEST_SUFFIX) or name.endswith(TAKEN_SUFFIX) or name.endswith(RESPONSE_SUFFIX)):
             continue
         path = os.path.join(folder, name)
         try:

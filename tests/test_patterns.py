@@ -7,6 +7,7 @@ even, and ``d`` comes from the two strips crossing the patch, so
 is built. Measured on the template before that check existed: 4x2, 6x3 and 8x5
 broke BOTH diagonals, 3x3, 5x5 and 7x7 broke b->d at the centre cell.
 """
+
 import math
 
 import pytest
@@ -25,6 +26,7 @@ from compas_singular.datastructures.mesh_quad_coarse.patterns import reconcile_s
 # ----------------------------------------------------------------------------
 # helpers
 # ----------------------------------------------------------------------------
+
 
 def connected(adjacency, start, end):
     seen, stack = {start}, [start]
@@ -71,12 +73,11 @@ def diagonals_are_whole(coarse, dense, fkey):
             edge_strip[u, v] = edge_strip[v, u] = skey
     sides = coarse._patch_sides(fkey, edge_strip)
     nu, nw = patch_divisions(sides)
-    uw, faces = create_pattern('ortho', nu, nw)
+    uw, faces = create_pattern("ortho", nu, nw)
     points, _ = pattern_morph(uw, faces, sides)
 
     vkey = {TOL.geometric_key(dense.vertex_coordinates(v)): v for v in dense.vertices()}
-    grid = {(i, j): vkey[TOL.geometric_key(points[i * (nw + 1) + j])]
-            for i in range(nu + 1) for j in range(nw + 1)}
+    grid = {(i, j): vkey[TOL.geometric_key(points[i * (nw + 1) + j])] for i in range(nu + 1) for j in range(nw + 1)}
 
     # ``halfedge``, not ``Mesh.has_edge``: that one is ``key in set(edges())``,
     # so it answers False for an edge stored the other way round
@@ -87,8 +88,7 @@ def diagonals_are_whole(coarse, dense, fkey):
                 adjacency.setdefault(p, set()).add(q)
                 adjacency.setdefault(q, set()).add(p)
 
-    return (connected(adjacency, grid[0, 0], grid[nu, nw]),
-            connected(adjacency, grid[nu, 0], grid[0, nw]))
+    return (connected(adjacency, grid[0, 0], grid[nu, nw]), connected(adjacency, grid[nu, 0], grid[0, nw]))
 
 
 def rectangle(t=0.5):
@@ -111,17 +111,14 @@ def square_and_triangle(shared=3, across=4, alone=5):
     coarse, quad, triangle, {name: skey}
     """
     P = [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0], [5, 18, 0]]
-    polylines = [[P[0], P[1]], [P[1], P[2]], [P[2], P[3]], [P[3], P[0]],
-                 [P[2], P[4]], [P[4], P[3]]]
+    polylines = [[P[0], P[1]], [P[1], P[2]], [P[2], P[3]], [P[3], P[0]], [P[2], P[4]], [P[4], P[3]]]
     coarse = CoarsePseudoQuadMesh.from_coarse_polylines(polylines, poles=[P[4]])
 
     quad = next(f for f in coarse.faces() if not coarse.is_face_pseudo_quad(f))
     triangle = next(f for f in coarse.faces() if coarse.is_face_pseudo_quad(f))
     in_quad, in_triangle = set(coarse.face_strips(quad)), set(coarse.face_strips(triangle))
-    strips = {'shared': (in_quad & in_triangle).pop(),
-              'across': (in_quad - in_triangle).pop(),
-              'alone': (in_triangle - in_quad).pop()}
-    for name, d in (('shared', shared), ('across', across), ('alone', alone)):
+    strips = {"shared": (in_quad & in_triangle).pop(), "across": (in_quad - in_triangle).pop(), "alone": (in_triangle - in_quad).pop()}
+    for name, d in (("shared", shared), ("across", across), ("alone", alone)):
         coarse.set_strip_density(strips[name], d)
     return coarse, quad, triangle, strips
 
@@ -134,14 +131,15 @@ def densities(coarse, strips):
 # the template
 # ----------------------------------------------------------------------------
 
-@pytest.mark.parametrize('n', [2, 4, 6, 8, 12])
+
+@pytest.mark.parametrize("n", [2, 4, 6, 8, 12])
 def test_both_diagonals_are_one_straight_chain(n):
-    uw, faces = create_pattern('diagonal', n, n)
+    uw, faces = create_pattern("diagonal", n, n)
     cuts = template_cuts(uw, faces)
     index = {p: i for i, p in enumerate(uw)}
 
-    assert connected(cuts, index[0.0, 0.0], index[1.0, 1.0])   # a -> c
-    assert connected(cuts, index[1.0, 0.0], index[0.0, 1.0])   # b -> d
+    assert connected(cuts, index[0.0, 0.0], index[1.0, 1.0])  # a -> c
+    assert connected(cuts, index[1.0, 0.0], index[0.0, 1.0])  # b -> d
 
     # straight: every cut lies on one of the two patch diagonals
     for a, others in cuts.items():
@@ -152,22 +150,23 @@ def test_both_diagonals_are_one_straight_chain(n):
             assert on_main or on_anti
 
 
-@pytest.mark.parametrize('nu, nw', [(4, 2), (6, 3), (8, 5), (3, 3), (5, 5)])
+@pytest.mark.parametrize("nu, nw", [(4, 2), (6, 3), (8, 5), (3, 3), (5, 5)])
 def test_a_size_that_would_break_a_diagonal_is_refused(nu, nw):
-    with pytest.raises(ValueError, match='reconcile_strip_densities'):
-        create_pattern('diagonal', nu, nw)
+    with pytest.raises(ValueError, match="reconcile_strip_densities"):
+        create_pattern("diagonal", nu, nw)
 
 
 # ----------------------------------------------------------------------------
 # the density check
 # ----------------------------------------------------------------------------
 
+
 def test_every_diagonal_patch_is_square_and_even():
     coarse = rectangle()
     before = dict(coarse.get_strip_densities())
     assert any(len({before[s] for s in coarse.face_strips(f)}) > 1 for f in coarse.faces())
 
-    changed = reconcile_strip_densities(coarse, 'diagonal')
+    changed = reconcile_strip_densities(coarse, "diagonal")
 
     after = coarse.get_strip_densities()
     for fkey in coarse.faces():
@@ -180,35 +179,35 @@ def test_every_diagonal_patch_is_square_and_even():
 
 def test_a_second_pass_changes_nothing():
     coarse = rectangle()
-    reconcile_strip_densities(coarse, 'diagonal')
-    assert reconcile_strip_densities(coarse, 'diagonal') == {}
+    reconcile_strip_densities(coarse, "diagonal")
+    assert reconcile_strip_densities(coarse, "diagonal") == {}
 
 
 def test_ortho_patches_tie_nothing():
     coarse, quad, triangle, strips = square_and_triangle(shared=3, across=4, alone=5)
 
-    reconcile_strip_densities(coarse, {quad: 'diagonal', triangle: 'ortho'})
+    reconcile_strip_densities(coarse, {quad: "diagonal", triangle: "ortho"})
 
     # the square's two strips meet at the larger, already even; the strip that
     # crosses only the ortho triangle keeps its odd density
-    assert densities(coarse, strips) == {'shared': 4, 'across': 4, 'alone': 5}
+    assert densities(coarse, strips) == {"shared": 4, "across": 4, "alone": 5}
 
 
 def test_a_pseudo_quad_ties_its_two_strips_too():
     coarse, _quad, _triangle, strips = square_and_triangle(shared=3, across=4, alone=5)
 
-    reconcile_strip_densities(coarse, 'diagonal')
+    reconcile_strip_densities(coarse, "diagonal")
 
     # the square ties shared-across, the triangle shared-alone: one group,
     # max 5, rounded up
-    assert densities(coarse, strips) == {'shared': 6, 'across': 6, 'alone': 6}
+    assert densities(coarse, strips) == {"shared": 6, "across": 6, "alone": 6}
 
 
 def test_fan_still_takes_one_even_density_everywhere():
     coarse = rectangle()
     top = max(coarse.get_strip_densities().values())
 
-    reconcile_strip_densities(coarse, 'fan')
+    reconcile_strip_densities(coarse, "fan")
 
     assert set(coarse.get_strip_densities().values()) == {top + top % 2}
 
@@ -217,10 +216,11 @@ def test_fan_still_takes_one_even_density_everywhere():
 # end to end
 # ----------------------------------------------------------------------------
 
+
 def test_densified_diagonals_run_corner_to_corner_in_every_patch():
     """Target-length densities in, the Rhino workflow's own path."""
     coarse = rectangle()
-    dense = coarse.quad_mesh(pattern_overwrite='diagonal')
+    dense = coarse.quad_mesh(pattern_overwrite="diagonal")
 
     for fkey in coarse.faces():
         assert diagonals_are_whole(coarse, dense, fkey) == (True, True), fkey
@@ -229,7 +229,7 @@ def test_densified_diagonals_run_corner_to_corner_in_every_patch():
 def test_diagonal_on_a_pseudo_quad_densifies():
     coarse, quad, triangle, _strips = square_and_triangle(shared=3, across=4, alone=5)
 
-    dense = coarse.quad_mesh(pattern_overwrite='diagonal')
+    dense = coarse.quad_mesh(pattern_overwrite="diagonal")
 
     # the cut cells on the collapsed side lose one triangle to the weld and
     # keep the other -- the one carrying the cut -- so nothing degenerate
@@ -262,6 +262,7 @@ def signed_area(points):
 def hausdorff(a, b):
     def one_way(xs, ys):
         return max(min(math.dist(x, y) for y in ys) for x in xs)
+
     return max(one_way(a, b), one_way(b, a))
 
 
@@ -270,25 +271,22 @@ def arc(p, q, bulge, n=24):
     dx, dy = q[0] - p[0], q[1] - p[1]
     length = math.hypot(dx, dy)
     nx, ny = dy / length, -dx / length
-    return [[p[0] + dx * t + nx * bulge * 4 * t * (1 - t), p[1] + dy * t + ny * bulge * 4 * t * (1 - t), 0.0]
-            for t in (i / n for i in range(n + 1))]
+    return [[p[0] + dx * t + nx * bulge * 4 * t * (1 - t), p[1] + dy * t + ny * bulge * 4 * t * (1 - t), 0.0] for t in (i / n for i in range(n + 1))]
 
 
-def triangle(pole, d, pattern='fan', bulge=None):
+def triangle(pole, d, pattern="fan", bulge=None):
     """One triangular patch on the equilateral triangle, the pole on corner ``pole``.
 
     Returns the dense mesh. ``bulge`` bows all three sides alike, so the input
     keeps the triangle's threefold symmetry.
     """
     if bulge is None:
-        coarse = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(
-            EQUILATERAL, [[0, 1, 2]], [EQUILATERAL[pole]])
+        coarse = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(EQUILATERAL, [[0, 1, 2]], [EQUILATERAL[pole]])
         coarse.collect_strips()
         curves = None
     else:
         a, b, c = EQUILATERAL
-        coarse = CoarsePseudoQuadMesh.from_coarse_polylines(
-            [arc(a, b, bulge), arc(b, c, bulge), arc(c, a, bulge)], poles=[EQUILATERAL[pole]])
+        coarse = CoarsePseudoQuadMesh.from_coarse_polylines([arc(a, b, bulge), arc(b, c, bulge), arc(c, a, bulge)], poles=[EQUILATERAL[pole]])
         curves = coarse.edges_to_curves()
     coarse.set_strips_density(d)
     coarse.set_global_face_pattern(pattern)
@@ -301,16 +299,16 @@ def vertex_at(mesh, xyz):
 
 def assert_well_formed(dense):
     areas = [signed_area(dense.face_coordinates(f)) for f in dense.faces()]
-    assert all(abs(a) > 1e-9 for a in areas), 'a zero-area face'
-    assert all(a > 0 for a in areas) or all(a < 0 for a in areas), 'faces wound both ways'
+    assert all(abs(a) > 1e-9 for a in areas), "a zero-area face"
+    assert all(a > 0 for a in areas) or all(a < 0 for a in areas), "faces wound both ways"
     assert dense.is_manifold()
     assert len(dense.vertices_on_boundaries()) == 1
     return sum(abs(a) for a in areas)
 
 
-@pytest.mark.parametrize('n', [2, 4, 6, 8])
+@pytest.mark.parametrize("n", [2, 4, 6, 8])
 def test_triangular_fan_template_is_three_corner_fans(n):
-    lam, faces = create_pattern('fan_triangle', n, n)
+    lam, faces = create_pattern("fan_triangle", n, n)
 
     # three corners, each rays x rings = n x n/2 cells
     assert len(faces) == 3 * n * n // 2
@@ -320,22 +318,22 @@ def test_triangular_fan_template_is_three_corner_fans(n):
         assert on_side == {round(k / n, 12) for k in range(n + 1)}
 
 
-@pytest.mark.parametrize('n', [2, 4, 6, 8])
+@pytest.mark.parametrize("n", [2, 4, 6, 8])
 def test_triangular_fan_template_is_the_same_at_every_corner(n):
-    lam, _faces = create_pattern('fan_triangle', n, n)
+    lam, _faces = create_pattern("fan_triangle", n, n)
 
     points = {tuple(round(x, 12) for x in p) for p in lam}
     assert {(p[2], p[0], p[1]) for p in points} == points
 
 
-@pytest.mark.parametrize('nu, nw', [(4, 2), (3, 3), (5, 5)])
+@pytest.mark.parametrize("nu, nw", [(4, 2), (3, 3), (5, 5)])
 def test_a_size_that_would_break_the_triangular_fan_is_refused(nu, nw):
-    with pytest.raises(ValueError, match='reconcile_strip_densities'):
-        create_pattern('fan_triangle', nu, nw)
+    with pytest.raises(ValueError, match="reconcile_strip_densities"):
+        create_pattern("fan_triangle", nu, nw)
 
 
-@pytest.mark.parametrize('bulge', [None, 0.3, -0.2])
-@pytest.mark.parametrize('d', [4, 6, 8])
+@pytest.mark.parametrize("bulge", [None, 0.3, -0.2])
+@pytest.mark.parametrize("d", [4, 6, 8])
 def test_every_corner_of_a_triangular_fan_is_the_same(d, bulge):
     """The pole is a corner like the other two -- straight sides or curved.
 
@@ -348,8 +346,7 @@ def test_every_corner_of_a_triangular_fan_is_the_same(d, bulge):
 
     cx, cy = 1.0, S3 / 3.0
     turn = 2.0 * math.pi / 3.0
-    turned = [[cx + (x - cx) * math.cos(turn) - (y - cy) * math.sin(turn),
-               cy + (x - cx) * math.sin(turn) + (y - cy) * math.cos(turn), z] for x, y, z in points[0]]
+    turned = [[cx + (x - cx) * math.cos(turn) - (y - cy) * math.sin(turn), cy + (x - cx) * math.sin(turn) + (y - cy) * math.cos(turn), z] for x, y, z in points[0]]
 
     assert hausdorff(turned, points[0]) < 1e-9
     assert hausdorff(points[0], points[1]) < 1e-9
@@ -358,19 +355,19 @@ def test_every_corner_of_a_triangular_fan_is_the_same(d, bulge):
         assert meshes[0].vertex_degree(vertex_at(meshes[0], corner)) == d + 1
 
 
-@pytest.mark.parametrize('d', [2, 4, 6, 8, 10])
-@pytest.mark.parametrize('pole', [0, 1, 2])
+@pytest.mark.parametrize("d", [2, 4, 6, 8, 10])
+@pytest.mark.parametrize("pole", [0, 1, 2])
 def test_a_triangular_fan_is_well_formed(pole, d):
     dense = triangle(pole, d)
     area = assert_well_formed(dense)
 
-    assert dense.number_of_faces() == 3 * d * d // 2          # not an ortho fallback
-    assert abs(area - assert_well_formed(triangle(pole, d, 'ortho'))) < 1e-9
+    assert dense.number_of_faces() == 3 * d * d // 2  # not an ortho fallback
+    assert abs(area - assert_well_formed(triangle(pole, d, "ortho"))) < 1e-9
 
 
-@pytest.mark.parametrize('pattern', ['ortho', 'fan'])
-@pytest.mark.parametrize('d', [2, 4, 6, 8, 10])
-@pytest.mark.parametrize('pole', [0, 1, 2])
+@pytest.mark.parametrize("pattern", ["ortho", "fan"])
+@pytest.mark.parametrize("d", [2, 4, 6, 8, 10])
+@pytest.mark.parametrize("pole", [0, 1, 2])
 def test_every_pole_face_is_registered(pole, d, pattern):
     """Pole faces were matched across the weld by their centre, rounded.
 
@@ -382,7 +379,7 @@ def test_every_pole_face_is_registered(pole, d, pattern):
 
     at_pole = {f for f in dense.vertex_faces(pole_key) if len(dense.face_vertices(f)) == 3}
     assert len(at_pole) == d
-    assert dense.attributes['face_pole'] == {f: pole_key for f in at_pole}
+    assert dense.attributes["face_pole"] == {f: pole_key for f in at_pole}
 
 
 def test_the_spokes_of_a_straight_triangular_fan_are_straight():
@@ -396,22 +393,20 @@ def test_the_spokes_of_a_straight_triangular_fan_are_straight():
         return sum(1 for x in points if abs(math.dist(p, x) + math.dist(x, q) - math.dist(p, q)) < 1e-9)
 
     # a corner's middle ray, and a seam between two corners: rings + 1 each
-    for start in (a, b, c, [(a[i] + b[i]) / 2 for i in range(3)],
-                  [(b[i] + c[i]) / 2 for i in range(3)], [(c[i] + a[i]) / 2 for i in range(3)]):
+    for start in (a, b, c, [(a[i] + b[i]) / 2 for i in range(3)], [(b[i] + c[i]) / 2 for i in range(3)], [(c[i] + a[i]) / 2 for i in range(3)]):
         assert on_segment(start, centre) == d // 2 + 1
 
 
-@pytest.mark.parametrize('pole', ['apex', 'shared'])
-@pytest.mark.parametrize('quad_pattern', ['ortho', 'diagonal', 'fan'])
+@pytest.mark.parametrize("pole", ["apex", "shared"])
+@pytest.mark.parametrize("quad_pattern", ["ortho", "diagonal", "fan"])
 def test_a_triangular_fan_welds_to_any_neighbour(quad_pattern, pole):
     """A square under a triangle, the edge between them curved."""
     P = [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0], [5, 18, 0]]
-    polylines = [[P[0], P[1]], [P[1], P[2]], arc(P[2], P[3], -1.0), [P[3], P[0]],
-                 arc(P[2], P[4], -1.5), arc(P[4], P[3], -1.5)]
-    coarse = CoarsePseudoQuadMesh.from_coarse_polylines(polylines, poles=[P[4] if pole == 'apex' else P[2]])
+    polylines = [[P[0], P[1]], [P[1], P[2]], arc(P[2], P[3], -1.0), [P[3], P[0]], arc(P[2], P[4], -1.5), arc(P[4], P[3], -1.5)]
+    coarse = CoarsePseudoQuadMesh.from_coarse_polylines(polylines, poles=[P[4] if pole == "apex" else P[2]])
     quad = next(f for f in coarse.faces() if not coarse.is_face_pseudo_quad(f))
     coarse.set_strips_density(4)
-    coarse.set_global_face_pattern('fan')
+    coarse.set_global_face_pattern("fan")
     coarse.set_face_pattern(quad, quad_pattern)
 
     dense = coarse.densify(overwrite_edges_to_curves=coarse.edges_to_curves())
@@ -436,11 +431,11 @@ def test_a_full_pole_of_triangular_fans():
     coarse = CoarsePseudoQuadMesh.from_vertices_and_faces_with_poles(vertices, faces, [vertices[4]])
     coarse.collect_strips()
     coarse.set_strips_density(d)
-    coarse.set_global_face_pattern('fan')
+    coarse.set_global_face_pattern("fan")
 
     dense = coarse.densify()
 
     assert_well_formed(dense)
     pole = vertex_at(dense, vertices[4])
     assert dense.vertex_degree(pole) == 4 * d
-    assert sorted(dense.attributes['face_pole']) == sorted(dense.vertex_faces(pole))
+    assert sorted(dense.attributes["face_pole"]) == sorted(dense.vertex_faces(pole))

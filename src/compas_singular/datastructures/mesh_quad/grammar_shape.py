@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    'add_opening',
-    'add_handle',
+    "add_opening",
+    "add_handle",
     # 'close_opening',
     # 'close_handle'
 ]
@@ -38,12 +38,12 @@ def add_opening(mesh: Mesh, fkey: int) -> list[int]:
     """
 
     initial_vertices = mesh.face_vertices(fkey)
-    new_vertices = [mesh.add_vertex(attr_dict={i: xyz for i, xyz in zip(['x', 'y', 'z'], centroid_points(
-        [mesh.face_centroid(fkey), mesh.vertex_coordinates(vkey)]))}) for vkey in initial_vertices]
+    new_vertices = [
+        mesh.add_vertex(attr_dict={i: xyz for i, xyz in zip(["x", "y", "z"], centroid_points([mesh.face_centroid(fkey), mesh.vertex_coordinates(vkey)]))})
+        for vkey in initial_vertices
+    ]
     mesh.delete_face(fkey)
-    _ = [
-        mesh.add_face([initial_vertices[i - 1], initial_vertices[i], new_vertices[i], new_vertices[i - 1]])
-        for i in range(len(initial_vertices))]
+    _ = [mesh.add_face([initial_vertices[i - 1], initial_vertices[i], new_vertices[i], new_vertices[i - 1]]) for i in range(len(initial_vertices))]
     return new_vertices
 
 
@@ -70,12 +70,14 @@ def add_handle(mesh: QuadMesh, fkey_1: int, fkey_2: int) -> list[int]:
     new_vertices_2 = add_opening(mesh, fkey_2)
 
     # get offset between new openings as to minimise the twist of the handle
-    offset_distance = {k: sum([distance_point_point(mesh.vertex_coordinates(new_vertices_1[(i - 1) % 4]),
-                                                    mesh.vertex_coordinates(new_vertices_2[(- i - k) % 4])) for i in range(4)]) for k in range(4)}
+    offset_distance = {
+        k: sum([distance_point_point(mesh.vertex_coordinates(new_vertices_1[(i - 1) % 4]), mesh.vertex_coordinates(new_vertices_2[(-i - k) % 4])) for i in range(4)])
+        for k in range(4)
+    }
     k = min(offset_distance, key=offset_distance.get)
 
     # add handle
-    return [mesh.add_face([new_vertices_1[(i - 1) % 4], new_vertices_1[i], new_vertices_2[(- i - 1 - k) % 4], new_vertices_2[(- i - k) % 4]]) for i in range(4)]
+    return [mesh.add_face([new_vertices_1[(i - 1) % 4], new_vertices_1[i], new_vertices_2[(-i - 1 - k) % 4], new_vertices_2[(-i - k) % 4]]) for i in range(4)]
 
 
 # def close_opening(mesh, polyedge):
@@ -159,5 +161,5 @@ def add_handle(mesh: QuadMesh, fkey_1: int, fkey_2: int) -> list[int]:
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

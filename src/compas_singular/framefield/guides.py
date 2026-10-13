@@ -2,6 +2,7 @@
 
 Compare with a no-guide control.
 """
+
 from __future__ import annotations
 
 from math import acos
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import Mesh
 
 
-__all__ = ['guide_metrics', 'format_guide_metrics']
+__all__ = ["guide_metrics", "format_guide_metrics"]
 
 #: A guide station is "tilted" past this many degrees off horizontal. See the
 #: design_notes/framefield.md (guides.py) on why this is a proxy and the control is the real defence.
@@ -45,7 +46,7 @@ def _nearest_on_polyline(
 ) -> tuple[float, tuple[float, float] | None]:
     """``(distance, unit tangent)`` of the closest point of a polyline, or ``(inf, None)``."""
     index, _t, _q, distance = closest_on_polyline(point, polyline)
-    if distance == float('inf'):
+    if distance == float("inf"):
         return distance, None
     a, b = polyline[index], polyline[index + 1]
     abx, aby = b[0] - a[0], b[1] - a[1]
@@ -72,7 +73,7 @@ def _families(points: list[list[float]]) -> list[tuple[float, float]] | None:
             return None
         ux, uy = vectors[0]
         for vx, vy in vectors[1:]:
-            if ux * vx + uy * vy < 0.0:      # opposite sense round the face
+            if ux * vx + uy * vy < 0.0:  # opposite sense round the face
                 vx, vy = -vx, -vy
             ux, uy = ux + vx, uy + vy
         length = (ux * ux + uy * uy) ** 0.5
@@ -113,9 +114,7 @@ def guide_metrics(mesh: Mesh, guides: list[list[Any]], steep: float = STEEP) -> 
 
         ``poles`` -- pseudo-quad faces skipped, having no two families to compare.
     """
-    empty = {'faces': 0, 'along': None, 'across': None, 'across_within': None,
-             'across_tilted': None, 'off_centre': None, 'off_centre_worst': None,
-             'poles': 0}
+    empty = {"faces": 0, "along": None, "across": None, "across_within": None, "across_tilted": None, "off_centre": None, "off_centre_worst": None, "poles": 0}
     if not guides:
         return empty
 
@@ -136,14 +135,12 @@ def guide_metrics(mesh: Mesh, guides: list[list[Any]], steep: float = STEEP) -> 
             if tangent is None:
                 continue
             # only the faces the guide actually passes through
-            if distance >= max(((centre[0] - p[0]) ** 2 + (centre[1] - p[1]) ** 2) ** 0.5
-                               for p in corners):
+            if distance >= max(((centre[0] - p[0]) ** 2 + (centre[1] - p[1]) ** 2) ** 0.5 for p in corners):
                 continue
 
             # off-centre: the guide's offset in units of half the face width across it
             normal = (-tangent[1], tangent[0])
-            projections = [(p[0] - centre[0]) * normal[0] + (p[1] - centre[1]) * normal[1]
-                           for p in corners]
+            projections = [(p[0] - centre[0]) * normal[0] + (p[1] - centre[1]) * normal[1] for p in corners]
             half = (max(projections) - min(projections)) / 2.0
             if half > 1e-9:
                 ratios.append(distance / half)
@@ -164,33 +161,30 @@ def guide_metrics(mesh: Mesh, guides: list[list[Any]], steep: float = STEEP) -> 
     angles = [a for _, a in across]
     tilted = [a for t, a in across if t >= steep]
     return {
-        'faces': len(along),
-        'along': _median(along),
-        'across': _median(angles),
-        'across_within': (100.0 * sum(1 for a in angles if a >= 90.0 - ACROSS_TOLERANCE)
-                          / len(angles)) if angles else None,
-        'across_tilted': _median(tilted),
-        'off_centre': _median(ratios),
-        'off_centre_worst': max(ratios) if ratios else None,
-        'poles': poles,
+        "faces": len(along),
+        "along": _median(along),
+        "across": _median(angles),
+        "across_within": (100.0 * sum(1 for a in angles if a >= 90.0 - ACROSS_TOLERANCE) / len(angles)) if angles else None,
+        "across_tilted": _median(tilted),
+        "off_centre": _median(ratios),
+        "off_centre_worst": max(ratios) if ratios else None,
+        "poles": poles,
     }
 
 
 def format_guide_metrics(metrics: dict[str, Any]) -> str:
     """One line of the numbers from ``guide_metrics``, for a harness to print."""
-    if not metrics['faces']:
-        return 'guide unseen (0 faces{})'.format(
-            ', {} poles'.format(metrics['poles']) if metrics['poles'] else '')
+    if not metrics["faces"]:
+        return "guide unseen (0 faces{})".format(", {} poles".format(metrics["poles"]) if metrics["poles"] else "")
 
-    def num(value: float | None, fmt: str = '{:5.1f}') -> str:
-        return '  -- ' if value is None else fmt.format(value)
+    def num(value: float | None, fmt: str = "{:5.1f}") -> str:
+        return "  -- " if value is None else fmt.format(value)
 
-    out = 'faces {:3d} | along {} deg | across {} deg, {}% within {:.0f}'.format(
-        metrics['faces'], num(metrics['along']), num(metrics['across']),
-        num(metrics['across_within'], '{:3.0f}'), ACROSS_TOLERANCE)
-    out += ' | tilted {} deg'.format(num(metrics['across_tilted']))
-    out += ' | off-centre {} med, {} worst'.format(
-        num(metrics['off_centre'], '{:4.2f}'), num(metrics['off_centre_worst'], '{:4.2f}'))
-    if metrics['poles']:
-        out += ' | {} poles skipped'.format(metrics['poles'])
+    out = "faces {:3d} | along {} deg | across {} deg, {}% within {:.0f}".format(
+        metrics["faces"], num(metrics["along"]), num(metrics["across"]), num(metrics["across_within"], "{:3.0f}"), ACROSS_TOLERANCE
+    )
+    out += " | tilted {} deg".format(num(metrics["across_tilted"]))
+    out += " | off-centre {} med, {} worst".format(num(metrics["off_centre"], "{:4.2f}"), num(metrics["off_centre_worst"], "{:4.2f}"))
+    if metrics["poles"]:
+        out += " | {} poles skipped".format(metrics["poles"])
     return out

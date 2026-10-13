@@ -1,4 +1,5 @@
 """The MCP library: guidance, prompts, thresholds and the example corpus."""
+
 import json
 import os
 
@@ -6,14 +7,18 @@ import pytest
 
 from compas_singular.mcp import library
 
-RECORD = {"name": "disc", "title": "A disc", "verdict": "good",
-          "instruction": "improve it", "lesson": "relax was enough",
-          "before": {"min_angle": 12.0, "max_angle": 170.0, "aspect_max": 9.0},
-          "after": {"min_angle": 44.0, "max_angle": 130.0, "aspect_max": 2.0},
-          "fingerprint": {"loops": 2, "faces_band": "small",
-                          "dominant": "min_angle", "severity": "unusable"},
-          "steps": [{"action": "relax", "arguments": {"seams": "free"}}],
-          "remarks": ["the hole drove everything"]}
+RECORD = {
+    "name": "disc",
+    "title": "A disc",
+    "verdict": "good",
+    "instruction": "improve it",
+    "lesson": "relax was enough",
+    "before": {"min_angle": 12.0, "max_angle": 170.0, "aspect_max": 9.0},
+    "after": {"min_angle": 44.0, "max_angle": 130.0, "aspect_max": 2.0},
+    "fingerprint": {"loops": 2, "faces_band": "small", "dominant": "min_angle", "severity": "unusable"},
+    "steps": [{"action": "relax", "arguments": {"seams": "free"}}],
+    "remarks": ["the hole drove everything"],
+}
 
 
 def test_the_shipped_library_loads(monkeypatch):
@@ -48,8 +53,8 @@ def test_thresholds_merge_per_metric(mcp_library):
         json.dump({"min_angle": {"good": 60.0}}, stream)
     merged = library.thresholds()
     assert merged["min_angle"]["good"] == 60.0
-    assert merged["min_angle"]["usable"] == 25.0      # the rest of that metric's bands
-    assert merged["aspect_max"]["good"] == 2.0        # and the other metrics
+    assert merged["min_angle"]["usable"] == 25.0  # the rest of that metric's bands
+    assert merged["aspect_max"]["good"] == 2.0  # and the other metrics
 
 
 def test_a_malformed_thresholds_file_falls_back(mcp_library):
@@ -58,8 +63,7 @@ def test_a_malformed_thresholds_file_falls_back(mcp_library):
     assert library.thresholds()["min_angle"]["good"] == 45.0
 
 
-@pytest.mark.parametrize("uri", ["guidance://../../../secrets", "guidance://.hidden",
-                                 "guidance://sub/dir", "evil://x"])
+@pytest.mark.parametrize("uri", ["guidance://../../../secrets", "guidance://.hidden", "guidance://sub/dir", "evil://x"])
 def test_a_resource_name_cannot_escape_the_folder(uri):
     assert library.read_resource(uri) is None
 
@@ -84,9 +88,7 @@ def test_examples_save_render_and_list(mcp_library):
 def test_recall_ranks_by_the_shape_of_the_problem(mcp_library):
     library.save_example(RECORD)
     library.save_example(dict(RECORD, name="near", fingerprint=dict(RECORD["fingerprint"])))
-    library.save_example(dict(RECORD, name="far",
-                              fingerprint={"loops": 9, "faces_band": "large",
-                                           "dominant": "aspect_max", "severity": "good"}))
+    library.save_example(dict(RECORD, name="far", fingerprint={"loops": 9, "faces_band": "large", "dominant": "aspect_max", "severity": "good"}))
     ranked = library.recall(RECORD["fingerprint"], limit=5)
     assert ranked[0]["fingerprint"] == RECORD["fingerprint"]
     assert ranked[0]["score"] > ranked[-1]["score"]

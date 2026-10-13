@@ -15,11 +15,7 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import QuadMesh
 
 
-__all__ = [
-    'interpolation_layout_two_meshes',
-    'interpolation_layout_primary',
-    'interpolation_layout_secondary'
-]
+__all__ = ["interpolation_layout_two_meshes", "interpolation_layout_primary", "interpolation_layout_secondary"]
 
 
 def interpolation_layout_two_meshes(interpolated_meshes: dict[QuadMesh, tuple[float, float]], dx: float, dy: float) -> None:
@@ -34,7 +30,7 @@ def interpolation_layout_two_meshes(interpolated_meshes: dict[QuadMesh, tuple[fl
     for d, meshes in position_to_meshes.items():
         for j, mesh in enumerate(meshes):
             centre = mesh.centroid() if mesh.area() != 0 else mesh.vertex_centroid()
-            mesh_move_by(mesh, subtract_vectors([d * dx, - j * dy, 0.0], centre))
+            mesh_move_by(mesh, subtract_vectors([d * dx, -j * dy, 0.0], centre))
 
 
 def interpolation_layout_primary(meshes: list[QuadMesh], interpolated_meshes: dict[QuadMesh, list[float]], radius: float) -> None:
@@ -82,6 +78,5 @@ def interpolation_layout_secondary(interpolated_meshes: dict[QuadMesh, list[floa
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     pass

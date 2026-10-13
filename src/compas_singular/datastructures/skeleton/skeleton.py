@@ -71,7 +71,7 @@ class Skeleton(Mesh):
 
         """
         skeleton = cls.from_vertices_and_faces(*mesh.to_vertices_and_faces())
-        skeleton.feature_edges = frozenset(mesh.attributes.get('feature_edges') or ())
+        skeleton.feature_edges = frozenset(mesh.attributes.get("feature_edges") or ())
         return skeleton
 
     def singular_faces(self) -> list[int]:
@@ -94,9 +94,7 @@ class Skeleton(Mesh):
             List of point XYZ-coordinates.
 
         """
-        return [
-            trimesh_face_circle(self, fkey)[0] for fkey in self.singular_faces()
-        ]
+        return [trimesh_face_circle(self, fkey)[0] for fkey in self.singular_faces()]
 
     def lines(self) -> list[tuple[list[float], list[float]]]:
         """Get the lines forming the topological skeleton, i.e. the lines connecting the circumcentres of adjacent faces.
@@ -111,9 +109,7 @@ class Skeleton(Mesh):
             (trimesh_face_circle(self, fkey)[0], trimesh_face_circle(self, nbr)[0])
             for fkey in self.faces()
             for nbr in self.real_neighbors(fkey)
-            if fkey < nbr
-            and TOL.geometric_key(trimesh_face_circle(self, fkey)[0])
-            != TOL.geometric_key(trimesh_face_circle(self, nbr)[0])
+            if fkey < nbr and TOL.geometric_key(trimesh_face_circle(self, fkey)[0]) != TOL.geometric_key(trimesh_face_circle(self, nbr)[0])
         ]
 
     def branches(self) -> list[list[list[float]]]:

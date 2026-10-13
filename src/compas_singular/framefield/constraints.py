@@ -1,4 +1,5 @@
 """Directional constraints on the field, pinning ``exp(4i theta)`` at background vertices."""
+
 from __future__ import annotations
 
 from cmath import exp as cexp
@@ -20,8 +21,7 @@ if TYPE_CHECKING:
     from compas_singular.framefield.background import BackgroundMesh
 
 
-__all__ = ['Constraint', 'PERIOD', 'as_curve_list', 'from_boundary', 'from_curves',
-           'representation']
+__all__ = ["Constraint", "PERIOD", "as_curve_list", "from_boundary", "from_curves", "representation"]
 
 
 #: A cross's period: the angle it can be rotated by without changing.
@@ -29,9 +29,9 @@ PERIOD = pi / 2.0
 
 #: ``weight`` of ``None`` means hard (eliminated from the solve); a float means a
 #: least-squares penalty, so several constraints can disagree gracefully.
-Constraint = namedtuple('Constraint', 'vkey direction weight')
+Constraint = namedtuple("Constraint", "vkey direction weight")
 
-MODES = ('perpendicular', 'tangent')
+MODES = ("perpendicular", "tangent")
 
 
 def representation(direction: list[float]) -> complex:
@@ -81,7 +81,7 @@ def from_boundary(
 def from_curves(
     background: BackgroundMesh,
     curves: Any,
-    mode: str = 'perpendicular',
+    mode: str = "perpendicular",
     band: float | None = None,
     weight: float | None = 1.0,
     skip_boundary: bool = True,
@@ -134,12 +134,12 @@ def from_curves(
                 continue
             p = mesh.vertex_coordinates(vkey)
             if not (lo_x <= p[0] <= hi_x and lo_y <= p[1] <= hi_y):
-                continue            # further than ``band`` from the whole curve
+                continue  # further than ``band`` from the whole curve
             i, _t, _q, d = closest_on_polyline(p, pts)
             if d > radius:
                 continue
             tangent = normalize_vector(subtract_vectors(pts[i + 1], pts[i]))
-            direction = [-tangent[1], tangent[0], 0.0] if mode == 'perpendicular' else tangent
+            direction = [-tangent[1], tangent[0], 0.0] if mode == "perpendicular" else tangent
             out.append(Constraint(vkey, direction, weight))
     return _merge_hard(out) if weight is None else out
 

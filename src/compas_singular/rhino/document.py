@@ -2,6 +2,7 @@
 
 Changed via ``ModifyAttributes`` so Rhino's undo restores it; redo not yet verified in Rhino.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -17,15 +18,14 @@ except ImportError:
     Rhino = None
 
 
-__all__ = ['ANCHOR_NAME', 'ANCHOR_LAYER', 'read_revision', 'read_snapshot', 'write_snapshot',
-           'pack', 'unpack']
+__all__ = ["ANCHOR_NAME", "ANCHOR_LAYER", "read_revision", "read_snapshot", "write_snapshot", "pack", "unpack"]
 
 
-ANCHOR_NAME = 'compas_singular.session'
-ANCHOR_LAYER = 'TopologyProblem::Session'
+ANCHOR_NAME = "compas_singular.session"
+ANCHOR_LAYER = "TopologyProblem::Session"
 
-_REVISION = 'revision'
-_SNAPSHOT = 'snapshot'
+_REVISION = "revision"
+_SNAPSHOT = "snapshot"
 
 
 def read_revision(doc: Any) -> str | None:
@@ -50,17 +50,18 @@ def write_snapshot(doc: Any, revision: Any, text: str) -> None:
 
 def pack(text: str) -> str:
     """``text`` compressed into a plain ASCII string."""
-    return base64.b64encode(zlib.compress(text.encode('utf-8'), 6)).decode('ascii')
+    return base64.b64encode(zlib.compress(text.encode("utf-8"), 6)).decode("ascii")
 
 
 def unpack(packed: str) -> str:
     """The inverse of ``pack``."""
-    return zlib.decompress(base64.b64decode(packed)).decode('utf-8')
+    return zlib.decompress(base64.b64decode(packed)).decode("utf-8")
 
 
 # ------------------------------------------------------------------------------
 # the anchor
 # ------------------------------------------------------------------------------
+
 
 def _read(doc: Any, key: str) -> str | None:
     anchor = _anchor(doc)
@@ -90,7 +91,7 @@ def _add_anchor(doc: Any) -> Any:
     attributes.Name = ANCHOR_NAME
     attributes.LayerIndex = _session_layer(doc)
     attributes.Visible = False
-    dot = Rhino.Geometry.TextDot('compas_singular session', Rhino.Geometry.Point3d.Origin)
+    dot = Rhino.Geometry.TextDot("compas_singular session", Rhino.Geometry.Point3d.Origin)
     guid = doc.Objects.AddTextDot(dot, attributes)
     return doc.Objects.FindId(guid)
 
@@ -101,9 +102,9 @@ def _session_layer(doc: Any) -> int:
     if index < 0:
         parent_id = None
         path = []
-        for name in ANCHOR_LAYER.split('::'):
+        for name in ANCHOR_LAYER.split("::"):
             path.append(name)
-            index = doc.Layers.FindByFullPath('::'.join(path), -1)
+            index = doc.Layers.FindByFullPath("::".join(path), -1)
             if index < 0:
                 layer = Rhino.DocObjects.Layer()
                 layer.Name = name

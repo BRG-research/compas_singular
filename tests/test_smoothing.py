@@ -2,6 +2,7 @@
 
 No Rhino: every projection goes through :mod:`compas.geometry`.
 """
+
 import random
 import warnings
 from math import pi
@@ -46,8 +47,7 @@ def _perturbed_grid(nx=8, amplitude=0.35, seed=0):
         if mesh.is_vertex_on_boundary(vertex):
             continue
         x, y, z = mesh.vertex_coordinates(vertex)
-        mesh.vertex_attributes(vertex, 'xyz', [x + rng.uniform(-amplitude, amplitude),
-                                               y + rng.uniform(-amplitude, amplitude), z])
+        mesh.vertex_attributes(vertex, "xyz", [x + rng.uniform(-amplitude, amplitude), y + rng.uniform(-amplitude, amplitude), z])
     return mesh
 
 
@@ -65,6 +65,7 @@ def _grid_with_hole(nx=8):
 # ==============================================================================
 # Closest point
 # ==============================================================================
+
 
 def test_closest_point_on_constraint_dispatch():
     polyline = Polyline([[0, 0, 0], [10, 0, 0], [10, 10, 0]])
@@ -125,24 +126,25 @@ def test_closest_point_on_constraint_explains_the_fallback_once():
         on_line = closest_point_on_constraint(curve, [5, 3, 0])
     assert distance_point_point(on_line, [5, 0, 0]) < 1e-9
     message = str(record[0].message)
-    assert '_UnimplementedLine does not implement closest_point' in message
-    assert '128-segment polyline' in message
+    assert "_UnimplementedLine does not implement closest_point" in message
+    assert "128-segment polyline" in message
 
     # a smoothing run projects every vertex at every iteration: said once, not every time
     with warnings.catch_warnings():
-        warnings.simplefilter('error')
+        warnings.simplefilter("error")
         closest_point_on_constraint(curve, [7, -1, 0])
         closest_point_on_constraint(_UnimplementedLine(), [2, 4, 0])
 
 
 def test_closest_point_on_constraint_rejects_unsupported():
     with pytest.raises(TypeError):
-        closest_point_on_constraint('not geometry', [0, 0, 0])
+        closest_point_on_constraint("not geometry", [0, 0, 0])
 
 
 # ==============================================================================
 # Boundary
 # ==============================================================================
+
 
 def test_mesh_boundary_loops_are_not_repeating():
     mesh = Mesh.from_meshgrid(dx=SIDE, nx=8)
@@ -171,11 +173,12 @@ def test_mesh_boundary_corners_finds_the_square_corners():
 # Smoothing
 # ==============================================================================
 
+
 def test_boundary_constrained_smoothing_keeps_the_outline_and_the_corners():
     mesh = _perturbed_grid()
     corners_before = {vertex: mesh.vertex_coordinates(vertex) for vertex in mesh_boundary_corners(mesh)}
 
-    constraints = boundary_constrained_smoothing(mesh, kmax=50, damping=0.5, algorithm='area')
+    constraints = boundary_constrained_smoothing(mesh, kmax=50, damping=0.5, algorithm="area")
 
     # every boundary vertex is constrained, and the corners are pinned to a point
     assert set(constraints) == set(mesh.vertices_on_boundary())
@@ -197,11 +200,14 @@ def test_boundary_constrained_smoothing_lets_the_boundary_slide():
     fixed.smooth_area(fixed=list(fixed.vertices_on_boundary()), kmax=50, damping=0.5)
 
     constrained = start.copy()
-    boundary_constrained_smoothing(constrained, kmax=50, damping=0.5, algorithm='area')
+    boundary_constrained_smoothing(constrained, kmax=50, damping=0.5, algorithm="area")
 
     def slide(mesh):
-        return max(distance_point_point(mesh.vertex_coordinates(vertex), start.vertex_coordinates(vertex))
-                   for vertex in mesh.vertices_on_boundary() if vertex not in mesh_boundary_corners(mesh))
+        return max(
+            distance_point_point(mesh.vertex_coordinates(vertex), start.vertex_coordinates(vertex))
+            for vertex in mesh.vertices_on_boundary()
+            if vertex not in mesh_boundary_corners(mesh)
+        )
 
     assert slide(fixed) < 1e-9
     assert slide(constrained) > 1e-3
@@ -235,11 +241,10 @@ def test_boundary_constrained_smoothing_holds_every_boundary_of_a_mesh_with_a_ho
     The automated constraints go through every boundary loop instead.
     """
     mesh = _grid_with_hole()
-    before = {vertex: mesh.vertex_coordinates(vertex)
-              for loop in mesh_boundary_loops(mesh) for vertex in loop}
+    before = {vertex: mesh.vertex_coordinates(vertex) for loop in mesh_boundary_loops(mesh) for vertex in loop}
     hole = mesh_boundary_polylines(mesh)[1]  # the hole as it is BEFORE smoothing
 
-    boundary_constrained_smoothing(mesh, kmax=50, damping=0.5, algorithm='area')
+    boundary_constrained_smoothing(mesh, kmax=50, damping=0.5, algorithm="area")
 
     for vertex, xyz in before.items():
         moved = mesh.vertex_coordinates(vertex)
@@ -251,8 +256,9 @@ def test_boundary_constrained_smoothing_holds_every_boundary_of_a_mesh_with_a_ho
     # and the free version really does lose the hole, which is what this guards against
     loose = _grid_with_hole()
     loose.smooth_area(fixed=list(loose.vertices_on_boundary()), kmax=50, damping=0.5)
-    drift = max(distance_point_point(loose.vertex_coordinates(vertex), closest_point_on_constraint(hole, loose.vertex_coordinates(vertex)))
-                for vertex in mesh_boundary_loops(loose)[1])
+    drift = max(
+        distance_point_point(loose.vertex_coordinates(vertex), closest_point_on_constraint(hole, loose.vertex_coordinates(vertex))) for vertex in mesh_boundary_loops(loose)[1]
+    )
     assert drift > 1e-3
 
 
@@ -261,7 +267,7 @@ def test_constrained_smoothing_pulls_a_free_mesh_onto_its_constraints():
     circle = Circle(4.0, Frame([SIDE / 2, SIDE / 2, 0], [1, 0, 0], [0, 1, 0]))
 
     constraints = {vertex: circle for vertex in mesh.vertices_on_boundary()}
-    constrained_smoothing(mesh, kmax=30, damping=0.5, constraints=constraints, algorithm='centroid')
+    constrained_smoothing(mesh, kmax=30, damping=0.5, constraints=constraints, algorithm="centroid")
 
     for vertex in mesh.vertices_on_boundary():
         xyz = mesh.vertex_coordinates(vertex)
@@ -274,7 +280,7 @@ def test_constrained_smoothing_honours_fixed_vertices():
     frozen = interior[0]
     before = mesh.vertex_coordinates(frozen)
 
-    constrained_smoothing(mesh, kmax=20, damping=0.5, algorithm='centroid', fixed=[frozen])
+    constrained_smoothing(mesh, kmax=20, damping=0.5, algorithm="centroid", fixed=[frozen])
 
     assert distance_point_point(mesh.vertex_coordinates(frozen), before) < 1e-9
 
@@ -283,10 +289,10 @@ def test_constrained_smoothing_honours_fixed_vertices():
 # Region
 # ==============================================================================
 
+
 def _core_around(mesh, centre, radius):
     """The vertices within `radius` of a point."""
-    return [vertex for vertex in mesh.vertices()
-            if distance_point_point(mesh.vertex_coordinates(vertex), centre) < radius]
+    return [vertex for vertex in mesh.vertices() if distance_point_point(mesh.vertex_coordinates(vertex), centre) < radius]
 
 
 def _rings(mesh, core, count):
@@ -321,19 +327,17 @@ def _relax_region_as_it_was(mesh, weight, kmax, damping, constraints):
             total = sum(areas)
             if not areas or total <= 0.0:
                 continue
-            target[vertex] = [
-                sum(a * c[i] for a, c in zip(areas, centroids)) / total for i in range(3)]
+            target[vertex] = [sum(a * c[i] for a, c in zip(areas, centroids)) / total for i in range(3)]
 
         for vertex, goal in target.items():
             xyz = mesh.vertex_coordinates(vertex)
             step = damping * weight[vertex]
-            mesh.vertex_attributes(vertex, 'xyz', [
-                xyz[i] + step * (goal[i] - xyz[i]) for i in range(3)])
+            mesh.vertex_attributes(vertex, "xyz", [xyz[i] + step * (goal[i] - xyz[i]) for i in range(3)])
 
         for vertex, constraint in constraints.items():
             moved = closest_point_on_constraint(constraint, mesh.vertex_coordinates(vertex))
             if moved is not None:
-                mesh.vertex_attributes(vertex, 'xyz', moved)
+                mesh.vertex_attributes(vertex, "xyz", moved)
 
 
 def test_region_smoothing_matches_the_original_relax_region():
@@ -351,8 +355,7 @@ def test_region_smoothing_matches_the_original_relax_region():
     _relax_region_as_it_was(old, weights, 20, 0.5, constraints)
 
     for vertex in start.vertices():
-        assert distance_point_point(new.vertex_coordinates(vertex),
-                                    old.vertex_coordinates(vertex)) < 1e-12
+        assert distance_point_point(new.vertex_coordinates(vertex), old.vertex_coordinates(vertex)) < 1e-12
 
 
 def test_region_smoothing_only_moves_the_region():
@@ -362,15 +365,12 @@ def test_region_smoothing_only_moves_the_region():
     mesh = start.copy()
     weights = region_smoothing(mesh, core, kmax=30, damping=0.5, blend=3)
 
-    moved = [vertex for vertex in mesh.vertices()
-             if distance_point_point(mesh.vertex_coordinates(vertex),
-                                     start.vertex_coordinates(vertex)) > 1e-9]
-    assert moved                            # something happened
-    assert set(moved) <= set(weights)       # and only inside the region
+    moved = [vertex for vertex in mesh.vertices() if distance_point_point(mesh.vertex_coordinates(vertex), start.vertex_coordinates(vertex)) > 1e-9]
+    assert moved  # something happened
+    assert set(moved) <= set(weights)  # and only inside the region
 
     # the core really relaxed, and the ring beyond the blend is untouched
-    assert max(distance_point_point(mesh.vertex_coordinates(vertex),
-                                    start.vertex_coordinates(vertex)) for vertex in core) > 1e-3
+    assert max(distance_point_point(mesh.vertex_coordinates(vertex), start.vertex_coordinates(vertex)) for vertex in core) > 1e-3
     for vertex in _rings(start, core, 4)[3]:
         assert vertex not in weights
 
@@ -385,8 +385,8 @@ def test_region_smoothing_tapers_the_damping_over_the_blend():
     previous = 1.0
     for ring in _rings(mesh, core, 3):
         weight = {weights[vertex] for vertex in ring}
-        assert len(weight) == 1                 # one weight per ring
-        assert 0.0 < weight.pop() < previous    # strictly decreasing, never zero
+        assert len(weight) == 1  # one weight per ring
+        assert 0.0 < weight.pop() < previous  # strictly decreasing, never zero
         previous = min(weights[vertex] for vertex in ring)
 
     # no blend at all: the core and nothing else
@@ -408,8 +408,7 @@ def test_region_smoothing_keeps_a_region_on_the_boundary():
         assert _distance_to_square_border(mesh.vertex_coordinates(vertex)) < 1e-9
 
     # and they slid along it rather than staying pinned
-    assert max(distance_point_point(mesh.vertex_coordinates(vertex),
-                                    start.vertex_coordinates(vertex)) for vertex in on_boundary) > 1e-3
+    assert max(distance_point_point(mesh.vertex_coordinates(vertex), start.vertex_coordinates(vertex)) for vertex in on_boundary) > 1e-3
 
 
 def test_region_smoothing_accepts_ready_made_weights():
@@ -423,8 +422,7 @@ def test_region_smoothing_accepts_ready_made_weights():
     assert region_smoothing(given, weights, kmax=20, damping=0.5, blend=99) == weights
 
     for vertex in start.vertices():
-        assert distance_point_point(tapered.vertex_coordinates(vertex),
-                                    given.vertex_coordinates(vertex)) < 1e-12
+        assert distance_point_point(tapered.vertex_coordinates(vertex), given.vertex_coordinates(vertex)) < 1e-12
 
 
 def test_region_smoothing_fixes_vertices_without_a_positive_weight():
@@ -445,20 +443,20 @@ def test_windowed_projection_matches_the_full_search():
 
     # not `import compas_singular.datastructures.mesh.smoothing`: the package exports a
     # `mesh` module of its own, which shadows the `mesh` subpackage on attribute lookup
-    smoothing = sys.modules['compas_singular.datastructures.mesh.smoothing']
+    smoothing = sys.modules["compas_singular.datastructures.mesh.smoothing"]
 
     def run(window):
         default = smoothing._PolylineProjector.__init__.__defaults__
         smoothing._PolylineProjector.__init__.__defaults__ = (window,)
         try:
             mesh = _perturbed_grid(nx=12, seed=1)
-            boundary_constrained_smoothing(mesh, kmax=50, damping=0.5, algorithm='area')
+            boundary_constrained_smoothing(mesh, kmax=50, damping=0.5, algorithm="area")
             return [mesh.vertex_coordinates(vertex) for vertex in sorted(mesh.vertices())]
         finally:
             smoothing._PolylineProjector.__init__.__defaults__ = default
 
     windowed = run(10)
-    exhaustive = run(10 ** 6)
+    exhaustive = run(10**6)
     assert all(distance_point_point(a, b) < 1e-12 for a, b in zip(windowed, exhaustive))
 
 
@@ -466,24 +464,24 @@ def test_windowed_projection_matches_the_full_search():
 # Algorithms
 # ==============================================================================
 
+
 def test_constrained_smoothing_runs_several_algorithms_in_turn():
     start = _perturbed_grid(seed=8)
 
     together = start.copy()
     constraints = automated_boundary_constraints(together)
-    constrained_smoothing(together, kmax=10, damping=0.5, constraints=constraints, algorithm=['area', 'centroid'])
+    constrained_smoothing(together, kmax=10, damping=0.5, constraints=constraints, algorithm=["area", "centroid"])
 
     in_turn = start.copy()
     constraints = automated_boundary_constraints(in_turn)
-    constrained_smoothing(in_turn, kmax=10, damping=0.5, constraints=constraints, algorithm='area')
-    constrained_smoothing(in_turn, kmax=10, damping=0.5, constraints=constraints, algorithm='centroid')
+    constrained_smoothing(in_turn, kmax=10, damping=0.5, constraints=constraints, algorithm="area")
+    constrained_smoothing(in_turn, kmax=10, damping=0.5, constraints=constraints, algorithm="centroid")
 
     for vertex in start.vertices():
-        assert distance_point_point(together.vertex_coordinates(vertex),
-                                    in_turn.vertex_coordinates(vertex)) < 1e-12
+        assert distance_point_point(together.vertex_coordinates(vertex), in_turn.vertex_coordinates(vertex)) < 1e-12
 
 
-@pytest.mark.parametrize('algorithm', ['wishful', ['area', 'wishful'], []])
+@pytest.mark.parametrize("algorithm", ["wishful", ["area", "wishful"], []])
 def test_constrained_smoothing_rejects_unknown_algorithms_before_moving(algorithm):
     start = _perturbed_grid(seed=9)
     mesh = start.copy()
@@ -499,14 +497,12 @@ def test_boundary_smoothing_only_moves_the_boundary():
     for vertex in start.vertices_on_boundary():
         x, y, z = start.vertex_coordinates(vertex)
         if y == 0.0 and 0.0 < x < SIDE:
-            start.vertex_attributes(vertex, 'xyz', [x * x / SIDE, y, z])
+            start.vertex_attributes(vertex, "xyz", [x * x / SIDE, y, z])
 
     mesh = start.copy()
     boundary_smoothing(mesh, kmax=20, damping=0.5)
 
-    moved = [vertex for vertex in mesh.vertices()
-             if distance_point_point(mesh.vertex_coordinates(vertex),
-                                     start.vertex_coordinates(vertex)) > 1e-9]
+    moved = [vertex for vertex in mesh.vertices() if distance_point_point(mesh.vertex_coordinates(vertex), start.vertex_coordinates(vertex)) > 1e-9]
     assert moved
     assert all(mesh.is_vertex_on_boundary(vertex) for vertex in moved)
     for vertex in moved:
@@ -517,15 +513,16 @@ def test_boundary_smoothing_only_moves_the_boundary():
 # Relaxation
 # ==============================================================================
 
+
 def test_relaxation_reads_vertex_keys_not_indices():
     """A mesh that lost vertices has keys that are not indices: nothing may be scrambled."""
-    pytest.importorskip('compas_fd')
+    pytest.importorskip("compas_fd")
     mesh = _grid_with_hole()
     assert sorted(mesh.vertices()) != list(range(mesh.number_of_vertices()))
 
     boundary = set(v for loop in mesh_boundary_loops(mesh) for v in loop)
     before = {vertex: mesh.vertex_coordinates(vertex) for vertex in mesh.vertices()}
-    relaxation(mesh, fixed='boundary')
+    relaxation(mesh, fixed="boundary")
 
     for vertex in boundary:
         assert distance_point_point(mesh.vertex_coordinates(vertex), before[vertex]) < 1e-9
@@ -535,7 +532,7 @@ def test_relaxation_reads_vertex_keys_not_indices():
 
 
 def test_relaxation_accepts_fixed_vertex_keys_and_rejects_unknown_modes():
-    pytest.importorskip('compas_fd')
+    pytest.importorskip("compas_fd")
     mesh = _perturbed_grid(seed=11)
     corners = mesh_boundary_corners(mesh)
     before = {vertex: mesh.vertex_coordinates(vertex) for vertex in corners}
@@ -545,11 +542,11 @@ def test_relaxation_accepts_fixed_vertex_keys_and_rejects_unknown_modes():
         assert distance_point_point(mesh.vertex_coordinates(vertex), before[vertex]) < 1e-9
 
     with pytest.raises(ValueError):
-        relaxation(mesh, fixed='manual')
+        relaxation(mesh, fixed="manual")
 
 
 def test_relaxation_holds_constrained_vertices_on_their_constraints():
-    pytest.importorskip('compas_fd')
+    pytest.importorskip("compas_fd")
     mesh = _perturbed_grid(seed=12)
     constraints = automated_boundary_constraints(mesh)
     assert any(isinstance(constraint, Polyline) for constraint in constraints.values())
@@ -560,7 +557,7 @@ def test_relaxation_holds_constrained_vertices_on_their_constraints():
     target = [x + 0.1 for x in mesh.vertex_coordinates(pin)]
     constraints[pin] = Point(*target)
 
-    relaxation(mesh, fixed='corners', constraints=constraints, q_factor=10.0)
+    relaxation(mesh, fixed="corners", constraints=constraints, q_factor=10.0)
 
     for vertex in mesh.vertices_on_boundary():
         assert _distance_to_square_border(mesh.vertex_coordinates(vertex)) < 1e-6

@@ -1,4 +1,5 @@
 """The MCP renderer, the image content block, and the look-before-you-deliver gate."""
+
 import base64
 import json
 import os
@@ -54,13 +55,13 @@ def _png_size(data):
 def _orange_pixels(session):
     """How much of the wall colour is visible. The whole point of the drawing."""
     data = render.render_png(session, 300, 300)
-    raw = zlib.decompress(data[data.index(b"IDAT") + 4:-12])
+    raw = zlib.decompress(data[data.index(b"IDAT") + 4 : -12])
     width, height = _png_size(data)
     stride = width * 3 + 1
     wall = render.COLORS["wall"]
     seen = 0
     for y in range(height):
-        row = raw[y * stride + 1:(y + 1) * stride]
+        row = raw[y * stride + 1 : (y + 1) * stride]
         for x in range(width):
             r, g, b = row[x * 3], row[x * 3 + 1], row[x * 3 + 2]
             if abs(r - wall[0]) < 40 and abs(g - wall[1]) < 40 and abs(b - wall[2]) < 40:
@@ -69,15 +70,14 @@ def _orange_pixels(session):
 
 
 def _raw(mcp, _tool, **arguments):
-    return mcp.dispatcher.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
-                                  "params": {"name": _tool, "arguments": arguments}})["result"]
+    return mcp.dispatcher.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": _tool, "arguments": arguments}})["result"]
 
 
 def test_it_produces_a_real_png(session):
     data = render.render_png(session, 400, 400)
     assert data and data[:8] == PNG
     assert _png_size(data) == (400, 400)
-    assert zlib.decompress(data[data.index(b"IDAT") + 4:-12])
+    assert zlib.decompress(data[data.index(b"IDAT") + 4 : -12])
     assert data[-8:-4] == b"IEND"
     assert base64.b64decode(render.render_png_base64(session, 200, 200)) is not None
 
@@ -138,7 +138,7 @@ def test_nothing_is_delivered_unlooked_at(served, tmp_path):
     assert not os.path.exists(out)
     assert served("rhino_push", timeout=0.2).get("reason", "").startswith("this mesh has changed")
     served("inspect")
-    assert served.session.visually_current is False     # WITHOUT the image does not count
+    assert served.session.visually_current is False  # WITHOUT the image does not count
     served("inspect", image=True)
     assert served.session.visually_current is True
     assert served("save_mesh", path=out).get("ok") is True
@@ -153,7 +153,7 @@ def test_any_change_to_the_mesh_invalidates_the_last_look(served, tmp_path):
     assert served("save_mesh", path=out).get("ok") is False
     served("inspect", image=True)
     served("undo")
-    assert served.session.visually_current is False     # an undo moves every vertex
+    assert served.session.visually_current is False  # an undo moves every vertex
     served("inspect", image=True)
     assert served("save_mesh", path=out).get("ok") is True
     assert served("inspect")["state"]["visually_current"] is True

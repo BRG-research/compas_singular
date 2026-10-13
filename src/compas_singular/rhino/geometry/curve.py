@@ -8,13 +8,10 @@ from typing import Sequence
 import rhinoscriptsyntax as rs  # type: ignore  # noqa: I001
 from compas_rhino.geometry import RhinoCurve
 
-__all__ = [
-    'RhinoCurve'
-]
+__all__ = ["RhinoCurve"]
 
 
 class RhinoCurve(RhinoCurve):
-
     def __init__(self) -> None:
         super(RhinoCurve, self).__init__()
 
@@ -51,5 +48,5 @@ class RhinoCurve(RhinoCurve):
                 vector = list(rs.CurveTangent(self.guid, param))
                 tangents.append(vector)
         else:
-            raise Exception('Object is not a curve.')
+            raise Exception("Object is not a curve.")
         return tangents

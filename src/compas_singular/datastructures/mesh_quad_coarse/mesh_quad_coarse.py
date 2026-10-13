@@ -21,35 +21,34 @@ from compas_singular.datastructures.mesh import meshes_join_and_weld
 from compas_singular.datastructures.mesh_quad import QuadMesh
 from compas_singular.datastructures.mesh_quad_coarse.patterns import PATTERNS
 
-__all__ = ['CoarseQuadMesh']
+__all__ = ["CoarseQuadMesh"]
 
 
 def _int_key(key: Any) -> Any:
     """A key JSON stringified back to the integer it was; anything else as is."""
-    if isinstance(key, str) and key.lstrip('-').isdigit():
+    if isinstance(key, str) and key.lstrip("-").isdigit():
         return int(key)
     return key
 
 
 class CoarseQuadMesh(QuadMesh):
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super(CoarseQuadMesh, self).__init__(*args, **kwargs)
-        self.attributes['strips_density'] = {}
-        self.attributes['dense_pattern'] = {}
-        self.attributes['vertex_coarse_to_dense'] = {}
-        self.attributes['edge_coarse_to_dense'] = {}
-        self.attributes['quad_mesh'] = None
-        self.attributes['polygonal_mesh'] = None
+        self.attributes["strips_density"] = {}
+        self.attributes["dense_pattern"] = {}
+        self.attributes["vertex_coarse_to_dense"] = {}
+        self.attributes["edge_coarse_to_dense"] = {}
+        self.attributes["quad_mesh"] = None
+        self.attributes["polygonal_mesh"] = None
         # The SHAPE of each coarse edge, when it is known. See ``edges_to_curves``.
-        self.attributes['edges_to_curves'] = []
-        self.attributes['decomposition_type'] = None
+        self.attributes["edges_to_curves"] = []
+        self.attributes["decomposition_type"] = None
 
     @property
     def __data__(self) -> dict[str, Any]:
         """Everything but the derived dense meshes this layout last produced."""
         data = super(CoarseQuadMesh, self).__data__
-        data['attributes'] = dict(data['attributes'], quad_mesh=None, polygonal_mesh=None)
+        data["attributes"] = dict(data["attributes"], quad_mesh=None, polygonal_mesh=None)
         return data
 
     @classmethod
@@ -62,15 +61,9 @@ class CoarseQuadMesh(QuadMesh):
         # tuples JSON turned into lists, as ``PseudoQuadMesh`` does for its poles.
         mesh = super(CoarseQuadMesh, cls).__from_data__(data)
         attributes = mesh.attributes
-        attributes['strips'] = {
-            _int_key(skey): [tuple(edge) for edge in edges]
-            for skey, edges in (attributes.get('strips') or {}).items()}
-        attributes['strips_density'] = {
-            _int_key(skey): d
-            for skey, d in (attributes.get('strips_density') or {}).items()}
-        attributes['dense_pattern'] = {
-            _int_key(fkey): pattern
-            for fkey, pattern in (attributes.get('dense_pattern') or {}).items()}
+        attributes["strips"] = {_int_key(skey): [tuple(edge) for edge in edges] for skey, edges in (attributes.get("strips") or {}).items()}
+        attributes["strips_density"] = {_int_key(skey): d for skey, d in (attributes.get("strips_density") or {}).items()}
+        attributes["dense_pattern"] = {_int_key(fkey): pattern for fkey, pattern in (attributes.get("dense_pattern") or {}).items()}
         return mesh
 
     # --------------------------------------------------------------------------
@@ -78,8 +71,9 @@ class CoarseQuadMesh(QuadMesh):
     # --------------------------------------------------------------------------
 
     @classmethod
-    def from_quad_mesh(cls, quad_mesh: QuadMesh, collect_strips: bool = True, collect_polyedges: bool = True, attribute_density: bool = True,
-                       strict: bool = False) -> "CoarseQuadMesh":
+    def from_quad_mesh(
+        cls, quad_mesh: QuadMesh, collect_strips: bool = True, collect_polyedges: bool = True, attribute_density: bool = True, strict: bool = False
+    ) -> "CoarseQuadMesh":
         """Build coarse quad mesh from quad mesh with density and child-parent element data.
 
         Parameters
@@ -119,11 +113,11 @@ class CoarseQuadMesh(QuadMesh):
         coarse_quad_mesh = cls.from_vertices_and_faces(coarse_vertices, coarse_faces_children)
 
         # attribute relation child-parent element between coarse and dense quad meshes
-        coarse_quad_mesh.attributes['vertex_coarse_to_dense'] = coarse_vertices_children
-        coarse_quad_mesh.attributes['edge_coarse_to_dense'] = {u: {} for u in coarse_quad_mesh.vertices()}
+        coarse_quad_mesh.attributes["vertex_coarse_to_dense"] = coarse_vertices_children
+        coarse_quad_mesh.attributes["edge_coarse_to_dense"] = {u: {} for u in coarse_quad_mesh.vertices()}
         for (u, v), polyedge in coarse_edges_children.items():
-            coarse_quad_mesh.attributes['edge_coarse_to_dense'][u][v] = polyedge
-            coarse_quad_mesh.attributes['edge_coarse_to_dense'][v][u] = list(reversed(polyedge))
+            coarse_quad_mesh.attributes["edge_coarse_to_dense"][u][v] = polyedge
+            coarse_quad_mesh.attributes["edge_coarse_to_dense"][v][u] = list(reversed(polyedge))
 
         # collect strip and polyedge attributes
         if collect_strips:
@@ -150,16 +144,16 @@ class CoarseQuadMesh(QuadMesh):
     # --------------------------------------------------------------------------
 
     def get_quad_mesh(self) -> QuadMesh | None:
-        return self.attributes['quad_mesh']
+        return self.attributes["quad_mesh"]
 
     def set_quad_mesh(self, quad_mesh: QuadMesh) -> None:
-        self.attributes['quad_mesh'] = quad_mesh
+        self.attributes["quad_mesh"] = quad_mesh
 
     def get_polygonal_mesh(self) -> Mesh | None:
-        return self.attributes['polygonal_mesh']
+        return self.attributes["polygonal_mesh"]
 
     def set_polygonal_mesh(self, polygonal_mesh: Mesh) -> None:
-        self.attributes['polygonal_mesh'] = polygonal_mesh
+        self.attributes["polygonal_mesh"] = polygonal_mesh
 
     # --------------------------------------------------------------------------
     # edge curvature getter and setter
@@ -174,8 +168,7 @@ class CoarseQuadMesh(QuadMesh):
             Keyed one way round per edge. ``densification`` looks up ``(v, u)`` and
             reverses when ``(u, v)`` is absent, so both directions are covered.
         """
-        return {(u, v): points
-                for u, v, points in self.attributes.get('edges_to_curves') or []}
+        return {(u, v): points for u, v, points in self.attributes.get("edges_to_curves") or []}
 
     def set_edges_to_curves(self, edges_to_curves: dict[tuple[int, int], list[list[float]]] | None) -> None:
         """Remember the shape of each coarse edge, stored JSON-safe as ``[u, v, points]``. ``None`` or ``{}`` clears it.
@@ -184,19 +177,15 @@ class CoarseQuadMesh(QuadMesh):
         ----------
         edges_to_curves : dict[tuple[int, int], list[[x, y, z]]] or None
         """
-        self.attributes['edges_to_curves'] = [
-            [u, v, [list(point) for point in points]]
-            for (u, v), points in (edges_to_curves or {}).items()]
+        self.attributes["edges_to_curves"] = [[u, v, [list(point) for point in points]] for (u, v), points in (edges_to_curves or {}).items()]
 
     def shape_polylines(self) -> list[list[list[float]]]:
         """The polylines the coarse edges take their shape from (separatrices, branches, drawn curves). ``[]`` if none."""
-        return [[list(point) for point in polyline]
-                for polyline in self.attributes.get('shape_polylines') or []]
+        return [[list(point) for point in polyline] for polyline in self.attributes.get("shape_polylines") or []]
 
     def set_shape_polylines(self, polylines: list[list[list[float]]] | None) -> None:
         """Remember the polylines the edges take their shape from. ``None`` clears them."""
-        self.attributes['shape_polylines'] = [
-            [list(point) for point in polyline] for polyline in (polylines or [])]
+        self.attributes["shape_polylines"] = [[list(point) for point in polyline] for polyline in (polylines or [])]
 
     def _filtered_edges_to_curves(self, boundary_curvature: bool, skeleton_curvature: bool) -> dict[tuple[int, int], list[list[float]]]:
         """The stored ``edges_to_curves``, filtered by the boundary and skeleton curvature toggles.
@@ -216,8 +205,7 @@ class CoarseQuadMesh(QuadMesh):
         stored = self.edges_to_curves()
         if not stored or (boundary_curvature and skeleton_curvature):
             return stored
-        return {(u, v): curve for (u, v), curve in stored.items()
-                if (boundary_curvature if self.is_edge_on_boundary(u, v) else skeleton_curvature)}
+        return {(u, v): curve for (u, v), curve in stored.items() if (boundary_curvature if self.is_edge_on_boundary(u, v) else skeleton_curvature)}
 
     def _create_patch_edge(self, u: int, v: int, d: int, edges_to_curves: dict[tuple[int, int], list[list[float]]] | None) -> list[list[float]]:
         """The ``d + 1`` points densifying edge ``(u, v)``, from its curve or else the chord.
@@ -251,7 +239,7 @@ class CoarseQuadMesh(QuadMesh):
 
     def coarse_edge_dense_edges(self, u: int, v: int) -> list[int]:
         """Return the child edges, or polyedge, in the dense quad mesh from a parent edge in the coarse quad mesh."""
-        return self.attributes['edge_coarse_to_dense'][u][v]
+        return self.attributes["edge_coarse_to_dense"][u][v]
 
     # --------------------------------------------------------------------------
     # density getters and setters
@@ -270,7 +258,7 @@ class CoarseQuadMesh(QuadMesh):
         int
             The strip density.
         """
-        return self.attributes['strips_density'][skey]
+        return self.attributes["strips_density"][skey]
 
     def get_strip_densities(self) -> dict[int, int]:
         """Get the density of a strip.
@@ -280,7 +268,7 @@ class CoarseQuadMesh(QuadMesh):
         dict
             The dictionary of the strip densities.
         """
-        return self.attributes['strips_density']
+        return self.attributes["strips_density"]
 
     # --------------------------------------------------------------------------
     # density setters
@@ -293,7 +281,7 @@ class CoarseQuadMesh(QuadMesh):
         -------
         bool
         """
-        table = self.attributes.get('strips_density') or {}
+        table = self.attributes.get("strips_density") or {}
         return bool(table) and all(skey in table for skey in self.strips())
 
     def set_strip_density(self, skey: int, d: int) -> None:
@@ -306,7 +294,7 @@ class CoarseQuadMesh(QuadMesh):
         d : int
             A density parameter.
         """
-        self.attributes['strips_density'][skey] = d
+        self.attributes["strips_density"][skey] = d
 
     def set_strips_density(self, d: int, skeys: list[int] | None = None) -> None:
         """Set the same density to all strips.
@@ -381,7 +369,7 @@ class CoarseQuadMesh(QuadMesh):
         nb_faces : int
             The target number of faces.
         """
-        n = (nb_faces / self.number_of_faces()) ** .5
+        n = (nb_faces / self.number_of_faces()) ** 0.5
         if ceil(n) - n > n - floor(n):
             n = int(floor(n))
         else:
@@ -393,38 +381,38 @@ class CoarseQuadMesh(QuadMesh):
     # --------------------------------------------------------------------------
 
     def dense_patterns(self) -> dict[int, str]:
-        if self.attributes['dense_pattern']=={}:
-            self.attributes['dense_pattern'] = {fkey:'ortho' for fkey in self.faces()}
-        return self.attributes['dense_pattern']
+        if self.attributes["dense_pattern"] == {}:
+            self.attributes["dense_pattern"] = {fkey: "ortho" for fkey in self.faces()}
+        return self.attributes["dense_pattern"]
 
     def get_face_pattern(self, fkey: int) -> str:
         fkeys = list(self.faces())
         if fkey not in fkeys:
-            raise ValueError(f'The face key does not correspond to any face of the mesh. Allowed fkeys are: {fkeys}')
+            raise ValueError(f"The face key does not correspond to any face of the mesh. Allowed fkeys are: {fkeys}")
 
-        face_patterns = self.attributes['dense_pattern']
+        face_patterns = self.attributes["dense_pattern"]
         if fkey not in face_patterns:
-            self.attributes['dense_pattern'][fkey] = 'ortho'
-            print('This face did not have a patterns assigned to it yet. Defaulting to ortho.')
-        return self.attributes['dense_pattern'][fkey]
+            self.attributes["dense_pattern"][fkey] = "ortho"
+            print("This face did not have a patterns assigned to it yet. Defaulting to ortho.")
+        return self.attributes["dense_pattern"][fkey]
 
     def get_faces_with_pattern(self, pattern: str) -> list[int]:
         if pattern not in PATTERNS:
-            raise ValueError(f'This is not an allowed pattern type. Possible patterns are: {PATTERNS}')
+            raise ValueError(f"This is not an allowed pattern type. Possible patterns are: {PATTERNS}")
         face_patterns = self.dense_patterns()
-        return [fkey for fkey, face_pattern in face_patterns.items() if face_pattern==pattern]
+        return [fkey for fkey, face_pattern in face_patterns.items() if face_pattern == pattern]
 
     def set_face_pattern(self, fkey: int, pattern: str) -> None:
         fkeys = list(self.faces())
         if fkey not in fkeys:
-            raise ValueError(f'The face key does not correspond to any face of the mesh. Allowed fkeys are: {fkeys}')
+            raise ValueError(f"The face key does not correspond to any face of the mesh. Allowed fkeys are: {fkeys}")
         if pattern not in PATTERNS:
-            raise ValueError(f'This is not an allowed pattern type. Possible patterns are: {PATTERNS}')
-        self.attributes['dense_pattern'][fkey] = pattern
+            raise ValueError(f"This is not an allowed pattern type. Possible patterns are: {PATTERNS}")
+        self.attributes["dense_pattern"][fkey] = pattern
 
     def set_global_face_pattern(self, pattern: str) -> None:
         if pattern not in PATTERNS:
-            raise ValueError(f'This is not an allowed pattern type. Possible patterns are: {PATTERNS}')
+            raise ValueError(f"This is not an allowed pattern type. Possible patterns are: {PATTERNS}")
         fkeys = self.faces()
         for fkey in fkeys:
             self.set_face_pattern(fkey, pattern)
@@ -433,8 +421,13 @@ class CoarseQuadMesh(QuadMesh):
     # densification
     # --------------------------------------------------------------------------
 
-    def densification(self, boundary_curvature: bool = True, skeleton_curvature: bool = True,
-                      overwrite_edges_to_curves: dict[tuple[int, int], list[list[float]]] | None = None, field: Any = None) -> QuadMesh:
+    def densification(
+        self,
+        boundary_curvature: bool = True,
+        skeleton_curvature: bool = True,
+        overwrite_edges_to_curves: dict[tuple[int, int], list[list[float]]] | None = None,
+        field: Any = None,
+    ) -> QuadMesh:
         """Generate a denser quad mesh from the coarse quad mesh and its strip densities.
 
         Parameters
@@ -510,7 +503,7 @@ class CoarseQuadMesh(QuadMesh):
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
 
     # import compas

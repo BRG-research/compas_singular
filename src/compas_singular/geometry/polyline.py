@@ -10,21 +10,21 @@ from compas.geometry import distance_point_point_xy
 from compas.itertools import pairwise
 
 __all__ = [
-    'bounding_box_diagonal',
-    'closest_on_polyline',
-    'discretise_boundary',
-    'discretise_line',
-    'distance_to_loop',
-    'distance_to_polyline',
-    'loop_arc_lengths',
-    'loop_parameter',
-    'near_loop',
-    'point_at_length',
-    'points_in_polygon_xy',
-    'polyline_length',
-    'project_on_polyline',
-    'resample_loop',
-    'signed_area',
+    "bounding_box_diagonal",
+    "closest_on_polyline",
+    "discretise_boundary",
+    "discretise_line",
+    "distance_to_loop",
+    "distance_to_polyline",
+    "loop_arc_lengths",
+    "loop_parameter",
+    "near_loop",
+    "point_at_length",
+    "points_in_polygon_xy",
+    "polyline_length",
+    "project_on_polyline",
+    "resample_loop",
+    "signed_area",
 ]
 
 
@@ -55,14 +55,13 @@ def closest_on_polyline(point: list[float], points: list[list[float]], closed: b
     # parameter on any outline with two non-contiguous collinear runs -- an
     # ordinary T- or L-plate.
     chain = list(points) + list(points[:1]) if closed else points
-    best = (0, 0.0, list(points[0]), float('inf'))
+    best = (0, 0.0, list(points[0]), float("inf"))
     for i, (a, b) in enumerate(pairwise(chain)):
         abx, aby, abz = b[0] - a[0], b[1] - a[1], b[2] - a[2]
         length2 = abx * abx + aby * aby + abz * abz
         if length2 == 0.0:
             continue
-        t = ((point[0] - a[0]) * abx + (point[1] - a[1]) * aby
-             + (point[2] - a[2]) * abz) / length2
+        t = ((point[0] - a[0]) * abx + (point[1] - a[1]) * aby + (point[2] - a[2]) * abz) / length2
         t = max(0.0, min(1.0, t))
         q = [a[0] + abx * t, a[1] + aby * t, a[2] + abz * t]
         d = distance_point_point(point, q)
@@ -85,7 +84,7 @@ def project_on_polyline(point: list[float], points: list[list[float]]) -> tuple[
     tuple
         ``(distance, arclength of the closest point, total length)``.
     """
-    best = (float('inf'), 0.0)
+    best = (float("inf"), 0.0)
     travelled = 0.0
     for a, b in pairwise(points):
         abx, aby = b[0] - a[0], b[1] - a[1]
@@ -123,7 +122,7 @@ def distance_to_loop(p: list[float], loop: list[list[float]]) -> float:
     """
     # Same answer from compas (import ``closest_point_on_polyline_xy``), but ~3.3x slower -- it sorts a per-segment cloud instead of keeping a running min:
     # return distance_point_point(p, closest_point_on_polyline_xy(p, list(loop) + list(loop[:1])))
-    best = float('inf')
+    best = float("inf")
     for a, b in pairwise(list(loop) + list(loop[:1])):
         abx, aby = b[0] - a[0], b[1] - a[1]
         length2 = abx * abx + aby * aby
@@ -235,7 +234,7 @@ def near_loop(points: list[list[float]], loop: list[list[float]], radius: float,
     margin = 1e-9 * abs(radius) + 1e-12
     out = []
     for start in range(0, len(points), chunk):
-        part = points[start:start + chunk]
+        part = points[start : start + chunk]
         pts = np.asarray([[p[0], p[1]] for p in part], dtype=float)
         px, py = pts[:, 0:1], pts[:, 1:2]
         t = np.clip(((px - ax) * abx + (py - ay) * aby) / length2, 0.0, 1.0)
@@ -275,8 +274,7 @@ def bounding_box_diagonal(*loops: list[list[float]]) -> float:
 
 def _clean_loop(points: list[list[float]]) -> list[list[float]]:
     """A loop as ``[x, y, z]`` floats, with consecutive duplicates and a closing point dropped."""
-    pts = [[float(p[0]), float(p[1]), float(p[2]) if len(p) > 2 else 0.0]
-           for p in points]
+    pts = [[float(p[0]), float(p[1]), float(p[2]) if len(p) > 2 else 0.0] for p in points]
     if not pts:
         return []
     out = [pts[0]]
@@ -315,8 +313,7 @@ def _subdivide_chain(chain: list[list[float]], spacing: float) -> list[list[floa
 
 def _clean_chain(points: list[list[float]]) -> list[list[float]]:
     """An open chain as ``[x, y, z]`` floats, consecutive duplicates dropped, ends kept."""
-    pts = [[float(p[0]), float(p[1]), float(p[2]) if len(p) > 2 else 0.0]
-           for p in points]
+    pts = [[float(p[0]), float(p[1]), float(p[2]) if len(p) > 2 else 0.0] for p in points]
     if not pts:
         return []
     out = [pts[0]]
@@ -348,7 +345,7 @@ def discretise_line(line: list[list[float]], spacing: float | None) -> list[list
         return points
     spacing = float(spacing)
     if spacing <= 0.0:
-        raise ValueError('spacing must be positive, got {}'.format(spacing))
+        raise ValueError("spacing must be positive, got {}".format(spacing))
     return _subdivide_chain(points, spacing)
 
 
@@ -404,8 +401,7 @@ def discretise_boundary(
 
     spacing = float(spacing)
     if spacing <= 0.0:
-        raise ValueError(
-            'spacing must be positive, got {}'.format(spacing))
+        raise ValueError("spacing must be positive, got {}".format(spacing))
 
     def one(loop: list[list[float]]) -> list[list[float]]:
         if len(loop) < 2:
@@ -413,8 +409,7 @@ def discretise_boundary(
         # ``d_min`` as a spacing rather than a count: the subdivision is
         # per-segment, so the floor has to reach the segments to be felt.
         # ``sum(ceil(l_j / s)) >= ceil(perimeter / s) = d_min`` at this spacing.
-        perimeter = sum(distance_point_point(a, b)
-                        for a, b in pairwise(loop + loop[:1]))
+        perimeter = sum(distance_point_point(a, b) for a, b in pairwise(loop + loop[:1]))
         # Its own name: assigning to ``spacing`` in here would make it local to
         # ``one`` and unbound on this very line.
         step = spacing
@@ -427,6 +422,5 @@ def discretise_boundary(
 
 def resample_loop(points: list[list[float]], spacing: float | None = None) -> list[list[float]]:
     """One loop through ``discretise_boundary``, with no scale rule."""
-    loop, _ = discretise_boundary(points, spacing=spacing,
-                                  alpha=None, d_min=None)
+    loop, _ = discretise_boundary(points, spacing=spacing, alpha=None, d_min=None)
     return loop

@@ -21,11 +21,11 @@ from compas_singular.datastructures import is_face_degenerate
 from compas_singular.datastructures import trimesh_face_circle
 
 __all__ = [
-    'boundary_triangulation',
-    'weld_polyline_features',
-    'arrange_polyline_features',
-    'as_points',
-    'as_curves',
+    "boundary_triangulation",
+    "weld_polyline_features",
+    "arrange_polyline_features",
+    "as_points",
+    "as_curves",
 ]
 
 
@@ -46,13 +46,12 @@ def as_points(curve: Polyline | list, close: bool | None = None) -> list[list[fl
     -------
     list[list[float]]
     """
-    if hasattr(curve, 'points'):
+    if hasattr(curve, "points"):
         curve = list(curve.points)
 
     points = curve
     if any(not isinstance(point, list) for point in curve):
-        points = [[float(point[0]), float(point[1]),
-                   float(point[2]) if len(point) > 2 else 0.0] for point in curve]
+        points = [[float(point[0]), float(point[1]), float(point[2]) if len(point) > 2 else 0.0] for point in curve]
 
     if close is not None and len(points) > 1:
         closed = TOL.geometric_key(points[0]) == TOL.geometric_key(points[-1])
@@ -84,14 +83,14 @@ def as_curves(curves: Polyline | list | None, close: bool | None = None) -> list
     """
     if curves is None:
         return []
-    if hasattr(curves, 'points'):                    # a single Polyline
+    if hasattr(curves, "points"):  # a single Polyline
         return [as_points(curves, close)]
     curves = list(curves)
     if not curves:
         return []
-    if hasattr(curves[0], 'points'):                 # a list of Polylines
+    if hasattr(curves[0], "points"):  # a list of Polylines
         return [as_points(curve, close) for curve in curves]
-    try:                                             # a single curve of points
+    try:  # a single curve of points
         float(curves[0][0])
         float(curves[0][1])
         return [as_points(curves, close)]
@@ -119,8 +118,7 @@ def weld_polyline_features(polyline_features: list[list[list[float]]]) -> list[l
     # network would renumber its points and move the Delaunay's tie-breaks.
     if len(polyline_features) < 2:
         return polyline_features
-    return graph_polylines(Graph.from_lines(
-        [(u, v) for polyline in polyline_features for u, v in pairwise(polyline)]))
+    return graph_polylines(Graph.from_lines([(u, v) for polyline in polyline_features for u, v in pairwise(polyline)]))
 
 
 def arrange_polyline_features(polyline_features: list[list[list[float]]], tol: float = 1e-9) -> list[list[list[float]]]:
@@ -172,8 +170,7 @@ def arrange_polyline_features(polyline_features: list[list[list[float]]], tol: f
             by_segment.setdefault(seg, []).append(point)
         points = [chain[0]]
         for index, (a, b) in enumerate(pairwise(chain)):
-            for point in sorted(by_segment.get(index, []),
-                                key=lambda q: distance_point_point(a, q)):
+            for point in sorted(by_segment.get(index, []), key=lambda q: distance_point_point(a, q)):
                 if distance_point_point(points[-1], point) > tol:
                     points.append(point)
             points.append(b)
@@ -295,11 +292,8 @@ def boundary_triangulation(
     # The features as point chains. The grafting needs to know which samples
     # belong to the same curve, and in what order -- see
     # ``SkeletonDecomposition.branches_singularity_to_boundary``.
-    delaunay_mesh.attributes['feature_points'] = [
-        [list(point) for point in polyline] for polyline in polyline_features]
-    delaunay_mesh.attributes['feature_edges'] = frozenset(
-        (TOL.geometric_key(a), TOL.geometric_key(b))
-        for polyline in polyline_features for a, b in pairwise(polyline))
+    delaunay_mesh.attributes["feature_points"] = [[list(point) for point in polyline] for polyline in polyline_features]
+    delaunay_mesh.attributes["feature_edges"] = frozenset((TOL.geometric_key(a), TOL.geometric_key(b)) for polyline in polyline_features for a, b in pairwise(polyline))
 
     return delaunay_mesh
 
@@ -308,5 +302,5 @@ def boundary_triangulation(
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

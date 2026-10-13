@@ -1,4 +1,5 @@
 """The coarse layout (``CoarsePseudoQuadMesh``) in Rhino: patches, corners, edges and strips."""
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -17,7 +18,7 @@ from compas_singular.rhino.helpers import bake_polylines
 from compas_singular.rhino.mesh_ui import ensure_layer
 from compas_singular.rhino.scene.meshobject import RhinoSingularMeshObject
 
-__all__ = ['RhinoCoarseObject']
+__all__ = ["RhinoCoarseObject"]
 
 
 # ------------------------------------------------------------------------------
@@ -35,14 +36,12 @@ def _shrunk_face(points: Sequence[Sequence[float]], scale: float) -> list[list[f
     cx = sum(p[0] for p in points) / n
     cy = sum(p[1] for p in points) / n
     cz = sum(p[2] for p in points) / n
-    return [[cx + (p[0] - cx) * scale,
-             cy + (p[1] - cy) * scale,
-             cz + (p[2] - cz) * scale] for p in points]
+    return [[cx + (p[0] - cx) * scale, cy + (p[1] - cy) * scale, cz + (p[2] - cz) * scale] for p in points]
 
 
 def _f32(point: Sequence[float]) -> tuple[float, ...]:
     """``point`` rounded the way a Rhino mesh vertex (``Point3f``) stores it."""
-    return struct.unpack('<3f', struct.pack('<3f', point[0], point[1], point[2]))
+    return struct.unpack("<3f", struct.pack("<3f", point[0], point[1], point[2]))
 
 
 def _append_face(vertices: list[list[float]], points: Sequence[Sequence[float]]) -> list[list[int]]:
@@ -71,9 +70,7 @@ def _append_face(vertices: list[list[float]], points: Sequence[Sequence[float]])
 
 def _lerp(a: Sequence[float], b: Sequence[float], t: float) -> list[float]:
     """The point ``t`` of the way from ``a`` to ``b``."""
-    return [a[0] + (b[0] - a[0]) * t,
-            a[1] + (b[1] - a[1]) * t,
-            a[2] + (b[2] - a[2]) * t]
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]
 
 
 class _Ribbon(object):
@@ -84,7 +81,7 @@ class _Ribbon(object):
         self.half = half
         self.vertices = []
         self.faces = []
-        self._index = {}                # float32 point -> vertex index
+        self._index = {}  # float32 point -> vertex index
 
     def _add(self, point: Sequence[float]) -> int:
         key = _f32(point)
@@ -97,8 +94,7 @@ class _Ribbon(object):
         """The point ``t`` of the way from vertex ``a`` to ``b``, as an index."""
         if b < a:
             a, b, t = b, a, 1.0 - t
-        return self._add(_lerp(self.mesh.vertex_coordinates(a),
-                               self.mesh.vertex_coordinates(b), t))
+        return self._add(_lerp(self.mesh.vertex_coordinates(a), self.mesh.vertex_coordinates(b), t))
 
     def corner(self, vkey: int) -> int:
         """A mesh vertex itself, as an index -- the pole a ribbon tapers into."""
@@ -120,6 +116,7 @@ class _Ribbon(object):
 # the layout
 # ------------------------------------------------------------------------------
 
+
 class RhinoCoarseObject(RhinoSingularMeshObject):
     """The coarse layout. Patches are drawn one object each, so a patch can be picked.
 
@@ -137,15 +134,13 @@ class RhinoCoarseObject(RhinoSingularMeshObject):
 
     #: One colour per dense pattern; see ``mesh_quad_coarse.patterns.PATTERNS``.
     PATTERN_COLORS = {
-        'ortho': Color.from_rgb255(255, 100, 100),
-        'diagonal': Color.from_rgb255(50, 255, 50),
-        'fan': Color.from_rgb255(50, 50, 255),
+        "ortho": Color.from_rgb255(255, 100, 100),
+        "diagonal": Color.from_rgb255(50, 255, 50),
+        "fan": Color.from_rgb255(50, 50, 255),
     }
 
-    def __init__(self, show_patterns: bool = False, poles_layer: str | None = None,
-                 curves_layer: str | None = None, polylines_layer: str | None = None,
-                 **kwargs: Any) -> None:
-        kwargs.setdefault('disjoint', True)
+    def __init__(self, show_patterns: bool = False, poles_layer: str | None = None, curves_layer: str | None = None, polylines_layer: str | None = None, **kwargs: Any) -> None:
+        kwargs.setdefault("disjoint", True)
         super(RhinoCoarseObject, self).__init__(**kwargs)
         self.show_patterns = show_patterns
         self.poles_layer = poles_layer
@@ -162,7 +157,7 @@ class RhinoCoarseObject(RhinoSingularMeshObject):
 
     def _owned_curves_layer(self) -> str | None:
         """``curves_layer``, unless the curves there are the user's own input."""
-        return None if self.mesh.attributes.get('route') == 'drawn' else self.curves_layer
+        return None if self.mesh.attributes.get("route") == "drawn" else self.curves_layer
 
     def layers(self) -> list[str]:
         parts = [self.poles_layer, self._owned_curves_layer(), self.polylines_layer]
@@ -179,11 +174,9 @@ class RhinoCoarseObject(RhinoSingularMeshObject):
             if self.poles_layer:
                 self.draw_poles()
             if self._owned_curves_layer():
-                self._draw_polylines(list(self.mesh.edges_to_curves().values()),
-                                     self.curves_layer, "edge curve")
+                self._draw_polylines(list(self.mesh.edges_to_curves().values()), self.curves_layer, "edge curve")
             if self.polylines_layer:
-                self._draw_polylines(self.mesh.shape_polylines(), self.polylines_layer,
-                                     "shape polyline")
+                self._draw_polylines(self.mesh.shape_polylines(), self.polylines_layer, "shape polyline")
         finally:
             rs.EnableRedraw(previous)
         sc.doc.Views.Redraw()
@@ -195,14 +188,13 @@ class RhinoCoarseObject(RhinoSingularMeshObject):
                 self.facecolor[face] = self.PATTERN_COLORS.get(self.mesh.get_face_pattern(face), Color.grey())
         guids = super(RhinoCoarseObject, self).draw_faces()
         if self.show_patterns:
-            self.draw_facelabels(text={face: self.mesh.get_face_pattern(face) for face in self._guid_face.values()},
-                                 color=Color.black())
+            self.draw_facelabels(text={face: self.mesh.get_face_pattern(face) for face in self._guid_face.values()}, color=Color.black())
         return guids
 
     def draw_poles(self) -> None:
         """The poles as points on ``poles_layer``."""
         ensure_layer(self.poles_layer)
-        poles = self.mesh.poles() if hasattr(self.mesh, 'poles') else []
+        poles = self.mesh.poles() if hasattr(self.mesh, "poles") else []
         for vkey in poles:
             guid = rs.AddPoint(Point3d(*self.mesh.vertex_coordinates(vkey)))
             if guid:
@@ -215,8 +207,7 @@ class RhinoCoarseObject(RhinoSingularMeshObject):
         guids, skipped = bake_polylines(polylines, layer, clear_existing=False)
         self._guids += guids
         if skipped:
-            print("  {} {}(s) Rhino refused on {!r} -- those edges densify as chords".format(
-                skipped, what, layer))
+            print("  {} {}(s) Rhino refused on {!r} -- those edges densify as chords".format(skipped, what, layer))
 
     # --------------------------------------------------------------------------
     # strips
@@ -257,12 +248,12 @@ class RhinoCoarseObject(RhinoSingularMeshObject):
         self.clear_strips()
         ensure_layer(self.layer)
         mesh = self.mesh
-        if collect or not mesh.attributes.get('strips'):
+        if collect or not mesh.attributes.get("strips"):
             work = mesh.copy()
             work.collect_strips()
         else:
-            work = mesh                                           # read only below
-        keys = list(work.attributes['strips']) if strips is None else list(strips)
+            work = mesh  # read only below
+        keys = list(work.attributes["strips"]) if strips is None else list(strips)
         highlight = set(highlight)
         strip_colors = strip_colors or {}
         labels = labels or {}
@@ -272,7 +263,7 @@ class RhinoCoarseObject(RhinoSingularMeshObject):
         previous = rs.EnableRedraw(False)
         try:
             for skey in keys:
-                if skey not in work.attributes['strips']:
+                if skey not in work.attributes["strips"]:
                     continue
                 vertices, faces = self._ribbon(work, skey, half)
                 if not faces:
@@ -283,7 +274,7 @@ class RhinoCoarseObject(RhinoSingularMeshObject):
                 # one the user can see no way to select, so the guard says so.
                 try:
                     guid = rs.AddMesh(vertices, faces)
-                except Exception as error:                        # noqa: BLE001
+                except Exception as error:  # noqa: BLE001
                     print("strip {}: Rhino refused the band -- {}".format(skey, error))
                     guid = None
                 if not guid:
@@ -291,9 +282,9 @@ class RhinoCoarseObject(RhinoSingularMeshObject):
                     continue
                 rs.ObjectLayer(guid, self.layer)
                 if skey in highlight:
-                    rs.ObjectColor(guid, self.colors['strip.highlight'])
+                    rs.ObjectColor(guid, self.colors["strip.highlight"])
                 else:
-                    rs.ObjectColor(guid, strip_colors.get(skey, self.colors['strip']))
+                    rs.ObjectColor(guid, strip_colors.get(skey, self.colors["strip"]))
                 self._guid_strip[guid] = skey
                 if skey in labels:
                     self._label_strip(work, skey, labels[skey])
@@ -301,8 +292,7 @@ class RhinoCoarseObject(RhinoSingularMeshObject):
             rs.EnableRedraw(previous)
         sc.doc.Views.Redraw()
         if missing:
-            print("{} of {} strips could not be drawn, and cannot be picked: {}.".format(
-                len(missing), len(keys), ", ".join(str(skey) for skey in missing)))
+            print("{} of {} strips could not be drawn, and cannot be picked: {}.".format(len(missing), len(keys), ", ".join(str(skey) for skey in missing)))
         return dict(self._guid_strip)
 
     def _ribbon(self, work: Any, skey: int, half: float) -> tuple[list[list[float]], list[list[int]]]:
@@ -310,8 +300,7 @@ class RhinoCoarseObject(RhinoSingularMeshObject):
         rungs = set(frozenset(edge) for edge in work.strip_edges(skey))
         ribbon = _Ribbon(work, half)
         for fkey in work.strip_faces(skey):
-            here = [(u, v) for u, v in work.face_halfedges(fkey)
-                    if u != v and frozenset((u, v)) in rungs]
+            here = [(u, v) for u, v in work.face_halfedges(fkey) if u != v and frozenset((u, v)) in rungs]
             opposite = work.face_opposite_edge(*here[0]) if here else None
             if opposite is None:
                 continue
@@ -320,21 +309,16 @@ class RhinoCoarseObject(RhinoSingularMeshObject):
             if w == x:
                 # The far side of a pseudo-quad collapsed to its pole: the ribbon
                 # tapers into the pole instead of stopping.
-                ribbon.add_face([ribbon.rung_point(u, v, 0.5 - half),
-                                 ribbon.rung_point(u, v, 0.5 + half),
-                                 ribbon.corner(w)])
+                ribbon.add_face([ribbon.rung_point(u, v, 0.5 - half), ribbon.rung_point(u, v, 0.5 + half), ribbon.corner(w)])
             else:
                 # (u, v, w, x) go round the face: u pairs with x and v with w.
-                ribbon.add_face([ribbon.rung_point(u, v, 0.5 - half),
-                                 ribbon.rung_point(u, v, 0.5 + half),
-                                 ribbon.rung_point(x, w, 0.5 + half),
-                                 ribbon.rung_point(x, w, 0.5 - half)])
+                ribbon.add_face(
+                    [ribbon.rung_point(u, v, 0.5 - half), ribbon.rung_point(u, v, 0.5 + half), ribbon.rung_point(x, w, 0.5 + half), ribbon.rung_point(x, w, 0.5 - half)]
+                )
         vertices, faces = ribbon.vertices, ribbon.faces
         if not faces:
             for fkey in work.strip_faces(skey):
-                faces += _append_face(vertices, _shrunk_face(
-                    [work.vertex_coordinates(c) for c in work.face_vertices(fkey)],
-                    POLE_FACE_SCALE))
+                faces += _append_face(vertices, _shrunk_face([work.vertex_coordinates(c) for c in work.face_vertices(fkey)], POLE_FACE_SCALE))
         return vertices, faces
 
     def _label_strip(self, work: Any, skey: int, text: Any) -> None:
@@ -342,16 +326,14 @@ class RhinoCoarseObject(RhinoSingularMeshObject):
         if not rungs:
             return
         u, v = rungs[len(rungs) // 2]
-        dot = rs.AddTextDot(str(text), Point3d(*_lerp(work.vertex_coordinates(u),
-                                                      work.vertex_coordinates(v), 0.5)))
+        dot = rs.AddTextDot(str(text), Point3d(*_lerp(work.vertex_coordinates(u), work.vertex_coordinates(v), 0.5)))
         if dot:
             rs.ObjectLayer(dot, self.layer)
             self._guid_strip_label[dot] = skey
 
     def clear_strips(self) -> None:
         """Just the ribbons and their labels; the rest of the drawing stays."""
-        guids = [guid for guid in list(self._guid_strip) + list(self._guid_strip_label)
-                 if rs.IsObject(guid)]
+        guids = [guid for guid in list(self._guid_strip) + list(self._guid_strip_label) if rs.IsObject(guid)]
         if guids:
             rs.DeleteObjects(guids)
         self._guid_strip = {}

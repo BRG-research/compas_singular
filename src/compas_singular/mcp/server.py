@@ -2,6 +2,7 @@
 
 Importing it registers the tools; ``build`` refuses to start on an empty registry.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -23,7 +24,7 @@ from compas_singular.mcp.describe import describe
 from compas_singular.mcp.protocol import Dispatcher
 from compas_singular.mcp.session import MeshSession
 
-__all__ = ['Handler', 'build', 'INSTRUCTIONS']
+__all__ = ["Handler", "build", "INSTRUCTIONS"]
 
 
 INSTRUCTIONS = """Build, and improve, a quad mesh from the compas_singular library.
@@ -79,17 +80,19 @@ class Handler(object):
     def list_resources(self) -> list[dict[str, Any]]:
         resources = list(library.list_resources())
         # The live journal is not a file, so the library cannot list it.
-        resources.insert(0, {
-            'uri': 'session://current',
-            'name': 'this session',
-            'description': 'What has been done so far: state, history, remarks '
-                           'and the current reading.',
-            'mimeType': 'text/markdown',
-        })
+        resources.insert(
+            0,
+            {
+                "uri": "session://current",
+                "name": "this session",
+                "description": "What has been done so far: state, history, remarks and the current reading.",
+                "mimeType": "text/markdown",
+            },
+        )
         return resources
 
     def read_resource(self, uri: str) -> str | None:
-        if uri == 'session://current':
+        if uri == "session://current":
             return self.render_session()
         return library.read_resource(uri)
 
@@ -111,60 +114,51 @@ class Handler(object):
         """
         session = self.session
         state = session.state()
-        lines = ['# This session', '']
+        lines = ["# This session", ""]
         if not session.loaded:
             if session.coarse is not None:
                 lines.append(
-                    'No dense mesh is loaded, but a coarse layout is: {} '
-                    'face(s), {} strip(s). Call coarse_densify for a dense '
-                    'mesh, or coarse_inspect to read the layout.'.format(
-                        state['coarse_faces'], state['coarse_strips']))
+                    "No dense mesh is loaded, but a coarse layout is: {} face(s), {} strip(s). Call coarse_densify for a dense mesh, or coarse_inspect to read the layout.".format(
+                        state["coarse_faces"], state["coarse_strips"]
+                    )
+                )
             elif session.walls:
                 lines.append(
-                    'No mesh is loaded, but a boundary is: {} wall(s). Call '
-                    'create_coarse_mesh to build a coarse layout from it, or '
-                    'rhino_pull again on a layer that has a mesh.'.format(
-                        state['walls']))
+                    "No mesh is loaded, but a boundary is: {} wall(s). Call "
+                    "create_coarse_mesh to build a coarse layout from it, or "
+                    "rhino_pull again on a layer that has a mesh.".format(state["walls"])
+                )
             else:
-                lines.append('Nothing is loaded. Call rhino_pull to take a '
-                             'mesh out of the open Rhino document.')
-            return '\n'.join(lines)
+                lines.append("Nothing is loaded. Call rhino_pull to take a mesh out of the open Rhino document.")
+            return "\n".join(lines)
 
         source = session.source or {}
-        lines.append('Mesh: {} faces, {} vertices, from {}.'.format(
-            state['faces'], state['vertices'],
-            source.get('layer') or source.get('name') or source.get('kind')
-            or 'an unknown source'))
+        lines.append(
+            "Mesh: {} faces, {} vertices, from {}.".format(
+                state["faces"], state["vertices"], source.get("layer") or source.get("name") or source.get("kind") or "an unknown source"
+            )
+        )
         metrics = session.quality()
         told = describe(session.mesh, metrics, library.thresholds())
-        lines += ['', '**Now:** {} -- {}'.format(told['verdict'],
-                                                 told['reading'])]
+        lines += ["", "**Now:** {} -- {}".format(told["verdict"], told["reading"])]
 
         if session.history:
-            lines += ['', '## Steps', '']
-            marks = {True: 'improved all three',
-                     False: 'did NOT improve all three',
-                     None: 'no change'}
+            lines += ["", "## Steps", ""]
+            marks = {True: "improved all three", False: "did NOT improve all three", None: "no change"}
             for entry in session.history:
-                lines.append('{}. `{}` -- {}{}'.format(
-                    entry['step'] + 1, entry['action'],
-                    marks.get(entry.get('all_improved'), ''),
-                    ' (UNDONE)' if entry.get('undone') else ''))
-                for remark in session.remarks_for(entry['step']):
-                    lines.append('   - {}'.format(remark))
-        loose = [r for r in session.remarks if r['step'] >= len(session.history)]
+                lines.append("{}. `{}` -- {}{}".format(entry["step"] + 1, entry["action"], marks.get(entry.get("all_improved"), ""), " (UNDONE)" if entry.get("undone") else ""))
+                for remark in session.remarks_for(entry["step"]):
+                    lines.append("   - {}".format(remark))
+        loose = [r for r in session.remarks if r["step"] >= len(session.history)]
         if loose:
-            lines += ['', '## Remarks', '']
-            lines += ['- {}'.format(r['text']) for r in loose]
-        return '\n'.join(lines)
+            lines += ["", "## Remarks", ""]
+            lines += ["- {}".format(r["text"]) for r in loose]
+        return "\n".join(lines)
 
 
 def build(session: MeshSession | None = None) -> Dispatcher:
     """A dispatcher wired to a handler. The one thing ``__main__`` needs."""
     handler = Handler(session)
     if not handler.list_tools():
-        raise RuntimeError(
-            'no tools are registered -- the tools_* imports in server.py are '
-            'what register them, so one has been dropped')
-    return Dispatcher(handler, name='compas_singular.mcp', version=__version__,
-                      instructions=INSTRUCTIONS)
+        raise RuntimeError("no tools are registered -- the tools_* imports in server.py are what register them, so one has been dropped")
+    return Dispatcher(handler, name="compas_singular.mcp", version=__version__, instructions=INSTRUCTIONS)

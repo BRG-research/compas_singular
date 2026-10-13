@@ -1,4 +1,5 @@
 """Symmetry: detection, the unit's guards, and the scripting workflow on both routes."""
+
 import random
 from math import cos
 from math import pi
@@ -27,8 +28,7 @@ def ngon(n, r=5.0, cx=5.0, cy=5.0, phase=0.0):
 
 
 def trefoil(n=120, hole=None):
-    outer = [[(7 + 3.5 * cos(3 * t)) * cos(t), (7 + 3.5 * cos(3 * t)) * sin(t), 0.0]
-             for t in (2 * pi * i / n for i in range(n))]
+    outer = [[(7 + 3.5 * cos(3 * t)) * cos(t), (7 + 3.5 * cos(3 * t)) * sin(t), 0.0] for t in (2 * pi * i / n for i in range(n))]
     inners = [ngon(32, hole, 0.0, 0.0)] if hole else []
     return outer, inners
 
@@ -50,8 +50,7 @@ def turn(points, k, centre=(5.0, 5.0)):
 SQUARE = [[0.0, 0.0, 0.0], [10.0, 0.0, 0.0], [10.0, 10.0, 0.0], [0.0, 10.0, 0.0]]
 RECT = [[0.0, 0.0, 0.0], [14.0, 0.0, 0.0], [14.0, 10.0, 0.0], [0.0, 10.0, 0.0]]
 L_SHAPE = [[0, 0, 0], [12, 0, 0], [12, 4, 0], [5, 4, 0], [5, 10, 0], [0, 10, 0]]
-PLUS = [[4, 0, 0], [8, 0, 0], [8, 4, 0], [12, 4, 0], [12, 8, 0], [8, 8, 0],
-        [8, 12, 0], [4, 12, 0], [4, 8, 0], [0, 8, 0], [0, 4, 0], [4, 4, 0]]
+PLUS = [[4, 0, 0], [8, 0, 0], [8, 4, 0], [12, 4, 0], [12, 8, 0], [8, 8, 0], [8, 12, 0], [4, 12, 0], [4, 8, 0], [0, 8, 0], [0, 4, 0], [4, 4, 0]]
 FOUR_POLES = [[3.0, 3.0, 0.0], [7.0, 3.0, 0.0], [7.0, 7.0, 0.0], [3.0, 7.0, 0.0]]
 #: Four arcs that are D4 images of each other.
 FOUR_ARCS = [turn(arc(0.0, 0.0, 6.5, 0.35, pi / 2 - 0.35), k) for k in range(4)]
@@ -76,9 +75,14 @@ def test_the_d4_group(d4):
     assert SymmetryGroup.from_data(d4.to_data()) == d4
 
 
-@pytest.mark.parametrize("keys, name", [
-    (["M0", "M45"], "D4"), (["M0", "M90"], "D2"), ("R90", "C4"),
-])
+@pytest.mark.parametrize(
+    "keys, name",
+    [
+        (["M0", "M45"], "D4"),
+        (["M0", "M90"], "D2"),
+        ("R90", "C4"),
+    ],
+)
 def test_generators_give_the_subgroup(d4, keys, name):
     assert d4.subgroup(keys).name == name
 
@@ -99,25 +103,27 @@ def test_composition(d4):
 # ==============================================================================
 
 
-@pytest.mark.parametrize("kw, expected, centre", [
-    pytest.param(dict(outer=SQUARE), "D4", (5, 5), id="square"),
-    pytest.param(dict(outer=RECT), "D2", (7, 5), id="rectangle"),
-    pytest.param(dict(outer=ngon(6)), "D6", (5, 5), id="hexagon"),
-    pytest.param(dict(outer=ngon(6, phase=pi / 6)), "D6", (5, 5), id="hexagon rotated 30"),
-    pytest.param(dict(outer=ngon(3)), "D3", (5, 5), id="triangle"),
-    pytest.param(dict(outer=ngon(5)), "D5", (5, 5), id="pentagon"),
-    pytest.param(dict(outer=trefoil()[0]), "D3", (0, 0), id="trefoil"),
-    pytest.param(dict(outer=TREFOIL_OUTER, inners=TREFOIL_HOLES), "D3", (0, 0), id="trefoil with hole"),
-    pytest.param(dict(outer=PLUS), "D4", (6, 6), id="plus plate"),
-    pytest.param(dict(outer=L_SHAPE), "C1", None, id="L-shape"),
-    pytest.param(dict(outer=SQUARE, inners=[ngon(26, 2.0)]), "D4", (5, 5), id="circle hole sampled 26"),
-    pytest.param(dict(outer=SQUARE, inners=[ngon(32, 2.0, phase=5 * pi / 180)]), "D4", (5, 5),
-                 id="circle hole sampled 32 rotated 5 deg"),
-    pytest.param(dict(outer=SQUARE, guides=FOUR_ARCS), "D4", (5, 5), id="four symmetric arcs"),
-    pytest.param(dict(outer=SQUARE, guides=PINWHEEL_ARCS), "C4", (5, 5), id="pinwheel arcs"),
-    pytest.param(dict(outer=SQUARE, poles=FOUR_POLES), "D4", (5, 5), id="four poles"),
-    pytest.param(dict(outer=SQUARE, guides=[[[2, 2, 0], [2, 6, 0]]]), "C1", None, id="off-centre guide"),
-])
+@pytest.mark.parametrize(
+    "kw, expected, centre",
+    [
+        pytest.param(dict(outer=SQUARE), "D4", (5, 5), id="square"),
+        pytest.param(dict(outer=RECT), "D2", (7, 5), id="rectangle"),
+        pytest.param(dict(outer=ngon(6)), "D6", (5, 5), id="hexagon"),
+        pytest.param(dict(outer=ngon(6, phase=pi / 6)), "D6", (5, 5), id="hexagon rotated 30"),
+        pytest.param(dict(outer=ngon(3)), "D3", (5, 5), id="triangle"),
+        pytest.param(dict(outer=ngon(5)), "D5", (5, 5), id="pentagon"),
+        pytest.param(dict(outer=trefoil()[0]), "D3", (0, 0), id="trefoil"),
+        pytest.param(dict(outer=TREFOIL_OUTER, inners=TREFOIL_HOLES), "D3", (0, 0), id="trefoil with hole"),
+        pytest.param(dict(outer=PLUS), "D4", (6, 6), id="plus plate"),
+        pytest.param(dict(outer=L_SHAPE), "C1", None, id="L-shape"),
+        pytest.param(dict(outer=SQUARE, inners=[ngon(26, 2.0)]), "D4", (5, 5), id="circle hole sampled 26"),
+        pytest.param(dict(outer=SQUARE, inners=[ngon(32, 2.0, phase=5 * pi / 180)]), "D4", (5, 5), id="circle hole sampled 32 rotated 5 deg"),
+        pytest.param(dict(outer=SQUARE, guides=FOUR_ARCS), "D4", (5, 5), id="four symmetric arcs"),
+        pytest.param(dict(outer=SQUARE, guides=PINWHEEL_ARCS), "C4", (5, 5), id="pinwheel arcs"),
+        pytest.param(dict(outer=SQUARE, poles=FOUR_POLES), "D4", (5, 5), id="four poles"),
+        pytest.param(dict(outer=SQUARE, guides=[[[2, 2, 0], [2, 6, 0]]]), "C1", None, id="off-centre guide"),
+    ],
+)
 def test_detected_group(kw, expected, centre):
     report = find_symmetry(**kw)
     assert report.group.name == expected
@@ -146,8 +152,7 @@ def test_a_guide_just_off_is_a_named_near_miss():
 def test_exact_translated_copies_keep_d4():
     for s in range(40):
         off = s * 1e-7 + 1.5e-6 * (s % 3)
-        report = find_symmetry(outer=[[p[0] + off, p[1] + off, 0] for p in SQUARE],
-                               inners=[[[p[0] + off, p[1] + off, 0] for p in ngon(24, 2.0)]])
+        report = find_symmetry(outer=[[p[0] + off, p[1] + off, 0] for p in SQUARE], inners=[[[p[0] + off, p[1] + off, 0] for p in ngon(24, 2.0)]])
         assert report.group.order == 8, s
 
 
@@ -155,8 +160,7 @@ def test_exact_translated_copies_keep_d4():
 def test_noise_keeps_d4(eps):
     rng = random.Random(0)
     for _ in range(20):
-        loops = [[[p[0] + rng.uniform(-eps, eps), p[1] + rng.uniform(-eps, eps), 0] for p in loop]
-                 for loop in (SQUARE, ngon(24, 2.0))]
+        loops = [[[p[0] + rng.uniform(-eps, eps), p[1] + rng.uniform(-eps, eps), 0] for p in loop] for loop in (SQUARE, ngon(24, 2.0))]
         assert find_symmetry(outer=loops[0], inners=[loops[1]]).group.order == 8
 
 
@@ -168,8 +172,7 @@ def test_keys_do_not_depend_on_position():
 def test_geometry_draws_mirrors_clipped_to_the_wall_and_rotation_arcs():
     geometry = find_symmetry(outer=SQUARE).geometry()
     assert len(geometry["mirrors"]) == 4
-    assert all(abs(line.length - 10.0) < 1e-6 or abs(line.length - 10.0 * 2 ** 0.5) < 1e-6
-               for line in geometry["mirrors"])
+    assert all(abs(line.length - 10.0) < 1e-6 or abs(line.length - 10.0 * 2**0.5) < 1e-6 for line in geometry["mirrors"])
     assert len(geometry["rotations"]) == 2
 
 
@@ -224,8 +227,7 @@ def test_poles_on_the_diagonal_mirrors_are_refused_with_d2_suggested():
 
 def test_rotation_seams_glue_densities():
     # The FIELD route's C3 unit: its strips reach the two seams as different strips.
-    c3 = FieldDecomposition.from_boundary(TREFOIL_OUTER, inner_boundaries=TREFOIL_HOLES, target_length=0.5,
-                                          solve=False).symmetry_unit(keys=["R120"])
+    c3 = FieldDecomposition.from_boundary(TREFOIL_OUTER, inner_boundaries=TREFOIL_HOLES, target_length=0.5, solve=False).symmetry_unit(keys=["R120"])
     c3.collect_strips()
     c3.set_strips_density_target(0.5)
     glued = [g for g in c3.glued_strips() if len(g) > 1]
@@ -233,13 +235,12 @@ def test_rotation_seams_glue_densities():
     group = glued[0]
     c3.set_strip_density(group[0], 7)
     assert all(c3.get_strip_density(k) == 7 for k in group)
-    CoarseQuadMesh.set_strip_density(c3, group[0], 3)       # force the pair apart
+    CoarseQuadMesh.set_strip_density(c3, group[0], 3)  # force the pair apart
     ok, notes = c3.check()
     assert not ok and "rotation seam" in " ".join(notes)
 
 
-@pytest.mark.parametrize("name", ["coarse_mesh", "decomposition_mesh", "get_field", "quad_mesh",
-                                  "edges_to_curves", "decomposition_polylines", "report"])
+@pytest.mark.parametrize("name", ["coarse_mesh", "decomposition_mesh", "get_field", "quad_mesh", "edges_to_curves", "decomposition_polylines", "report"])
 def test_an_unsolved_field_decomposition_asks_for_solve(name):
     d = FieldDecomposition.from_boundary(SQUARE, target_length=0.5, solve=False)
     assert d.is_solved is False
@@ -252,8 +253,7 @@ def test_solve_later_equals_solving_up_front():
     direct = FieldDecomposition.from_boundary(SQUARE, target_length=0.5)
     a, b = solved.coarse_mesh(), direct.coarse_mesh()
     assert a.number_of_faces() == b.number_of_faces()
-    assert (sorted(map(tuple, (a.vertex_coordinates(v) for v in a.vertices())))
-            == sorted(map(tuple, (b.vertex_coordinates(v) for v in b.vertices()))))
+    assert sorted(map(tuple, (a.vertex_coordinates(v) for v in a.vertices()))) == sorted(map(tuple, (b.vertex_coordinates(v) for v in b.vertices())))
     assert direct.inputs.get("target_length") == 0.5
 
 
@@ -337,8 +337,7 @@ def _workflow_params():
 
 def _all_quad(mesh):
     face_pole = mesh.attributes.get("face_pole") or {}
-    return all(len(mesh.face_vertices(f)) == 4 or (len(mesh.face_vertices(f)) == 3 and f in face_pole)
-               for f in mesh.faces())
+    return all(len(mesh.face_vertices(f)) == 4 or (len(mesh.face_vertices(f)) == 3 and f in face_pole) for f in mesh.faces())
 
 
 @pytest.mark.parametrize("route, kw, keys, expected", list(_workflow_params()))

@@ -2,6 +2,7 @@
 
 Undo is a list of JSON snapshots taken by ``SingularSession.record``; runs without Rhino.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
     from compas_singular.symmetry import Domain
 
 
-__all__ = ['SingularSession', 'UNDO_DEPTH']
+__all__ = ["SingularSession", "UNDO_DEPTH"]
 
 
 #: How many recorded states ``SingularSession.undo`` can step back through.
@@ -43,7 +44,7 @@ class SingularSession(Data):
     """
 
     #: The attributes that hold items. Everything else is settings or history.
-    ITEMS = ('domain', 'coarse', 'field', 'dense')
+    ITEMS = ("domain", "coarse", "field", "dense")
 
     def __init__(
         self,
@@ -60,8 +61,8 @@ class SingularSession(Data):
         self.coarse = coarse
         self.field = field
         self.dense = dense
-        self._history = []      # [(step name, JSON snapshot)], oldest first
-        self._current = -1      # index into _history of the state we are in
+        self._history = []  # [(step name, JSON snapshot)], oldest first
+        self._current = -1  # index into _history of the state we are in
 
     # --------------------------------------------------------------------------
     # compas Data
@@ -75,14 +76,14 @@ class SingularSession(Data):
 
     @property
     def __data__(self) -> dict[str, Any]:
-        data = {'settings': self.settings.model_dump()}
+        data = {"settings": self.settings.model_dump()}
         for item in self.ITEMS:
             data[item] = getattr(self, item)
         return data
 
     @classmethod
     def __from_data__(cls, data: dict[str, Any]) -> SingularSession:
-        settings = Settings.model_validate(data.get('settings') or {})
+        settings = Settings.model_validate(data.get("settings") or {})
         return cls(settings=settings, **{item: data.get(item) for item in cls.ITEMS})
 
     def clear(self, *items: str) -> None:
@@ -92,7 +93,7 @@ class SingularSession(Data):
         """
         for item in items:
             if item not in self.ITEMS:
-                raise ValueError('not a session item: {!r}; the items are {}'.format(item, self.ITEMS))
+                raise ValueError("not a session item: {!r}; the items are {}".format(item, self.ITEMS))
             setattr(self, item, None)
 
     # --------------------------------------------------------------------------
@@ -109,7 +110,7 @@ class SingularSession(Data):
         """Read a project written by ``dump``, recorded as the first undo state."""
         session = cls()
         session.take(compas.json_load(filepath))
-        session.record('load')
+        session.record("load")
         return session
 
     # --------------------------------------------------------------------------
@@ -118,7 +119,7 @@ class SingularSession(Data):
 
     def record(self, name: str) -> None:
         """Remember the current state as the step called ``name``. Drops any redo."""
-        del self._history[self._current + 1:]
+        del self._history[self._current + 1 :]
         self._history.append((name, compas.json_dumps(self)))
         del self._history[:-UNDO_DEPTH]
         self._current = len(self._history) - 1
@@ -149,7 +150,7 @@ class SingularSession(Data):
         loaded from a file, say. Keeps ``self``, so whatever refers to this
         session (a Rhino document) stays valid."""
         if not isinstance(other, SingularSession):
-            raise TypeError('not a compas_singular session: {}'.format(type(other).__name__))
+            raise TypeError("not a compas_singular session: {}".format(type(other).__name__))
         self.settings = other.settings
         for item in self.ITEMS:
             setattr(self, item, getattr(other, item))

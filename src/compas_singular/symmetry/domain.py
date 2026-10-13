@@ -1,4 +1,5 @@
 """The input every meshing route takes: walls, holes, guides and poles."""
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -14,7 +15,7 @@ from compas_singular.symmetry._geometry import bbox_diagonal
 from compas_singular.symmetry._geometry import open_loop
 from compas_singular.symmetry._geometry import point_in_polygon
 
-__all__ = ['Domain']
+__all__ = ["Domain"]
 
 
 class Domain(Data):
@@ -70,9 +71,8 @@ class Domain(Data):
         return cls.from_data(data)
 
     def to_data(self) -> dict[str, Any]:
-        return {'outer': self.outer, 'inners': self.inners,
-                'guides': self.guides, 'poles': self.poles}
+        return {"outer": self.outer, "inners": self.inners, "guides": self.guides, "poles": self.poles}
 
     @classmethod
     def from_data(cls, data: dict[str, Any]) -> Domain:
-        return cls(data.get('outer'), data.get('inners'), data.get('guides'), data.get('poles'))
+        return cls(data.get("outer"), data.get("inners"), data.get("guides"), data.get("poles"))

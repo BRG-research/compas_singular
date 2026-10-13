@@ -2,6 +2,7 @@
 
 Topology edits snapshot the whole mesh; the coarse layout has its own undo stack.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import CoarsePseudoQuadMesh
 
 
-__all__ = ['MeshSession', 'UNDO_DEPTH']
+__all__ = ["MeshSession", "UNDO_DEPTH"]
 
 
 #: How many snapshots to keep. Position maps are small, but a long session with
@@ -31,11 +32,19 @@ UNDO_DEPTH = 20
 #: Actions that change the COARSE layout, and so belong to its undo stack.
 #: Everything else in the history belongs to the dense mesh. ``coarse_densify``
 #: is dense: it reads the layout and replaces the dense mesh.
-COARSE_ACTIONS = frozenset(('create_coarse_mesh', 'coarse_set_density',
-                            'coarse_set_pattern', 'coarse_add_strip',
-                            'coarse_remove_strip', 'coarse_divide',
-                            'coarse_move_corner', 'rhino_pull_coarse',
-                            'coarse_load'))
+COARSE_ACTIONS = frozenset(
+    (
+        "create_coarse_mesh",
+        "coarse_set_density",
+        "coarse_set_pattern",
+        "coarse_add_strip",
+        "coarse_remove_strip",
+        "coarse_divide",
+        "coarse_move_corner",
+        "rhino_pull_coarse",
+        "coarse_load",
+    )
+)
 
 
 class MeshSession(object):
@@ -85,8 +94,9 @@ class MeshSession(object):
     # loading
     # --------------------------------------------------------------------
 
-    def adopt(self, mesh: Mesh, walls: Iterable[Any] | None = None, guides: Iterable[Any] | None = None,
-              points: Iterable[Any] | None = None, source: dict[str, Any] | None = None) -> MeshSession:
+    def adopt(
+        self, mesh: Mesh, walls: Iterable[Any] | None = None, guides: Iterable[Any] | None = None, points: Iterable[Any] | None = None, source: dict[str, Any] | None = None
+    ) -> MeshSession:
         """Take a new mesh, clearing the undo stack, and drop the coarse layout if the domain changed."""
         old_domain = self._domain()
         self.mesh = mesh
@@ -109,10 +119,11 @@ class MeshSession(object):
 
     def _domain(self) -> tuple[Any, Any, list[list[float]]]:
         """Walls, guides and points as plain nested lists, for comparison."""
+
         def curves(items: Iterable[Any]) -> list[list[list[float]]]:
-            return [[list(p) for p in getattr(c, 'points', c)] for c in items]
-        return (curves(self.walls), curves(self.guides),
-                [list(p) for p in self.points])
+            return [[list(p) for p in getattr(c, "points", c)] for c in items]
+
+        return (curves(self.walls), curves(self.guides), [list(p) for p in self.points])
 
     @property
     def loaded(self) -> bool:
@@ -139,8 +150,7 @@ class MeshSession(object):
         metrics = self.quality()
         if metrics is None:
             return None
-        return (metrics.get('min_angle'), metrics.get('max_angle'),
-                metrics.get('aspect_max'))
+        return (metrics.get("min_angle"), metrics.get("max_angle"), metrics.get("aspect_max"))
 
     # --------------------------------------------------------------------
     # has anybody actually looked at it
@@ -177,23 +187,22 @@ class MeshSession(object):
     # --------------------------------------------------------------------
 
     def positions(self) -> dict[Any, list[float]]:
-        return dict((key, list(self.mesh.vertex_coordinates(key)))
-                    for key in self.mesh.vertices())
+        return dict((key, list(self.mesh.vertex_coordinates(key))) for key in self.mesh.vertices())
 
-    def snapshot(self, label: str = '', whole: bool = False) -> str | None:
+    def snapshot(self, label: str = "", whole: bool = False) -> str | None:
         """Remember every vertex position, or with ``whole=True`` a copy of the mesh, on the undo stack."""
         if self.mesh is None:
             return None
         entry = {
-            'label': label,
-            'vertices': self.mesh.number_of_vertices(),
-            'faces': self.mesh.number_of_faces(),
-            'step': len(self.history),
+            "label": label,
+            "vertices": self.mesh.number_of_vertices(),
+            "faces": self.mesh.number_of_faces(),
+            "step": len(self.history),
         }
         if whole:
-            entry['mesh'] = self.mesh.copy()
+            entry["mesh"] = self.mesh.copy()
         else:
-            entry['positions'] = self.positions()
+            entry["positions"] = self.positions()
         self._undo.append(entry)
         while len(self._undo) > UNDO_DEPTH:
             self._undo.pop(0)
@@ -211,43 +220,40 @@ class MeshSession(object):
             ``(True, label)``, or ``(False, reason)``.
         """
         if self.mesh is None:
-            return False, 'nothing is loaded'
+            return False, "nothing is loaded"
         if not self._undo:
-            return False, 'nothing to undo -- no snapshot has been taken'
+            return False, "nothing to undo -- no snapshot has been taken"
         entry = self._undo.pop()
-        if 'mesh' in entry:
-            self.mesh = entry['mesh']
-            self._mark_undone(entry['step'], 'dense')
+        if "mesh" in entry:
+            self.mesh = entry["mesh"]
+            self._mark_undone(entry["step"], "dense")
             self.mark_changed()
-            return True, entry['label'] or 'the last snapshot'
-        if (entry['vertices'] != self.mesh.number_of_vertices()
-                or entry['faces'] != self.mesh.number_of_faces()):
+            return True, entry["label"] or "the last snapshot"
+        if entry["vertices"] != self.mesh.number_of_vertices() or entry["faces"] != self.mesh.number_of_faces():
             # Reachable since the dense line tools: a POSITION snapshot taken
             # before a topology edit that was not itself undone first.
-            return False, ('the mesh has {} vertices and {} faces, but the '
-                           'snapshot was taken at {} and {} -- a position undo '
-                           'cannot restore a changed topology'.format(
-                               self.mesh.number_of_vertices(),
-                               self.mesh.number_of_faces(),
-                               entry['vertices'], entry['faces']))
-        for key, xyz in entry['positions'].items():
-            self.mesh.vertex_attributes(key, 'xyz', xyz)
-        self._mark_undone(entry['step'], 'dense')
+            return False, (
+                "the mesh has {} vertices and {} faces, but the snapshot was taken at {} and {} -- a position undo cannot restore a changed topology".format(
+                    self.mesh.number_of_vertices(), self.mesh.number_of_faces(), entry["vertices"], entry["faces"]
+                )
+            )
+        for key, xyz in entry["positions"].items():
+            self.mesh.vertex_attributes(key, "xyz", xyz)
+        self._mark_undone(entry["step"], "dense")
         # An undo moves every vertex, so the last picture is out of date too.
         self.mark_changed()
-        return True, entry['label'] or 'the last snapshot'
+        return True, entry["label"] or "the last snapshot"
 
     # --------------------------------------------------------------------
     # coarse-layout undo -- a different stack, because a strip edit changes
     # topology and a position map cannot restore that
     # --------------------------------------------------------------------
 
-    def snapshot_coarse(self, label: str = '') -> str | None:
+    def snapshot_coarse(self, label: str = "") -> str | None:
         """Remember the coarse layout whole, so a strip edit can be undone."""
         if self.coarse is None:
             return None
-        self._coarse_undo.append({'label': label, 'mesh': self.coarse.copy(),
-                                  'step': len(self.history)})
+        self._coarse_undo.append({"label": label, "mesh": self.coarse.copy(), "step": len(self.history)})
         while len(self._coarse_undo) > UNDO_DEPTH:
             self._coarse_undo.pop(0)
         return label
@@ -264,24 +270,24 @@ class MeshSession(object):
             ``(True, label)``, or ``(False, reason)``.
         """
         if self.coarse is None:
-            return False, 'no coarse layout is loaded'
+            return False, "no coarse layout is loaded"
         if not self._coarse_undo:
-            return False, 'nothing to undo -- no coarse snapshot has been taken'
+            return False, "nothing to undo -- no coarse snapshot has been taken"
         entry = self._coarse_undo.pop()
-        self.coarse = entry['mesh']
+        self.coarse = entry["mesh"]
         self._coarse_changed_at += 1
-        self._mark_undone(entry['step'], 'coarse')
-        return True, entry['label'] or 'the last coarse snapshot'
+        self._mark_undone(entry["step"], "coarse")
+        return True, entry["label"] or "the last coarse snapshot"
 
     def _mark_undone(self, step: int, layer: str) -> None:
         """Flag, not delete, the history steps an undo took back, for its own layer only."""
         for entry in self.history[step:]:
-            if entry.get('layer') == layer:
-                entry['undone'] = True
+            if entry.get("layer") == layer:
+                entry["undone"] = True
 
     def live_steps(self) -> list[dict[str, Any]]:
         """The history minus every step an undo took back."""
-        return [entry for entry in self.history if not entry.get('undone')]
+        return [entry for entry in self.history if not entry.get("undone")]
 
     # --------------------------------------------------------------------
     # the record
@@ -289,63 +295,60 @@ class MeshSession(object):
 
     def record(self, action: str, before: Any = None, after: Any = None, **detail: Any) -> dict[str, Any]:
         """Append a step. Returns the entry, so a tool can report it back."""
-        entry = {'step': len(self.history), 'action': action,
-                 'layer': 'coarse' if action in COARSE_ACTIONS else 'dense',
-                 'at': time.time(), 'before': before, 'after': after}
+        entry = {"step": len(self.history), "action": action, "layer": "coarse" if action in COARSE_ACTIONS else "dense", "at": time.time(), "before": before, "after": after}
         entry.update(detail)
         self.history.append(entry)
-        if entry['layer'] == 'coarse':
+        if entry["layer"] == "coarse":
             self._coarse_changed_at += 1
         return entry
 
     def add_remark(self, text: str, about: Any = None) -> dict[str, Any]:
-        remark = {'step': len(self.history), 'text': text, 'about': about,
-                  'at': time.time()}
+        remark = {"step": len(self.history), "text": text, "about": about, "at": time.time()}
         self.remarks.append(remark)
         return remark
 
     def remarks_for(self, step: int) -> list[str]:
-        return [r['text'] for r in self.remarks if r['step'] == step]
+        return [r["text"] for r in self.remarks if r["step"] == step]
 
     def state(self) -> dict[str, Any]:
         """A small summary. The reading in prose is ``describe``'s job."""
         mesh = self.mesh
         coarse = self.coarse
         return {
-            'loaded': self.loaded,
-            'source': self.source,
-            'vertices': mesh.number_of_vertices() if mesh else None,
-            'faces': mesh.number_of_faces() if mesh else None,
-            'walls': len(self.walls),
-            'guides': len(self.guides),
-            'points': len(self.points),
-            'steps': len(self.live_steps()),
-            'undone_steps': len(self.history) - len(self.live_steps()),
-            'remarks': len(self.remarks),
-            'undo_depth': len(self._undo),
-            'visually_current': self.visually_current,
-            'coarse_loaded': coarse is not None,
-            'coarse_faces': coarse.number_of_faces() if coarse else None,
-            'coarse_strips': len(list(coarse.strips())) if coarse else None,
-            'coarse_undo_depth': len(self._coarse_undo),
-            'coarse_visually_current': self.coarse_visually_current,
+            "loaded": self.loaded,
+            "source": self.source,
+            "vertices": mesh.number_of_vertices() if mesh else None,
+            "faces": mesh.number_of_faces() if mesh else None,
+            "walls": len(self.walls),
+            "guides": len(self.guides),
+            "points": len(self.points),
+            "steps": len(self.live_steps()),
+            "undone_steps": len(self.history) - len(self.live_steps()),
+            "remarks": len(self.remarks),
+            "undo_depth": len(self._undo),
+            "visually_current": self.visually_current,
+            "coarse_loaded": coarse is not None,
+            "coarse_faces": coarse.number_of_faces() if coarse else None,
+            "coarse_strips": len(list(coarse.strips())) if coarse else None,
+            "coarse_undo_depth": len(self._coarse_undo),
+            "coarse_visually_current": self.coarse_visually_current,
         }
 
     def __repr__(self) -> str:
         state = self.state()
-        return '<MeshSession {} faces, {} step(s)>'.format(
-            state['faces'], state['steps'])
+        return "<MeshSession {} faces, {} step(s)>".format(state["faces"], state["steps"])
 
 
 def _as_polylines(curves: Iterable[Any] | None) -> list[Polyline]:
     """Point lists as compas polylines, which the smoothers want."""
     from compas.geometry import Polyline
+
     out = []
     for curve in curves or []:
         if isinstance(curve, Polyline):
             out.append(curve)
             continue
-        points = getattr(curve, 'points', curve)
+        points = getattr(curve, "points", curve)
         points = [list(p) for p in points]
         if len(points) >= 2:
             out.append(Polyline(points))

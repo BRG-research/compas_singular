@@ -1,4 +1,5 @@
 """What ``.detect.find_symmetry`` found, and the geometry to show it with."""
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
     from compas_singular.symmetry.group import SymmetryGroup
 
 
-__all__ = ['SymmetryReport']
+__all__ = ["SymmetryReport"]
 
 
 class SymmetryReport(object):
@@ -79,8 +80,7 @@ class SymmetryReport(object):
         return self.group.keys()
 
     def __repr__(self) -> str:
-        return '<Symmetry {} about ({:.3f}, {:.3f}): {}>'.format(
-            self.group.name, self.centre[0], self.centre[1], ' '.join(self.keys) or '-')
+        return "<Symmetry {} about ({:.3f}, {:.3f}): {}>".format(self.group.name, self.centre[0], self.centre[1], " ".join(self.keys) or "-")
 
     def centre_inside(self) -> bool:
         return self.domain.contains(self.centre)
@@ -90,25 +90,23 @@ class SymmetryReport(object):
         out = []
         g = self.group
         if g.is_trivial:
-            out.append('no symmetry detected within tol {:.3g}'.format(self.tol))
+            out.append("no symmetry detected within tol {:.3g}".format(self.tol))
         if self.circle_like:
-            out.append('every rotation up to order {} passed: the domain is circle-like, '
-                       'choose the symmetry you want by keys'.format(self.max_order))
+            out.append("every rotation up to order {} passed: the domain is circle-like, choose the symmetry you want by keys".format(self.max_order))
         if g.n in (3, 6) and self.centre_inside():
-            out.append('{}-fold symmetry about a centre inside the domain: any quad mesh '
-                       'with this symmetry has a singularity at the centre'.format(g.n))
+            out.append("{}-fold symmetry about a centre inside the domain: any quad mesh with this symmetry has a singularity at the centre".format(g.n))
         worst = max([d for d, _ in self.deviations.values()] or [0.0])
         if worst > 0.0:
-            out.append('worst deviation of the detected symmetry: {:.3g} (tol {:.3g})'.format(worst, self.tol))
+            out.append("worst deviation of the detected symmetry: {:.3g} (tol {:.3g})".format(worst, self.tol))
         for key, dev, where in self.near_misses[:5]:
-            tag = where[0] if where else '?'
-            out.append('near miss {}: {:.3g} off, worst on {}'.format(key, dev, tag))
+            tag = where[0] if where else "?"
+            out.append("near miss {}: {:.3g} off, worst on {}".format(key, dev, tag))
         return out
 
     def summary(self) -> str:
         lines = [repr(self)]
-        lines += ['  ' + note for note in self.notes()]
-        return '\n'.join(lines)
+        lines += ["  " + note for note in self.notes()]
+        return "\n".join(lines)
 
     # ------------------------------------------------------------------
     # per feature class
@@ -124,20 +122,17 @@ class SymmetryReport(object):
             consecutive groups says which kind of feature breaks the symmetry.
         """
         from compas_singular.symmetry.detect import find_symmetry
+
         stages = []
         include = []
-        present = {'walls': bool(self.domain.outer), 'holes': bool(self.domain.inners),
-                   'guides': bool(self.domain.guides), 'poles': bool(self.domain.poles)}
-        for kind, label in (('walls', 'walls'), ('holes', '+holes'),
-                            ('guides', '+guides'), ('poles', '+poles')):
+        present = {"walls": bool(self.domain.outer), "holes": bool(self.domain.inners), "guides": bool(self.domain.guides), "poles": bool(self.domain.poles)}
+        for kind, label in (("walls", "walls"), ("holes", "+holes"), ("guides", "+guides"), ("poles", "+poles")):
             if kind not in self.include:
                 continue
             include.append(kind)
-            if not present[kind] and kind != 'walls':
+            if not present[kind] and kind != "walls":
                 continue
-            report = find_symmetry(domain=self.domain, tol=self.tol, near=self.near,
-                                   include=tuple(include), max_order=self.max_order,
-                                   centre=self.centre)
+            report = find_symmetry(domain=self.domain, tol=self.tol, near=self.near, include=tuple(include), max_order=self.max_order, centre=self.centre)
             stages.append((label, report))
         return stages
 
@@ -164,28 +159,26 @@ class SymmetryReport(object):
         g = self.group
         c = self.centre
         diagonal = self.domain.diagonal or 1.0
-        out = {'centre': Point(*c), 'mirrors': [], 'rotations': [], 'near_misses': []}
+        out = {"centre": Point(*c), "mirrors": [], "rotations": [], "near_misses": []}
 
         for e in g.mirror_elements():
             a, b = self._clip_line(e.angle)
-            out['mirrors'].append(Line(a, b))
+            out["mirrors"].append(Line(a, b))
 
         if g.n > 1:
             radius = arc_radius or 0.12 * diagonal
             start = g.axis if g.mirrors else 0.0
             sweep = 2 * pi / g.n
             steps = max(8, int(32 * sweep / (2 * pi)) + 4)
-            arc = [[c[0] + radius * cos(start + sweep * i / steps),
-                    c[1] + radius * sin(start + sweep * i / steps), 0.0] for i in range(steps + 1)]
-            out['rotations'].append(Polyline(arc))
+            arc = [[c[0] + radius * cos(start + sweep * i / steps), c[1] + radius * sin(start + sweep * i / steps), 0.0] for i in range(steps + 1)]
+            out["rotations"].append(Polyline(arc))
             end = start + sweep
-            tick = [[c[0] + 0.8 * radius * cos(end), c[1] + 0.8 * radius * sin(end), 0.0],
-                    [c[0] + 1.2 * radius * cos(end), c[1] + 1.2 * radius * sin(end), 0.0]]
-            out['rotations'].append(Polyline(tick))
+            tick = [[c[0] + 0.8 * radius * cos(end), c[1] + 0.8 * radius * sin(end), 0.0], [c[0] + 1.2 * radius * cos(end), c[1] + 1.2 * radius * sin(end), 0.0]]
+            out["rotations"].append(Polyline(tick))
 
         for key, dev, where in self.near_misses:
             if where:
-                out['near_misses'].append(Point(*where[1]))
+                out["near_misses"].append(Point(*where[1]))
         return out
 
     def _clip_line(self, angle: float) -> tuple[list[float], list[float]]:
@@ -213,9 +206,7 @@ class SymmetryReport(object):
         lo, hi = min(ts), max(ts)
         return [c[0] + lo * ux, c[1] + lo * uy, 0.0], [c[0] + hi * ux, c[1] + hi * uy, 0.0]
 
-    def unit_outline(
-        self, keys: Sequence[str] | None = None, centre: str = 'route', seam: Any = None
-    ) -> dict[str, list[Polyline]]:
+    def unit_outline(self, keys: Sequence[str] | None = None, centre: str = "route", seam: Any = None) -> dict[str, list[Polyline]]:
         """The unit region for ``keys`` as closed ``Polyline``s, before any meshing.
 
         Returns
@@ -226,6 +217,7 @@ class SymmetryReport(object):
         """
         from compas.geometry import Polyline
         from compas_singular.symmetry.cut import cut_unit
+
         unit = cut_unit(self.domain, self.group.subgroup(keys), centre=centre, seam=seam)
         loops = []
         for outer, holes in unit.components:
@@ -233,16 +225,21 @@ class SymmetryReport(object):
             for hole in holes:
                 loops.append(Polyline(hole + [hole[0]]))
         seams = [Polyline(s) for s in unit.seam_segments()]
-        return {'loops': loops, 'seams': seams}
+        return {"loops": loops, "seams": seams}
 
     # ------------------------------------------------------------------
 
     def to_data(self) -> dict[str, Any]:
-        return {'group': self.group.to_data(), 'tol': self.tol, 'near': self.near,
-                'include': list(self.include), 'circle_like': self.circle_like,
-                'deviations': {k: v[0] for k, v in self.deviations.items()},
-                'near_misses': [[k, d, w[0] if w else None] for k, d, w in self.near_misses],
-                'domain': self.domain.to_data()}
+        return {
+            "group": self.group.to_data(),
+            "tol": self.tol,
+            "near": self.near,
+            "include": list(self.include),
+            "circle_like": self.circle_like,
+            "deviations": {k: v[0] for k, v in self.deviations.items()},
+            "near_misses": [[k, d, w[0] if w else None] for k, d, w in self.near_misses],
+            "domain": self.domain.to_data(),
+        }
 
 
 def _inside(point: Sequence[float], loop: Sequence[Sequence[float]]) -> bool:

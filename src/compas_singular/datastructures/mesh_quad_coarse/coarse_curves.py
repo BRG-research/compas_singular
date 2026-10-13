@@ -2,6 +2,7 @@
 
 Tolerances allow for the float32 round trip of a baked mesh. Design notes: ``design_notes/datastructures.md``.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -20,10 +21,10 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    'coarse_edges_to_curves',
-    'snap_corners_to_walls',
-    'mean_edge_length',
-    'BoundaryLoop',
+    "coarse_edges_to_curves",
+    "snap_corners_to_walls",
+    "mean_edge_length",
+    "BoundaryLoop",
 ]
 
 
@@ -73,7 +74,7 @@ class BoundaryLoop(object):
         Searched over ONE turn -- the second turn is the same loop and would
         only ever tie.
         """
-        best = (float('inf'), 0.0, None)
+        best = (float("inf"), 0.0, None)
         for i in range(len(self.points)):
             a, b = self.ring[i], self.ring[i + 1]
             abx, aby = b[0] - a[0], b[1] - a[1]
@@ -100,8 +101,7 @@ class BoundaryLoop(object):
 
     def _span(self, s0: float, s1: float, flip: bool, pa: list[float], pb: list[float]) -> list[list[float]] | None:
         """One way round, as the loop's own points from ``pa`` to ``pb``, with the ends set exactly to them."""
-        inner = [list(self.ring[i]) for i in range(len(self.ring))
-                 if s0 + 1e-9 < self.cum[i] < s1 - 1e-9]
+        inner = [list(self.ring[i]) for i in range(len(self.ring)) if s0 + 1e-9 < self.cum[i] < s1 - 1e-9]
 
         # An arc SHORTER than the loop's own sampling step straddles no loop
         # point, so it would come back as two points -- the chord -- and be
@@ -136,8 +136,7 @@ class BoundaryLoop(object):
         ahead = (sa, sa + forward, False)
         behind = (sb, sb + backward, True)
         order = (ahead, behind) if forward <= backward else (behind, ahead)
-        return [arc for arc in (self._span(s0, s1, flip, pa, pb)
-                                for s0, s1, flip in order) if arc is not None]
+        return [arc for arc in (self._span(s0, s1, flip, pa, pb) for s0, s1, flip in order) if arc is not None]
 
     def arc(self, pa: list[float], pb: list[float]) -> list[list[float]] | None:
         """The shorter way round the loop from ``pa`` to ``pb``, or ``None``."""
@@ -157,8 +156,7 @@ def _arc_is_one_edge(arc: list[list[float]] | None, pa: list[float], pb: list[fl
 
     for point in corners:
         # the arc's own endpoints are not "another corner"
-        if (distance_point_point(point, pa) < 1e-6
-                or distance_point_point(point, pb) < 1e-6):
+        if distance_point_point(point, pa) < 1e-6 or distance_point_point(point, pb) < 1e-6:
             continue
         if not (lo_x <= point[0] <= hi_x and lo_y <= point[1] <= hi_y):
             continue
@@ -193,8 +191,9 @@ def _wall_arc(loops: list[BoundaryLoop], pa: list[float], pb: list[float], corne
     return None
 
 
-def snap_corners_to_walls(coarse: "CoarseQuadMesh | CoarsePseudoQuadMesh", loops: "list[list[list[float]]] | tuple[list[list[float]], ...]" = (),
-                          wall_tol: float | None = None) -> tuple[int, float]:
+def snap_corners_to_walls(
+    coarse: "CoarseQuadMesh | CoarsePseudoQuadMesh", loops: "list[list[list[float]]] | tuple[list[list[float]], ...]" = (), wall_tol: float | None = None
+) -> tuple[int, float]:
     """Move the layout's boundary corners onto the nearest wall, within ``wall_tol``. ``(moved, worst)``.
 
     Mutates ``coarse``; call it before ``coarse_edges_to_curves``.
@@ -235,15 +234,19 @@ def snap_corners_to_walls(coarse: "CoarseQuadMesh | CoarsePseudoQuadMesh", loops
             continue
         if best[0] <= 1e-12 or best[0] > wall_tol:
             continue
-        coarse.vertex_attributes(vertex, 'xyz', best[1])
+        coarse.vertex_attributes(vertex, "xyz", best[1])
         moved += 1
         worst = max(worst, best[0])
     return moved, worst
 
 
-def coarse_edges_to_curves(coarse: "CoarseQuadMesh | CoarsePseudoQuadMesh", loops: "list[list[list[float]]] | tuple[list[list[float]], ...]" = (),
-                           polylines: "list[list[list[float]]] | tuple[list[list[float]], ...]" = (), wall_tol: float | None = None,
-                           precision: int | None = None) -> tuple[dict[tuple[int, int], list[list[float]]], dict[str, int]]:
+def coarse_edges_to_curves(
+    coarse: "CoarseQuadMesh | CoarsePseudoQuadMesh",
+    loops: "list[list[list[float]]] | tuple[list[list[float]], ...]" = (),
+    polylines: "list[list[list[float]]] | tuple[list[list[float]], ...]" = (),
+    wall_tol: float | None = None,
+    precision: int | None = None,
+) -> tuple[dict[tuple[int, int], list[list[float]]], dict[str, int]]:
     """``({(u, v): polyline}, tally)``: the shape of every coarse edge, for ``densification(edges_to_curves=...)``.
 
     The mapping is complete for every edge, as ``densification`` requires.
@@ -291,7 +294,7 @@ def coarse_edges_to_curves(coarse: "CoarseQuadMesh | CoarsePseudoQuadMesh", loop
 
     lookup = {}
     traced = []
-    for polyline in (polylines or []):
+    for polyline in polylines or []:
         points = [[float(p[0]), float(p[1]), float(p[2])] for p in polyline]
         if len(points) < 2:
             continue
@@ -312,45 +315,42 @@ def coarse_edges_to_curves(coarse: "CoarseQuadMesh | CoarsePseudoQuadMesh", loop
         best, found = wall_tol, None
         for points in traced:
             for curve in (points, list(reversed(points))):
-                score = (distance_point_point(curve[0], pa)
-                         + distance_point_point(curve[-1], pb))
+                score = distance_point_point(curve[0], pa) + distance_point_point(curve[-1], pb)
                 if score < best:
                     best, found = score, curve
         return found
 
     # BOUNDARY corners only -- see _arc_is_one_edge. An interior corner cannot
     # end a boundary edge, so it is not evidence that an arc spans several.
-    corners = [coarse.vertex_coordinates(w) for w in coarse.vertices()
-               if coarse.is_vertex_on_boundary(w)]
-    tally = {'boundary': 0, 'traced': 0, 'chord': 0, 'wall_missed': 0}
+    corners = [coarse.vertex_coordinates(w) for w in coarse.vertices() if coarse.is_vertex_on_boundary(w)]
+    tally = {"boundary": 0, "traced": 0, "chord": 0, "wall_missed": 0}
     out = {}
 
     for u, v in coarse.edges():
         pa = coarse.vertex_coordinates(u)
         pb = coarse.vertex_coordinates(v)
 
-        curve, how = None, 'chord'
+        curve, how = None, "chord"
 
         on_wall = bool(walls) and coarse.is_edge_on_boundary((u, v))
         if on_wall:
             curve = _wall_arc(walls, pa, pb, corners, wall_tol, arc_tol)
             if curve is not None:
-                how = 'boundary'
+                how = "boundary"
             else:
-                tally['wall_missed'] += 1
+                tally["wall_missed"] += 1
 
         if curve is None:
-            curve = lookup.get((TOL.geometric_key(pa, precision),
-                                TOL.geometric_key(pb, precision)))
+            curve = lookup.get((TOL.geometric_key(pa, precision), TOL.geometric_key(pb, precision)))
             if curve is None:
                 curve = _nearest_branch(pa, pb)
             if curve is not None:
                 curve = [list(point) for point in curve]
-                how = 'traced'
+                how = "traced"
 
         if curve is None or len(curve) < 2:
             curve = [list(pa), list(pb)]
-            how = 'chord'
+            how = "chord"
         else:
             # Both branches must end EXACTLY on the corners or the Coons patches
             # of the two faces sharing this edge disagree and will not weld.

@@ -2,6 +2,7 @@
 
 Plain Python, no shapely. Design notes: ``design_notes/symmetry.md``.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -30,12 +31,13 @@ if TYPE_CHECKING:
     from compas_singular.symmetry.group import SymmetryGroup
 
 
-__all__ = ['cut_unit', 'UnitDomain', 'clip_halfplane']
+__all__ = ["cut_unit", "UnitDomain", "clip_halfplane"]
 
 
 # ----------------------------------------------------------------------
 # half-plane clipping
 # ----------------------------------------------------------------------
+
 
 def _interp(p: Sequence[float], q: Sequence[float], sp: float, sq: float) -> list[float]:
     t = sp / (sp - sq)
@@ -73,9 +75,7 @@ def _remove_spikes(loop: list[Sequence[float]], eps: float) -> list[Sequence[flo
     return loop
 
 
-def clip_halfplane(
-    loops: Sequence[Sequence[Sequence[float]]], point: Sequence[float], direction: Sequence[float], eps: float
-) -> list[list[Sequence[float]]]:
+def clip_halfplane(loops: Sequence[Sequence[Sequence[float]]], point: Sequence[float], direction: Sequence[float], eps: float) -> list[list[Sequence[float]]]:
     """The part of the region bounded by ``loops`` LEFT of the directed line.
 
     Parameters
@@ -134,8 +134,8 @@ def clip_halfplane(
     if chains:
         events = []
         for index, chain in enumerate(chains):
-            events.append((along(chain[0]), 0, index))     # entry
-            events.append((along(chain[-1]), 1, index))    # exit
+            events.append((along(chain[0]), 0, index))  # entry
+            events.append((along(chain[-1]), 1, index))  # exit
         events.sort()
         # The interior along the line is exit -> next entry. With ties, an entry
         # sorts before an exit, which keeps a loop that TOUCHES the line from
@@ -150,7 +150,7 @@ def clip_halfplane(
                 while j < len(order) and not (order[j][1] == 0 and order[j][2] not in successor.values()):
                     j += 1
                 if j == len(order):
-                    raise ValueError('half-plane clip failed: an exit at {:.6g} has no entry after it'.format(u))
+                    raise ValueError("half-plane clip failed: an exit at {:.6g} has no entry after it".format(u))
                 successor[index] = order[j][2]
             k += 1
         visited = set()
@@ -166,16 +166,14 @@ def clip_halfplane(
                 j = successor[j]
                 guard += 1
                 if guard > len(chains) + 1:
-                    raise ValueError('half-plane clip failed: chains do not close')
+                    raise ValueError("half-plane clip failed: chains do not close")
             loop = _remove_spikes(_dedupe(loop, eps), eps)
             if len(loop) >= 3 and abs(signed_area(loop)) > eps * eps:
                 kept.append(loop)
     return kept
 
 
-def clip_polyline(
-    points: Sequence[Sequence[float]], point: Sequence[float], direction: Sequence[float], eps: float
-) -> list[list[Sequence[float]]]:
+def clip_polyline(points: Sequence[Sequence[float]], point: Sequence[float], direction: Sequence[float], eps: float) -> list[list[Sequence[float]]]:
     """Pieces of an open polyline left of the line (on the line counts as in).
     Pieces lying entirely ON the line are dropped: they are seam, not guide."""
     cx, cy = point[0], point[1]
@@ -215,6 +213,7 @@ def clip_polyline(
 # the unit
 # ----------------------------------------------------------------------
 
+
 class Seam(object):
     """One boundary ray of the wedge.
 
@@ -245,8 +244,7 @@ class Seam(object):
         return [self.centre[0] + t * self.direction[0], self.centre[1] + t * self.direction[1], 0.0]
 
     def to_data(self) -> dict[str, Any]:
-        return {'name': self.name, 'angle': degrees(self.angle), 'kind': self.kind,
-                'element': self.element}
+        return {"name": self.name, "angle": degrees(self.angle), "kind": self.kind, "element": self.element}
 
 
 class UnitDomain(object):
@@ -417,19 +415,23 @@ class UnitDomain(object):
         return runs
 
     def to_data(self) -> dict[str, Any]:
-        return {'group': self.group.to_data(), 'seams': [s.to_data() for s in self.seams],
-                'wedge': degrees(self.wedge), 'eps': self.eps,
-                'components': [[outer, holes] for outer, holes in self.components],
-                'guides': self.guides, 'poles': self.poles, 'poles_on_seams': self.poles_on_seams}
+        return {
+            "group": self.group.to_data(),
+            "seams": [s.to_data() for s in self.seams],
+            "wedge": degrees(self.wedge),
+            "eps": self.eps,
+            "components": [[outer, holes] for outer, holes in self.components],
+            "guides": self.guides,
+            "poles": self.poles,
+            "poles_on_seams": self.poles_on_seams,
+        }
 
 
 def _choose_rotation_seam(domain: Domain, group: SymmetryGroup, eps: float, samples: int = 180) -> float:
     return rotation_seam_candidates(domain, group, eps, samples)[0]
 
 
-def rotation_seam_candidates(
-    domain: Domain, group: SymmetryGroup, eps: float, samples: int = 180, count: int | None = None
-) -> list[float]:
+def rotation_seam_candidates(domain: Domain, group: SymmetryGroup, eps: float, samples: int = 180, count: int | None = None) -> list[float]:
     """Seam angles for a rotation-only group, best first. See the scoring below.
 
     Nearly equal angles are collapsed so the list offers genuinely different
@@ -446,9 +448,7 @@ def rotation_seam_candidates(
     return out
 
 
-def _score_rotation_seams(
-    domain: Domain, group: SymmetryGroup, eps: float, samples: int = 180
-) -> list[tuple[float, float]]:
+def _score_rotation_seams(domain: Domain, group: SymmetryGroup, eps: float, samples: int = 180) -> list[tuple[float, float]]:
     """``[(score, angle)]`` for every sampled seam angle of a rotation-only group; lower is better."""
     c = group.centre
     span = 2 * pi / group.n
@@ -459,8 +459,7 @@ def _score_rotation_seams(
         ux, uy = cos(theta), sin(theta)
         far = [c[0] + radius * ux, c[1] + radius * uy]
         score = 0.0
-        for loop, weight, closed in ([(domain.outer, 0.0, True)] + [(h, 1.0, True) for h in domain.inners]
-                                     + [(g, 1.0, False) for g in domain.guides]):
+        for loop, weight, closed in [(domain.outer, 0.0, True)] + [(h, 1.0, True) for h in domain.inners] + [(g, 1.0, False) for g in domain.guides]:
             crossings = _count_crossings(c, far, loop, closed)
             if loop is domain.outer:
                 score += 2.0 * max(0, crossings - 1)
@@ -496,7 +495,7 @@ def _count_crossings(a: Sequence[float], b: Sequence[float], loop: Sequence[Sequ
 def cut_unit(
     domain: Domain,
     group: SymmetryGroup,
-    centre: str = 'route',
+    centre: str = "route",
     seam: float | None = None,
     eps: float | None = None,
 ) -> UnitDomain:
@@ -521,7 +520,7 @@ def cut_unit(
     -------
     UnitDomain
     """
-    if centre not in ('route', None):
+    if centre not in ("route", None):
         raise NotImplementedError("centre={!r} is not implemented yet -- only 'route'".format(centre))
     diagonal = domain.diagonal or 1.0
     eps = 1e-7 * diagonal if eps is None else eps
@@ -531,22 +530,21 @@ def cut_unit(
     holes = [oriented(open_loop(h), ccw=False) for h in domain.inners if len(h) >= 3]
 
     if group.is_trivial:
-        return UnitDomain(group, [], [(outer, holes)], [list(g) for g in domain.guides],
-                          [list(p) for p in domain.poles], [], eps, 2 * pi)
+        return UnitDomain(group, [], [(outer, holes)], [list(g) for g in domain.guides], [list(p) for p in domain.poles], [], eps, 2 * pi)
 
     if group.mirrors:
         a = group.axis
         wedge = pi / group.n
         b = a + wedge
-        seam_a = Seam('A', a, 'mirror', _mirror(a).key, c)
-        seam_b = Seam('B', b, 'mirror', _mirror(b).key, c)
+        seam_a = Seam("A", a, "mirror", _mirror(a).key, c)
+        seam_b = Seam("B", b, "mirror", _mirror(b).key, c)
     else:
         a = _choose_rotation_seam(domain, group, eps) if seam is None else float(seam)
         wedge = 2 * pi / group.n
         b = a + wedge
         key = _rotation(wedge).key
-        seam_a = Seam('A', a, 'rotation', key, c)
-        seam_b = Seam('B', b, 'rotation', key, c)
+        seam_a = Seam("A", a, "rotation", key, c)
+        seam_b = Seam("B", b, "rotation", key, c)
 
     # Left of A (angles a .. a + pi), then -- unless the wedge IS that half-plane --
     # left of B reversed (angles b - pi .. b).
@@ -568,11 +566,11 @@ def cut_unit(
         ty = sum(p[1] for p in h) / len(h)
         owners = [i for i, (o, _) in enumerate(components) if point_in_polygon(tx, ty, o)]
         if not owners:
-            raise ValueError('a hole of the unit is not inside any of its outer loops')
+            raise ValueError("a hole of the unit is not inside any of its outer loops")
         owner = min(owners, key=lambda i: area_centroid(components[i][0])[0])
         components[owner][1].append(h)
     if not components:
-        raise ValueError('the unit is empty -- is the centre {} inside the domain?'.format(c))
+        raise ValueError("the unit is empty -- is the centre {} inside the domain?".format(c))
 
     unit = UnitDomain(group, [seam_a, seam_b], components, guides, [], [], eps, wedge)
     for p in domain.poles:

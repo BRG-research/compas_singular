@@ -3,6 +3,7 @@
 Welds corners, snaps boundary corners to the walls, repairs to all-quad; the field is not re-solved.
 Design notes: ``design_notes/editing.md``.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -22,9 +23,7 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import QuadMesh
 
 
-__all__ = ['coarse_from_skeleton', 'warp_polyline', 'face_polylines',
-           'faces_from_geometry', 'mesh_from_faces', 'snap_to_loops',
-           'closest_on_loop', 'PRECISION']
+__all__ = ["coarse_from_skeleton", "warp_polyline", "face_polylines", "faces_from_geometry", "mesh_from_faces", "snap_to_loops", "closest_on_loop", "PRECISION"]
 
 
 #: Decimals the corner weld rounds to. Matches ``_mesh_from_faces`` and is the
@@ -37,16 +36,15 @@ PRECISION = 3
 # reading what Rhino handed back
 # ------------------------------------------------------------------
 
+
 def _is_mesh(thing: Any) -> bool:
     """Duck-typed: a compas mesh of any class, including the pseudo-quad ones."""
-    return all(hasattr(thing, name)
-               for name in ('vertices', 'faces', 'vertex_coordinates',
-                            'face_vertices'))
+    return all(hasattr(thing, name) for name in ("vertices", "faces", "vertex_coordinates", "face_vertices"))
 
 
 def _as_points(thing: Any) -> list[list[float]]:
     """A polyline, compas ``Polyline`` or point list as a point list, without a closing repeat."""
-    points = [list(p)[:3] for p in getattr(thing, 'points', thing)]
+    points = [list(p)[:3] for p in getattr(thing, "points", thing)]
     points = [p + [0.0] * (3 - len(p)) for p in points]
     if len(points) > 1 and distance_point_point(points[0], points[-1]) < 1e-9:
         points = points[:-1]
@@ -56,9 +54,7 @@ def _as_points(thing: Any) -> list[list[float]]:
 def faces_from_geometry(geometry: Any) -> list[list[list[float]]]:
     """``[[corner, corner, ...], ...]`` from a mesh, closed polylines, or faces already given as point lists."""
     if _is_mesh(geometry):
-        return [[list(geometry.vertex_coordinates(v))
-                 for v in geometry.face_vertices(f)]
-                for f in geometry.faces()]
+        return [[list(geometry.vertex_coordinates(v)) for v in geometry.face_vertices(f)] for f in geometry.faces()]
 
     faces = []
     for item in geometry:
@@ -72,13 +68,14 @@ def faces_from_geometry(geometry: Any) -> list[list[list[float]]]:
 # putting an edited corner back on the wall
 # ------------------------------------------------------------------
 
+
 def closest_on_loop(point: list[float], loop: list[list[float]]) -> tuple[float, list[float] | None]:
     """``(distance, projected point)`` for the closest point of a closed loop.
 
     The loop is treated as closed whether or not its last point repeats its
     first, matching every other loop consumer in this package.
     """
-    best_d, best_p = float('inf'), None
+    best_d, best_p = float("inf"), None
     ring = list(loop) + list(loop[:1])
     for a, b in pairwise(ring):
         abx, aby = b[0] - a[0], b[1] - a[1]
@@ -120,7 +117,7 @@ def snap_to_loops(mesh: "QuadMesh", loops: list[list[list[float]]], tol: float) 
     # when a user DRAGS a hole corner, which is the case this seam exists for.
     for vkey in set(v for ring in mesh.vertices_on_boundaries() for v in ring):
         point = mesh.vertex_coordinates(vkey)
-        best_d, best_p = float('inf'), None
+        best_d, best_p = float("inf"), None
         for loop in loops:
             d, q = closest_on_loop(point, loop)
             if d < best_d:
@@ -130,7 +127,7 @@ def snap_to_loops(mesh: "QuadMesh", loops: list[list[list[float]]], tol: float) 
         if best_d > tol:
             off += 1
             continue
-        mesh.vertex_attributes(vkey, 'xyz', best_p)
+        mesh.vertex_attributes(vkey, "xyz", best_p)
         moved += 1
     return moved, off
 
@@ -138,6 +135,7 @@ def snap_to_loops(mesh: "QuadMesh", loops: list[list[list[float]]], tol: float) 
 # ------------------------------------------------------------------
 # faces -> mesh
 # ------------------------------------------------------------------
+
 
 def _key(point: list[float]) -> tuple[float, float]:
     return (round(point[0], PRECISION), round(point[1], PRECISION))
@@ -174,6 +172,7 @@ def mesh_from_faces(faces: list[list[list[float]]], cls: type = CoarsePseudoQuad
 # ------------------------------------------------------------------
 # the entry point
 # ------------------------------------------------------------------
+
 
 def coarse_from_skeleton(
     geometry: Any,
@@ -216,40 +215,39 @@ def coarse_from_skeleton(
         ``repair.solve_non_quad_faces`` returned).
     """
     faces = faces_from_geometry(geometry)
-    notes = {'faces_in': len(faces), 'faces_out': 0, 'vertices': 0,
-             'snapped': 0, 'off_wall': 0, 'degenerate': 0, 'sides': {},
-             'repair': ''}
+    notes = {"faces_in": len(faces), "faces_out": 0, "vertices": 0, "snapped": 0, "off_wall": 0, "degenerate": 0, "sides": {}, "repair": ""}
     if not faces:
         return None, notes
 
     mesh, dropped = mesh_from_faces(faces, cls)
-    notes['degenerate'] = dropped
+    notes["degenerate"] = dropped
     if mesh is None:
         return None, notes
 
     # Snapping needs the topology -- see ``snap_to_loops`` -- so it happens
     # after the weld and before anything is measured or validated.
-    notes['snapped'], notes['off_wall'] = snap_to_loops(mesh, loops or [], snap_tol)
+    notes["snapped"], notes["off_wall"] = snap_to_loops(mesh, loops or [], snap_tol)
 
     sides = {}
     for fkey in mesh.faces():
         n = len(mesh.face_vertices(fkey))
         sides[n] = sides.get(n, 0) + 1
-    notes['sides'] = sides
+    notes["sides"] = sides
 
     # Whatever came back, it leaves here all-quad -- or all-quad plus registered
     # pseudo-quad poles, which is the same thing to ``densification``. Reused
     # wholesale: this is the identical repair the generated layout goes through.
     mesh, note = solve_non_quad_faces(mesh, cls, loops, poles=poles)
-    notes['repair'] = note
-    notes['faces_out'] = mesh.number_of_faces()
-    notes['vertices'] = mesh.number_of_vertices()
+    notes["repair"] = note
+    notes["faces_out"] = mesh.number_of_faces()
+    notes["vertices"] = mesh.number_of_vertices()
     return mesh, notes
 
 
 # ------------------------------------------------------------------
 # moving a traced curve onto new endpoints
 # ------------------------------------------------------------------
+
 
 def warp_polyline(points: list[list[float]], pa: list[float], pb: list[float], limit: float = 1.0) -> list[list[float]] | None:
     """End-anchored warp of a traced polyline onto moved endpoints, blending by arc length.
@@ -302,6 +300,7 @@ def warp_polyline(points: list[list[float]], pa: list[float], pb: list[float], l
 # what to bake into Rhino
 # ------------------------------------------------------------------
 
+
 def face_polylines(coarse: "QuadMesh") -> list[Polyline]:
     """One closed polyline per patch with corners only, to bake and edit.
 
@@ -311,7 +310,6 @@ def face_polylines(coarse: "QuadMesh") -> list[Polyline]:
     """
     out = []
     for fkey in coarse.faces():
-        corners = [list(coarse.vertex_coordinates(v))
-                   for v in coarse.face_vertices(fkey)]
+        corners = [list(coarse.vertex_coordinates(v)) for v in coarse.face_vertices(fkey)]
         out.append(Polyline(corners + corners[:1]))
     return out

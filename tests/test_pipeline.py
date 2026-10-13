@@ -3,6 +3,7 @@
 These exercise the decomposition / densification / grammar logic against the
 current COMPAS 2.x API (no visualisation, so they run anywhere).
 """
+
 import os
 import json
 
@@ -20,11 +21,11 @@ from compas_singular.algorithms import boundary_triangulation
 from compas_singular.algorithms import SkeletonDecomposition
 
 HERE = os.path.dirname(__file__)
-DATA = os.path.join(HERE, 'data')
+DATA = os.path.join(HERE, "data")
 
 
 def test_coarse_quad_densification():
-    mesh = CoarseQuadMesh.from_json(os.path.join(DATA, 'coarse_quad_mesh_british_museum.json'))
+    mesh = CoarseQuadMesh.from_json(os.path.join(DATA, "coarse_quad_mesh_british_museum.json"))
     assert mesh.number_of_faces() == 12
     mesh.collect_strips()
     mesh.set_strips_density(3)
@@ -33,18 +34,18 @@ def test_coarse_quad_densification():
 
 
 def test_pseudo_quad_densification_preserves_poles():
-    mesh = CoarsePseudoQuadMesh.from_json(os.path.join(DATA, 'coarse_quad_mesh_british_museum_poles.json'))
+    mesh = CoarsePseudoQuadMesh.from_json(os.path.join(DATA, "coarse_quad_mesh_british_museum_poles.json"))
     # the pole map must survive JSON (de)serialisation with integer face keys
-    assert all(isinstance(fkey, int) for fkey in mesh.attributes['face_pole'])
+    assert all(isinstance(fkey, int) for fkey in mesh.attributes["face_pole"])
     assert sorted(mesh.poles()) == [0, 3, 16, 19]
     mesh.collect_strips()
-    mesh.set_strips_density_target(t=.5)
+    mesh.set_strips_density_target(t=0.5)
     mesh.densification()
     assert mesh.get_quad_mesh().number_of_faces() > 0
 
 
 def test_skeleton_decomposition_planar():
-    with open(os.path.join(DATA, '01_decomposition.json')) as f:
+    with open(os.path.join(DATA, "01_decomposition.json")) as f:
         outer_boundary, inner_boundaries, polyline_features, point_features = json.load(f)
     trimesh = boundary_triangulation(outer_boundary, inner_boundaries, polyline_features, point_features)
     decomposition = SkeletonDecomposition.from_mesh(trimesh)
@@ -58,11 +59,11 @@ def test_skeleton_decomposition_planar():
 
 def _ngon(n, radius, phase=0.0):
     from math import cos, sin
-    return [[radius * cos(phase + 2 * pi * i / n),
-             radius * sin(phase + 2 * pi * i / n), 0.0] for i in range(n)]
+
+    return [[radius * cos(phase + 2 * pi * i / n), radius * sin(phase + 2 * pi * i / n), 0.0] for i in range(n)]
 
 
-@pytest.mark.parametrize('radii,spacing', [((4.0, 2.0), 0.5), ((5.0, 2.0), 0.25)])
+@pytest.mark.parametrize("radii,spacing", [((4.0, 2.0), 0.5), ((5.0, 2.0), 0.25)])
 def test_polygonal_walls_do_not_divide_by_zero(radii, spacing):
     """A polygonal domain triangulates without a ZeroDivisionError.
 
@@ -80,18 +81,15 @@ def test_polygonal_walls_do_not_divide_by_zero(radii, spacing):
     """
     outer = _ngon(12, radii[0], phase=pi / 12)
     inner = _ngon(6, radii[1], phase=pi / 12)
-    decomposition = SkeletonDecomposition.from_boundary(
-        outer, inner_boundaries=[inner], target_length=spacing)
+    decomposition = SkeletonDecomposition.from_boundary(outer, inner_boundaries=[inner], target_length=spacing)
     coarse = decomposition.coarse_mesh()
     assert coarse.number_of_faces() > 0
     assert coarse.is_manifold()
 
 
-@pytest.mark.parametrize('string', ['ata', 'atta', 'attta', 'attpptta'])
+@pytest.mark.parametrize("string", ["ata", "atta", "attta", "attpptta"])
 def test_lizard_grammar_produces_manifold_mesh(string):
-    vertices = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [2.0, 1.0, 0.0],
-                [0.0, 2.0, 0.0], [1.0, 2.0, 0.0], [2.0, 2.0, 0.0]]
+    vertices = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [2.0, 1.0, 0.0], [0.0, 2.0, 0.0], [1.0, 2.0, 0.0], [2.0, 2.0, 0.0]]
     faces = [[0, 1, 4, 3], [1, 2, 5, 4], [3, 4, 7, 6], [4, 5, 8, 7]]
     mesh = QuadMesh.from_vertices_and_faces(vertices, faces)
     mesh.collect_strips()
@@ -110,6 +108,7 @@ def test_lizard_grammar_produces_manifold_mesh(string):
 # quadrangulate_polygonal_faces welds, and welding renumbers keys.
 # ==============================================================================
 
+
 def _square(side=10.0, spacing=0.2):
     from compas.geometry import distance_point_point
 
@@ -123,6 +122,7 @@ def _square(side=10.0, spacing=0.2):
 
 def _segment(a, b, spacing=0.2):
     from compas.geometry import distance_point_point
+
     n = max(1, int(round(distance_point_point(a, b) / spacing)))
     return [[a[0] + i / n * (b[0] - a[0]), a[1] + i / n * (b[1] - a[1]), 0.0] for i in range(n + 1)]
 
@@ -140,15 +140,18 @@ def _face_sizes(mesh):
     return sizes
 
 
-@pytest.mark.parametrize('features, points, faces, vertices, sizes', [
-    ((), (), 4, 9, {4: 4}),
-    ((), ([5.0, 5.0, 0.0],), 12, 17, {3: 4, 4: 8}),
-    ((), ([3.0, 3.0, 0.0], [7.0, 7.0, 0.0]), 14, 18, {3: 6, 4: 8}),
-    # re-measured 2026-09-15: was 10 faces / 21 vertices, a layout that dropped
-    # both free tips, covered 95.9% of the square and left two corner vertices
-    # belonging to no face. Each tip is now a two-valent vertex (Fig 4.21c).
-    ((_segment([1.4, 1.4, 0.0], [8.6, 8.6, 0.0]),), (), 12, 19, {4: 12}),
-])
+@pytest.mark.parametrize(
+    "features, points, faces, vertices, sizes",
+    [
+        ((), (), 4, 9, {4: 4}),
+        ((), ([5.0, 5.0, 0.0],), 12, 17, {3: 4, 4: 8}),
+        ((), ([3.0, 3.0, 0.0], [7.0, 7.0, 0.0]), 14, 18, {3: 6, 4: 8}),
+        # re-measured 2026-09-15: was 10 faces / 21 vertices, a layout that dropped
+        # both free tips, covered 95.9% of the square and left two corner vertices
+        # belonging to no face. Each tip is now a two-valent vertex (Fig 4.21c).
+        ((_segment([1.4, 1.4, 0.0], [8.6, 8.6, 0.0]),), (), 12, 19, {4: 12}),
+    ],
+)
 def test_curve_feature_repair_leaves_working_inputs_alone(features, points, faces, vertices, sizes):
     """Inputs that already worked must come out untouched, key for key.
 
@@ -167,7 +170,7 @@ def test_curve_feature_repair_leaves_working_inputs_alone(features, points, face
 def test_curve_feature_extremity_on_boundary_densifies():
     """Fig 4.17: a curve feature with both extremities on the boundary."""
     coarse = _coarse([_segment([0.0, 5.0, 0.0], [10.0, 5.0, 0.0])])
-    assert max(_face_sizes(coarse)) <= 4, 'seam propagation left a polygonal face'
+    assert max(_face_sizes(coarse)) <= 4, "seam propagation left a polygonal face"
     coarse.collect_strips()
     coarse.set_strips_density_target(0.5)
     coarse.densification()
@@ -186,8 +189,7 @@ def test_curve_feature_free_extremities_densifies():
 
 def test_multiple_curve_features_densify():
     """Fig 4.19: several curve features, meeting at a shared node."""
-    arms = [_segment([5.0, 5.0, 0.0], [x, y, 0.0])
-            for x, y in ((0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0))]
+    arms = [_segment([5.0, 5.0, 0.0], [x, y, 0.0]) for x, y in ((0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0))]
     coarse = _coarse(arms)
     assert max(_face_sizes(coarse)) <= 4
     coarse.collect_strips()
@@ -200,9 +202,9 @@ def test_closed_curve_feature_densifies():
     """A closed curve feature needs the fallback repair -- seam propagation
     cannot reach a face carrying more than one seam on the same side."""
     import math
+
     n = 80
-    loop = [[5.0 + 2.5 * math.cos(2 * math.pi * i / n), 5.0 + 2.5 * math.sin(2 * math.pi * i / n), 0.0]
-            for i in range(n)]
+    loop = [[5.0 + 2.5 * math.cos(2 * math.pi * i / n), 5.0 + 2.5 * math.sin(2 * math.pi * i / n), 0.0] for i in range(n)]
     coarse = _coarse([loop + loop[:1]])
     assert max(_face_sizes(coarse)) <= 4
     coarse.collect_strips()
@@ -218,7 +220,7 @@ def test_every_triangular_coarse_face_carries_a_pole():
     with a KeyError, which is the whole crash the curve-feature path died on.
     """
     coarse = _coarse([_segment([2.0, 5.0, 0.0], [8.0, 5.0, 0.0])])
-    face_pole = coarse.attributes['face_pole']
+    face_pole = coarse.attributes["face_pole"]
     for fkey in coarse.faces():
         if len(coarse.face_vertices(fkey)) == 3:
             assert fkey in face_pole
@@ -231,7 +233,7 @@ def test_crossing_features_are_welded_at_their_junction():
 
     arms = [_segment([5.0, 5.0, 0.0], [x, y, 0.0]) for x, y in ((0.0, 5.0), (10.0, 5.0))]
     welded = weld_polyline_features(arms)
-    assert len(welded) == 1, 'two arms meeting end to end should join into one chain'
+    assert len(welded) == 1, "two arms meeting end to end should join into one chain"
     # a single feature, or none, is passed through untouched
     assert weld_polyline_features([arms[0]]) == [arms[0]]
     assert weld_polyline_features([]) == []
@@ -246,11 +248,13 @@ def test_boundary_triangulation_accepts_polylines_and_points():
     reference = _face_sizes(_coarse([diagonal]))
 
     polyline = Polyline([Point(*p) for p in diagonal])
-    for form in (diagonal,                       # a bare list of points
-                 [diagonal],                     # the historical form
-                 polyline,                       # a bare Polyline
-                 [polyline],                     # one Polyline in a list
-                 [[Point(*p) for p in diagonal]]):
+    for form in (
+        diagonal,  # a bare list of points
+        [diagonal],  # the historical form
+        polyline,  # a bare Polyline
+        [polyline],  # one Polyline in a list
+        [[Point(*p) for p in diagonal]],
+    ):
         assert _face_sizes(_coarse(form)) == reference
 
     # a Polyline outer boundary, and a Point feature
@@ -286,21 +290,19 @@ def test_boundary_interior_angle_separates_convex_from_concave():
     """
     from math import degrees
 
-    square = SkeletonDecomposition.from_mesh(
-        boundary_triangulation(_plate([[0, 0], [10, 0], [10, 10], [0, 10]]), [], [], []))
-    ell = SkeletonDecomposition.from_mesh(
-        boundary_triangulation(_plate([[0, 0], [10, 0], [10, 4], [4, 4], [4, 9], [0, 9]]), [], [], []))
+    square = SkeletonDecomposition.from_mesh(boundary_triangulation(_plate([[0, 0], [10, 0], [10, 10], [0, 10]]), [], [], []))
+    ell = SkeletonDecomposition.from_mesh(boundary_triangulation(_plate([[0, 0], [10, 0], [10, 4], [4, 4], [4, 9], [0, 9]]), [], [], []))
 
     def angle_at(decomposition, xy):
         for vkey in decomposition.vertices():
             x, y, _ = decomposition.vertex_coordinates(vkey)
             if abs(x - xy[0]) < 1e-6 and abs(y - xy[1]) < 1e-6:
                 return degrees(decomposition.boundary_interior_angle(vkey))
-        raise AssertionError('no vertex at %s' % (xy,))
+        raise AssertionError("no vertex at %s" % (xy,))
 
-    assert angle_at(square, (0, 0)) == pytest.approx(90.0, abs=1e-6)     # convex
-    assert angle_at(ell, (10, 4)) == pytest.approx(90.0, abs=1e-6)       # convex
-    assert angle_at(ell, (4, 4)) == pytest.approx(270.0, abs=1e-6)       # concave
+    assert angle_at(square, (0, 0)) == pytest.approx(90.0, abs=1e-6)  # convex
+    assert angle_at(ell, (10, 4)) == pytest.approx(90.0, abs=1e-6)  # convex
+    assert angle_at(ell, (4, 4)) == pytest.approx(270.0, abs=1e-6)  # concave
 
 
 def test_convex_corner_carrying_a_curve_feature_is_not_corrected():
@@ -315,17 +317,20 @@ def test_convex_corner_carrying_a_curve_feature_is_not_corrected():
     outer = _plate([[0, 0], [10, 0], [10, 10], [0, 10]])
     diagonal = _segment([0.0, 0.0, 0.0], [10.0, 10.0, 0.0])
 
-    decomposition = SkeletonDecomposition.from_mesh(
-        boundary_triangulation(outer, [], [diagonal], []))
+    decomposition = SkeletonDecomposition.from_mesh(boundary_triangulation(outer, [], [diagonal], []))
 
     # the diagonal cuts the square into two halves
     assert len(decomposition.vertices_on_boundaries()) == 2
 
     for corner in ([0.0, 0.0], [10.0, 10.0]):
-        copies = [v for v in decomposition.vertices() if decomposition.vertex_neighbors(v)
-                  and abs(decomposition.vertex_coordinates(v)[0] - corner[0]) < 1e-9
-                  and abs(decomposition.vertex_coordinates(v)[1] - corner[1]) < 1e-9]
-        assert len(copies) == 2, 'the cut did not reach the corner %s' % corner
+        copies = [
+            v
+            for v in decomposition.vertices()
+            if decomposition.vertex_neighbors(v)
+            and abs(decomposition.vertex_coordinates(v)[0] - corner[0]) < 1e-9
+            and abs(decomposition.vertex_coordinates(v)[1] - corner[1]) < 1e-9
+        ]
+        assert len(copies) == 2, "the cut did not reach the corner %s" % corner
         for vkey in copies:
             assert vkey in decomposition.corner_vertices()
             assert decomposition.boundary_interior_angle(vkey) <= pi
@@ -346,7 +351,7 @@ def test_no_skeleton_branch_crosses_a_curve_feature():
     trimesh = boundary_triangulation(outer, [], [diagonal], [])
     decomposition = SkeletonDecomposition.from_mesh(trimesh)
 
-    assert decomposition.feature_edges, 'the cut was not recorded'
+    assert decomposition.feature_edges, "the cut was not recorded"
 
     # every corner of the square is an END face, including the two the feature
     # lands on -- a triangle has three, and the cut makes two triangles
@@ -360,8 +365,7 @@ def test_no_skeleton_branch_crosses_a_curve_feature():
     coarse = decomposition.decomposition_mesh([])
     assert coarse.number_of_faces() == 6
     assert all(len(coarse.face_vertices(f)) == 4 for f in coarse.faces())
-    interior = [v for v in coarse.vertices()
-                if not coarse.is_vertex_on_boundary(v) and len(coarse.vertex_neighbors(v)) != 4]
+    interior = [v for v in coarse.vertices() if not coarse.is_vertex_on_boundary(v) and len(coarse.vertex_neighbors(v)) != 4]
     assert len(interior) == 2
 
 
@@ -385,22 +389,19 @@ def test_grafts_at_adjacent_samples_of_a_feature_share_a_node():
     """
     outer = _plate([[0, 0], [10, 0], [10, 10], [0, 10]])
     segment = _segment([2.8, 6.6, 0.0], [6.6, 2.8, 0.0])
-    decomposition = SkeletonDecomposition.from_mesh(
-        boundary_triangulation(outer, [], [segment], []))
+    decomposition = SkeletonDecomposition.from_mesh(boundary_triangulation(outer, [], [segment], []))
 
-    assert decomposition.feature_points, 'the feature chains were not recorded'
+    assert decomposition.feature_points, "the feature chains were not recorded"
 
     targets = {TOL.geometric_key(t) for _, t in decomposition.branches_singularity_to_boundary()}
-    on_feature = {k for k in targets
-                  if any(TOL.geometric_key(s) == k for s in decomposition.feature_points[0])}
+    on_feature = {k for k in targets if any(TOL.geometric_key(s) == k for s in decomposition.feature_points[0])}
     # four singular faces, each grafting once to the segment; the two at the
     # midpoint now share a node, the two at the tips stay distinct
     assert len(on_feature) == 3
 
     coarse = decomposition.decomposition_mesh([])
     assert all(len(coarse.face_vertices(f)) == 4 for f in coarse.faces())
-    interior = [v for v in coarse.vertices()
-                if not coarse.is_vertex_on_boundary(v) and len(coarse.vertex_neighbors(v)) != 4]
+    interior = [v for v in coarse.vertices() if not coarse.is_vertex_on_boundary(v) and len(coarse.vertex_neighbors(v)) != 4]
     # the four singular points, and the two free tips as two-valent vertices
     assert len(interior) == 6
 
@@ -459,7 +460,7 @@ def test_a_feature_landing_on_walls_gives_an_all_quad_layout():
     assert _face_sizes(coarse) == {4: 10}
     assert decomposition.repair_notes == []
     for corner in rectangle:
-        assert any(coarse.vertex_coordinates(v) == corner for v in coarse.vertices()), 'corner %s lost' % corner
+        assert any(coarse.vertex_coordinates(v) == corner for v in coarse.vertices()), "corner %s lost" % corner
 
 
 def test_free_feature_extremities_stay_layout_vertices():
@@ -471,10 +472,8 @@ def test_free_feature_extremities_stay_layout_vertices():
     """
     coarse = _coarse([_segment([2.8, 6.6, 0.0], [6.6, 2.8, 0.0])])
     for tip in ([2.8, 6.6], [6.6, 2.8]):
-        vkeys = [v for v in coarse.vertices()
-                 if abs(coarse.vertex_coordinates(v)[0] - tip[0]) < 1e-6
-                 and abs(coarse.vertex_coordinates(v)[1] - tip[1]) < 1e-6]
-        assert len(vkeys) == 1, 'tip %s is not a layout vertex' % tip
+        vkeys = [v for v in coarse.vertices() if abs(coarse.vertex_coordinates(v)[0] - tip[0]) < 1e-6 and abs(coarse.vertex_coordinates(v)[1] - tip[1]) < 1e-6]
+        assert len(vkeys) == 1, "tip %s is not a layout vertex" % tip
         assert len(coarse.vertex_neighbors(vkeys[0])) == 2
 
 
@@ -504,7 +503,7 @@ def test_seam_propagation_that_never_ends_is_abandoned():
     decomposition = SkeletonDecomposition.from_boundary(rectangle, polyline_features=crossing, target_length=0.2236)
     coarse = decomposition.coarse_mesh()
 
-    assert any('did not terminate' in note for note in decomposition.repair_notes)
+    assert any("did not terminate" in note for note in decomposition.repair_notes)
     assert coarse.number_of_faces() < 200
     assert max(_face_sizes(coarse)) <= 4
 
@@ -542,13 +541,11 @@ def test_two_crossing_features_decompose_to_all_quads():
     diagonal = _segment([0.0, 0.0, 0.0], [10.0, 10.0, 0.0])
     crossing = _segment([2.8, 6.6, 0.0], [6.6, 2.8, 0.0])
 
-    decomposition = SkeletonDecomposition.from_mesh(
-        boundary_triangulation(outer, [], [diagonal, crossing], []))
+    decomposition = SkeletonDecomposition.from_mesh(boundary_triangulation(outer, [], [diagonal, crossing], []))
     coarse = decomposition.decomposition_mesh([])
 
     assert all(len(coarse.face_vertices(f)) == 4 for f in coarse.faces())
-    interior = [v for v in coarse.vertices()
-                if not coarse.is_vertex_on_boundary(v) and len(coarse.vertex_neighbors(v)) != 4]
+    interior = [v for v in coarse.vertices() if not coarse.is_vertex_on_boundary(v) and len(coarse.vertex_neighbors(v)) != 4]
     assert len(interior) == 4
 
 
@@ -569,8 +566,7 @@ def test_a_two_point_guide_is_discretised_like_the_walls():
     # whether the layout gets a node there
     assert line[0] == [0.0, 0.0, 0.0]
     assert line[-1] == [10.0, 10.0, 0.0]
-    assert max(((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5
-               for a, b in zip(line, line[1:])) <= 0.2 + 1e-9
+    assert max(((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5 for a, b in zip(line, line[1:])) <= 0.2 + 1e-9
 
     # every input point survives, so a kink stays a kink
     kinked = discretise_line([[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [2.0, 2.0, 0.0]], 1.0)
@@ -581,8 +577,7 @@ def test_a_two_point_guide_is_discretised_like_the_walls():
 
     # and end to end: the two-point guide now gives the Fig 4.17 layout
     square = [[0.0, 0.0, 0.0], [10.0, 0.0, 0.0], [10.0, 10.0, 0.0], [0.0, 10.0, 0.0]]
-    decomposition = SkeletonDecomposition.from_boundary(
-        square, polyline_features=[[[0.0, 0.0, 0.0], [10.0, 10.0, 0.0]]], target_length=0.2)
+    decomposition = SkeletonDecomposition.from_boundary(square, polyline_features=[[[0.0, 0.0, 0.0], [10.0, 10.0, 0.0]]], target_length=0.2)
     coarse = decomposition.decomposition_mesh([])
     assert len(decomposition.corner_faces()) == 6
     assert coarse.number_of_faces() == 6
@@ -603,8 +598,7 @@ def test_a_collapsed_edge_is_opened_enough_to_be_an_edge():
     On this unit layout the old fraction opens the pair to 0.09, the current one
     to 0.43.
     """
-    vertices = [[0, 0, 0], [1, 0, 0], [2, 0, 0], [0, 1, 0], [0.7, 1, 0], [1.3, 1, 0],
-                [2, 1, 0], [0, 2, 0], [1, 2, 0], [2, 2, 0]]
+    vertices = [[0, 0, 0], [1, 0, 0], [2, 0, 0], [0, 1, 0], [0.7, 1, 0], [1.3, 1, 0], [2, 1, 0], [0, 2, 0], [1, 2, 0], [2, 2, 0]]
     faces = [[0, 1, 4, 3], [1, 2, 6, 5], [1, 5, 4], [3, 4, 8, 7], [4, 5, 8], [5, 6, 9, 8]]
     decomposition = SkeletonDecomposition()
     decomposition.mesh = CoarsePseudoQuadMesh.from_vertices_and_faces(vertices, faces)
@@ -612,9 +606,9 @@ def test_a_collapsed_edge_is_opened_enough_to_be_an_edge():
     decomposition.solve_triangular_faces()
     coarse = decomposition.mesh
 
-    assert _face_sizes(coarse) == {4: 6}, 'case 1 did not turn the triangles into quads'
+    assert _face_sizes(coarse) == {4: 6}, "case 1 did not turn the triangles into quads"
     shortest = min(coarse.edge_length(*e) for e in coarse.edges())
-    assert shortest > 0.25, 'collapsed edge left at %.4f' % shortest
+    assert shortest > 0.25, "collapsed edge left at %.4f" % shortest
 
 
 def test_case_two_survives_a_missing_decomposition_polyline():
@@ -638,7 +632,7 @@ def test_case_two_survives_a_missing_decomposition_polyline():
     for fkey in coarse.faces():
         for vkey in coarse.face_vertices(fkey):
             x, y, z = coarse.vertex_coordinates(vkey)
-            assert x == x and y == y and z == z, 'NaN in the merged vertex'
+            assert x == x and y == y and z == z, "NaN in the merged vertex"
 
 
 def _arc(p, q, bulge, n=24):
@@ -646,9 +640,7 @@ def _arc(p, q, bulge, n=24):
     dx, dy = q[0] - p[0], q[1] - p[1]
     length = (dx * dx + dy * dy) ** 0.5
     nx, ny = -dy / length, dx / length
-    return [[p[0] + dx * (i / n) + nx * bulge * 4 * (i / n) * (1 - i / n),
-             p[1] + dy * (i / n) + ny * bulge * 4 * (i / n) * (1 - i / n), 0.0]
-            for i in range(n + 1)]
+    return [[p[0] + dx * (i / n) + nx * bulge * 4 * (i / n) * (1 - i / n), p[1] + dy * (i / n) + ny * bulge * 4 * (i / n) * (1 - i / n), 0.0] for i in range(n + 1)]
 
 
 def test_symmetric_curve_features_do_not_crash_the_collapsed_boundary_fix():
@@ -664,13 +656,11 @@ def test_symmetric_curve_features_do_not_crash_the_collapsed_boundary_fix():
     failures = []
     for spacing in (0.3, 0.4):
         for bulge in (0.5, 1.5, 2.5):
-            features = [_arc([0, 5, 0], [10, 5, 0], bulge),
-                        _arc([0, 5, 0], [10, 5, 0], -bulge)]
+            features = [_arc([0, 5, 0], [10, 5, 0], bulge), _arc([0, 5, 0], [10, 5, 0], -bulge)]
             try:
-                decomposition = SkeletonDecomposition.from_boundary(
-                    square, polyline_features=features, target_length=spacing)
+                decomposition = SkeletonDecomposition.from_boundary(square, polyline_features=features, target_length=spacing)
                 coarse = decomposition.decomposition_mesh([])
                 assert coarse.number_of_faces() > 0
-            except Exception as exc:                     # noqa: BLE001
-                failures.append('spacing %s bulge %s: %s' % (spacing, bulge, exc))
+            except Exception as exc:  # noqa: BLE001
+                failures.append("spacing %s bulge %s: %s" % (spacing, bulge, exc))
     assert not failures, failures

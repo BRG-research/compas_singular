@@ -22,7 +22,6 @@ __all__ = ["RhinoSurface"]
 
 
 class RhinoSurface(RhinoSurface):
-
     def __init__(self) -> None:
         super(RhinoSurface, self).__init__()
 
@@ -68,19 +67,13 @@ class RhinoSurface(RhinoSurface):
 
         for border_guid in borders:
             extremities = map(
-                lambda x: rs.EvaluateCurve(
-                    border_guid, rs.CurveParameter(border_guid, x)
-                ),
+                lambda x: rs.EvaluateCurve(border_guid, rs.CurveParameter(border_guid, x)),
                 [0.0, 1.0],
             )
 
             if rs.IsCurveClosed(border_guid):
-                start_tgt = rs.CurveTangent(
-                    border_guid, rs.CurveParameter(border_guid, 0.0)
-                )
-                end_tgt = rs.CurveTangent(
-                    border_guid, rs.CurveParameter(border_guid, 1.0)
-                )
+                start_tgt = rs.CurveTangent(border_guid, rs.CurveParameter(border_guid, 0.0))
+                end_tgt = rs.CurveTangent(border_guid, rs.CurveParameter(border_guid, 1.0))
                 if angle_vectors(start_tgt, end_tgt) > threshold:
                     kinks += extremities
 
@@ -105,12 +98,7 @@ class RhinoSurface(RhinoSurface):
 
         """
         borders = self.borders(border_type=0)
-        proj_dist = {
-            tuple(proj_xyz): distance_point_point(xyz, proj_xyz)
-            for proj_xyz in [
-                RhinoCurve(border).closest_point(xyz) for border in borders
-            ]
-        }
+        proj_dist = {tuple(proj_xyz): distance_point_point(xyz, proj_xyz) for proj_xyz in [RhinoCurve(border).closest_point(xyz) for border in borders]}
         compas_rhino.delete_objects(borders)
         return min(proj_dist, key=proj_dist.get)
 
@@ -202,7 +190,7 @@ class RhinoSurface(RhinoSurface):
         """
         for vertex in mesh.vertices():
             xyz = self.point_uv_to_xyz(mesh.vertex_coordinates(vertex)[:2])
-            mesh.vertex_attributes(vertex, 'xyz', xyz)
+            mesh.vertex_attributes(vertex, "xyz", xyz)
 
     def discrete_mapping(
         self,

@@ -3,6 +3,7 @@
 It covers ``tools_rhino``'s SUCCESS path, which is otherwise only ever seen
 refusing. The mesh work in between is real; only the document is fake.
 """
+
 import math
 import threading
 import time
@@ -50,43 +51,47 @@ class FakeLink(object):
         if verb == "ping":
             spool.answer(request_id, True, result={"document": "fake.3dm"})
         elif verb == "pull" and not args.get("selection"):
-            spool.answer(request_id, True, result={
-                "document": "fake.3dm", "layer": args.get("layer"),
-                "outer": self.walls[0], "inners": self.walls[1:], "guides": [],
-                "mesh": wire.mesh_to_wire(self.mesh)})
+            spool.answer(
+                request_id,
+                True,
+                result={"document": "fake.3dm", "layer": args.get("layer"), "outer": self.walls[0], "inners": self.walls[1:], "guides": [], "mesh": wire.mesh_to_wire(self.mesh)},
+            )
         elif verb == "pull":
-            spool.answer(request_id, True, result={
-                "document": "fake.3dm", "layer": "(selection)",
-                "outer": SELECTION["outer"], "inners": [], "guides": [],
-                "points": SELECTION["points"], "mesh": None})
+            spool.answer(
+                request_id,
+                True,
+                result={"document": "fake.3dm", "layer": "(selection)", "outer": SELECTION["outer"], "inners": [], "guides": [], "points": SELECTION["points"], "mesh": None},
+            )
         elif verb == "pull_coarse":
             # the document holds whatever was last pushed
             sent = self.pushed.get("coarse") or {}
-            spool.answer(request_id, True, result={
-                "document": "fake.3dm", "outer": DOMAIN["outer"], "inners": [],
-                "guides": [], "points": DOMAIN["points"], "coarse": sent.get("coarse")})
+            spool.answer(
+                request_id, True, result={"document": "fake.3dm", "outer": DOMAIN["outer"], "inners": [], "guides": [], "points": DOMAIN["points"], "coarse": sent.get("coarse")}
+            )
         elif verb == "push_markers":
             self.pushed["markers"] = args
-            spool.answer(request_id, True, result={
-                "document": "fake.3dm", "layer": "TopologyProblem::MCP::Markers",
-                "undo_record": "MCP markers"})
+            spool.answer(request_id, True, result={"document": "fake.3dm", "layer": "TopologyProblem::MCP::Markers", "undo_record": "MCP markers"})
         elif verb == "push_coarse":
             self.pushed["coarse"] = args
             pushed = compas.json_loads(args["coarse"])
-            spool.answer(request_id, True, result={
-                "document": "fake.3dm",
-                "layers": {"mesh": "TopologyProblem::Skeleton::Mesh"},
-                "poles": len(pushed.poles()),
-                "polylines": len(pushed.shape_polylines()),
-                "edge_curves": len(pushed.edges_to_curves()),
-                "before_layer": "TopologyProblem::Skeleton::MCP::Before",
-                "undo_record": "MCP push coarse"})
+            spool.answer(
+                request_id,
+                True,
+                result={
+                    "document": "fake.3dm",
+                    "layers": {"mesh": "TopologyProblem::Skeleton::Mesh"},
+                    "poles": len(pushed.poles()),
+                    "polylines": len(pushed.shape_polylines()),
+                    "edge_curves": len(pushed.edges_to_curves()),
+                    "before_layer": "TopologyProblem::Skeleton::MCP::Before",
+                    "undo_record": "MCP push coarse",
+                },
+            )
         elif verb == "push":
             self.pushed["mesh"] = args["mesh"]
-            spool.answer(request_id, True, result={
-                "document": "fake.3dm", "layer": args.get("layer"),
-                "before_layer": "TopologyProblem::QuadMesh::MCP::Before",
-                "undo_record": "MCP push"})
+            spool.answer(
+                request_id, True, result={"document": "fake.3dm", "layer": args.get("layer"), "before_layer": "TopologyProblem::QuadMesh::MCP::Before", "undo_record": "MCP push"}
+            )
         else:
             spool.answer(request_id, False, error="unknown verb")
 
@@ -150,7 +155,7 @@ def test_improve_and_push_the_mesh_back(mcp, link):
         assert end[0] > start[0]
     else:
         assert start == end
-    assert mcp("rhino_push", layer="QuadMesh").get("ok") is False      # nothing has looked at it
+    assert mcp("rhino_push", layer="QuadMesh").get("ok") is False  # nothing has looked at it
     looked = mcp("inspect", image=True)
     assert looked["inputs"]["walls"] == len(link.walls)
     out = mcp("rhino_push", layer="QuadMesh")
@@ -191,16 +196,14 @@ def test_push_coarse_sends_the_layout_as_the_cmd_commands_will_read_it(mcp, link
     corner = coarse.vertex_coordinates(next(k for k in coarse.vertices() if not coarse.is_vertex_on_boundary(k)))
     moved = mcp("coarse_move_corner", corner=vertex_handle(corner), to=[corner[0] + 0.1, corner[1] + 0.1])
     assert moved.get("ok") is True, moved.get("reason")
-    assert mcp("rhino_push_coarse").get("ok") is False        # an edit needs another look
+    assert mcp("rhino_push_coarse").get("ok") is False  # an edit needs another look
 
 
 def test_a_face_with_two_corners_equal_at_float32_is_caught_before_rhino_refuses_it():
     # 1e-9 at a coordinate of 1 is below float32's step there (1.2e-7)
-    pinched = CoarsePseudoQuadMesh.from_vertices_and_faces(
-        [[0, 0, 0], [1, 1, 0], [1 + 1e-9, 1, 0], [0, 1, 0]], [[0, 1, 2, 3]])
+    pinched = CoarsePseudoQuadMesh.from_vertices_and_faces([[0, 0, 0], [1, 1, 0], [1 + 1e-9, 1, 0], [0, 1, 0]], [[0, 1, 2, 3]])
     assert len(_float32_collapsed(pinched)) == 1
-    spread = CoarsePseudoQuadMesh.from_vertices_and_faces(
-        [[0, 0, 0], [1, 1, 0], [1 + 1e-3, 1, 0], [0, 1, 0]], [[0, 1, 2, 3]])
+    spread = CoarsePseudoQuadMesh.from_vertices_and_faces([[0, 0, 0], [1, 1, 0], [1 + 1e-3, 1, 0], [0, 1, 0]], [[0, 1, 2, 3]])
     assert _float32_collapsed(spread) == []
 
 
@@ -217,7 +220,7 @@ def test_pull_coarse_brings_the_pushed_layout_back(mcp, link):
     assert dense.get("ok") is True, dense.get("reason")
     mesh = mcp.session.mesh
     apex = [p for p in (mesh.vertex_coordinates(k) for k in mesh.vertices()) if math.dist(p[:2], [7.5, 2.0]) < 0.01]
-    assert apex                       # the drawn ARC that went out, not its chord
+    assert apex  # the drawn ARC that went out, not its chord
 
 
 def test_pull_coarse_refuses_when_the_document_has_no_layout(mcp, link):

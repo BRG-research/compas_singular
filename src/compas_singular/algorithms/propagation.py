@@ -17,13 +17,7 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import Mesh
 
 
-__all__ = [
-    'quadrangulate_mesh',
-    'quadrangulate_faces',
-    'quadrangulate_face',
-    'discrete_coons_patch_mesh',
-    'update_adjacent_face'
-]
+__all__ = ["quadrangulate_mesh", "quadrangulate_faces", "quadrangulate_face", "discrete_coons_patch_mesh", "update_adjacent_face"]
 
 
 def quadrangulate_mesh(mesh: Mesh, sources: list[int]) -> None:
@@ -92,8 +86,7 @@ def quadrangulate_faces(mesh: Mesh, face_sources: dict[int, list[int]], max_face
         if not mesh.has_face(fkey) or len(mesh.face_vertices(fkey)) == 4:
             continue
 
-        sources = [vkey for vkey in mesh.face_vertices(fkey)
-                   if vkey in face_sources.get(fkey, ()) or (vkey in created and is_straight_through(mesh, fkey, vkey))]
+        sources = [vkey for vkey in mesh.face_vertices(fkey) if vkey in face_sources.get(fkey, ()) or (vkey in created and is_straight_through(mesh, fkey, vkey))]
         new_sources = quadrangulate_face(mesh, fkey, sources)
         created.update(new_sources)
         todo += [nbr for vkey in new_sources for nbr in mesh.vertex_faces(vkey) if len(mesh.face_vertices(nbr)) > 4]
@@ -141,8 +134,8 @@ def quadrangulate_face(mesh: Mesh, fkey: int, sources: list[int]) -> list[int]:
             elif len(uv) == 2 and len(wx) != 2:
                 # subdivide uv
                 n = len(wx) - len(uv) + 1
-                new_points = [mesh.edge_point(uv[0], uv[1], float(k) / float(n)) for k in range(n + 1)][1: -1]
-                new_vertices = [mesh.add_vertex(attr_dict={xyz: value for xyz, value in zip(['x', 'y', 'z'], point)}) for point in new_points]
+                new_points = [mesh.edge_point(uv[0], uv[1], float(k) / float(n)) for k in range(n + 1)][1:-1]
+                new_vertices = [mesh.add_vertex(attr_dict={xyz: value for xyz, value in zip(["x", "y", "z"], point)}) for point in new_points]
                 new_sources += new_vertices
                 if i == 0:
                     ab = [uv[0]] + new_vertices + [uv[-1]]
@@ -152,8 +145,8 @@ def quadrangulate_face(mesh: Mesh, fkey: int, sources: list[int]) -> list[int]:
             elif len(uv) != 2 and len(wx) == 2:
                 # subdivide wx
                 n = len(uv) - len(wx) + 1
-                new_points = [mesh.edge_point(wx[0], wx[1], float(k) / float(n)) for k in range(n + 1)][1: -1]
-                new_vertices = [mesh.add_vertex(attr_dict={xyz: value for xyz, value in zip(['x', 'y', 'z'], point)}) for point in new_points]
+                new_points = [mesh.edge_point(wx[0], wx[1], float(k) / float(n)) for k in range(n + 1)][1:-1]
+                new_vertices = [mesh.add_vertex(attr_dict={xyz: value for xyz, value in zip(["x", "y", "z"], point)}) for point in new_points]
                 new_sources += new_vertices
                 if i == 0:
                     cd = [wx[0]] + new_vertices + [wx[-1]]
@@ -208,7 +201,7 @@ def discrete_coons_patch_mesh(mesh: Mesh, ab: list[int], bc: list[int], dc: list
         if i not in vertex_index_map:
             max_vkey += 1
             vertex_index_map[i] = max_vkey
-            mesh.add_vertex(max_vkey, attr_dict={xyz: value for xyz, value in zip(['x', 'y', 'z'], vertex)})
+            mesh.add_vertex(max_vkey, attr_dict={xyz: value for xyz, value in zip(["x", "y", "z"], vertex)})
 
     for face in coons_face_vertices:
         mesh.add_face(list(reversed([vertex_index_map[vkey] for vkey in face])))
@@ -229,12 +222,11 @@ def update_adjacent_face(mesh: Mesh, u: int, v: int, vertices_uv: list[int]) -> 
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
-    
-
+if __name__ == "__main__":
     from compas_viewer import Viewer
 
     from compas_singular.datastructures.mesh.mesh import Mesh
+
     viewer = Viewer()
 
     vertices = [
@@ -250,10 +242,7 @@ if __name__ == '__main__':
         [4, 1, 0],
     ]
 
-    faces = [
-        [0, 1, 2, 3, 4, 5, 6, 7],
-        [3, 8, 9, 4]
-    ]
+    faces = [[0, 1, 2, 3, 4, 5, 6, 7], [3, 8, 9, 4]]
 
     sources = [1, 2, 6, 7]
 

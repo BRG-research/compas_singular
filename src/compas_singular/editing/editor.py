@@ -3,6 +3,7 @@
 Holds the working copy and the walls, moves a vertex, undoes, and deletes a strip.
 Design notes: ``design_notes/editing.md``.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -24,7 +25,7 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import QuadMesh
 
 
-__all__ = ['MeshEditor', 'boundary_vertex_set']
+__all__ = ["MeshEditor", "boundary_vertex_set"]
 
 
 def boundary_vertex_set(mesh: "QuadMesh") -> set[int]:
@@ -85,17 +86,15 @@ class MeshEditor(object):
     #: that edge would then be handed different endpoints and fail to weld.
     #: Empty on any layout that did not come from ``from_coarse_polylines``, so
     #: clearing it is a no-op everywhere else.
-    DERIVED_ATTRIBUTES = ('quad_mesh', 'polygonal_mesh',
-                          'vertex_coarse_to_dense', 'edge_coarse_to_dense',
-                          'edges_to_curves')
+    DERIVED_ATTRIBUTES = ("quad_mesh", "polygonal_mesh", "vertex_coarse_to_dense", "edge_coarse_to_dense", "edges_to_curves")
 
     #: ``attributes`` keys that are keyed BY STRIP INDEX, and so are meaningless
     #: once a rebuild has renumbered the strips.
-    STRIP_KEYED_ATTRIBUTES = ('strips', 'polyedges', 'strips_density')
+    STRIP_KEYED_ATTRIBUTES = ("strips", "polyedges", "strips_density")
 
     def __init__(self, mesh: "QuadMesh", walls: list[Any] | None = None, work_on_copy: bool = True) -> None:
         if mesh is None:
-            raise ValueError('no mesh to edit')
+            raise ValueError("no mesh to edit")
         self.target = mesh
         self.mesh = mesh.copy() if work_on_copy else mesh
         self.walls = self._as_walls(walls)
@@ -104,7 +103,7 @@ class MeshEditor(object):
         #: connectivity, and putting coordinates back would leave the faces they
         #: created in place with nothing to say where they came from.
         self._snapshot = self.mesh.copy()
-        self.last_reason = ''
+        self.last_reason = ""
         self.last_deletion = {}
         #: Whether anything has been changed since this editor was built. What
         #: the curvature branch keys off: on an UNEDITED layout every coarse edge
@@ -122,7 +121,7 @@ class MeshEditor(object):
     def _as_walls(walls: list[Any] | None) -> list[BoundaryLoop]:
         """``BoundaryLoop`` per wall. Accepts loops already built as one."""
         out = []
-        for wall in (walls or []):
+        for wall in walls or []:
             if isinstance(wall, BoundaryLoop):
                 out.append(wall)
                 continue
@@ -138,7 +137,7 @@ class MeshEditor(object):
         """
         if not self.walls:
             return list(xyz)
-        best_d, best_p = float('inf'), None
+        best_d, best_p = float("inf"), None
         for wall in self.walls:
             d, _s, q = wall.project(xyz)
             if d < best_d:
@@ -178,8 +177,7 @@ class MeshEditor(object):
         mesh = self.mesh if mesh is None else mesh
         work = mesh.copy()
         work.collect_strips()
-        counted = sum(1 for skey in work.attributes['strips']
-                      if not work.is_strip_closed(skey))
+        counted = sum(1 for skey in work.attributes["strips"] if not work.is_strip_closed(skey))
         expected = work.number_of_edges() - 2 * work.number_of_faces()
         return counted == expected, counted, expected
 
@@ -190,11 +188,11 @@ class MeshEditor(object):
     def _refuse(self, reason: str) -> tuple[bool, dict[str, str]]:
         """Record why an operation was not performed. Always ``(False, notes)``."""
         self.last_reason = reason
-        return False, {'error': reason}
+        return False, {"error": reason}
 
     def _accept(self, **notes: Any) -> tuple[bool, dict[str, Any]]:
         """Record a success. Always ``(True, notes)``."""
-        self.last_reason = ''
+        self.last_reason = ""
         return True, notes
 
     # ------------------------------------------------------------------
@@ -204,7 +202,7 @@ class MeshEditor(object):
     def move_vertex(self, vkey: int, xyz: list[float], project: bool = True) -> tuple[bool, dict[str, Any]]:
         """Move one vertex, projecting a boundary vertex back onto its wall unless ``project`` is off. ``(ok, notes)``."""
         if vkey not in self.mesh.vertex:
-            return self._refuse('vertex {} is not in the mesh'.format(vkey))
+            return self._refuse("vertex {} is not in the mesh".format(vkey))
 
         point = self._as_point(xyz)
         projected = False
@@ -212,7 +210,7 @@ class MeshEditor(object):
             point = self._as_point(self.project_to_wall(point))
             projected = True
 
-        self.mesh.vertex_attributes(vkey, 'xyz', point)
+        self.mesh.vertex_attributes(vkey, "xyz", point)
         self.edited = True
         return self._accept(moved=vkey, xyz=point, projected=projected)
 
@@ -221,8 +219,7 @@ class MeshEditor(object):
         point = list(xyz)
         while len(point) < 3:
             point.append(0.0)
-        return [float(point[0]), float(point[1]),
-                0.0 if self.PLANAR else float(point[2])]
+        return [float(point[0]), float(point[1]), 0.0 if self.PLANAR else float(point[2])]
 
     # ------------------------------------------------------------------
     # undo
@@ -253,14 +250,13 @@ class MeshEditor(object):
         """Everything ``undo`` needs to put back. A subclass with more
         state than the mesh (a curve map, a dirty flag) extends this and
         ``_restore`` together, never one without the other."""
-        return {'mesh': self.mesh.copy(), 'edited': self.edited,
-                'last_deletion': dict(self.last_deletion)}
+        return {"mesh": self.mesh.copy(), "edited": self.edited, "last_deletion": dict(self.last_deletion)}
 
     def _restore(self, state: dict[str, Any]) -> None:
         """The inverse of ``_state``."""
-        self.mesh = state['mesh']
-        self.edited = state['edited']
-        self.last_deletion = state['last_deletion']
+        self.mesh = state["mesh"]
+        self.edited = state["edited"]
+        self.last_deletion = state["last_deletion"]
 
     def push_undo(self) -> None:
         """Snapshot the mesh before an operation that may mutate it."""
@@ -278,11 +274,10 @@ class MeshEditor(object):
         a front end can tell "undid something" from "there was nothing left".
         """
         if not self._undo_stack:
-            return self._refuse('nothing to undo')
+            return self._refuse("nothing to undo")
         self._restore(self._undo_stack.pop())
-        self.last_reason = ''
-        return self._accept(faces=self.mesh.number_of_faces(),
-                            remaining=len(self._undo_stack))
+        self.last_reason = ""
+        return self._accept(faces=self.mesh.number_of_faces(), remaining=len(self._undo_stack))
 
     # ------------------------------------------------------------------
     # deleting a strip -- the template
@@ -297,7 +292,7 @@ class MeshEditor(object):
 
     def _gate(self, work: "QuadMesh") -> tuple[bool, str]:
         """Whether a trial result is acceptable. ``(ok, reason)``. The base accepts anything."""
-        return True, ''
+        return True, ""
 
     def strip_through(self, edge: tuple[int, int]) -> int | None:
         """The strip key through ``edge``, resolved on a copy. ``None`` if none."""
@@ -305,15 +300,22 @@ class MeshEditor(object):
         work.collect_strips()
         return work.edge_strip(tuple(edge))
 
-    def _empty_plan(self, reason: str = '') -> dict[str, Any]:
+    def _empty_plan(self, reason: str = "") -> dict[str, Any]:
         """A deletion plan with nothing done yet: every key ``plan_strip_deletion`` publishes."""
-        return {'ok': False, 'reason': reason, 'skey': None, 'faces': 0,
-                'collateral': [], 'boundaries_lost': [], 'to_split': {},
-                'can_preserve': True,
-                'faces_before': self.mesh.number_of_faces(),
-                'faces_after': None,
-                'vertices_before': self.mesh.number_of_vertices(),
-                'vertices_after': None}
+        return {
+            "ok": False,
+            "reason": reason,
+            "skey": None,
+            "faces": 0,
+            "collateral": [],
+            "boundaries_lost": [],
+            "to_split": {},
+            "can_preserve": True,
+            "faces_before": self.mesh.number_of_faces(),
+            "faces_after": None,
+            "vertices_before": self.mesh.number_of_vertices(),
+            "vertices_after": None,
+        }
 
     def _trial_delete(
         self,
@@ -332,20 +334,20 @@ class MeshEditor(object):
 
         if skey is None:
             if edge is None:
-                info['reason'] = 'no edge or strip given'
+                info["reason"] = "no edge or strip given"
                 return None, info
             skey = work.edge_strip(tuple(edge))
-        if skey is None or skey not in work.attributes['strips']:
-            info['reason'] = 'that edge belongs to no strip -- nothing to remove'
+        if skey is None or skey not in work.attributes["strips"]:
+            info["reason"] = "that edge belongs to no strip -- nothing to remove"
             return None, info
 
-        info['skey'] = skey
-        info['faces'] = len(work.strip_faces(skey))
-        info['collateral'] = list(collateral_strip_deletions(work, [skey]))
+        info["skey"] = skey
+        info["faces"] = len(work.strip_faces(skey))
+        info["collateral"] = list(collateral_strip_deletions(work, [skey]))
         # ``total_boundary_deletions`` returns the BOUNDARIES themselves -- a list
         # of vertex rings -- despite the name. Formatting it with ``{}`` prints a
         # list of rings where a number was meant, so callers take ``len``.
-        info['boundaries_lost'] = list(total_boundary_deletions(work, [skey]))
+        info["boundaries_lost"] = list(total_boundary_deletions(work, [skey]))
 
         # **Thesis Eq 5.11, and this helper is the only thing that implements
         # it.** A boundary collapses when fewer than THREE edges represent it
@@ -368,14 +370,12 @@ class MeshEditor(object):
         # Reported whether or not it was asked for: a front end wants to say "this
         # would cost you a hole, and here is what I would have to split to save
         # it" before the user decides.
-        info['to_split'] = {} if at_risk is None else dict(at_risk)
-        info['can_preserve'] = at_risk is not None
+        info["to_split"] = {} if at_risk is None else dict(at_risk)
+        info["can_preserve"] = at_risk is not None
 
         if preserve_boundaries:
             if at_risk is None:
-                info['reason'] = ('this strip cannot go without collapsing a '
-                                  'boundary, and there is no strip left on that '
-                                  'boundary to split to prevent it')
+                info["reason"] = "this strip cannot go without collapsing a boundary, and there is no strip left on that boundary to split to prevent it"
                 return None, info
             if at_risk:
                 self._split_strips(work, at_risk)
@@ -385,10 +385,9 @@ class MeshEditor(object):
                 if edge is not None:
                     skey = work.edge_strip(tuple(edge))
                     if skey is None:
-                        info['reason'] = ('lost track of the strip after the '
-                                          'pre-split')
+                        info["reason"] = "lost track of the strip after the pre-split"
                         return None, info
-                    info['skey'] = skey
+                    info["skey"] = skey
 
         try:
             _grammar_delete_strip(work, skey)
@@ -396,22 +395,21 @@ class MeshEditor(object):
             # Measured: 1 strip of 24 on a two-hole plate raises ``KeyError`` from
             # inside the grammar. Catching it costs the user a refusal instead of
             # a traceback.
-            info['reason'] = 'the grammar could not delete that strip ({}: {})'.format(
-                type(exc).__name__, exc)
+            info["reason"] = "the grammar could not delete that strip ({}: {})".format(type(exc).__name__, exc)
             return None, info
 
         if work.number_of_faces() == 0:
-            info['reason'] = 'that would delete every face of the mesh'
+            info["reason"] = "that would delete every face of the mesh"
             return None, info
 
         ok, reason = self._gate(work)
         if not ok:
-            info['reason'] = reason
+            info["reason"] = reason
             return None, info
 
-        info['ok'] = True
-        info['faces_after'] = work.number_of_faces()
-        info['vertices_after'] = work.number_of_vertices()
+        info["ok"] = True
+        info["faces_after"] = work.number_of_faces()
+        info["vertices_after"] = work.number_of_vertices()
         return work, info
 
     def plan_strip_deletion(
@@ -430,9 +428,8 @@ class MeshEditor(object):
             before/after face and vertex counts. A subclass that publishes
             different names or shapes adapts this at its own boundary.
         """
-        _work, info = self._trial_delete(
-            edge, preserve_boundaries=preserve_boundaries, skey=skey)
-        self.last_reason = '' if info['ok'] else info['reason']
+        _work, info = self._trial_delete(edge, preserve_boundaries=preserve_boundaries, skey=skey)
+        self.last_reason = "" if info["ok"] else info["reason"]
         return info
 
     def remove_strip(
@@ -445,10 +442,9 @@ class MeshEditor(object):
 
         Collapses the band and welds its sides; it does not dissolve the picked line.
         """
-        work, info = self._trial_delete(
-            edge, preserve_boundaries=preserve_boundaries, skey=skey)
+        work, info = self._trial_delete(edge, preserve_boundaries=preserve_boundaries, skey=skey)
         if work is None:
-            return self._refuse(info['reason'])
+            return self._refuse(info["reason"])
 
         self.mesh = work
         self.edited = True
@@ -465,12 +461,12 @@ class MeshEditor(object):
         Strip data is carried only when ``carry_strip_data``; a rebuild renumbers strips.
         """
         target = self.target
-        route = target.attributes.get('route')
+        route = target.attributes.get("route")
         # A symmetric unit's seams, group and tolerances (``compas_singular.symmetry``)
         # describe the DOMAIN the layout lives in, like the route -- a rebuild that
         # renumbers the layout does not change them, and dropping them would leave
         # a unit that can no longer be expanded.
-        symmetry = target.attributes.get('symmetry')
+        symmetry = target.attributes.get("symmetry")
 
         target.clear()
         # ``clear()`` deliberately does not do this, and the omission is the trap:
@@ -482,16 +478,16 @@ class MeshEditor(object):
             target.add_vertex(key=vkey, attr_dict=dict(source.vertex[vkey]))
         for fkey in source.faces():
             target.add_face(source.face_vertices(fkey), fkey=fkey)
-        for fkey, data in getattr(source, 'facedata', {}).items():
+        for fkey, data in getattr(source, "facedata", {}).items():
             target.facedata[fkey] = deepcopy(data)
-        for edge, data in getattr(source, 'edgedata', {}).items():
+        for edge, data in getattr(source, "edgedata", {}).items():
             target.edgedata[edge] = deepcopy(data)
 
         # The dense mesh and the coarse-to-dense maps describe the layout as it
         # was BEFORE this edit. Keeping them is how a stale mesh gets served.
         for key in self.DERIVED_ATTRIBUTES:
             if key in target.attributes:
-                target.attributes[key] = None if 'mesh' in key else {}
+                target.attributes[key] = None if "mesh" in key else {}
         if not carry_strip_data:
             for key in self.STRIP_KEYED_ATTRIBUTES:
                 if key in target.attributes:
@@ -499,7 +495,7 @@ class MeshEditor(object):
         # The route is a property of the layout, not of the rebuild that produced
         # it, so it comes from the object being written into rather than the copy.
         if route is not None:
-            target.attributes['route'] = route
+            target.attributes["route"] = route
         if symmetry:
-            target.attributes['symmetry'] = deepcopy(symmetry)
+            target.attributes["symmetry"] = deepcopy(symmetry)
         return target

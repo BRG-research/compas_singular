@@ -1,4 +1,5 @@
 """The MCP JSON-RPC layer, driven with a fake handler -- a failure here is a protocol failure."""
+
 import io
 import json
 import sys
@@ -77,13 +78,16 @@ def test_a_crashing_handler_does_not_kill_the_session(dispatcher, capsys):
     assert "RuntimeError" in capsys.readouterr().err
 
 
-@pytest.mark.parametrize("method, params, code", [
-    ("nope", None, protocol.METHOD_NOT_FOUND),
-    ("prompts/list", None, protocol.METHOD_NOT_FOUND),       # an unadvertised capability
-    ("tools/call", {}, protocol.INVALID_PARAMS),
-    ("tools/call", {"name": "echo", "arguments": 5}, protocol.INVALID_PARAMS),
-    ("resources/read", {"uri": "nope://x"}, protocol.INVALID_PARAMS),
-])
+@pytest.mark.parametrize(
+    "method, params, code",
+    [
+        ("nope", None, protocol.METHOD_NOT_FOUND),
+        ("prompts/list", None, protocol.METHOD_NOT_FOUND),  # an unadvertised capability
+        ("tools/call", {}, protocol.INVALID_PARAMS),
+        ("tools/call", {"name": "echo", "arguments": 5}, protocol.INVALID_PARAMS),
+        ("resources/read", {"uri": "nope://x"}, protocol.INVALID_PARAMS),
+    ],
+)
 def test_protocol_faults_are_json_rpc_errors(dispatcher, method, params, code):
     assert _call(dispatcher, 5, method, params)["error"]["code"] == code
 
@@ -103,8 +107,7 @@ def test_the_stdio_loop_frames_skips_blanks_survives_junk_and_batches():
         json.dumps({"jsonrpc": "2.0", "id": 3, "method": "ping"}),
     ]
     sink = io.StringIO()
-    protocol.serve(protocol.Dispatcher(Fake()), stdin=io.StringIO("\n".join(lines) + "\n"),
-                   stdout=sink, guard=False)
+    protocol.serve(protocol.Dispatcher(Fake()), stdin=io.StringIO("\n".join(lines) + "\n"), stdout=sink, guard=False)
     replies = [json.loads(line) for line in sink.getvalue().splitlines() if line.strip()]
     assert len(replies) == 4
     assert "Content-Length" not in sink.getvalue()
@@ -117,8 +120,7 @@ def test_the_stdout_guard_keeps_a_stray_print_off_the_stream(capsys):
     sink = io.StringIO()
     stdout = sys.stdout
     request = {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "chatty"}}
-    protocol.serve(protocol.Dispatcher(Noisy()), stdin=io.StringIO(json.dumps(request) + "\n"),
-                   stdout=sink)
+    protocol.serve(protocol.Dispatcher(Noisy()), stdin=io.StringIO(json.dumps(request) + "\n"), stdout=sink)
     assert "CORRUPT" not in sink.getvalue()
     assert all(json.loads(line) for line in sink.getvalue().splitlines() if line.strip())
     assert "CORRUPT" in capsys.readouterr().err

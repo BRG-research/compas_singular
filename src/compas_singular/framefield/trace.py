@@ -1,4 +1,5 @@
 """Separatrix tracing from singularities, reflex corners and uncut holes, with guarded stopping rules."""
+
 from __future__ import annotations
 
 from collections import namedtuple
@@ -20,11 +21,11 @@ from compas_singular.geometry.polyline import closest_on_polyline
 from compas_singular.geometry.polyline import loop_arc_lengths
 from compas_singular.geometry.polyline import signed_area
 
-__all__ = ['Tracer', 'Separatrix']
+__all__ = ["Tracer", "Separatrix"]
 
 
 #: ``reason`` is one of 'boundary', 'singularity', 'cycle', 'length', 'lost'.
-Separatrix = namedtuple('Separatrix', 'points source sink reason')
+Separatrix = namedtuple("Separatrix", "points source sink reason")
 
 #: Two cut sites whose field alignment differs by less than this are equally
 #: aligned, and ``Tracer._cut_launches_from`` picks between them on arc
@@ -55,7 +56,7 @@ class _Trail(object):
 
     def revisits(self, points: list[list[float]], skip: int = 20) -> bool:
         """Whether ``points[-1]`` is within ``tol`` of any of ``points[:-skip]``."""
-        for p in points[self.added:len(points) - skip]:
+        for p in points[self.added : len(points) - skip]:
             self.grid.setdefault(self._key(p), []).append(p)
         self.added = max(self.added, len(points) - skip)
         head = points[-1]
@@ -138,8 +139,7 @@ class Tracer(object):
     def singularity_positions(self) -> dict[int, list[float]]:
         """Where each singularity is: ``singularity_points`` where given, else
         the face centroid. What traces launch from and snap back onto."""
-        return {fkey: self.singularity_points.get(fkey) or self.mesh.face_centroid(fkey)
-                for fkey, _ in self.field.singularities()}
+        return {fkey: self.singularity_points.get(fkey) or self.mesh.face_centroid(fkey) for fkey, _ in self.field.singularities()}
 
     #: Old name, kept for callers outside the package.
     _singularity_points = singularity_positions
@@ -150,12 +150,11 @@ class Tracer(object):
         best = []
         for scale, samples in PROBES:
             radius = self.background.target_length * scale
-            phis = [2.0 * pi * i / samples for i in range(samples + 1)]   # closes the lap
-            points = [[centre[0] + cos(phi) * radius, centre[1] + sin(phi) * radius, 0.0]
-                      for phi in phis]
+            phis = [2.0 * pi * i / samples for i in range(samples + 1)]  # closes the lap
+            points = [[centre[0] + cos(phi) * radius, centre[1] + sin(phi) * radius, 0.0] for phi in phis]
             found = self.locator.locate_many(points)
             if any(f is None for f in found):
-                continue                    # the circle left the domain
+                continue  # the circle left the domain
             residual = []
             theta = None
             for point, phi, hit in zip(points, phis, found):
@@ -211,8 +210,7 @@ class Tracer(object):
             return None
         for sign in (1.0, -1.0):
             normal = [-ty / length * sign, tx / length * sign, 0.0]
-            probe = [loop[i][0] + normal[0] * self.background.target_length * 0.6,
-                     loop[i][1] + normal[1] * self.background.target_length * 0.6, 0.0]
+            probe = [loop[i][0] + normal[0] * self.background.target_length * 0.6, loop[i][1] + normal[1] * self.background.target_length * 0.6, 0.0]
             if self.locator.locate(probe) is not None:
                 return normal
         return None
@@ -256,8 +254,7 @@ class Tracer(object):
             if not candidates:
                 continue
             top = max(c[0] for c in candidates)
-            _, _, point, arm = min((c for c in candidates if c[0] > top - ALIGN_TIE),
-                                   key=lambda c: c[1])
+            _, _, point, arm = min((c for c in candidates if c[0] > top - ALIGN_TIE), key=lambda c: c[1])
             launches.append((point, arm))
         return launches
 
@@ -292,6 +289,7 @@ class Tracer(object):
     def corner_points(self, corner_limit: float = pi / 12.0) -> list[list[float]]:
         """Every boundary corner, as a flat list of points."""
         from compas_singular.framefield.separatrix_network import boundary_corners
+
         out = []
         for loop in self._loops():
             for i in boundary_corners(loop, corner_limit):
@@ -328,13 +326,13 @@ class Tracer(object):
         d = list(direction)
         fkey = None
         length = 0.0
-        reason = 'length'
+        reason = "length"
         sink = None
 
         while length < self.max_length:
             d1, f1 = self.direction_at(points[-1], d, fkey)
             if d1 is None:
-                reason = 'lost'
+                reason = "lost"
                 break
             mid = [points[-1][k] + d1[k] * h * 0.5 for k in range(3)]
             d2, _ = self.direction_at(mid, d1, f1)
@@ -348,7 +346,7 @@ class Tracer(object):
                 if clipped is not None:
                     points.append(clipped)
                     length += distance_point_point(points[-2], clipped)
-                reason = 'boundary'
+                reason = "boundary"
                 break
 
             length += distance_point_point(points[-1], nxt)
@@ -358,13 +356,13 @@ class Tracer(object):
             hit = None
             for skey, centre in singular_points.items():
                 if skey == source and length < stop_radius * 3.0:
-                    continue                       # our own launch point
+                    continue  # our own launch point
                 if distance_point_point(nxt, centre) < stop_radius:
                     hit = skey
                     break
             if hit is not None:
                 points.append(list(singular_points[hit]))
-                reason, sink = 'singularity', hit
+                reason, sink = "singularity", hit
                 break
 
             # A trace can run ALONG a wall without ever leaving the domain, and
@@ -375,18 +373,18 @@ class Tracer(object):
                 near = self._project_to_boundary(nxt)
                 if near is not None and distance_point_point(nxt, near) < h * 0.75:
                     points.append(near)
-                    reason = 'boundary'
+                    reason = "boundary"
                     break
 
             if len(points) > 40 and trail.revisits(points):
-                reason = 'cycle'
+                reason = "cycle"
                 break
 
         return Separatrix(points, source, sink, reason)
 
     def _project_to_boundary(self, point: list[float]) -> list[float] | None:
         """Closest point on any boundary loop."""
-        best, best_d = None, float('inf')
+        best, best_d = None, float("inf")
         for loop in self._loops():
             _i, _t, q, d = closest_on_polyline(point, loop, closed=True)
             if d < best_d:
@@ -395,7 +393,7 @@ class Tracer(object):
 
     def _clip_to_boundary(self, inside: list[float], outside: list[float]) -> list[float] | None:
         """Where the segment ``inside -> outside`` leaves the domain."""
-        best, best_d = None, float('inf')
+        best, best_d = None, float("inf")
         for loop in self._loops():
             for a, b in pairwise(loop + loop[:1]):
                 x = intersection_segment_segment_xy((inside, outside), (a, b))
@@ -466,9 +464,7 @@ class Tracer(object):
                 # launched from the corner itself, stepped along the arm -- not
                 # from the probe, which would shift the whole trace sideways
                 step = self.background.target_length * 0.5
-                launches.extend(
-                    ([here[0] + d[0] * step, here[1] + d[1] * step, 0.0], d)
-                    for d, _ in candidates[:k - 1])
+                launches.extend(([here[0] + d[0] * step, here[1] + d[1] * step, 0.0], d) for d, _ in candidates[: k - 1])
         return launches
 
     @staticmethod
@@ -504,8 +500,7 @@ class Tracer(object):
             if len(dirs) != expected:
                 arm_mismatch.append((fkey, len(dirs), expected))
             for d in dirs:
-                start = [centre[0] + d[0] * self.background.target_length * 0.5,
-                         centre[1] + d[1] * self.background.target_length * 0.5, 0.0]
+                start = [centre[0] + d[0] * self.background.target_length * 0.5, centre[1] + d[1] * self.background.target_length * 0.5, 0.0]
                 out.append(self.trace(start, d, source=fkey, singular_points=singular_points))
 
         for start, d in self.corner_launches():
@@ -516,9 +511,9 @@ class Tracer(object):
             # ``'hole'`` tells ``build_network`` this start sits on a smooth wall
             # and is a split point of it, where a corner launch (``None``) must
             # be snapped back onto its corner
-            trace = self.trace(start, d, source='hole', singular_points=singular_points)
+            trace = self.trace(start, d, source="hole", singular_points=singular_points)
             # a cut that does not land on another wall is a dangling edge
-            if trace.reason == 'boundary':
+            if trace.reason == "boundary":
                 out.append(trace)
                 cuts += 1
 
@@ -527,10 +522,10 @@ class Tracer(object):
             reasons[s.reason] = reasons.get(s.reason, 0) + 1
 
         report = {
-            'count': len(out),
-            'reasons': reasons,
-            'arm_mismatch': arm_mismatch,
-            'hole_cuts': cuts,
-            'ok': not arm_mismatch and not reasons.get('lost') and not reasons.get('cycle'),
+            "count": len(out),
+            "reasons": reasons,
+            "arm_mismatch": arm_mismatch,
+            "hole_cuts": cuts,
+            "ok": not arm_mismatch and not reasons.get("lost") and not reasons.get("cycle"),
         }
         return out, report

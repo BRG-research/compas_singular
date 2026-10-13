@@ -5,6 +5,7 @@ The numbers in the first three cases are measured against
 it returns ZERO faces for anything whose cuts all run wall to wall, because it keeps
 a face only when a corner is off the boundary.
 """
+
 from math import cos, pi, sin
 
 import pytest
@@ -21,6 +22,7 @@ from compas_singular.datastructures import split_at_junctions
 # domains
 # ----------------------------------------------------------------------------
 
+
 def square_edges():
     """The four sides of a 10 x 10 square, one polyline each."""
     corners = [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]]
@@ -29,9 +31,7 @@ def square_edges():
 
 def arc(cx, cy, r, start, end, n=12):
     """An arc sampled at ``n`` segments, angles in degrees."""
-    return [[cx + r * cos(pi * (start + (end - start) * k / n) / 180.0),
-             cy + r * sin(pi * (start + (end - start) * k / n) / 180.0), 0.0]
-            for k in range(n + 1)]
+    return [[cx + r * cos(pi * (start + (end - start) * k / n) / 180.0), cy + r * sin(pi * (start + (end - start) * k / n) / 180.0), 0.0] for k in range(n + 1)]
 
 
 def at(r, deg):
@@ -40,8 +40,7 @@ def at(r, deg):
 
 
 def signed_area(ring):
-    return 0.5 * sum(a[0] * b[1] - b[0] * a[1]
-                     for a, b in pairwise(list(ring) + list(ring[:1])))
+    return 0.5 * sum(a[0] * b[1] - b[0] * a[1] for a, b in pairwise(list(ring) + list(ring[:1])))
 
 
 def sides(mesh):
@@ -56,17 +55,21 @@ def sides(mesh):
 # the layouts that work
 # ----------------------------------------------------------------------------
 
+
 def test_square_with_four_arm_cross():
     """The one case ``from_polylines`` also handles -- same answer, 4 quads."""
-    polylines = square_edges() + [
-        [[5, 5, 0], [5, 0, 0]], [[5, 5, 0], [10, 5, 0]],
-        [[5, 5, 0], [5, 10, 0]], [[5, 5, 0], [0, 5, 0]]]
+    polylines = square_edges() + [[[5, 5, 0], [5, 0, 0]], [[5, 5, 0], [10, 5, 0]], [[5, 5, 0], [5, 10, 0]], [[5, 5, 0], [0, 5, 0]]]
     # the walls have to be split at the cross's landings, as they are on screen
     polylines = polylines[4:] + [
-        [[0, 0, 0], [5, 0, 0]], [[5, 0, 0], [10, 0, 0]],
-        [[10, 0, 0], [10, 5, 0]], [[10, 5, 0], [10, 10, 0]],
-        [[10, 10, 0], [5, 10, 0]], [[5, 10, 0], [0, 10, 0]],
-        [[0, 10, 0], [0, 5, 0]], [[0, 5, 0], [0, 0, 0]]]
+        [[0, 0, 0], [5, 0, 0]],
+        [[5, 0, 0], [10, 0, 0]],
+        [[10, 0, 0], [10, 5, 0]],
+        [[10, 5, 0], [10, 10, 0]],
+        [[10, 10, 0], [5, 10, 0]],
+        [[5, 10, 0], [0, 10, 0]],
+        [[0, 10, 0], [0, 5, 0]],
+        [[0, 5, 0], [0, 0, 0]],
+    ]
 
     coarse = CoarsePseudoQuadMesh.from_coarse_polylines(polylines)
 
@@ -78,11 +81,14 @@ def test_square_with_four_arm_cross():
 def test_square_with_one_cut_wall_to_wall():
     """``from_polylines`` gives 0 faces here: every corner is on a boundary."""
     polylines = [
-        [[0, 0, 0], [5, 0, 0]], [[5, 0, 0], [10, 0, 0]],
+        [[0, 0, 0], [5, 0, 0]],
+        [[5, 0, 0], [10, 0, 0]],
         [[10, 0, 0], [10, 10, 0]],
-        [[10, 10, 0], [5, 10, 0]], [[5, 10, 0], [0, 10, 0]],
+        [[10, 10, 0], [5, 10, 0]],
+        [[5, 10, 0], [0, 10, 0]],
         [[0, 10, 0], [0, 0, 0]],
-        [[5, 0, 0], [5, 10, 0]]]
+        [[5, 0, 0], [5, 10, 0]],
+    ]
 
     coarse = CoarsePseudoQuadMesh.from_coarse_polylines(polylines)
 
@@ -93,16 +99,16 @@ def test_square_with_hash_grid():
     """Four strokes drawn as a ``#``, pre-split at their crossings: 9 quads."""
     xs = [0, 3, 7, 10]
     polylines = []
-    for j in (0, 3):                      # bottom and top walls
+    for j in (0, 3):  # bottom and top walls
         for i in range(3):
             polylines.append([[xs[i], j and 10 or 0, 0], [xs[i + 1], j and 10 or 0, 0]])
-    for i in (0, 3):                      # left and right walls
+    for i in (0, 3):  # left and right walls
         for j in range(3):
             polylines.append([[i and 10 or 0, xs[j], 0], [i and 10 or 0, xs[j + 1], 0]])
-    for y in (3, 7):                      # horizontals
+    for y in (3, 7):  # horizontals
         for i in range(3):
             polylines.append([[xs[i], y, 0], [xs[i + 1], y, 0]])
-    for x in (3, 7):                      # verticals
+    for x in (3, 7):  # verticals
         for j in range(3):
             polylines.append([[x, xs[j], 0], [x, xs[j + 1], 0]])
 
@@ -124,8 +130,7 @@ def annulus_polylines():
 
 
 def test_annulus_hole_is_not_filled():
-    coarse = CoarsePseudoQuadMesh.from_coarse_polylines(
-        annulus_polylines(), holes=[[0, 0, 0]])
+    coarse = CoarsePseudoQuadMesh.from_coarse_polylines(annulus_polylines(), holes=[[0, 0, 0]])
 
     assert sides(coarse) == {4: 3}
     assert coarse.number_of_vertices() == 6
@@ -135,7 +140,7 @@ def test_annulus_without_holes_fills_the_hole():
     """The hole is a bounded cycle like any other; only ``holes`` tells it apart."""
     coarse = CoarsePseudoQuadMesh.from_coarse_polylines(annulus_polylines())
 
-    assert coarse.number_of_faces() == 4      # three patches plus the hole
+    assert coarse.number_of_faces() == 4  # three patches plus the hole
 
 
 def test_every_face_winds_counter_clockwise():
@@ -145,8 +150,7 @@ def test_every_face_winds_counter_clockwise():
     a walk that decides the unbounded face from the corners hands the mesh an
     inverted face. Measured on this annulus before the fix.
     """
-    coarse = CoarsePseudoQuadMesh.from_coarse_polylines(
-        annulus_polylines(), holes=[[0, 0, 0]])
+    coarse = CoarsePseudoQuadMesh.from_coarse_polylines(annulus_polylines(), holes=[[0, 0, 0]])
 
     for fkey in coarse.faces():
         ring = [coarse.vertex_coordinates(v) for v in coarse.face_vertices(fkey)]
@@ -154,9 +158,7 @@ def test_every_face_winds_counter_clockwise():
 
 
 def test_triangle_is_a_pseudo_quad():
-    polylines = [[[0, 0, 0], [10, 0, 0]],
-                 [[10, 0, 0], [5, 8, 0]],
-                 [[5, 8, 0], [0, 0, 0]]]
+    polylines = [[[0, 0, 0], [10, 0, 0]], [[10, 0, 0], [5, 8, 0]], [[5, 8, 0], [0, 0, 0]]]
 
     coarse = CoarsePseudoQuadMesh.from_coarse_polylines(polylines)
 
@@ -167,9 +169,7 @@ def test_triangle_is_a_pseudo_quad():
 
 
 def test_poles_choose_which_corner_collapses():
-    polylines = [[[0, 0, 0], [10, 0, 0]],
-                 [[10, 0, 0], [5, 8, 0]],
-                 [[5, 8, 0], [0, 0, 0]]]
+    polylines = [[[0, 0, 0], [10, 0, 0]], [[10, 0, 0], [5, 8, 0]], [[5, 8, 0], [0, 0, 0]]]
 
     coarse = CoarsePseudoQuadMesh.from_coarse_polylines(polylines, poles=[[5, 8, 0]])
 
@@ -181,10 +181,10 @@ def test_poles_choose_which_corner_collapses():
 # the drawings that are refused
 # ----------------------------------------------------------------------------
 
+
 def split_square_edges():
     """The square's walls, already split at the four mid-side landings."""
-    ring = [[0, 0, 0], [5, 0, 0], [10, 0, 0], [10, 5, 0],
-            [10, 10, 0], [5, 10, 0], [0, 10, 0], [0, 5, 0]]
+    ring = [[0, 0, 0], [5, 0, 0], [10, 0, 0], [10, 5, 0], [10, 10, 0], [5, 10, 0], [0, 10, 0], [0, 5, 0]]
     return [[ring[i], ring[(i + 1) % 8]] for i in range(8)]
 
 
@@ -192,56 +192,49 @@ def test_dangling_curve_raises():
     """A stub running from a wall corner into the middle of nowhere."""
     polylines = split_square_edges() + [[[5, 0, 0], [5, 5, 0]]]
 
-    with pytest.raises(ValueError, match='dangling'):
+    with pytest.raises(ValueError, match="dangling"):
         CoarsePseudoQuadMesh.from_coarse_polylines(polylines)
 
 
 def test_t_junction_raises():
     """The common mistake: a wall drawn as one curve with a cut landing halfway."""
-    polylines = square_edges() + [
-        [[5, 0, 0], [5, 10, 0]],
-        [[10, 5, 0], [5, 5, 0]], [[0, 5, 0], [5, 5, 0]]]
+    polylines = square_edges() + [[[5, 0, 0], [5, 10, 0]], [[10, 5, 0], [5, 5, 0]], [[0, 5, 0], [5, 5, 0]]]
 
-    with pytest.raises(ValueError, match='interior of polyline'):
+    with pytest.raises(ValueError, match="interior of polyline"):
         CoarsePseudoQuadMesh.from_coarse_polylines(polylines)
 
 
 def test_crossing_curves_raise():
     """Both cuts land on proper corners, so only the crossing is wrong."""
-    polylines = split_square_edges() + [
-        [[5, 0, 0], [5, 10, 0]], [[0, 5, 0], [10, 5, 0]]]
+    polylines = split_square_edges() + [[[5, 0, 0], [5, 10, 0]], [[0, 5, 0], [10, 5, 0]]]
 
-    with pytest.raises(ValueError, match='cross at'):
+    with pytest.raises(ValueError, match="cross at"):
         CoarsePseudoQuadMesh.from_coarse_polylines(polylines)
 
 
 def test_five_sided_patch_raises():
     """A pentagon: perfectly drawable, and it has no densification."""
     polylines = []
-    corners = [[cos(2 * pi * k / 5) * 5, sin(2 * pi * k / 5) * 5, 0.0]
-               for k in range(5)]
+    corners = [[cos(2 * pi * k / 5) * 5, sin(2 * pi * k / 5) * 5, 0.0] for k in range(5)]
     for k in range(5):
         polylines.append([corners[k], corners[(k + 1) % 5]])
 
-    with pytest.raises(ValueError, match='5 sides'):
+    with pytest.raises(ValueError, match="5 sides"):
         CoarsePseudoQuadMesh.from_coarse_polylines(polylines)
 
 
 def test_two_edges_between_the_same_corners_raise():
     """An annulus cut TWICE: a mesh cannot key two half-edges to one corner pair."""
-    polylines = [arc(0, 0, 5, 0, 180), arc(0, 0, 5, 180, 360),
-                 arc(0, 0, 2, 0, 180), arc(0, 0, 2, 180, 360),
-                 [[2, 0, 0], [5, 0, 0]], [[-2, 0, 0], [-5, 0, 0]]]
+    polylines = [arc(0, 0, 5, 0, 180), arc(0, 0, 5, 180, 360), arc(0, 0, 2, 0, 180), arc(0, 0, 2, 180, 360), [[2, 0, 0], [5, 0, 0]], [[-2, 0, 0], [-5, 0, 0]]]
 
-    with pytest.raises(ValueError, match='both corners'):
+    with pytest.raises(ValueError, match="both corners"):
         CoarsePseudoQuadMesh.from_coarse_polylines(polylines)
 
 
 def test_closed_curve_is_not_an_edge():
-    polylines = square_edges() + [
-        [[3, 3, 0], [7, 3, 0], [7, 7, 0], [3, 7, 0], [3, 3, 0]]]
+    polylines = square_edges() + [[[3, 3, 0], [7, 3, 0], [7, 7, 0], [3, 7, 0], [3, 3, 0]]]
 
-    with pytest.raises(ValueError, match='same corner'):
+    with pytest.raises(ValueError, match="same corner"):
         CoarsePseudoQuadMesh.from_coarse_polylines(polylines)
 
 
@@ -249,10 +242,10 @@ def test_closed_curve_is_not_an_edge():
 # the curvature, and what carries it
 # ----------------------------------------------------------------------------
 
+
 def test_densification_follows_the_drawn_curves():
     """A bare ``densification()`` reproduces the arcs, with nothing handed back."""
-    coarse = CoarsePseudoQuadMesh.from_coarse_polylines(
-        annulus_polylines(), holes=[[0, 0, 0]])
+    coarse = CoarsePseudoQuadMesh.from_coarse_polylines(annulus_polylines(), holes=[[0, 0, 0]])
     coarse.set_strips_density(4)
     dense = coarse.densification()
 
@@ -268,17 +261,14 @@ def test_densification_follows_the_drawn_curves():
 
 def test_cleared_curves_fall_back_to_chords():
     """The unchanged branch: no stored curves means straight coarse edges."""
-    coarse = CoarsePseudoQuadMesh.from_coarse_polylines(
-        annulus_polylines(), holes=[[0, 0, 0]])
+    coarse = CoarsePseudoQuadMesh.from_coarse_polylines(annulus_polylines(), holes=[[0, 0, 0]])
     coarse.set_edges_to_curves(None)
     coarse.set_strips_density(4)
     dense = coarse.densification()
 
     assert coarse.edges_to_curves() == {}
-    off_circle = [v for v in dense.vertices()
-                  if abs((sum(c * c for c in dense.vertex_coordinates(v)[:2])) ** 0.5
-                         - 5.0) > 1e-6]
-    assert off_circle          # the outer ring is now chorded
+    off_circle = [v for v in dense.vertices() if abs((sum(c * c for c in dense.vertex_coordinates(v)[:2])) ** 0.5 - 5.0) > 1e-6]
+    assert off_circle  # the outer ring is now chorded
 
 
 def test_layouts_from_other_constructors_are_untouched():
@@ -298,9 +288,8 @@ def test_json_round_trip_keeps_the_curves():
     import os
     import tempfile
 
-    coarse = CoarsePseudoQuadMesh.from_coarse_polylines(
-        annulus_polylines(), holes=[[0, 0, 0]])
-    path = os.path.join(tempfile.mkdtemp(), 'coarse.json')
+    coarse = CoarsePseudoQuadMesh.from_coarse_polylines(annulus_polylines(), holes=[[0, 0, 0]])
+    path = os.path.join(tempfile.mkdtemp(), "coarse.json")
     coarse.save_to_json(path)
 
     reloaded = CoarsePseudoQuadMesh.from_json(path)
@@ -308,14 +297,14 @@ def test_json_round_trip_keeps_the_curves():
     assert reloaded.number_of_faces() == coarse.number_of_faces()
     assert reloaded.edges_to_curves().keys() == coarse.edges_to_curves().keys()
     with open(path) as f:
-        json.load(f)          # it is real JSON, tuple keys and all
+        json.load(f)  # it is real JSON, tuple keys and all
 
 
 def test_a_layout_saved_before_this_change_still_loads():
     """``attributes`` from an older JSON has no ``edges_to_curves`` key at all."""
     vertices = [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]]
     coarse = CoarsePseudoQuadMesh.from_vertices_and_faces(vertices, [[0, 1, 2, 3]])
-    del coarse.attributes['edges_to_curves']
+    del coarse.attributes["edges_to_curves"]
 
     assert coarse.edges_to_curves() == {}
     coarse.collect_strips()
@@ -326,6 +315,7 @@ def test_a_layout_saved_before_this_change_still_loads():
 # ----------------------------------------------------------------------------
 # the round trip this constructor exists for
 # ----------------------------------------------------------------------------
+
 
 def test_generated_layout_survives_a_bake_and_a_read_back():
     """A layout out as one curve per edge, and back in, is the same layout.
@@ -341,14 +331,11 @@ def test_generated_layout_survives_a_bake_and_a_read_back():
     outer = [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0], [0, 0, 0]]
     inner = [[6, 4, 0], [4, 4, 0], [4, 6, 0], [6, 6, 0], [6, 4, 0]]
 
-    decomposition = SkeletonDecomposition.from_boundary(
-        Polyline(outer), inner_boundaries=[Polyline(inner)], target_length=0.5)
+    decomposition = SkeletonDecomposition.from_boundary(Polyline(outer), inner_boundaries=[Polyline(inner)], target_length=0.5)
     coarse = decomposition.coarse_mesh()
-    curves, _tally = coarse_edges_to_curves(
-        coarse, loops=[outer[:-1], inner[:-1]], polylines=decomposition.polylines)
+    curves, _tally = coarse_edges_to_curves(coarse, loops=[outer[:-1], inner[:-1]], polylines=decomposition.polylines)
 
-    back = CoarsePseudoQuadMesh.from_coarse_polylines(
-        list(curves.values()), holes=[[5, 5, 0]])
+    back = CoarsePseudoQuadMesh.from_coarse_polylines(list(curves.values()), holes=[[5, 5, 0]])
 
     assert back.number_of_faces() == coarse.number_of_faces()
     assert back.number_of_vertices() == coarse.number_of_vertices()
@@ -361,6 +348,7 @@ def test_generated_layout_survives_a_bake_and_a_read_back():
 # ----------------------------------------------------------------------------
 # reading a CAD polyline as edges
 # ----------------------------------------------------------------------------
+
 
 def test_closed_rectangle_splits_into_its_four_sides():
     rectangle = [[0, 0, 0], [10, 0, 0], [10, 6, 0], [0, 6, 0], [0, 0, 0]]
@@ -382,7 +370,7 @@ def test_seam_halfway_along_a_side_is_not_a_corner():
 
     assert len(pieces) == 4
     bottom = [piece for piece in pieces if all(abs(p[1]) < 1e-12 for p in piece)]
-    assert len(bottom) == 1 and len(bottom[0]) == 3      # 0 -> 5 -> 10, one edge
+    assert len(bottom) == 1 and len(bottom[0]) == 3  # 0 -> 5 -> 10, one edge
 
 
 def test_collinear_vertex_is_not_a_corner():
@@ -407,8 +395,7 @@ def test_the_frame_drawn_in_rhino():
     remaining corners were reported as T-junctions.
     """
     outer = [[15, -20, 0], [487, -20, 0], [487, -410, 0], [15, -410, 0], [15, -20, 0]]
-    inner = [[153, -123, 0], [360, -118, 0], [347, -282, 0], [152, -282, 0],
-             [153, -123, 0]]
+    inner = [[153, -123, 0], [360, -118, 0], [347, -282, 0], [152, -282, 0], [153, -123, 0]]
     diagonals = [[outer[k], inner[k]] for k in range(4)]
 
     polylines = split_at_corners(outer) + split_at_corners(inner) + diagonals
@@ -424,6 +411,7 @@ def test_the_frame_drawn_in_rhino():
 # splitting a drawing where its curves meet
 # ----------------------------------------------------------------------------
 
+
 def drawn(*curves):
     """What the Rhino command does: polylines at their corners, then junctions."""
     edges = [piece for curve in curves for piece in split_at_corners(curve)]
@@ -437,7 +425,7 @@ def test_rectangle_cut_in_half():
     """The drawing that hit the strict rule: one closed polyline, one line across."""
     pieces, _origin = drawn(RECTANGLE, [[0, 5, 0], [20, 5, 0]])
 
-    assert len(pieces) == 7                   # 4 sides, 2 of them split, + the cut
+    assert len(pieces) == 7  # 4 sides, 2 of them split, + the cut
     coarse = CoarsePseudoQuadMesh.from_coarse_polylines(pieces)
     assert sides(coarse) == {4: 2}
 
@@ -452,8 +440,7 @@ def test_plus_drawn_as_two_crossing_strokes():
 
 def test_hash_drawn_as_four_strokes():
     square = [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0], [0, 0, 0]]
-    strokes = [[[0, 3, 0], [10, 3, 0]], [[0, 7, 0], [10, 7, 0]],
-               [[3, 0, 0], [3, 10, 0]], [[7, 0, 0], [7, 10, 0]]]
+    strokes = [[[0, 3, 0], [10, 3, 0]], [[0, 7, 0], [10, 7, 0]], [[3, 0, 0], [3, 10, 0]], [[7, 0, 0], [7, 10, 0]]]
     pieces, _origin = drawn(square, *strokes)
 
     coarse = CoarsePseudoQuadMesh.from_coarse_polylines(pieces)
@@ -481,8 +468,8 @@ def test_origin_maps_every_piece_back_to_its_curve():
     pieces, origin = split_at_junctions(curves)
 
     assert len(origin) == len(pieces)
-    assert origin.count(0) == 1               # the cut itself is not split
-    for piece, i in zip(pieces, origin):      # every piece lies along its source
+    assert origin.count(0) == 1  # the cut itself is not split
+    for piece, i in zip(pieces, origin):  # every piece lies along its source
         source = curves[i]
         for point in piece:
             assert min(distance_point_point(point, q) for q in source) <= 20.0
@@ -492,7 +479,7 @@ def test_a_curve_stopping_short_is_still_refused():
     """Short of the wall is not ON it: nothing to split at, still dangling."""
     pieces, _origin = drawn(RECTANGLE, [[0, 5, 0], [19.5, 5, 0]])
 
-    with pytest.raises(ValueError, match='dangling'):
+    with pytest.raises(ValueError, match="dangling"):
         CoarsePseudoQuadMesh.from_coarse_polylines(pieces)
 
 
@@ -501,7 +488,7 @@ def test_a_circle_with_nothing_landing_on_it_stays_whole():
     pieces, _origin = split_at_junctions([circle])
 
     assert len(pieces) == 1
-    with pytest.raises(ValueError, match='same corner'):
+    with pytest.raises(ValueError, match="same corner"):
         CoarsePseudoQuadMesh.from_coarse_polylines(pieces)
 
 
@@ -509,18 +496,17 @@ def test_a_circle_with_nothing_landing_on_it_stays_whole():
 # one connected drawing, and corners marked by points
 # ----------------------------------------------------------------------------
 
+
 def test_a_loose_piece_is_refused():
     """A hole no division line reaches used to be kept INSIDE a patch, silently.
 
     The square around it came back as one quad covering the hole, and
     ``densifiable`` accepted it. Now it is refused, naming a curve of the loop.
     """
-    square = [[[0, 0, 0], [10, 0, 0]], [[10, 0, 0], [10, 10, 0]],
-              [[10, 10, 0], [0, 10, 0]], [[0, 10, 0], [0, 0, 0]]]
-    loop = [[[4, 4, 0], [6, 4, 0]], [[6, 4, 0], [6, 6, 0]],
-            [[6, 6, 0], [4, 6, 0]], [[4, 6, 0], [4, 4, 0]]]
+    square = [[[0, 0, 0], [10, 0, 0]], [[10, 0, 0], [10, 10, 0]], [[10, 10, 0], [0, 10, 0]], [[0, 10, 0], [0, 0, 0]]]
+    loop = [[[4, 4, 0], [6, 4, 0]], [[6, 4, 0], [6, 6, 0]], [[6, 6, 0], [4, 6, 0]], [[4, 6, 0], [4, 4, 0]]]
 
-    with pytest.raises(ValueError, match=r'2 separate pieces: polyline [4-7]'):
+    with pytest.raises(ValueError, match=r"2 separate pieces: polyline [4-7]"):
         CoarsePseudoQuadMesh.from_coarse_polylines(square + loop, holes=[[5, 5, 0]])
 
 

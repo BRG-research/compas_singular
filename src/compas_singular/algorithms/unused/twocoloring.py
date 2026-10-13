@@ -29,12 +29,11 @@ def delete_strips_preserving_boundaries(mesh: QuadMesh, skeys: list[int]) -> Non
 
 
 __all__ = [
-    'TwoColourableProjection',
+    "TwoColourableProjection",
 ]
 
 
 class TwoColourableProjection(object):
-
     def __init__(self, quad_mesh: QuadMesh) -> None:
         self.quad_mesh = quad_mesh
         self.results: Any = None
@@ -140,7 +139,6 @@ class TwoColourableProjection(object):
 
         relation = {}
         for k in range(n):
-
             for combination in itertools.combination(mesh.strips(), k):
                 other_strips = list(mesh.strips())
                 for skey in combination:
@@ -319,11 +317,11 @@ class TwoColourableProjection(object):
                 for previous_combination in results:
                     if are_items_in_list(previous_combination, combination):
                         # if a sub-combination yielded an invalid topology do not pursue
-                        if results[previous_combination] == 'invalid shape topology':
-                            results[combination] = 'already invalid shape topology'
+                        if results[previous_combination] == "invalid shape topology":
+                            results[combination] = "already invalid shape topology"
                             break
                         elif isinstance(results[previous_combination], tuple):
-                            results[combination] = 'already two-colourable'
+                            results[combination] = "already two-colourable"
                             break
                 if combination in results:
                     continue
@@ -333,7 +331,7 @@ class TwoColourableProjection(object):
                     continue
 
                 if len(total_boundary_deletions(mesh, combination)) > 0:
-                    results[combination] = 'invalid shape topology'
+                    results[combination] = "invalid shape topology"
                     continue
 
                 # delete strips in mesh and check validity
@@ -342,14 +340,14 @@ class TwoColourableProjection(object):
                 delete_strips_preserving_boundaries(copy_mesh, combination)
                 topological_validity = copy_mesh.is_manifold() and copy_mesh.euler() == mesh.euler()
                 if not topological_validity:
-                    results[combination] = 'invalid shape topology'
+                    results[combination] = "invalid shape topology"
 
                 # delete strip vertices in network and check colourability
                 else:
                     vertices, edges = copy_mesh.strip_graph()
                     two_colourability = is_adjacency_two_colorable(vertex_adjacency_from_edges(edges))
                     if not two_colourability:
-                        results[combination] = 'not two-colourable'
+                        results[combination] = "not two-colourable"
                         to_continue = True
                     else:
                         results[combination] = (copy_mesh, (vertices, edges), two_colourability)
@@ -411,20 +409,20 @@ class TwoColourableProjection(object):
                     if disc_comb.issubset(set_combi):
                         # if are_items_in_list(previous_combination, combination):
                         # if a sub-combination yielded an invalid topology do not pursue
-                        if discarding_combination_type[tuple(disc_comb)] == 'invalid shape topology':
-                            results[combination] = 'already invalid shape topology'
+                        if discarding_combination_type[tuple(disc_comb)] == "invalid shape topology":
+                            results[combination] = "already invalid shape topology"
                             break
-                        elif discarding_combination_type[tuple(disc_comb)] == 'two-colourable':
-                            results[combination] = 'already two-colourable'
+                        elif discarding_combination_type[tuple(disc_comb)] == "two-colourable":
+                            results[combination] = "already two-colourable"
                             break
 
                 if len(collateral_strip_deletions(mesh, combination)) > 0:
-                    results[combination] = 'collateral deletions'
+                    results[combination] = "collateral deletions"
 
                 if len(total_boundary_deletions(mesh, combination)) > 0:
-                    results[combination] = 'invalid shape topology'
+                    results[combination] = "invalid shape topology"
                     discarding_combination.append(set(combination))
-                    discarding_combination_type[tuple(combination)] = 'invalid shape topology'
+                    discarding_combination_type[tuple(combination)] = "invalid shape topology"
 
                 if combination in results:
                     continue
@@ -435,9 +433,9 @@ class TwoColourableProjection(object):
                 delete_strips_preserving_boundaries(copy_mesh, combination)
                 topological_validity = copy_mesh.is_manifold() and copy_mesh.euler() == mesh.euler()
                 if not topological_validity:
-                    results[combination] = 'invalid shape topology'
+                    results[combination] = "invalid shape topology"
                     discarding_combination.append(set(combination))
-                    discarding_combination_type[tuple(combination)] = 'invalid shape topology'
+                    discarding_combination_type[tuple(combination)] = "invalid shape topology"
 
                 # delete strip vertices in network and check colourability
                 else:
@@ -446,12 +444,12 @@ class TwoColourableProjection(object):
                     new_edges = [(u, v) for u, v in edges if u not in combination and v not in combination]
                     two_colourability = is_adjacency_two_colorable(vertex_adjacency_from_edges(new_edges))
                     if not two_colourability:
-                        results[combination] = 'not two-colourable'
+                        results[combination] = "not two-colourable"
                         to_continue = True
                     else:
                         results[combination] = (copy_mesh, (new_vertices, new_edges), two_colourability)
                         discarding_combination.append(set(combination))
-                        discarding_combination_type[tuple(combination)] = 'two-colourable'
+                        discarding_combination_type[tuple(combination)] = "two-colourable"
                         total_valid += 1
 
             if not to_continue:

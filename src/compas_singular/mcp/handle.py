@@ -2,6 +2,7 @@
 
 Regions are selected by description via ``select``, never enumerated.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -17,13 +18,13 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    'PRECISION',
-    'vertex_handle',
-    'handles_of',
-    'resolve',
-    'select',
-    'describe_selector',
-    'SelectorError',
+    "PRECISION",
+    "vertex_handle",
+    "handles_of",
+    "resolve",
+    "select",
+    "describe_selector",
+    "SelectorError",
 ]
 
 
@@ -48,8 +49,7 @@ def vertex_handle(xyz: Sequence[float], precision: int = PRECISION) -> str:
     -------
     str
     """
-    pattern = 'v:{0:.' + str(precision) + 'f},{1:.' + str(precision) + \
-              'f},{2:.' + str(precision) + 'f}'
+    pattern = "v:{0:." + str(precision) + "f},{1:." + str(precision) + "f},{2:." + str(precision) + "f}"
     # ``+ 0.0`` normalises -0.0 to 0.0, so a vertex on an axis does not get two
     # different names depending on which side it was approached from.
     return pattern.format(xyz[0] + 0.0, xyz[1] + 0.0, xyz[2] + 0.0)
@@ -58,8 +58,7 @@ def vertex_handle(xyz: Sequence[float], precision: int = PRECISION) -> str:
 def handles_of(mesh: Mesh, vertices: Iterable[Any] | None = None) -> dict[Any, str]:
     """``{vertex key: handle}`` for the given vertices, or for all of them."""
     keys = list(mesh.vertices()) if vertices is None else list(vertices)
-    return dict((key, vertex_handle(mesh.vertex_coordinates(key)))
-                for key in keys)
+    return dict((key, vertex_handle(mesh.vertex_coordinates(key))) for key in keys)
 
 
 def _parse(handle: Any) -> list[float] | None:
@@ -67,9 +66,9 @@ def _parse(handle: Any) -> list[float] | None:
     if not isinstance(handle, str):
         return None
     text = handle.strip()
-    if text.startswith('v:'):
+    if text.startswith("v:"):
         text = text[2:]
-    parts = text.replace(' ', '').split(',')
+    parts = text.replace(" ", "").split(",")
     if len(parts) != 3:
         return None
     try:
@@ -94,27 +93,24 @@ def resolve(mesh: Mesh, handle: str) -> tuple[Any, str]:
     """
     point = _parse(handle)
     if point is None:
-        return None, ('{!r} is not a vertex handle -- they look like '
-                      'v:12.500,4.250,0.000'.format(handle))
+        return None, ("{!r} is not a vertex handle -- they look like v:12.500,4.250,0.000".format(handle))
 
     wanted = vertex_handle(point)
     best, best_distance = None, None
     for key in mesh.vertices():
         xyz = mesh.vertex_coordinates(key)
         if vertex_handle(xyz) == wanted:
-            return key, 'exact'
+            return key, "exact"
         distance = _distance(xyz, point)
         if best_distance is None or distance < best_distance:
             best, best_distance = key, distance
 
-    tolerance = RESOLVE_STEPS * (10.0 ** -PRECISION)
+    tolerance = RESOLVE_STEPS * (10.0**-PRECISION)
     if best is not None and best_distance <= tolerance:
-        return best, 'nearest'
+        return best, "nearest"
     if best is None:
-        return None, 'the mesh has no vertices'
-    return None, ('no vertex at {} -- the nearest is {:.4f} away, at '
-                  '{}'.format(handle, best_distance,
-                              vertex_handle(mesh.vertex_coordinates(best))))
+        return None, "the mesh has no vertices"
+    return None, ("no vertex at {} -- the nearest is {:.4f} away, at {}".format(handle, best_distance, vertex_handle(mesh.vertex_coordinates(best))))
 
 
 def _distance(a: Sequence[float], b: Sequence[float]) -> float:
@@ -125,21 +121,21 @@ def _distance(a: Sequence[float], b: Sequence[float]) -> float:
 # regions
 # ==============================================================================
 
+
 def _boundary_vertices(mesh: Mesh) -> set:
     return set(mesh.vertices_on_boundary())
 
 
 def _singular_vertices(mesh: Mesh) -> set:
     """Irregular interior vertices and poles."""
-    test = getattr(mesh, 'is_vertex_singular', None)
+    test = getattr(mesh, "is_vertex_singular", None)
     if test is not None:
         try:
             return set(key for key in mesh.vertices() if test(key))
         except Exception:
             pass
     boundary = _boundary_vertices(mesh)
-    return set(key for key in mesh.vertices()
-               if key not in boundary and len(mesh.vertex_neighbors(key)) != 4)
+    return set(key for key in mesh.vertices() if key not in boundary and len(mesh.vertex_neighbors(key)) != 4)
 
 
 def _grow(mesh: Mesh, seed: Iterable[Any], rings: int) -> set:
@@ -147,8 +143,7 @@ def _grow(mesh: Mesh, seed: Iterable[Any], rings: int) -> set:
     out = set(seed)
     frontier = set(seed)
     for _ in range(max(0, int(rings))):
-        frontier = set(n for key in frontier
-                       for n in mesh.vertex_neighbors(key)) - out
+        frontier = set(n for key in frontier for n in mesh.vertex_neighbors(key)) - out
         if not frontier:
             break
         out |= frontier
@@ -157,6 +152,7 @@ def _grow(mesh: Mesh, seed: Iterable[Any], rings: int) -> set:
 
 def _face_min_angle(mesh: Mesh, fkey: Any) -> float:
     from compas_singular.framefield.quality import face_angles
+
     points = [mesh.vertex_coordinates(key) for key in mesh.face_vertices(fkey)]
     angles = face_angles(points)
     return min(angles) if angles else 180.0
@@ -200,55 +196,48 @@ def select(mesh: Mesh, selector: dict[str, Any] | str) -> tuple[set, str]:
         refusal that names the mistake.
     """
     if isinstance(selector, str):
-        selector = {'kind': selector}
+        selector = {"kind": selector}
     if not isinstance(selector, dict):
-        raise SelectorError('a region must be an object like '
-                            "{'kind': 'worst_faces', 'count': 3}")
+        raise SelectorError("a region must be an object like {'kind': 'worst_faces', 'count': 3}")
 
-    kind = selector.get('kind')
+    kind = selector.get("kind")
     if not kind:
-        raise SelectorError("a region needs a 'kind'; try 'all', 'interior', "
-                            "'near_point', 'worst_faces', 'singularities' or "
-                            "'handles'")
+        raise SelectorError("a region needs a 'kind'; try 'all', 'interior', 'near_point', 'worst_faces', 'singularities' or 'handles'")
 
-    if kind == 'all':
+    if kind == "all":
         keys = set(mesh.vertices())
-        return keys, 'every vertex ({})'.format(len(keys))
+        return keys, "every vertex ({})".format(len(keys))
 
-    if kind == 'interior':
+    if kind == "interior":
         keys = set(mesh.vertices()) - _boundary_vertices(mesh)
-        return keys, '{} interior vertices'.format(len(keys))
+        return keys, "{} interior vertices".format(len(keys))
 
-    if kind == 'near_point':
-        point = selector.get('point')
-        radius = selector.get('radius')
+    if kind == "near_point":
+        point = selector.get("point")
+        radius = selector.get("radius")
         if point is None or radius is None:
             raise SelectorError("'near_point' needs 'point' and 'radius'")
-        keys = set(key for key in mesh.vertices()
-                   if _distance(mesh.vertex_coordinates(key), point) <= radius)
-        return keys, '{} vertices within {:g} of {}'.format(
-            len(keys), radius, vertex_handle(point))
+        keys = set(key for key in mesh.vertices() if _distance(mesh.vertex_coordinates(key), point) <= radius)
+        return keys, "{} vertices within {:g} of {}".format(len(keys), radius, vertex_handle(point))
 
-    if kind == 'worst_faces':
-        count = int(selector.get('count', 1))
+    if kind == "worst_faces":
+        count = int(selector.get("count", 1))
         if count < 1:
             raise SelectorError("'count' must be at least 1")
         ranked = sorted(mesh.faces(), key=lambda f: _face_min_angle(mesh, f))
         chosen = ranked[:count]
         keys = set(key for fkey in chosen for key in mesh.face_vertices(fkey))
         worst = _face_min_angle(mesh, chosen[0]) if chosen else None
-        return keys, '{} vertices of the {} worst face(s); worst angle {:.1f} deg'.format(
-            len(keys), len(chosen), worst if worst is not None else float('nan'))
+        return keys, "{} vertices of the {} worst face(s); worst angle {:.1f} deg".format(len(keys), len(chosen), worst if worst is not None else float("nan"))
 
-    if kind == 'singularities':
-        rings = int(selector.get('rings', 2))
+    if kind == "singularities":
+        rings = int(selector.get("rings", 2))
         seed = _singular_vertices(mesh)
         keys = _grow(mesh, seed, rings)
-        return keys, '{} singular vertices grown by {} ring(s) to {}'.format(
-            len(seed), rings, len(keys))
+        return keys, "{} singular vertices grown by {} ring(s) to {}".format(len(seed), rings, len(keys))
 
-    if kind == 'handles':
-        wanted = selector.get('handles')
+    if kind == "handles":
+        wanted = selector.get("handles")
         if not wanted:
             raise SelectorError("'handles' needs a non-empty 'handles' list")
         keys, missing = set(), []
@@ -259,13 +248,10 @@ def select(mesh: Mesh, selector: dict[str, Any] | str) -> tuple[set, str]:
             else:
                 keys.add(key)
         if missing:
-            raise SelectorError('could not place {} of {} handles: {}'.format(
-                len(missing), len(wanted), ', '.join(str(m) for m in missing[:3])))
-        return keys, '{} named vertices'.format(len(keys))
+            raise SelectorError("could not place {} of {} handles: {}".format(len(missing), len(wanted), ", ".join(str(m) for m in missing[:3])))
+        return keys, "{} named vertices".format(len(keys))
 
-    raise SelectorError(
-        "unknown region kind {!r}; try 'all', 'interior', 'near_point', "
-        "'worst_faces', 'singularities' or 'handles'".format(kind))
+    raise SelectorError("unknown region kind {!r}; try 'all', 'interior', 'near_point', 'worst_faces', 'singularities' or 'handles'".format(kind))
 
 
 def describe_selector(selector: dict[str, Any] | str | Any) -> str:
@@ -274,7 +260,6 @@ def describe_selector(selector: dict[str, Any] | str | Any) -> str:
         return selector
     if not isinstance(selector, dict):
         return str(selector)
-    kind = selector.get('kind', '?')
-    extra = ', '.join('{}={}'.format(k, v) for k, v in sorted(selector.items())
-                      if k != 'kind' and k != 'handles')
-    return '{}({})'.format(kind, extra) if extra else kind
+    kind = selector.get("kind", "?")
+    extra = ", ".join("{}={}".format(k, v) for k, v in sorted(selector.items()) if k != "kind" and k != "handles")
+    return "{}({})".format(kind, extra) if extra else kind

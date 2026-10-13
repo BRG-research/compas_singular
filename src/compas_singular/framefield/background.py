@@ -1,4 +1,5 @@
 """The background triangulation the field lives on: walls discretised at ``target_length`` plus an interior grid."""
+
 from __future__ import annotations
 
 from math import ceil
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 
 # ``discretise_boundary`` is shared with the skeleton route, so the two routes
 # discretise their walls identically.
-__all__ = ['BackgroundMesh', 'discretise_boundary', 'interior_grid', 'inside_domain']
+__all__ = ["BackgroundMesh", "discretise_boundary", "interior_grid", "inside_domain"]
 
 
 def _as_open_loop(points: Any) -> list[list[float]]:
@@ -93,7 +94,7 @@ def interior_grid(
     inners = list(inners or [])
     limit = margin * target_length
 
-    if symmetry is not None and symmetry.enabled('background'):
+    if symmetry is not None and symmetry.enabled("background"):
         # imported here: symmetry.py imports _jitter from this module
         from compas_singular.framefield.symmetry import interior_points
 
@@ -103,10 +104,11 @@ def interior_grid(
     ys = [p[1] for p in outer]
     nx = int(ceil((max(xs) - min(xs)) / target_length))
     ny = int(ceil((max(ys) - min(ys)) / target_length))
-    grid = [[min(xs) + (i + 0.5) * target_length + _jitter(i, j, 0.2 * target_length),
-             min(ys) + (j + 0.5) * target_length + _jitter(j, i, 0.2 * target_length),
-             0.0]
-            for i in range(nx + 1) for j in range(ny + 1)]
+    grid = [
+        [min(xs) + (i + 0.5) * target_length + _jitter(i, j, 0.2 * target_length), min(ys) + (j + 0.5) * target_length + _jitter(j, i, 0.2 * target_length), 0.0]
+        for i in range(nx + 1)
+        for j in range(ny + 1)
+    ]
     return [p for p, keep in zip(grid, inside_domain(grid, outer, inners, limit)) if keep]
 
 
@@ -202,8 +204,7 @@ class BackgroundMesh(object):
             loops += [_as_open_loop(loop) for loop in (inner_boundaries or [])]
             target_length = alpha * bounding_box_diagonal(*loops)
 
-        outer, inners = discretise_boundary(outer_boundary, inner_boundaries,
-                                            spacing=target_length, d_min=d_min)
+        outer, inners = discretise_boundary(outer_boundary, inner_boundaries, spacing=target_length, d_min=d_min)
 
         points = list(outer)
         for loop in inners:
@@ -284,33 +285,33 @@ class BackgroundMesh(object):
         """
         mesh = self.mesh
         report = {
-            'vertices': mesh.number_of_vertices(),
-            'faces': mesh.number_of_faces(),
-            'edges': mesh.number_of_edges(),
+            "vertices": mesh.number_of_vertices(),
+            "faces": mesh.number_of_faces(),
+            "edges": mesh.number_of_edges(),
         }
 
         negative = []
         for fkey in mesh.faces():
             a, b, c = [mesh.vertex_coordinates(v) for v in mesh.face_vertices(fkey)]
-            area2 = ((b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1]))
+            area2 = (b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])
             if area2 <= 0.0:
                 negative.append(fkey)
-        report['negative_area_faces'] = len(negative)
+        report["negative_area_faces"] = len(negative)
 
-        report['triangles_only'] = all(len(mesh.face_vertices(f)) == 3 for f in mesh.faces())
+        report["triangles_only"] = all(len(mesh.face_vertices(f)) == 3 for f in mesh.faces())
 
         loops = mesh.boundaries()
-        report['boundary_loops'] = len(loops)
-        report['expected_loops'] = 1 + len(self.inners)
+        report["boundary_loops"] = len(loops)
+        report["expected_loops"] = 1 + len(self.inners)
 
-        chi = report['vertices'] - report['edges'] + report['faces']
-        report['euler'] = chi
-        report['expected_euler'] = 1 - len(self.inners)
+        chi = report["vertices"] - report["edges"] + report["faces"]
+        report["euler"] = chi
+        report["expected_euler"] = 1 - len(self.inners)
 
-        report['ok'] = (
-            report['negative_area_faces'] == 0
-            and report['triangles_only']
-            and report['boundary_loops'] == report['expected_loops']
-            and report['euler'] == report['expected_euler']
+        report["ok"] = (
+            report["negative_area_faces"] == 0
+            and report["triangles_only"]
+            and report["boundary_loops"] == report["expected_loops"]
+            and report["euler"] == report["expected_euler"]
         )
         return report

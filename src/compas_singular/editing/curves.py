@@ -2,6 +2,7 @@
 
 The match is anchored on the end that did not move.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import CoarseQuadMesh
 
 
-__all__ = ['warp_edge_curve', 'warp_chorded_edges']
+__all__ = ["warp_edge_curve", "warp_chorded_edges"]
 
 
 def warp_edge_curve(
@@ -107,7 +108,7 @@ def warp_chorded_edges(
     warped = 0
     for edge, curve in list(mapping.items()):
         if len(curve) > 2:
-            continue                      # already a wall arc or an exact match
+            continue  # already a wall arc or an exact match
         u, v = edge
         pa = coarse.vertex_coordinates(u)
         pb = coarse.vertex_coordinates(v)

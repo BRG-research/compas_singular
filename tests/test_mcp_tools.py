@@ -1,4 +1,5 @@
 """Every MCP mesh tool, driven through the server, with no Rhino and no model."""
+
 import inspect
 import os
 
@@ -26,10 +27,17 @@ def loaded(mcp, mesh_file):
     return mcp
 
 
-@pytest.mark.parametrize("tool, arguments", [
-    ("inspect", {}), ("relax", {}), ("smooth_boundary_constrained", {}),
-    ("save_mesh", {"path": "x.json"}), ("undo", {}), ("smooth_region", {"region": {"kind": "all"}}),
-])
+@pytest.mark.parametrize(
+    "tool, arguments",
+    [
+        ("inspect", {}),
+        ("relax", {}),
+        ("smooth_boundary_constrained", {}),
+        ("save_mesh", {"path": "x.json"}),
+        ("undo", {}),
+        ("smooth_region", {"region": {"kind": "all"}}),
+    ],
+)
 def test_every_tool_refuses_cleanly_with_nothing_loaded(mcp, tool, arguments):
     assert mcp(tool, **arguments).get("ok") is False
 
@@ -38,7 +46,7 @@ def test_load_mesh_works_with_rhino_closed(mcp, mesh_file):
     path, mesh, walls = mesh_file
     out = mcp("load_mesh", path=path)
     assert out.get("ok") is True
-    assert "warning" in out                    # the boundary cannot be corrected without walls
+    assert "warning" in out  # the boundary cannot be corrected without walls
     out = mcp("load_mesh", path=path, walls=walls)
     assert out.get("ok") is True and out["walls"] == len(walls)
     assert "warning" not in out
@@ -109,8 +117,7 @@ def test_remarks_and_history(loaded):
 
 def test_save_and_recall_a_worked_example(loaded):
     assert loaded("save_example", name="x", verdict="excellent").get("ok") is False
-    out = loaded("save_example", name="British Museum dense", verdict="good",
-                 lesson="relax alone was enough.", instruction="improve this mesh")
+    out = loaded("save_example", name="British Museum dense", verdict="good", lesson="relax alone was enough.", instruction="improve this mesh")
     assert out.get("ok") is True, out.get("reason")
     assert os.path.isfile(out.get("path", ""))
     found = loaded("recall_examples")
@@ -119,7 +126,7 @@ def test_save_and_recall_a_worked_example(loaded):
     assert "British" in (loaded.handler.read_resource(found["examples"][0]["uri"]) or "")
     second = loaded("save_example", name="British Museum dense", verdict="bad")
     assert second.get("path") != out.get("path")
-    assert len(loaded("recall_examples", limit=5)["examples"]) == 2   # bad ones too, on purpose
+    assert len(loaded("recall_examples", limit=5)["examples"]) == 2  # bad ones too, on purpose
 
 
 def test_save_mesh_needs_a_look_first_and_round_trips(loaded, tmp_path):
@@ -164,8 +171,7 @@ def _mesh_and_guide():
     mesh, walls = make_dense_mesh(density=4)
     open_polyedges = [pe for pe, closed in collect_polyedges(mesh) if not closed and len(pe) > 6]
     # a guide just off a real polyedge, so a chain exists to be chosen
-    guide = [[x + 0.05, y + 0.05, z] for x, y, z in
-             (mesh.vertex_coordinates(k) for k in max(open_polyedges, key=len)[1:-1])]
+    guide = [[x + 0.05, y + 0.05, z] for x, y, z in (mesh.vertex_coordinates(k) for k in max(open_polyedges, key=len)[1:-1])]
     return mesh, walls, guide
 
 
@@ -199,10 +205,13 @@ def test_relax_fdm_runs_snapshots_and_validates_its_fixed_set(loaded):
     assert loaded("relax_fdm", fixed="nails").get("ok") is False
 
 
-@pytest.mark.parametrize("tool, attribute", [
-    ("smooth_boundary_constrained", "boundary_constrained_smoothing"),
-    ("smooth_guides", "constrained_smoothing"),
-])
+@pytest.mark.parametrize(
+    "tool, attribute",
+    [
+        ("smooth_boundary_constrained", "boundary_constrained_smoothing"),
+        ("smooth_guides", "constrained_smoothing"),
+    ],
+)
 def test_a_pass_that_raises_halfway_puts_the_mesh_back(mcp, monkeypatch, tool, attribute):
     def move_then_raise(mesh, *args, **kwargs):
         for key in list(mesh.vertices())[:5]:

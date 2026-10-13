@@ -4,6 +4,7 @@ Covers ``topology.coloring``, ``mesh_quad.coloring``, ``mesh_quad.morphing``,
 ``mesh_quad.grammar_shape``, ``mesh_quad_pseudo.grammar_poles``, the singularity
 decompositions and strip graph on ``QuadMesh``, and ``utilities.lists``.
 """
+
 from math import cos
 from math import pi
 from math import sin
@@ -32,8 +33,7 @@ from compas_singular.utilities.lists import sublist_from_to_items_in_closed_list
 
 def grid(n, m):
     vertices = [[float(i), float(j), 0.0] for j in range(m + 1) for i in range(n + 1)]
-    faces = [[j * (n + 1) + i, j * (n + 1) + i + 1, (j + 1) * (n + 1) + i + 1, (j + 1) * (n + 1) + i]
-             for j in range(m) for i in range(n)]
+    faces = [[j * (n + 1) + i, j * (n + 1) + i + 1, (j + 1) * (n + 1) + i + 1, (j + 1) * (n + 1) + i] for j in range(m) for i in range(n)]
     return QuadMesh.from_vertices_and_faces(vertices, faces)
 
 
@@ -58,6 +58,7 @@ def is_proper(adjacency, colors):
 # is_adjacency_two_colorable
 # ----------------------------------------------------------------------------
 
+
 def test_an_even_cycle_is_two_colourable():
     adjacency = {0: [1, 3], 1: [0, 2], 2: [1, 3], 3: [2, 0]}
     colors = is_adjacency_two_colorable(adjacency)
@@ -65,7 +66,7 @@ def test_an_even_cycle_is_two_colourable():
     assert is_proper(adjacency, colors)
 
 
-@pytest.mark.parametrize('n', [3, 5])
+@pytest.mark.parametrize("n", [3, 5])
 def test_an_odd_cycle_is_not(n):
     adjacency = {i: [(i - 1) % n, (i + 1) % n] for i in range(n)}
     assert is_adjacency_two_colorable(adjacency) is None
@@ -93,6 +94,7 @@ def test_a_self_loop_is_ignored():
 # strip and polyedge colourings
 # ----------------------------------------------------------------------------
 
+
 def test_a_regular_grid_colours_its_strips_by_direction():
     mesh = grid(3, 2)
     mesh.collect_strips()
@@ -105,12 +107,12 @@ def test_a_regular_grid_colours_its_strips_by_direction():
     assert by_direction[True] != by_direction[False]
 
 
-@pytest.mark.parametrize('k, colourable', [(3, False), (4, True), (5, False)])
+@pytest.mark.parametrize("k, colourable", [(3, False), (4, True), (5, False)])
 def test_strips_are_two_colourable_only_round_an_even_valence(k, colourable):
     assert (quad_mesh_strip_2_coloring(star(k)) is not None) == colourable
 
 
-@pytest.mark.parametrize('k', [3, 4, 5])
+@pytest.mark.parametrize("k", [3, 4, 5])
 def test_strip_n_colouring_never_gives_crossing_strips_one_colour(k):
     mesh = star(k)
     colors = quad_mesh_strip_n_coloring(mesh)
@@ -119,7 +121,7 @@ def test_strip_n_colouring_never_gives_crossing_strips_one_colour(k):
         assert colors[a] != colors[b]
 
 
-@pytest.mark.parametrize('k', [3, 5])
+@pytest.mark.parametrize("k", [3, 5])
 def test_polyedges_round_an_odd_singularity_are_two_colourable(k):
     # the spokes only meet at the singularity, which does not count as crossing,
     # so the polyedge graph splits into components -- each must be coloured
@@ -134,10 +136,8 @@ def test_polyedge_colouring_by_edge_matches_the_grid_directions():
     mesh = grid(3, 3)
     mesh.collect_polyedges(strict=True)
     colors = quad_mesh_polyedge_2_coloring(mesh, edge_output=True)
-    horizontal = {colors[(u, v)] for u, v in mesh.edges()
-                  if mesh.vertex_coordinates(u)[1] == mesh.vertex_coordinates(v)[1]}
-    vertical = {colors[(u, v)] for u, v in mesh.edges()
-                if mesh.vertex_coordinates(u)[0] == mesh.vertex_coordinates(v)[0]}
+    horizontal = {colors[(u, v)] for u, v in mesh.edges() if mesh.vertex_coordinates(u)[1] == mesh.vertex_coordinates(v)[1]}
+    vertical = {colors[(u, v)] for u, v in mesh.edges() if mesh.vertex_coordinates(u)[0] == mesh.vertex_coordinates(v)[0]}
     assert len(horizontal) == len(vertical) == 1
     assert horizontal != vertical
     assert all(colors[(u, v)] == colors[(v, u)] for u, v in mesh.edges())
@@ -153,13 +153,13 @@ def test_polyedge_n_colouring_of_a_grid_needs_two_colours():
 # morphing: fold groups
 # ----------------------------------------------------------------------------
 
+
 def test_fold_groups_alternate_across_the_selected_polyedges():
     # crossing an edge of a selected polyedge flips the group, any other edge keeps it;
     # selecting every vertical line therefore alternates the groups row by row
     mesh = grid(3, 3)
     mesh.collect_polyedges(strict=True)
-    verticals = [polyedge for _, polyedge in mesh.polyedges(data=True)
-                 if mesh.vertex_coordinates(polyedge[0])[0] == mesh.vertex_coordinates(polyedge[-1])[0]]
+    verticals = [polyedge for _, polyedge in mesh.polyedges(data=True) if mesh.vertex_coordinates(polyedge[0])[0] == mesh.vertex_coordinates(polyedge[-1])[0]]
     groups = fold_vertex_group(mesh, verticals)
     assert set(groups) == set(mesh.vertices())
     for vkey, group in groups.items():
@@ -179,13 +179,14 @@ def test_fold_moves_each_group_by_its_own_function():
 # shape grammar: openings and handles
 # ----------------------------------------------------------------------------
 
+
 def test_add_opening_punches_a_hole_ringed_by_quads():
     mesh = grid(2, 2)
     new = add_opening(mesh, 0)
     assert len(new) == 4
     assert mesh.number_of_faces() == 4 - 1 + 4
     assert len(mesh.vertices_on_boundaries()) == 2
-    assert mesh.euler() == 0                     # a disc with a hole: an annulus
+    assert mesh.euler() == 0  # a disc with a hole: an annulus
     assert all(len(mesh.face_vertices(f)) == 4 for f in mesh.faces())
 
 
@@ -210,11 +211,11 @@ def test_add_handle_adds_one_genus():
 # pseudo-quad grammar: split and merge
 # ----------------------------------------------------------------------------
 
+
 def test_split_and_merge_a_quad_round_trip():
-    mesh = PseudoQuadMesh.from_vertices_and_faces(
-        [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]], [[0, 1, 2, 3]])
+    mesh = PseudoQuadMesh.from_vertices_and_faces([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]], [[0, 1, 2, 3]])
     poles = split_quad_in_pseudo_quads(mesh, 0, 0)
-    assert set(poles.values()) == {0}            # both triangles keep their pole at the cut vertex
+    assert set(poles.values()) == {0}  # both triangles keep their pole at the cut vertex
     assert sorted(len(mesh.face_vertices(f)) for f in mesh.faces()) == [3, 3]
 
     a, b = poles
@@ -222,25 +223,23 @@ def test_split_and_merge_a_quad_round_trip():
     assert mesh.number_of_faces() == 1
     face = mesh.face_vertices(fkey)
     i = face.index(0)
-    assert face[i:] + face[:i] == [0, 1, 2, 3]   # same winding as the original
+    assert face[i:] + face[:i] == [0, 1, 2, 3]  # same winding as the original
 
 
 def test_split_refuses_a_non_quad():
-    mesh = PseudoQuadMesh.from_vertices_and_faces(
-        [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], [[0, 1, 2]])
+    mesh = PseudoQuadMesh.from_vertices_and_faces([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], [[0, 1, 2]])
     assert split_quad_in_pseudo_quads(mesh, 0, 0) is None
 
 
 def test_merge_refuses_faces_that_do_not_touch():
-    mesh = PseudoQuadMesh.from_vertices_and_faces(
-        [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0],
-         [5.0, 0.0, 0.0], [6.0, 0.0, 0.0], [5.0, 1.0, 0.0]], [[0, 1, 2], [3, 4, 5]])
+    mesh = PseudoQuadMesh.from_vertices_and_faces([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [5.0, 0.0, 0.0], [6.0, 0.0, 0.0], [5.0, 1.0, 0.0]], [[0, 1, 2], [3, 4, 5]])
     assert merge_pseudo_quads_in_quad(mesh, 0, 1) is None
 
 
 # ----------------------------------------------------------------------------
 # QuadMesh: singularity decomposition and the strip graph
 # ----------------------------------------------------------------------------
+
 
 def test_a_regular_grid_decomposes_into_its_four_sides():
     mesh = grid(2, 2)
@@ -252,9 +251,8 @@ def test_a_regular_grid_decomposes_into_its_four_sides():
 def test_a_singularity_splits_the_decomposition_at_it():
     mesh = star(3)
     polyedges = mesh.singularity_polyedges()
-    assert all(polyedge[0] == 0 or polyedge[-1] == 0 or mesh.is_edge_on_boundary(polyedge[0], polyedge[1])
-               for polyedge in polyedges)
-    assert sum(1 for p in polyedges if 0 in (p[0], p[-1])) == 3   # one per spoke
+    assert all(polyedge[0] == 0 or polyedge[-1] == 0 or mesh.is_edge_on_boundary(polyedge[0], polyedge[1]) for polyedge in polyedges)
+    assert sum(1 for p in polyedges if 0 in (p[0], p[-1])) == 3  # one per spoke
 
 
 def test_strip_side_polyedges_bound_the_strip():
@@ -272,17 +270,18 @@ def test_the_strip_graph_has_one_edge_per_face():
     vertices, edges = mesh.strip_graph()
     assert set(vertices) == set(mesh.strips())
     assert len(edges) == mesh.number_of_faces()
-    assert all(a != b for a, b in edges)         # a face is never crossed twice by one strip here
+    assert all(a != b for a, b in edges)  # a face is never crossed twice by one strip here
 
 
 # ----------------------------------------------------------------------------
 # utilities.lists
 # ----------------------------------------------------------------------------
 
+
 def test_list_split_open_and_closed():
     assert list_split([0, 1, 2, 3, 4], [2]) == [[0, 1, 2], [2, 3, 4]]
     assert list_split([0, 1, 2, 3, 0], [0, 2]) == [[0, 1, 2], [2, 3, 0]]
-    assert list_split([0, 1, 2, 3, 0], [2]) == [[2, 3, 0, 1, 2]]   # one cut of a loop re-roots it
+    assert list_split([0, 1, 2, 3, 0], [2]) == [[2, 3, 0, 1, 2]]  # one cut of a loop re-roots it
 
 
 def test_sublist_in_a_closed_list_follows_the_loop():
@@ -297,6 +296,6 @@ def test_membership_helpers():
     assert common_items([1, 2, 3], [3, 1]) == [1, 3]
 
 
-@pytest.mark.parametrize('a, b', [([5, 1, 4], [4, 1, 5]), ([3, 1, 2, 3], [2, 3, 1, 2]), ([2, 0, 1, 2], [1, 2, 0, 1])])
+@pytest.mark.parametrize("a, b", [([5, 1, 4], [4, 1, 5]), ([3, 1, 2, 3], [2, 3, 1, 2]), ([2, 0, 1, 2], [1, 2, 0, 1])])
 def test_isomorphic_polyedges_share_one_canonical_form(a, b):
     assert remove_isomorphism_in_integer_list(a) == remove_isomorphism_in_integer_list(b)

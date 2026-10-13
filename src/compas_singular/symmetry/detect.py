@@ -2,6 +2,7 @@
 
 Matched by true distance to segments of the same kind, with chord-sag slack on curves. Nothing is enforced here.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -24,12 +25,12 @@ from compas_singular.symmetry.group import _mirror
 from compas_singular.symmetry.group import _rotation
 from compas_singular.symmetry.report import SymmetryReport
 
-__all__ = ['find_symmetry', 'Matcher']
+__all__ = ["find_symmetry", "Matcher"]
 
 
-INCLUDE = ('walls', 'holes', 'guides', 'poles')
+INCLUDE = ("walls", "holes", "guides", "poles")
 
-_KIND = {'walls': 'outer', 'holes': 'hole', 'guides': 'guide', 'poles': 'pole'}
+_KIND = {"walls": "outer", "holes": "hole", "guides": "guide", "poles": "pole"}
 
 
 class Matcher(object):
@@ -56,24 +57,22 @@ class Matcher(object):
                 # A midpoint is itself off the curve by its own segment's sag.
                 self.samples.append((0.5 * (a[0] + b[0]), 0.5 * (a[1] + b[1]), kind, tag, sags[i]))
 
-        if 'walls' in include and len(domain.outer) >= 2:
-            add_curve(domain.outer, True, 'outer', 'outer')
-        if 'holes' in include:
+        if "walls" in include and len(domain.outer) >= 2:
+            add_curve(domain.outer, True, "outer", "outer")
+        if "holes" in include:
             for i, loop in enumerate(domain.inners):
-                add_curve(loop, True, 'hole', 'hole {}'.format(i + 1))
-        if 'guides' in include:
+                add_curve(loop, True, "hole", "hole {}".format(i + 1))
+        if "guides" in include:
             for i, curve in enumerate(domain.guides):
-                add_curve(curve, False, 'guide', 'guide {}'.format(i + 1))
-        if 'poles' in include:
-            h = self.hashes.setdefault('pole', SegmentHash(cell))
+                add_curve(curve, False, "guide", "guide {}".format(i + 1))
+        if "poles" in include:
+            h = self.hashes.setdefault("pole", SegmentHash(cell))
             for i, p in enumerate(domain.poles):
-                tag = 'pole {}'.format(i + 1)
+                tag = "pole {}".format(i + 1)
                 h.add_point(p, tag)
-                self.samples.append((p[0], p[1], 'pole', tag, 0.0))
+                self.samples.append((p[0], p[1], "pole", tag, 0.0))
 
-    def deviation(
-        self, element: Element, limit: float | None = None, subset: int | None = None
-    ) -> tuple[float, tuple[str, list[float]] | None]:
+    def deviation(self, element: Element, limit: float | None = None, subset: int | None = None) -> tuple[float, tuple[str, list[float]] | None]:
         """``(worst distance, (tag, point))`` for one element, or ``inf`` once it exceeds ``limit``."""
         limit = self.near if limit is None else limit
         a, b, c, d = element.matrix
@@ -88,7 +87,7 @@ class Matcher(object):
             if dist > worst:
                 worst, where = dist, (tag, [x, y, 0.0])
                 if worst > limit:
-                    return float('inf'), where
+                    return float("inf"), where
         return worst, where
 
 
@@ -137,17 +136,17 @@ def find_symmetry(
     near = max(1e-2 * diagonal, 10 * tol) if near is None else float(near)
 
     if centre is None:
-        centre = domain.area_centroid() if 'walls' in include else None
+        centre = domain.area_centroid() if "walls" in include else None
     if centre is None:
         pts = [p for p in _included_points(domain, include)]
         if not pts:
-            raise ValueError('nothing to detect a symmetry from -- the domain is empty')
+            raise ValueError("nothing to detect a symmetry from -- the domain is empty")
         centre = [sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts), 0.0]
     centre = [float(centre[0]), float(centre[1]), 0.0]
 
     matcher = Matcher(domain, centre, include, near)
     if not matcher.samples:
-        raise ValueError('nothing to detect a symmetry from -- no included geometry')
+        raise ValueError("nothing to detect a symmetry from -- no included geometry")
     subset = max(1, len(matcher.samples) // 64)
     tested = {}
 
@@ -187,49 +186,46 @@ def find_symmetry(
 
     # --- the largest subgroup whose every element passes ------------------
     for candidate in group.subgroups():
-        if all(test(e)[0] <= tol for e in candidate.elements if e.kind != 'identity'):
+        if all(test(e)[0] <= tol for e in candidate.elements if e.kind != "identity"):
             group = candidate
             break
 
     deviations = {}
     for e in group.elements:
-        if e.kind == 'identity':
+        if e.kind == "identity":
             continue
         dev, where = test(e)
         deviations[e.key] = (dev, where)
 
     near_misses = []
     for key, (dev, where) in sorted(tested.items(), key=lambda item: item[1][0]):
-        if key in deviations or dev <= tol or dev == float('inf'):
+        if key in deviations or dev <= tol or dev == float("inf"):
             continue
         near_misses.append((key, dev, where))
 
-    return SymmetryReport(domain=domain, group=group, tol=tol, near=near,
-                          include=include, deviations=deviations,
-                          near_misses=near_misses, circle_like=circle_like,
-                          max_order=max_order)
+    return SymmetryReport(
+        domain=domain, group=group, tol=tol, near=near, include=include, deviations=deviations, near_misses=near_misses, circle_like=circle_like, max_order=max_order
+    )
 
 
 def _included_points(domain: Domain, include: Sequence[str]) -> Iterator[list[float]]:
-    if 'walls' in include:
+    if "walls" in include:
         for p in domain.outer:
             yield p
-    if 'holes' in include:
+    if "holes" in include:
         for loop in domain.inners:
             for p in loop:
                 yield p
-    if 'guides' in include:
+    if "guides" in include:
         for curve in domain.guides:
             for p in curve:
                 yield p
-    if 'poles' in include:
+    if "poles" in include:
         for p in domain.poles:
             yield p
 
 
-def _mirror_candidates(
-    domain: Domain, include: Sequence[str], centre: Sequence[float], tol: float, period: float
-) -> list[float]:
+def _mirror_candidates(domain: Domain, include: Sequence[str], centre: Sequence[float], tol: float, period: float) -> list[float]:
     """Axis angles worth testing, reduced modulo ``period`` and de-duplicated."""
     cx, cy = centre[0], centre[1]
     angles = []
@@ -250,14 +246,14 @@ def _mirror_candidates(
             if (is_max or is_min) and r[i] > tol:
                 angles.append(atan2(loop[i][1] - cy, loop[i][0] - cx))
 
-    if 'walls' in include and len(domain.outer) >= 3:
+    if "walls" in include and len(domain.outer) >= 3:
         extremes(domain.outer, True)
     else:
-        for loop in domain.inners if 'holes' in include else []:
+        for loop in domain.inners if "holes" in include else []:
             extremes(loop, True)
-        for curve in domain.guides if 'guides' in include else []:
+        for curve in domain.guides if "guides" in include else []:
             extremes(curve, False)
-        for p in domain.poles if 'poles' in include else []:
+        for p in domain.poles if "poles" in include else []:
             if hypot(p[0] - cx, p[1] - cy) > tol:
                 angles.append(atan2(p[1] - cy, p[0] - cx))
     if not angles:

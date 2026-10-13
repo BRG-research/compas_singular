@@ -5,13 +5,7 @@ from __future__ import print_function
 
 from typing import Any
 
-__all__ = [
-    'list_split',
-    'sublist_from_to_items_in_closed_list',
-    'are_items_in_list',
-    'common_items',
-    'remove_isomorphism_in_integer_list'
-]
+__all__ = ["list_split", "sublist_from_to_items_in_closed_list", "are_items_in_list", "common_items", "remove_isomorphism_in_integer_list"]
 
 
 def list_split(lst: list[Any], indices: list[int]) -> list[list[Any]]:
@@ -183,7 +177,7 @@ def remove_isomorphism_in_integer_list(lst: list[int]) -> list[int]:
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
 
     # import compas

@@ -5,9 +5,7 @@ from __future__ import print_function
 
 from typing import Any
 
-__all__ = [
-    'is_adjacency_two_colorable'
-]
+__all__ = ["is_adjacency_two_colorable"]
 
 
 def is_adjacency_two_colorable(adjacency: dict[Any, list[Any]]) -> dict[Any, int] | None:
@@ -62,7 +60,7 @@ def is_adjacency_two_colorable(adjacency: dict[Any, list[Any]]) -> dict[Any, int
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
 
     # import time

@@ -26,7 +26,6 @@ __all__ = []
 
 
 class Mapper(object):
-
     def __init__(self, meshes: list[QuadMesh]) -> None:
         self.meshes = meshes
         self.submesh = None
@@ -61,8 +60,9 @@ class Mapper(object):
         map_mesh = mesh.copy()
         for skey in strips_to_delete:
             old_vkeys_to_new_vkeys = delete_strip(map_mesh, skey)
-            mesh_to_map_mesh = {mesh_key: old_vkeys_to_new_vkeys[map_mesh_key]
-                                if map_mesh_key in old_vkeys_to_new_vkeys else map_mesh_key for mesh_key, map_mesh_key in mesh_to_map_mesh.items()}
+            mesh_to_map_mesh = {
+                mesh_key: old_vkeys_to_new_vkeys[map_mesh_key] if map_mesh_key in old_vkeys_to_new_vkeys else map_mesh_key for mesh_key, map_mesh_key in mesh_to_map_mesh.items()
+            }
         matches = matches_between_ismorphic_meshes(map_mesh, submesh, boundary_edge_data=True)
         match_0 = list(matches)[0]
         mesh_to_submesh = {mesh_key: match_0[map_mesh_key] for mesh_key, map_mesh_key in mesh_to_map_mesh.items()}
@@ -84,6 +84,7 @@ class Mapper(object):
     def map_polyedge_from_mesh_to_mesh(self, polyedge: list[int], mesh_0: QuadMesh, mesh_1: QuadMesh) -> list[int]:
         vkey_map = self.map_from_mesh_to_mesh(mesh_0, mesh_1)
         return [vkey_map[vkey] for vkey in polyedge]
+
 
 # --------------------------------------------------------------------------
 # distances, deletion rules and submeshes
@@ -108,7 +109,6 @@ def distance_and_deletion_rules_between_2_meshes(mesh_i: QuadMesh, mesh_j: QuadM
     ni, nj = mesh_i.number_of_strips(), mesh_j.number_of_strips()
 
     for k in range(0, max(ni, nj) - 1):
-
         for nodes_i in it.combinations(list(mesh_i.strips()), k + max(0, ni - nj)):
             mesh_i_copy = mesh_i.copy()
             delete_strips(mesh_i_copy, nodes_i)
@@ -250,8 +250,7 @@ def interpolation(meshes: list[QuadMesh]) -> int:
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     import time
 
     from compas_singular.algorithms.interpolation.isomorphism import are_meshes_isomorphic
@@ -305,8 +304,8 @@ if __name__ == '__main__':
     # plotter.draw_faces()
     # plotter.show()
 
-    mesh_1 = PseudoQuadMesh.from_json('/Users/Robin/Desktop/distance_validation/50.json')
-    mesh_2 = PseudoQuadMesh.from_json('/Users/Robin/Desktop/distance_validation/51.json')
+    mesh_1 = PseudoQuadMesh.from_json("/Users/Robin/Desktop/distance_validation/50.json")
+    mesh_2 = PseudoQuadMesh.from_json("/Users/Robin/Desktop/distance_validation/51.json")
 
     # new_face_pole_1 = {int(fkey): vkey for fkey, vkey in mesh_1.attributes['face_pole'].items()}
     # mesh_1.attributes['face_pole'] = new_face_pole_1
@@ -316,7 +315,7 @@ if __name__ == '__main__':
     # mesh_2.attributes['face_pole'] = new_face_pole_2
     mesh_2.collect_strips()
 
-    #n1 > n2
+    # n1 > n2
     n1, n2 = mesh_1.number_of_strips(), mesh_2.number_of_strips()
     print(n1, n2)
     t = []
@@ -324,7 +323,7 @@ if __name__ == '__main__':
         t0 = time.time()
         results = distance_and_deletion_rules_between_2_meshes(mesh_1, mesh_2)
         t1 = time.time()
-        t.append(t1-t0)
+        t.append(t1 - t0)
     n0 = n1 - len(results[0][1][mesh_1])
     k = n2 - n0
     d = results[0][0]
@@ -348,7 +347,7 @@ if __name__ == '__main__':
     print(len(non_iso_submeshes))
 
     for i, mesh in enumerate(non_iso_submeshes):
-        mesh.to_json('/Users/Robin/Desktop/distance_validation/7_{}.json'.format(i))
+        mesh.to_json("/Users/Robin/Desktop/distance_validation/7_{}.json".format(i))
         # plotter = MeshPlotter(mesh, figsize = (20, 20))
         # plotter.draw_vertices(radius = 0.01)
         # plotter.draw_edges()

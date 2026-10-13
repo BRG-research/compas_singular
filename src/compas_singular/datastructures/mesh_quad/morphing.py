@@ -14,10 +14,7 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import QuadMesh
 
 
-__all__ = [
-    'fold',
-    'fold_vertex_group'
-]
+__all__ = ["fold", "fold_vertex_group"]
 
 
 def fold_vertex_group(quad_mesh: QuadMesh, polyedges: list[list[int]]) -> dict[int, int]:
@@ -48,7 +45,6 @@ def fold_vertex_group(quad_mesh: QuadMesh, polyedges: list[list[int]]) -> dict[i
                 vkey_to_group[vkey] = vkey_to_group[nbr] if not in_polyedge else 1 - vkey_to_group[nbr]
 
         for nbr in quad_mesh.vertex_neighbors(vkey):
-
             if (vkey, nbr) in is_edge_in_polyedges:
                 in_polyedge = is_edge_in_polyedges[(vkey, nbr)]
             elif (nbr, vkey) in is_edge_in_polyedges:
@@ -56,15 +52,16 @@ def fold_vertex_group(quad_mesh: QuadMesh, polyedges: list[list[int]]) -> dict[i
 
             if nbr in vkey_to_group:
                 if (vkey_to_group[vkey] == vkey_to_group[nbr]) == in_polyedge:
-                    print('!')
+                    print("!")
 
         to_visit += [nbr for nbr in quad_mesh.vertex_neighbors(vkey) if nbr not in vkey_to_group]
 
     return vkey_to_group
 
 
-def fold(quad_mesh: QuadMesh, vkey_to_group: dict[int, int], func0: Callable[[QuadMesh, int], list[float]],
-         func1: Callable[[QuadMesh, int], list[float]]) -> dict[int, list[float]]:
+def fold(
+    quad_mesh: QuadMesh, vkey_to_group: dict[int, int], func0: Callable[[QuadMesh, int], list[float]], func1: Callable[[QuadMesh, int], list[float]]
+) -> dict[int, list[float]]:
 
     moves = {}
     for vkey, group in vkey_to_group.items():
@@ -81,7 +78,7 @@ def fold(quad_mesh: QuadMesh, vkey_to_group: dict[int, int], func0: Callable[[Qu
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
 
     # import compas

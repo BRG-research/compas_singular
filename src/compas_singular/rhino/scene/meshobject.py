@@ -2,6 +2,7 @@
 
 Each object owns one layer; cleared objects are deleted, never purged, so Ctrl+Z still works.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -27,7 +28,7 @@ from compas_singular.rhino.mesh_ui import ensure_layer
 from compas_singular.rhino.mesh_ui import relock
 from compas_singular.rhino.mesh_ui import unlock
 
-__all__ = ['RhinoSingularMeshObject']
+__all__ = ["RhinoSingularMeshObject"]
 
 
 def _selection(flag: bool | Sequence[Any] | None, everything: Callable[[], Iterable[Any]]) -> list[Any]:
@@ -88,7 +89,7 @@ class RhinoSingularMeshObject(RUIMeshObject):
         self._guid_edge = {}
         self._guid_face = {}
         self._guid_path = []
-        self._path_colors = {}          # guid -> its colour before show_path
+        self._path_colors = {}  # guid -> its colour before show_path
         # What is on screen, for ``sync``: vkey -> (guid, xyz, colour key), and
         # frozenset edge -> (guid, (xyz, xyz)), ends None for a SHAPED edge.
         self._drawn_vertices = {}
@@ -137,7 +138,7 @@ class RhinoSingularMeshObject(RUIMeshObject):
     def draw_joined_faces(self) -> Any | None:
         """The faces as one welded mesh with n-gons kept, as ``helpers.bake_mesh`` bakes it."""
         index = {vkey: i for i, vkey in enumerate(self.mesh.vertices())}
-        vertices = [self.mesh.vertex_attributes(vkey, 'xyz') for vkey in self.mesh.vertices()]
+        vertices = [self.mesh.vertex_attributes(vkey, "xyz") for vkey in self.mesh.vertices()]
         faces = [[index[vkey] for vkey in self.mesh.face_vertices(fkey)] for fkey in self.mesh.faces()]
         geometry = vertices_and_faces_to_rhino(vertices, faces, disjoint=False)
         guid = sc.doc.Objects.AddMesh(geometry, self.compile_attributes())
@@ -154,10 +155,8 @@ class RhinoSingularMeshObject(RUIMeshObject):
         guids = super(RhinoSingularMeshObject, self).draw_faces()
         refused = [face for guid, face in zip(guids, faces) if guid == System.Guid.Empty]
         if refused:
-            self._guid_face = {guid: face for guid, face in zip(guids, faces)
-                               if guid != System.Guid.Empty}
-            print("{} of {} face(s) could not be drawn, and cannot be picked: {}".format(
-                len(refused), len(faces), ", ".join(str(face) for face in refused)))
+            self._guid_face = {guid: face for guid, face in zip(guids, faces) if guid != System.Guid.Empty}
+            print("{} of {} face(s) could not be drawn, and cannot be picked: {}".format(len(refused), len(faces), ", ".join(str(face) for face in refused)))
         return guids
 
     def draw_vertices(self) -> list[Any]:
@@ -166,8 +165,7 @@ class RhinoSingularMeshObject(RUIMeshObject):
             return []
         boundary = _boundary_vertices(self.mesh)
         special = set(self.special)
-        guids = [self._add_vertex(vkey, self._vertex_color_key(vkey, boundary, special))
-                 for vkey in vertices]
+        guids = [self._add_vertex(vkey, self._vertex_color_key(vkey, boundary, special)) for vkey in vertices]
         return [guid for guid in guids if guid]
 
     def draw_edges(self) -> list[Any]:
@@ -182,8 +180,7 @@ class RhinoSingularMeshObject(RUIMeshObject):
         if chorded:
             print("{} edge(s) drawn as a chord -- Rhino refused the curve.".format(len(chorded)))
         if lost:
-            print("{} edge(s) could not be drawn, and cannot be picked: {}.".format(
-                len(lost), ", ".join("{}-{}".format(*edge) for edge in lost)))
+            print("{} edge(s) could not be drawn, and cannot be picked: {}.".format(len(lost), ", ".join("{}-{}".format(*edge) for edge in lost)))
         return guids
 
     def sync(self) -> tuple[int, int]:
@@ -197,9 +194,7 @@ class RhinoSingularMeshObject(RUIMeshObject):
         special = set(self.special)
 
         stale = []
-        wanted_vertices = {vkey: (tuple(mesh.vertex_coordinates(vkey)),
-                                  self._vertex_color_key(vkey, boundary, special))
-                           for vkey in mesh.vertices()}
+        wanted_vertices = {vkey: (tuple(mesh.vertex_coordinates(vkey)), self._vertex_color_key(vkey, boundary, special)) for vkey in mesh.vertices()}
         for vkey, (guid, xyz, color_key) in list(self._drawn_vertices.items()):
             if wanted_vertices.get(vkey) != (xyz, color_key):
                 stale.append(guid)
@@ -211,9 +206,7 @@ class RhinoSingularMeshObject(RUIMeshObject):
             keep = False
             if ends is not None and edge in wanted_edges:
                 u, v = self._guid_edge.get(guid, (None, None))
-                keep = (u in mesh.vertex and v in mesh.vertex
-                        and ends == (tuple(mesh.vertex_coordinates(u)),
-                                     tuple(mesh.vertex_coordinates(v))))
+                keep = u in mesh.vertex and v in mesh.vertex and ends == (tuple(mesh.vertex_coordinates(u)), tuple(mesh.vertex_coordinates(v)))
             if not keep:
                 stale.append(guid)
                 self._guid_edge.pop(guid, None)
@@ -238,10 +231,10 @@ class RhinoSingularMeshObject(RUIMeshObject):
 
     def _vertex_color_key(self, vkey: int, boundary: Iterable[int], special: Iterable[int]) -> str:
         if vkey in special:
-            return 'vertex.special'
+            return "vertex.special"
         if vkey in boundary:
-            return 'vertex.boundary'
-        return 'vertex'
+            return "vertex.boundary"
+        return "vertex"
 
     def _place(self, guid: Any, color_key: str) -> None:
         """Put a freshly added object on this layer, in its colour."""
@@ -263,11 +256,11 @@ class RhinoSingularMeshObject(RUIMeshObject):
         ends = (tuple(self.mesh.vertex_coordinates(u)), tuple(self.mesh.vertex_coordinates(v)))
         try:
             guid = rs.AddLine(Point3d(*ends[0]), Point3d(*ends[1]))
-        except Exception:                                         # noqa: BLE001
-            guid = None                                           # a zero-length chord
+        except Exception:  # noqa: BLE001
+            guid = None  # a zero-length chord
         if not guid:
             return None
-        self._place(guid, 'edge')
+        self._place(guid, "edge")
         self._guid_edge[guid] = (u, v)
         self._drawn_edges[frozenset((u, v))] = (guid, ends)
         return guid
@@ -279,14 +272,14 @@ class RhinoSingularMeshObject(RUIMeshObject):
             return None
         try:
             guid = rs.AddPolyline([Point3d(*point) for point in shape])
-        except Exception:                                         # noqa: BLE001
+        except Exception:  # noqa: BLE001
             chorded.append((u, v))
             return None
         if not guid:
             return None
-        self._place(guid, 'edge')
+        self._place(guid, "edge")
         self._guid_edge[guid] = (u, v)
-        self._drawn_edges[frozenset((u, v))] = (guid, None)      # a SHAPE: sync replaces it
+        self._drawn_edges[frozenset((u, v))] = (guid, None)  # a SHAPE: sync replaces it
         return guid
 
     # --------------------------------------------------------------------------
@@ -391,7 +384,7 @@ class RhinoSingularMeshObject(RUIMeshObject):
     def show_path(self, vkeys: Sequence[int], color: tuple[int, int, int] | None = None) -> None:
         """Show the corners picked so far by recolouring their objects, replacing what was shown before."""
         self.clear_path()
-        color = color or self.colors['path']
+        color = color or self.colors["path"]
         vkeys = list(vkeys)
         guid_of_vertex = {vkey: guid for guid, vkey in self._guid_vertex.items()}
         guid_of_edge = {frozenset(edge): guid for guid, edge in self._guid_edge.items()}
@@ -414,7 +407,7 @@ class RhinoSingularMeshObject(RUIMeshObject):
         for a, b in chords:
             try:
                 guid = rs.AddPolyline([Point3d(*a), Point3d(*b)])
-            except Exception:                                     # noqa: BLE001
+            except Exception:  # noqa: BLE001
                 guid = None
             if guid:
                 rs.ObjectLayer(guid, self.layer)
@@ -445,5 +438,4 @@ class RhinoSingularMeshObject(RUIMeshObject):
         relock(state)
 
     def _pickable_guids(self) -> list[Any]:
-        return (list(self._guid_vertex) + list(self._guid_edge)
-                + list(self._guid_face) + list(self._guid_path))
+        return list(self._guid_vertex) + list(self._guid_edge) + list(self._guid_face) + list(self._guid_path)

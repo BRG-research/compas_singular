@@ -3,6 +3,7 @@
 Independent of how anything was built: these search positions, they never read
 the orbit labels an expansion records. That is what makes them a check.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     from compas_singular.symmetry.group import SymmetryGroup
 
 
-__all__ = ['point_invariance', 'mesh_invariance']
+__all__ = ["point_invariance", "mesh_invariance"]
 
 
 def point_invariance(points: Sequence[Sequence[float]], group: SymmetryGroup, tol: float | None = None) -> dict[str, Any]:
@@ -35,7 +36,7 @@ def point_invariance(points: Sequence[Sequence[float]], group: SymmetryGroup, to
     """
     pts = [[p[0], p[1], 0.0] for p in points]
     if not pts:
-        return {'share': 1.0, 'worst': 0.0, 'by_element': {}}
+        return {"share": 1.0, "worst": 0.0, "by_element": {}}
     xs = [p[0] for p in pts]
     ys = [p[1] for p in pts]
     diagonal = hypot(max(xs) - min(xs), max(ys) - min(ys)) or 1.0
@@ -54,9 +55,7 @@ def point_invariance(points: Sequence[Sequence[float]], group: SymmetryGroup, to
                 hit += 1
             worst = max(worst, d)
         by_element[e.key] = (hit / float(len(pts)), worst)
-    return {'share': min(s for s, _ in by_element.values()),
-            'worst': max(w for _, w in by_element.values()),
-            'by_element': by_element}
+    return {"share": min(s for s, _ in by_element.values()), "worst": max(w for _, w in by_element.values()), "by_element": by_element}
 
 
 def mesh_invariance(mesh: Mesh, group: SymmetryGroup, tol: float | None = None) -> dict[str, Any]:

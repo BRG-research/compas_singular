@@ -2,6 +2,7 @@
 
 Each round is one sparse least-squares solve; quality is spent only where a guide asked for it.
 """
+
 from __future__ import annotations
 
 from math import atan2
@@ -26,8 +27,7 @@ if TYPE_CHECKING:
     from compas_singular.framefield.field import CrossField
 
 
-__all__ = ['field_densification', 'FieldSampler', 'relax_patch',
-           'PATCH_MIN_ANGLE', 'PATCH_MAX_ANGLE', 'PATCH_MAX_ASPECT']
+__all__ = ["field_densification", "FieldSampler", "relax_patch", "PATCH_MIN_ANGLE", "PATCH_MAX_ANGLE", "PATCH_MAX_ASPECT"]
 
 
 #: How far a patch may be spent to satisfy a GUIDE curve. Floors, not targets:
@@ -61,6 +61,7 @@ CONTRACTION = 0.25
 # sampling the field at arbitrary points
 # ------------------------------------------------------------------
 
+
 class FieldSampler(object):
     """The field's angle at points that are not background vertices.
 
@@ -74,7 +75,7 @@ class FieldSampler(object):
     def __init__(self, field: CrossField, locator: Any = None) -> None:
         self.field = field
         locator = locator if locator is not None else field.locator()
-        self.locator = getattr(locator, 'locator', locator)
+        self.locator = getattr(locator, "locator", locator)
         u = field.u
         faces = self.locator.fkeys
         corners = [[u[v] for v in self.locator.face_vertices[f]] for f in faces]
@@ -149,6 +150,7 @@ class FieldSampler(object):
 # the patch solver
 # ------------------------------------------------------------------
 
+
 def _unwrap(grid: np.ndarray, sampler: FieldSampler) -> np.ndarray | None:
     """A continuous ``i``-family angle over the patch, or ``None``."""
     n, m, _ = grid.shape
@@ -173,7 +175,7 @@ def _unwrap(grid: np.ndarray, sampler: FieldSampler) -> np.ndarray | None:
 
 def _root(values: np.ndarray) -> np.ndarray:
     """Elementwise ``x ** 0.5`` with Python's rounding, which is not ``np.sqrt``'s."""
-    return np.array([x ** 0.5 for x in values.tolist()], dtype=float)
+    return np.array([x**0.5 for x in values.tolist()], dtype=float)
 
 
 class _PatchSystem(object):
@@ -183,7 +185,7 @@ class _PatchSystem(object):
         n, m, _ = coons.shape
         self.coons = coons
         self.shape = (n, m)
-        fi, fj = np.meshgrid(np.arange(1, n - 1), np.arange(1, m - 1), indexing='ij')
+        fi, fj = np.meshgrid(np.arange(1, n - 1), np.arange(1, m - 1), indexing="ij")
         self.fi, self.fj = fi.ravel(), fj.ravel()
         self.nfree = len(self.fi)
         column = -np.ones((n, m), dtype=int)
@@ -212,8 +214,7 @@ class _PatchSystem(object):
             k = column[self.fi + di, self.fj + dj]
             self.neighbours.append((k >= 0, k, self.fi + di, self.fj + dj))
 
-    def solve(self, grid: np.ndarray, theta: np.ndarray, stiffness: float,
-              tikhonov: float) -> np.ndarray | None:
+    def solve(self, grid: np.ndarray, theta: np.ndarray, stiffness: float, tikhonov: float) -> np.ndarray | None:
         """One least-squares solve for the interior. A new grid, or ``None`` if
         the system is singular."""
         if not self.nfree:
@@ -282,8 +283,7 @@ class _PatchSystem(object):
             tik_rhs[axis::2] = lam * coons[self.fi, self.fj, axis]
 
         total = base2 + 2 * self.nfree
-        A = coo_matrix((np.concatenate(vals), (np.concatenate(rows), np.concatenate(cols))),
-                       shape=(total, 2 * self.nfree)).tocsr()
+        A = coo_matrix((np.concatenate(vals), (np.concatenate(rows), np.concatenate(cols))), shape=(total, 2 * self.nfree)).tocsr()
         b = np.concatenate([rhs, smoothing, tik_rhs])
         normal = (A.T @ A).tocsc()
         try:
@@ -301,6 +301,7 @@ class _PatchSystem(object):
 
 def _measure(grid: np.ndarray, coons: np.ndarray) -> tuple[float, float, float, int]:
     """``(min_angle, max_angle, aspect_max, folds)`` of a patch grid, folds relative to Coons."""
+
     def corners(g: np.ndarray) -> list[np.ndarray]:
         return [g[:-1, :-1, :2], g[:-1, 1:, :2], g[1:, 1:, :2], g[1:, :-1, :2]]
 
@@ -317,7 +318,7 @@ def _measure(grid: np.ndarray, coons: np.ndarray) -> tuple[float, float, float, 
     for a, b in zip(quad, quad[1:] + quad[:1]):
         d = (a - b).reshape(-1, 2).tolist()
         # Python's ``x ** 2`` and ``** 0.5``, which numpy does not reproduce exactly
-        lengths.append(np.array([(x ** 2 + y ** 2) ** 0.5 for x, y in d]))
+        lengths.append(np.array([(x**2 + y**2) ** 0.5 for x, y in d]))
     angles = []
     for k in range(4):
         a, b, c = quad[k - 1], quad[k], quad[(k + 1) % 4]
@@ -333,14 +334,13 @@ def _measure(grid: np.ndarray, coons: np.ndarray) -> tuple[float, float, float, 
     lengths = np.stack(lengths)
     shortest = lengths.min(axis=0)
     if np.any(shortest <= 0.0):
-        aspect = float('inf')
+        aspect = float("inf")
     else:
         aspect = max(0.0, float((lengths.max(axis=0) / shortest).max()))
     return float(min(180.0, angles.min())), float(max(0.0, angles.max())), aspect, folds
 
 
-def _accepts(measured: tuple[float, float, float, int],
-             reference: tuple[float, float, float, int], spend: bool) -> bool:
+def _accepts(measured: tuple[float, float, float, int], reference: tuple[float, float, float, int], spend: bool) -> bool:
     """Whether a relaxed patch may replace its Coons interior: never folded, and improving unless ``spend``.
 
     Parameters
@@ -354,9 +354,7 @@ def _accepts(measured: tuple[float, float, float, int],
     ref_lo, ref_hi, ref_aspect, _ = reference
     if not spend:
         return lo >= ref_lo and hi <= ref_hi and aspect <= ref_aspect
-    return (lo >= min(PATCH_MIN_ANGLE, ref_lo)
-            and hi <= max(PATCH_MAX_ANGLE, ref_hi)
-            and aspect <= max(PATCH_MAX_ASPECT, ref_aspect))
+    return lo >= min(PATCH_MIN_ANGLE, ref_lo) and hi <= max(PATCH_MAX_ANGLE, ref_hi) and aspect <= max(PATCH_MAX_ASPECT, ref_aspect)
 
 
 def _settle(
@@ -379,24 +377,24 @@ def _settle(
         with the grid.
     """
     grid = coons.copy()
-    first = shift = float('inf')
+    first = shift = float("inf")
     for _ in range(iterations):
         theta = _unwrap(grid, sampler)
         if theta is None:
-            return 'failed', None
+            return "failed", None
         nxt = system.solve(grid, theta, stiffness, tikhonov)
         if nxt is None:
-            return 'failed', None
+            return "failed", None
         shift = float(np.max(np.abs(nxt - grid)))
-        first = shift if first == float('inf') else first
+        first = shift if first == float("inf") else first
         grid = nxt
         if shift < still:
             break
     if shift > CONTRACTION * first and shift > still:
-        return 'unsettled', grid
+        return "unsettled", grid
     if float(np.max(np.abs(grid - coons))) < still:
-        return 'flat', grid
-    return 'settled', grid
+        return "flat", grid
+    return "settled", grid
 
 
 def relax_patch(
@@ -445,10 +443,10 @@ def relax_patch(
     vertices, faces = discrete_coons_patch(ab, bc, dc, ad)
     n, m = len(ab), len(bc)
     coons = np.array([[v[0], v[1], v[2]] for v in vertices], dtype=float).reshape(n, m, 3)
-    info = {'stiffness': None, 'min': None, 'max': None, 'folds': None, 'aspect': None}
+    info = {"stiffness": None, "min": None, "max": None, "folds": None, "aspect": None}
 
     if n < 3 or m < 3:
-        return vertices, faces, 'flat', info
+        return vertices, faces, "flat", info
 
     scale = float(np.mean(np.abs(np.diff(coons[:, :, :2], axis=0)))) or 1.0
     still = TOLERANCE * scale
@@ -458,7 +456,7 @@ def relax_patch(
     def verdict(mu: float, grid: np.ndarray) -> tuple[bool, dict[str, Any]]:
         measured = _measure(grid, coons)
         lo, hi, aspect, folds = measured
-        found = {'stiffness': mu, 'min': lo, 'max': hi, 'folds': folds, 'aspect': aspect}
+        found = {"stiffness": mu, "min": lo, "max": hi, "folds": folds, "aspect": aspect}
         return (not guard or _accepts(measured, reference, spend)), found
 
     known = {}
@@ -466,35 +464,36 @@ def relax_patch(
         mu = stiffness[-1]
         known[mu] = _settle(system, coons, sampler, mu, iterations, tikhonov, still)
         status, grid = known[mu]
-        if status == 'failed':
-            return vertices, faces, 'guarded', info
-        if status == 'unsettled':
-            return vertices, faces, 'guarded', info
-        if status == 'settled':
+        if status == "failed":
+            return vertices, faces, "guarded", info
+        if status == "unsettled":
+            return vertices, faces, "guarded", info
+        if status == "settled":
             ok, info = verdict(mu, grid)
             if not ok:
-                return vertices, faces, 'guarded', info
+                return vertices, faces, "guarded", info
 
     for mu in stiffness:
         status, grid = known.get(mu) or _settle(system, coons, sampler, mu, iterations, tikhonov, still)
-        if status == 'failed':
-            return vertices, faces, 'guarded', info
-        if status == 'unsettled':
+        if status == "failed":
+            return vertices, faces, "guarded", info
+        if status == "unsettled":
             continue
-        if status == 'flat':
+        if status == "flat":
             # Coons was already the minimiser; hand the input back untouched
-            return vertices, faces, 'flat', info
+            return vertices, faces, "flat", info
         ok, info = verdict(mu, grid)
         if ok:
             out = [[float(p[0]), float(p[1]), float(p[2])] for p in grid.reshape(n * m, 3)]
-            return out, faces, 'relaxed', info
+            return out, faces, "relaxed", info
 
-    return vertices, faces, 'guarded', info
+    return vertices, faces, "guarded", info
 
 
 # ------------------------------------------------------------------
 # the densification
 # ------------------------------------------------------------------
+
 
 def field_densification(
     coarse: CoarsePseudoQuadMesh,
@@ -548,23 +547,22 @@ def field_densification(
     pole_map = [TOL.geometric_key(coarse.vertex_coordinates(pole)) for pole in coarse.poles()]
 
     sampler = FieldSampler(field, locator) if field_aware else None
-    stats = {'patches': 0, 'relaxed': 0, 'poles': 0, 'guarded': 0, 'flat': 0,
-             'coons': 0, 'stiffness': [], 'folds': 0, 'seam_edge': {}}
+    stats = {"patches": 0, "relaxed": 0, "poles": 0, "guarded": 0, "flat": 0, "coons": 0, "stiffness": [], "folds": 0, "seam_edge": {}}
 
     meshes = []
     for fkey in coarse.faces():
-        stats['patches'] += 1
+        stats["patches"] += 1
         polylines = []
         for u, v in coarse.face_halfedges(fkey):
             d = coarse.get_strip_density(edge_strip[u, v])
             polyline = coarse._create_patch_edge(u, v, d, edges_to_curves)
             for index, point in enumerate(polyline):
-                stats['seam_edge'].setdefault(TOL.geometric_key(point), (u, v, index))
+                stats["seam_edge"].setdefault(TOL.geometric_key(point), (u, v, index))
             polylines.append(polyline)
 
         pseudo = coarse.is_face_pseudo_quad(fkey)
         if pseudo:
-            pole = coarse.attributes['face_pole'][fkey]
+            pole = coarse.attributes["face_pole"][fkey]
             polylines.insert(coarse.face_vertices(fkey).index(pole), None)
 
         ab, bc, cd, da = polylines
@@ -573,15 +571,15 @@ def field_densification(
 
         if sampler is None or pseudo:
             vertices, faces = discrete_coons_patch(ab, bc, dc, ad)
-            stats['poles' if pseudo else 'coons'] += 1
+            stats["poles" if pseudo else "coons"] += 1
         else:
             vertices, faces, verdict, info = relax_patch(
-                ab, bc, dc, ad, sampler, iterations=iterations, tikhonov=tikhonov,
-                stiffness=stiffness, guard=guard, spend=spend, early_exit=early_exit)
+                ab, bc, dc, ad, sampler, iterations=iterations, tikhonov=tikhonov, stiffness=stiffness, guard=guard, spend=spend, early_exit=early_exit
+            )
             stats[verdict] += 1
-            if verdict == 'relaxed':
-                stats['stiffness'].append(info['stiffness'])
-                stats['folds'] += info['folds'] or 0
+            if verdict == "relaxed":
+                stats["stiffness"].append(info["stiffness"])
+                stats["folds"] += info["folds"] or 0
 
         faces = [[u for u, v in pairwise(face + face[:1]) if u != v] for face in faces]
         meshes.append(PseudoQuadMesh.from_vertices_and_faces_with_face_poles(vertices, faces))
@@ -607,6 +605,6 @@ def field_densification(
                 if TOL.geometric_key(dense.vertex_coordinates(vkey)) == face_pole_map[gk]:
                     face_pole[fkey] = vkey
                     break
-    dense.attributes['face_pole'] = face_pole
+    dense.attributes["face_pole"] = face_pole
 
     return dense, stats

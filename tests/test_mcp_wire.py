@@ -1,4 +1,5 @@
 """The MCP mesh encoding that crosses to Rhino: plain JSON, no compas types."""
+
 import json
 
 import pytest
@@ -16,8 +17,7 @@ def test_a_quad_mesh_round_trips_exactly():
     payload = wire.mesh_to_wire(mesh)
     assert all(len(v) == 3 for v in payload["vertices"])
     # faces index INTO the vertex list, not vertex keys
-    assert all(all(isinstance(i, int) and 0 <= i < len(payload["vertices"]) for i in f)
-               for f in payload["faces"])
+    assert all(all(isinstance(i, int) and 0 <= i < len(payload["vertices"]) for i in f) for f in payload["faces"])
     back = wire.mesh_from_wire(payload)
     assert back.number_of_vertices() == mesh.number_of_vertices()
     assert back.number_of_faces() == mesh.number_of_faces()
@@ -43,13 +43,16 @@ def test_the_payload_is_plain_json():
     assert "dtype" not in text and "compas" not in text
 
 
-@pytest.mark.parametrize("bad, want", [
-    ({"vertices": [[0, 0, 0]], "faces": [[0, 1, 2, 3]]}, "refers to vertex"),
-    ({"vertices": [], "faces": []}, "no vertices"),
-    ({"faces": []}, "needs"),
-    ({"vertices": [[0, 0, 0]], "faces": [[0, 1]]}, "at least 3"),
-    ("nope", "not a dict"),
-])
+@pytest.mark.parametrize(
+    "bad, want",
+    [
+        ({"vertices": [[0, 0, 0]], "faces": [[0, 1, 2, 3]]}, "refers to vertex"),
+        ({"vertices": [], "faces": []}, "no vertices"),
+        ({"faces": []}, "needs"),
+        ({"vertices": [[0, 0, 0]], "faces": [[0, 1]]}, "at least 3"),
+        ("nope", "not a dict"),
+    ],
+)
 def test_a_malformed_payload_fails_where_the_fault_is(bad, want):
     with pytest.raises(wire.WireError, match=want):
         wire.mesh_from_wire(bad)

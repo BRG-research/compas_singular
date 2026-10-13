@@ -8,10 +8,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from compas_singular.datastructures import PseudoQuadMesh
 
-__all__ = [
-    'split_quad_in_pseudo_quads',
-    'merge_pseudo_quads_in_quad'
-]
+__all__ = ["split_quad_in_pseudo_quads", "merge_pseudo_quads_in_quad"]
 
 
 def split_quad_in_pseudo_quads(mesh: "PseudoQuadMesh", fkey: int, vkey: int) -> dict[int, int] | None:
@@ -53,7 +50,7 @@ def merge_pseudo_quads_in_quad(mesh: "PseudoQuadMesh", fkey_1: int, fkey_2: int)
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
 
     # import compas

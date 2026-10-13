@@ -3,6 +3,7 @@
 Validates rather than repairs: a crossing, T-junction, dangling or loose curve raises, naming the curve.
 Design notes: ``design_notes/datastructures.md``.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -16,12 +17,12 @@ from compas.itertools import pairwise
 from compas.tolerance import TOL
 
 __all__ = [
-    'split_at_corners',
-    'split_at_junctions',
-    'weld_network',
-    'check_network',
-    'faces_from_network',
-    'check_faces',
+    "split_at_corners",
+    "split_at_junctions",
+    "weld_network",
+    "check_network",
+    "faces_from_network",
+    "check_faces",
 ]
 
 
@@ -45,6 +46,7 @@ CORNER_ANGLE = radians(1.0)
 # small geometry, all XY
 # ----------------------------------------------------------------------------
 
+
 def _flat(point: list[float]) -> list[float]:
     return [float(point[0]), float(point[1]), 0.0]
 
@@ -61,8 +63,7 @@ def _clean(points: list[list[float]]) -> list[list[float]]:
 
 def _shoelace(ring: list[list[float]]) -> float:
     """Twice the signed area of a closed ring whose last point is not repeated."""
-    return sum(a[0] * b[1] - b[0] * a[1]
-               for a, b in pairwise(list(ring) + list(ring[:1])))
+    return sum(a[0] * b[1] - b[0] * a[1] for a, b in pairwise(list(ring) + list(ring[:1])))
 
 
 def _point_in_ring(point: list[float], ring: list[list[float]]) -> bool:
@@ -121,7 +122,7 @@ def _crossing(p1: list[float], p2: list[float], p3: list[float], p4: list[float]
 
 def _locate(points: list[list[float]], point: list[float]) -> tuple[float, int, float]:
     """``(distance, segment, t)`` of the point of an open polyline nearest ``point``."""
-    best = (float('inf'), 0, 0.0)
+    best = (float("inf"), 0, 0.0)
     for i, (a, b) in enumerate(pairwise(points)):
         abx, aby = b[0] - a[0], b[1] - a[1]
         length2 = abx * abx + aby * aby
@@ -147,12 +148,13 @@ def _overlap(a: tuple[float, float, float, float], b: tuple[float, float, float,
 
 def _xy(point: list[float]) -> str:
     """A point as it should appear in an error message -- the user has to find it."""
-    return '({:.3f}, {:.3f})'.format(point[0], point[1])
+    return "({:.3f}, {:.3f})".format(point[0], point[1])
 
 
 # ----------------------------------------------------------------------------
 # 0. reading a CAD polyline as edges
 # ----------------------------------------------------------------------------
+
 
 def _turn(a: list[float], b: list[float], c: list[float]) -> float:
     """Absolute turning angle at ``b`` walking ``a -> b -> c``, in radians."""
@@ -253,8 +255,9 @@ def _cut(points: list[list[float]], cuts: list[tuple[int, float, list[float]]], 
     return pieces
 
 
-def split_at_junctions(polylines: list[list[list[float]]], tol: float | None = None, precision: int | None = None,
-                       points: "list[list[float]] | tuple[list[float], ...]" = ()) -> tuple[list[list[list[float]]], list[int]]:
+def split_at_junctions(
+    polylines: list[list[list[float]]], tol: float | None = None, precision: int | None = None, points: "list[list[float]] | tuple[list[float], ...]" = ()
+) -> tuple[list[list[list[float]]], list[int]]:
     """Split every polyline wherever another ends on it or crosses it. ``(pieces, origin)``.
 
     Turns a drawing into a network ``weld_network`` accepts; dangling ends are left for it to refuse.
@@ -284,11 +287,9 @@ def split_at_junctions(polylines: list[list[list[float]]], tol: float | None = N
         tol = 10.0 ** -(DEFAULT_PRECISION if precision is None else precision)
 
     lines = [_clean(polyline) for polyline in polylines]
-    closed = [len(points) > 2 and distance_point_point(points[0], points[-1]) <= tol
-              for points in lines]
+    closed = [len(points) > 2 and distance_point_point(points[0], points[-1]) <= tol for points in lines]
     # A closed curve has no ends: its seam is just a point along it.
-    ends = [[] if closed[i] or len(points) < 2 else [points[0], points[-1]]
-            for i, points in enumerate(lines)]
+    ends = [[] if closed[i] or len(points) < 2 else [points[0], points[-1]] for i, points in enumerate(lines)]
     boxes = [_bbox(points, tol) if len(points) >= 2 else None for points in lines]
     cuts = [[] for _ in lines]
     extra = [_flat(point) for point in points]
@@ -299,11 +300,10 @@ def split_at_junctions(polylines: list[list[list[float]]], tol: float | None = N
             continue
         candidates = [end for j, others in enumerate(ends) if j != i for end in others]
         for end in candidates + extra:
-            if not (boxes[i][0] <= end[0] <= boxes[i][2]
-                    and boxes[i][1] <= end[1] <= boxes[i][3]):
+            if not (boxes[i][0] <= end[0] <= boxes[i][2] and boxes[i][1] <= end[1] <= boxes[i][3]):
                 continue
             if any(distance_point_point(end, own) <= tol for own in ends[i]):
-                continue                   # a shared corner, not a landing
+                continue  # a shared corner, not a landing
             d, segment, t = _locate(line, end)
             if d <= tol:
                 cuts[i].append((segment, t, end))
@@ -327,7 +327,7 @@ def split_at_junctions(polylines: list[list[list[float]]], tol: float | None = N
                     t, u = hit
                     point = [p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t, 0.0]
                     if any(distance_point_point(point, corner) <= tol for corner in corners):
-                        continue           # at an end: a landing or a shared corner
+                        continue  # at an end: a landing or a shared corner
                     cuts[i].append((si, t, point))
                     cuts[j].append((sj, u, point))
 
@@ -345,6 +345,7 @@ def split_at_junctions(polylines: list[list[list[float]]], tol: float | None = N
 # ----------------------------------------------------------------------------
 # 1. the weld
 # ----------------------------------------------------------------------------
+
 
 def weld_network(polylines: list[list[list[float]]], precision: int | None = None) -> tuple[list[list[float]], list[tuple[int, int, list[list[float]]]]]:
     """``(vertices, edges)`` from a drawn network. One polyline is one coarse edge.
@@ -381,9 +382,7 @@ def weld_network(polylines: list[list[list[float]]], precision: int | None = Non
     for i, polyline in enumerate(polylines):
         points = _clean(polyline)
         if len(points) < 2:
-            raise ValueError(
-                'polyline {} is not an edge: it has fewer than two distinct '
-                'points.'.format(i))
+            raise ValueError("polyline {} is not an edge: it has fewer than two distinct points.".format(i))
 
         ends = []
         for point in (points[0], points[-1]):
@@ -396,18 +395,19 @@ def weld_network(polylines: list[list[list[float]]], precision: int | None = Non
 
         if a == b:
             raise ValueError(
-                'polyline {} starts and ends at the same corner {}. A coarse edge '
-                'runs between two corners -- a closed curve is a patch outline, not '
-                'an edge.'.format(i, _xy(points[0])))
+                "polyline {} starts and ends at the same corner {}. A coarse edge runs between two corners -- a closed curve is a patch outline, not an edge.".format(
+                    i, _xy(points[0])
+                )
+            )
 
         pair = (a, b) if a < b else (b, a)
         if pair in between:
             raise ValueError(
-                'polylines {} and {} both run between {} and {}. A mesh keys its '
-                'half-edges by corner pair, so two edges cannot share both corners '
-                '-- add a corner to one of them. (An annulus therefore needs at '
-                'least three cuts, not two.)'.format(
-                    between[pair], i, _xy(vertices[a]), _xy(vertices[b])))
+                "polylines {} and {} both run between {} and {}. A mesh keys its "
+                "half-edges by corner pair, so two edges cannot share both corners "
+                "-- add a corner to one of them. (An annulus therefore needs at "
+                "least three cuts, not two.)".format(between[pair], i, _xy(vertices[a]), _xy(vertices[b]))
+            )
         between[pair] = i
 
         edges.append((a, b, points))
@@ -418,6 +418,7 @@ def weld_network(polylines: list[list[list[float]]], precision: int | None = Non
 # ----------------------------------------------------------------------------
 # 2. the checks
 # ----------------------------------------------------------------------------
+
 
 def check_network(vertices: list[list[float]], edges: list[tuple[int, int, list[list[float]]]], tol: float) -> None:
     """Raise unless the drawn network is a clean planar arrangement.
@@ -440,15 +441,10 @@ def check_network(vertices: list[list[float]], edges: list[tuple[int, int, list[
         for vertex, point in enumerate(vertices):
             if vertex == a or vertex == b:
                 continue
-            if (distance_point_point(point, points[0]) <= tol
-                    or distance_point_point(point, points[-1]) <= tol):
+            if distance_point_point(point, points[0]) <= tol or distance_point_point(point, points[-1]) <= tol:
                 continue
-            if min(_distance_to_segment(point, p, q)
-                   for p, q in pairwise(points)) <= tol:
-                raise ValueError(
-                    'the corner at {} lies on the interior of polyline {}. That '
-                    'polyline is two coarse edges drawn as one -- split it '
-                    'there.'.format(_xy(point), i))
+            if min(_distance_to_segment(point, p, q) for p, q in pairwise(points)) <= tol:
+                raise ValueError("the corner at {} lies on the interior of polyline {}. That polyline is two coarse edges drawn as one -- split it there.".format(_xy(point), i))
 
     for i in range(len(edges)):
         for j in range(i + 1, len(edges)):
@@ -459,12 +455,9 @@ def check_network(vertices: list[list[float]], edges: list[tuple[int, int, list[
                     hit = _crossing(p1, p2, p3, p4)
                     if hit is None:
                         continue
-                    if any(distance_point_point(hit, end) <= tol for end in
-                           (points_i[0], points_i[-1], points_j[0], points_j[-1])):
+                    if any(distance_point_point(hit, end) <= tol for end in (points_i[0], points_i[-1], points_j[0], points_j[-1])):
                         continue
-                    raise ValueError(
-                        'polylines {} and {} cross at {} with no corner there. '
-                        'Split both at that point.'.format(i, j, _xy(hit)))
+                    raise ValueError("polylines {} and {} cross at {} with no corner there. Split both at that point.".format(i, j, _xy(hit)))
 
     # Last, because it is the least specific: a corner that lands on a wall drawn as
     # one long curve is BOTH dangling and a T-junction, and "split that polyline" is
@@ -477,9 +470,8 @@ def check_network(vertices: list[list[float]], edges: list[tuple[int, int, list[
     for vertex, count in enumerate(degree):
         if count < 2:
             raise ValueError(
-                'the corner at {} is the end of one curve only. A dangling curve '
-                'bounds no patch -- extend it to another corner, or delete '
-                'it.'.format(_xy(vertices[vertex])))
+                "the corner at {} is the end of one curve only. A dangling curve bounds no patch -- extend it to another corner, or delete it.".format(_xy(vertices[vertex]))
+            )
 
     parent = list(range(len(vertices)))
 
@@ -504,16 +496,17 @@ def check_network(vertices: list[list[float]], edges: list[tuple[int, int, list[
 
         loose = min(pieces.values(), key=extent)
         raise ValueError(
-            'the drawing is in {} separate pieces: polyline {} (and the {} other '
-            'curve(s) joined to it) touches nothing else. A coarse layout is one '
-            'connected drawing -- connect the piece, or delete it. A hole is '
-            'connected by at least three division lines reaching it.'.format(
-                len(pieces), loose[0], len(loose) - 1))
+            "the drawing is in {} separate pieces: polyline {} (and the {} other "
+            "curve(s) joined to it) touches nothing else. A coarse layout is one "
+            "connected drawing -- connect the piece, or delete it. A hole is "
+            "connected by at least three division lines reaching it.".format(len(pieces), loose[0], len(loose) - 1)
+        )
 
 
 # ----------------------------------------------------------------------------
 # 3. the face walk
 # ----------------------------------------------------------------------------
+
 
 def faces_from_network(vertices: list[list[float]], edges: list[tuple[int, int, list[list[float]]]], holes: list[list[float]] | None = None) -> list[list[int]]:
     """The domain's patches as counter-clockwise rings of corner indices, by planar face walk.
@@ -534,12 +527,8 @@ def faces_from_network(vertices: list[list[float]], edges: list[tuple[int, int, 
     """
     leaving = {}
     for i, (a, b, points) in enumerate(edges):
-        leaving.setdefault(a, []).append(
-            (atan2(points[1][1] - points[0][1],
-                   points[1][0] - points[0][0]), (i, 1)))
-        leaving.setdefault(b, []).append(
-            (atan2(points[-2][1] - points[-1][1],
-                   points[-2][0] - points[-1][0]), (i, -1)))
+        leaving.setdefault(a, []).append((atan2(points[1][1] - points[0][1], points[1][0] - points[0][0]), (i, 1)))
+        leaving.setdefault(b, []).append((atan2(points[-2][1] - points[-1][1], points[-2][0] - points[-1][0]), (i, -1)))
     for corner in leaving:
         leaving[corner].sort()
 
@@ -588,13 +577,13 @@ def faces_from_network(vertices: list[list[float]], edges: list[tuple[int, int, 
 # 4. the promise
 # ----------------------------------------------------------------------------
 
+
 def check_faces(faces: list[list[int]], vertices: list[list[float]], sides: tuple[int, ...] = (3, 4)) -> None:
     """Raise unless every recovered patch has an allowed number of sides (triangles become poles)."""
     for corners in faces:
         if len(corners) not in sides:
             raise ValueError(
-                'a patch with {} sides was recovered, at {}. This constructor takes '
-                'triangular and quadrilateral patches only -- split it in the '
-                'drawing.'.format(
-                    len(corners),
-                    ', '.join(_xy(vertices[corner]) for corner in corners)))
+                "a patch with {} sides was recovered, at {}. This constructor takes triangular and quadrilateral patches only -- split it in the drawing.".format(
+                    len(corners), ", ".join(_xy(vertices[corner]) for corner in corners)
+                )
+            )

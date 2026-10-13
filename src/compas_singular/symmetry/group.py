@@ -2,6 +2,7 @@
 
 Rotations are ``R<degrees>``, mirrors ``M<axis degrees>``.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -17,7 +18,7 @@ from math import sin
 from typing import Any
 from typing import Sequence
 
-__all__ = ['Element', 'SymmetryGroup', 'rotation_key', 'mirror_key']
+__all__ = ["Element", "SymmetryGroup", "rotation_key", "mirror_key"]
 
 
 #: One group element.
@@ -26,14 +27,14 @@ __all__ = ['Element', 'SymmetryGroup', 'rotation_key', 'mirror_key']
 #: rotation angle or the mirror's AXIS angle, in radians; ``matrix`` is the linear
 #: part ``(a, b, c, d)`` acting as ``x' = a x + b y``, ``y' = c x + d y`` about the
 #: centre.
-Element = namedtuple('Element', ['key', 'kind', 'angle', 'matrix', 'reflects'])
+Element = namedtuple("Element", ["key", "kind", "angle", "matrix", "reflects"])
 
 
 def _fmt(value: float) -> str:
     value = round(value, 1)
     if value == 0.0:
-        value = 0.0          # no '-0'
-    return '{:g}'.format(value)
+        value = 0.0  # no '-0'
+    return "{:g}".format(value)
 
 
 def rotation_key(angle: float) -> str:
@@ -41,7 +42,7 @@ def rotation_key(angle: float) -> str:
     deg = degrees(angle) % 360.0
     if abs(deg - 360.0) < 0.05:
         deg = 0.0
-    return 'R' + _fmt(deg)
+    return "R" + _fmt(deg)
 
 
 def mirror_key(axis: float) -> str:
@@ -49,20 +50,20 @@ def mirror_key(axis: float) -> str:
     deg = degrees(axis) % 180.0
     if abs(deg - 180.0) < 0.05:
         deg = 0.0
-    return 'M' + _fmt(deg)
+    return "M" + _fmt(deg)
 
 
 def _rotation(angle: float) -> Element:
     c, s = cos(angle), sin(angle)
-    kind = 'identity' if rotation_key(angle) == 'R0' else 'rotation'
-    key = 'I' if kind == 'identity' else rotation_key(angle)
+    kind = "identity" if rotation_key(angle) == "R0" else "rotation"
+    key = "I" if kind == "identity" else rotation_key(angle)
     return Element(key, kind, angle % (2 * pi), (c, -s, s, c), False)
 
 
 def _mirror(axis: float) -> Element:
     axis = axis % pi
     c, s = cos(2 * axis), sin(2 * axis)
-    return Element(mirror_key(axis), 'mirror', axis, (c, s, s, -c), True)
+    return Element(mirror_key(axis), "mirror", axis, (c, s, s, -c), True)
 
 
 class SymmetryGroup(object):
@@ -102,7 +103,7 @@ class SymmetryGroup(object):
 
     @property
     def name(self) -> str:
-        return '{}{}'.format('D' if self.mirrors else 'C', self.n)
+        return "{}{}".format("D" if self.mirrors else "C", self.n)
 
     @property
     def order(self) -> int:
@@ -116,14 +117,16 @@ class SymmetryGroup(object):
         return self.order
 
     def __repr__(self) -> str:
-        return '<SymmetryGroup {} about ({:.3f}, {:.3f}): {}>'.format(
-            self.name, self.centre[0], self.centre[1], ' '.join(self.keys()) or '-')
+        return "<SymmetryGroup {} about ({:.3f}, {:.3f}): {}>".format(self.name, self.centre[0], self.centre[1], " ".join(self.keys()) or "-")
 
     def __eq__(self, other: Any) -> bool:
-        return (isinstance(other, SymmetryGroup) and self.name == other.name
-                and sorted(self.keys()) == sorted(other.keys())
-                and abs(self.centre[0] - other.centre[0]) < 1e-9
-                and abs(self.centre[1] - other.centre[1]) < 1e-9)
+        return (
+            isinstance(other, SymmetryGroup)
+            and self.name == other.name
+            and sorted(self.keys()) == sorted(other.keys())
+            and abs(self.centre[0] - other.centre[0]) < 1e-9
+            and abs(self.centre[1] - other.centre[1]) < 1e-9
+        )
 
     def __ne__(self, other: Any) -> bool:
         return not self.__eq__(other)
@@ -144,14 +147,13 @@ class SymmetryGroup(object):
 
     def keys(self) -> list[str]:
         """Every non-identity element's key."""
-        return [e.key for e in self.elements if e.kind != 'identity']
+        return [e.key for e in self.elements if e.kind != "identity"]
 
     def element(self, key: str) -> Element:
         for e in self.elements:
             if e.key == key:
                 return e
-        raise KeyError('{} is not an element of {} -- it has {}'.format(
-            key, self.name, ', '.join(['I'] + self.keys())))
+        raise KeyError("{} is not an element of {} -- it has {}".format(key, self.name, ", ".join(["I"] + self.keys())))
 
     @property
     def identity(self) -> Element:
@@ -189,8 +191,7 @@ class SymmetryGroup(object):
         """The element ``first o second`` -- ``second`` applied first."""
         a1, b1, c1, d1 = first.matrix
         a2, b2, c2, d2 = second.matrix
-        matrix = (a1 * a2 + b1 * c2, a1 * b2 + b1 * d2,
-                  c1 * a2 + d1 * c2, c1 * b2 + d1 * d2)
+        matrix = (a1 * a2 + b1 * c2, a1 * b2 + b1 * d2, c1 * a2 + d1 * c2, c1 * b2 + d1 * d2)
         return self._match(matrix)
 
     def inverse(self, element: Element) -> Element:
@@ -205,7 +206,7 @@ class SymmetryGroup(object):
             if gap is None or d < gap:
                 best, gap = e, d
         if gap > tol:
-            raise ValueError('matrix {} is not an element of {}'.format(matrix, self.name))
+            raise ValueError("matrix {} is not an element of {}".format(matrix, self.name))
         return best
 
     # ------------------------------------------------------------------
@@ -218,7 +219,7 @@ class SymmetryGroup(object):
             return SymmetryGroup(self.centre, self.n, self.mirrors, self.axis)
         if isinstance(keys, str):
             keys = [keys]
-        generators = [self.element(k) for k in keys if k != 'I']
+        generators = [self.element(k) for k in keys if k != "I"]
         closure = {self.identity.key: self.identity}
         frontier = list(closure.values())
         while frontier:
@@ -242,7 +243,7 @@ class SymmetryGroup(object):
         for m in rot_orders:
             if self.mirrors:
                 for k in range(self.n // m):
-                    axis = (self.axis + pi * k / self.n)
+                    axis = self.axis + pi * k / self.n
                     g = SymmetryGroup(self.centre, m, True, axis)
                     sig = (g.name, tuple(sorted(g.keys())))
                     if sig not in seen:
@@ -261,14 +262,11 @@ class SymmetryGroup(object):
     # ------------------------------------------------------------------
 
     def to_data(self) -> dict[str, Any]:
-        return {'centre': [self.centre[0], self.centre[1]], 'n': self.n,
-                'mirrors': self.mirrors, 'axis': degrees(self.axis),
-                'name': self.name, 'keys': self.keys()}
+        return {"centre": [self.centre[0], self.centre[1]], "n": self.n, "mirrors": self.mirrors, "axis": degrees(self.axis), "name": self.name, "keys": self.keys()}
 
     @classmethod
     def from_data(cls, data: dict[str, Any]) -> SymmetryGroup:
-        return cls(data['centre'] + [0.0], data['n'], data['mirrors'],
-                   radians(data.get('axis', 0.0)))
+        return cls(data["centre"] + [0.0], data["n"], data["mirrors"], radians(data.get("axis", 0.0)))
 
 
 def angle_of(vector: Sequence[float]) -> float:

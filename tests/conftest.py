@@ -1,4 +1,5 @@
 """Fixtures shared by the MCP tests: an isolated spool and library, and a dense mesh."""
+
 import json
 import os
 
@@ -34,14 +35,14 @@ class McpServer(object):
 
     def __init__(self):
         from compas_singular.mcp.server import build
+
         self.dispatcher = build()
         self.handler = self.dispatcher.handler
         self.session = self.handler.session
 
     def __call__(self, _tool, **arguments):
         # ``_tool`` is underscored because some tools take a ``name`` argument.
-        reply = self.dispatcher.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
-                                        "params": {"name": _tool, "arguments": arguments}})
+        reply = self.dispatcher.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": _tool, "arguments": arguments}})
         return json.loads(reply["result"]["content"][0]["text"])
 
 
@@ -54,6 +55,7 @@ def make_dense_mesh(density=3):
     """A dense quad mesh with something wrong with it, and its boundary loops."""
     from compas_singular.datastructures import CoarseQuadMesh
     from compas_singular.datastructures.mesh.smoothing import mesh_boundary_polylines
+
     coarse = CoarseQuadMesh.from_json(data_path("coarse_quad_mesh_british_museum.json"))
     coarse.collect_strips()
     coarse.set_strips_density(density)

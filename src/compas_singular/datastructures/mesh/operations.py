@@ -21,14 +21,14 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import Mesh
 
 __all__ = [
-    'mesh_move_by',
-    'mesh_move_vertices_by',
-    'mesh_move_vertex_to',
-    'is_face_degenerate',
-    'trimesh_face_circle',
-    'mesh_weld',
-    'meshes_join',
-    'meshes_join_and_weld',
+    "mesh_move_by",
+    "mesh_move_vertices_by",
+    "mesh_move_vertex_to",
+    "is_face_degenerate",
+    "trimesh_face_circle",
+    "mesh_weld",
+    "meshes_join",
+    "meshes_join_and_weld",
 ]
 
 
@@ -44,9 +44,9 @@ def mesh_move_by(mesh: Mesh, vector: list[float]) -> None:
     """
 
     for vkey in mesh.vertices():
-        mesh.vertex[vkey]['x'] += vector[0]
-        mesh.vertex[vkey]['y'] += vector[1]
-        mesh.vertex[vkey]['z'] += vector[2]
+        mesh.vertex[vkey]["x"] += vector[0]
+        mesh.vertex[vkey]["y"] += vector[1]
+        mesh.vertex[vkey]["z"] += vector[2]
 
 
 def mesh_move_vertices_by(mesh: Mesh, key_to_vector: dict[int, list[float]]) -> None:
@@ -61,9 +61,9 @@ def mesh_move_vertices_by(mesh: Mesh, key_to_vector: dict[int, list[float]]) -> 
     """
 
     for vkey, vector in key_to_vector.items():
-        mesh.vertex[vkey]['x'] += vector[0]
-        mesh.vertex[vkey]['y'] += vector[1]
-        mesh.vertex[vkey]['z'] += vector[2]
+        mesh.vertex[vkey]["x"] += vector[0]
+        mesh.vertex[vkey]["y"] += vector[1]
+        mesh.vertex[vkey]["z"] += vector[2]
 
 
 def mesh_move_vertex_to(mesh: Mesh, point: list[float], vkey: int) -> None:
@@ -79,9 +79,9 @@ def mesh_move_vertex_to(mesh: Mesh, point: list[float], vkey: int) -> None:
         A vertex key.
     """
 
-    mesh.vertex[vkey]['x'] = point[0]
-    mesh.vertex[vkey]['y'] = point[1]
-    mesh.vertex[vkey]['z'] = point[2]
+    mesh.vertex[vkey]["x"] = point[0]
+    mesh.vertex[vkey]["y"] = point[1]
+    mesh.vertex[vkey]["z"] = point[2]
 
 
 #: Relative height below which a triangle counts as flat. The test compares the
@@ -112,7 +112,7 @@ def is_face_degenerate(a: list[float], b: list[float], c: list[float], tol: floa
     ac = subtract_vectors(c, a)
     bc = subtract_vectors(c, b)
     longest = max(length_vector(ab), length_vector(ac), length_vector(bc))
-    return length_vector(cross_vectors(ab, ac)) <= tol * longest ** 2
+    return length_vector(cross_vectors(ab, ac)) <= tol * longest**2
 
 
 def trimesh_face_circle(mesh: Mesh, fkey: int) -> tuple[list[float], float, list[float]] | None:
@@ -158,9 +158,7 @@ def trimesh_face_circle(mesh: Mesh, fkey: int) -> tuple[list[float], float, list
     normal = normalize_vector(cross_vectors(ab, ac))
     d = 2 * length_vector_sqrd(cross_vectors(ba, cb))
     if d == 0.0 or is_face_degenerate(a, b, c):
-        raise ValueError(
-            "face {} of the mesh is flat -- its three vertices {}, {} and {} are "
-            "collinear, so it has no circumcircle".format(fkey, a, b, c))
+        raise ValueError("face {} of the mesh is flat -- its three vertices {}, {} and {} are collinear, so it has no circumcircle".format(fkey, a, b, c))
     A = length_vector_sqrd(cb) * dot_vectors(ba, ca) / d
     B = length_vector_sqrd(ca) * dot_vectors(ab, cb) / d
     C = length_vector_sqrd(ba) * dot_vectors(ac, bc) / d
@@ -257,5 +255,5 @@ def meshes_join_and_weld(meshes: list[Mesh], precision: int | None = None, cls: 
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

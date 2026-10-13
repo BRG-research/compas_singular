@@ -2,6 +2,7 @@
 
 Importing it does nothing, and the Rhino-free parts import headless.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -17,33 +18,32 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import CoarsePseudoQuadMesh
 
 try:
-    import rhinoscriptsyntax as rs # type: ignore  # noqa: I001
+    import rhinoscriptsyntax as rs  # type: ignore  # noqa: I001
 except ImportError:
     rs = None
 
 
 __all__ = [
-    'DEFAULT_SETTINGS',
-    'get_settings',
-    'set_settings',
-    'resolve_relax',
-    'resolve_field_symmetry',
-    'resolve_spacing',
-    'THESIS_ALPHA',
-    'resolve_densities',
-    'has_closed_guide',
-    'ROOT',
-    'LAYER_DATA',
-    'layer_path',
-    'ensure_layers',
-    'read_layout',
+    "DEFAULT_SETTINGS",
+    "get_settings",
+    "set_settings",
+    "resolve_relax",
+    "resolve_field_symmetry",
+    "resolve_spacing",
+    "THESIS_ALPHA",
+    "resolve_densities",
+    "has_closed_guide",
+    "ROOT",
+    "LAYER_DATA",
+    "layer_path",
+    "ensure_layers",
+    "read_layout",
 ]
 
 
 def _require_rhino() -> None:
     if rs is None:
-        raise RuntimeError("compas_singular.rhino.project: this function needs Rhino "
-                           "(rhinoscriptsyntax is not importable here).")
+        raise RuntimeError("compas_singular.rhino.project: this function needs Rhino (rhinoscriptsyntax is not importable here).")
 
 
 # ==============================================================================
@@ -62,6 +62,7 @@ def get_settings() -> dict[str, Any]:
     """The session's settings, as a dict a command can change and hand to ``set_settings``."""
     _require_rhino()
     from compas_singular.rhino.session import RhinoSession
+
     return RhinoSession.current().settings.model_dump()
 
 
@@ -69,9 +70,10 @@ def set_settings(settings: dict[str, Any]) -> dict[str, Any]:
     """Store ``settings`` (a dict) in the session, and record it. Returns them as stored."""
     _require_rhino()
     from compas_singular.rhino.session import RhinoSession
+
     session = RhinoSession.current()
     session.settings = Settings.model_validate(settings)
-    session.record('Settings')
+    session.record("Settings")
     return session.settings.model_dump()
 
 
@@ -95,13 +97,13 @@ def resolve_spacing(settings: dict[str, Any], loops: Sequence[Sequence[Sequence[
     if value is not None:
         return float(value)
     from compas_singular.geometry.polyline import bounding_box_diagonal
+
     if loops is None:
         _require_rhino()
         guids = list(rs.ObjectsByLayer("Outer") or []) + list(rs.ObjectsByLayer("Inner") or [])
         box = rs.BoundingBox(guids) if guids else None
         if not box:
-            raise RuntimeError("No outer boundary selected -- the thesis spacing "
-                               "is measured on it. Set Background_Spacing instead.")
+            raise RuntimeError("No outer boundary selected -- the thesis spacing is measured on it. Set Background_Spacing instead.")
         loops = [[[p.X, p.Y, p.Z] for p in box]]
     return THESIS_ALPHA * bounding_box_diagonal(*loops)
 
@@ -139,14 +141,13 @@ def resolve_densities(coarse: CoarsePseudoQuadMesh, settings: dict[str, Any], ve
     """
     if coarse.has_densities():
         return False
-    coarse.attributes['strips_density'] = {}
+    coarse.attributes["strips_density"] = {}
     if settings.get("density_mode") == "density":
         coarse.set_strips_density(int(settings["target_density"]))
     else:
         coarse.set_strips_density_target(settings["target_length"])
     if verbose:
-        print("densities: none saved on the layout -- every strip set by the "
-              "target {}".format(settings.get("density_mode", "length")))
+        print("densities: none saved on the layout -- every strip set by the target {}".format(settings.get("density_mode", "length")))
     return True
 
 
@@ -198,6 +199,7 @@ def ensure_layers() -> None:
 # the layout
 # ==============================================================================
 
+
 def read_layout(verbose: bool = True) -> CoarsePseudoQuadMesh:
     """A copy of the session's coarse layout; raises if the session holds none.
 
@@ -212,10 +214,8 @@ def read_layout(verbose: bool = True) -> CoarsePseudoQuadMesh:
 
     layout = RhinoSession.current().coarse
     if layout is None:
-        raise RuntimeError("This document holds no coarse layout. Run CMD_coarse_mesh "
-                           "or CMD_read_coarse_mesh first.")
+        raise RuntimeError("This document holds no coarse layout. Run CMD_coarse_mesh or CMD_read_coarse_mesh first.")
     coarse = layout.copy()
     if verbose:
-        print("layout: {} patch(es), route {!r}".format(
-            coarse.number_of_faces(), coarse.attributes.get("route", "unknown")))
+        print("layout: {} patch(es), route {!r}".format(coarse.number_of_faces(), coarse.attributes.get("route", "unknown")))
     return coarse

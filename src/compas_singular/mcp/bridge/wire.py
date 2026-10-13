@@ -2,6 +2,7 @@
 
 Nothing compas-typed crosses the wire, and coordinates are not rounded.
 """
+
 from __future__ import absolute_import
 from __future__ import annotations
 from __future__ import division
@@ -18,11 +19,11 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    'mesh_to_wire',
-    'mesh_from_wire',
-    'points_of',
-    'curve_to_wire',
-    'curves_to_wire',
+    "mesh_to_wire",
+    "mesh_from_wire",
+    "points_of",
+    "curve_to_wire",
+    "curves_to_wire",
 ]
 
 
@@ -44,7 +45,7 @@ def points_of(curve: Polyline | Sequence[Any]) -> list[list[float]]:
     -------
     list[list[float]]
     """
-    points = getattr(curve, 'points', None)
+    points = getattr(curve, "points", None)
     if points is None:
         points = curve
     return [[float(p[0]), float(p[1]), float(p[2])] for p in points]
@@ -62,7 +63,7 @@ def curves_to_wire(curves: Iterable[Polyline | Sequence[Any]] | None) -> list[li
 
 def _pole_points(mesh: Mesh) -> list[list[float]]:
     """The mesh's poles as points, or ``[]`` if it has no notion of one."""
-    poles = getattr(mesh, 'poles', None)
+    poles = getattr(mesh, "poles", None)
     if poles is None:
         return []
     try:
@@ -88,9 +89,8 @@ def mesh_to_wire(mesh: Mesh) -> dict[str, Any]:
     keys = list(mesh.vertices())
     index = dict((key, i) for i, key in enumerate(keys))
     vertices = [list(mesh.vertex_coordinates(key)) for key in keys]
-    faces = [[index[key] for key in mesh.face_vertices(fkey)]
-             for fkey in mesh.faces()]
-    return {'vertices': vertices, 'faces': faces, 'poles': _pole_points(mesh)}
+    faces = [[index[key] for key in mesh.face_vertices(fkey)] for fkey in mesh.faces()]
+    return {"vertices": vertices, "faces": faces, "poles": _pole_points(mesh)}
 
 
 def mesh_from_wire(data: dict[str, Any], cls: type | None = None) -> Mesh:
@@ -112,25 +112,23 @@ def mesh_from_wire(data: dict[str, Any], cls: type | None = None) -> Mesh:
     Mesh
     """
     if not isinstance(data, dict):
-        raise WireError('mesh payload is {}, not a dict'.format(type(data).__name__))
-    vertices = data.get('vertices')
-    faces = data.get('faces')
+        raise WireError("mesh payload is {}, not a dict".format(type(data).__name__))
+    vertices = data.get("vertices")
+    faces = data.get("faces")
     if not isinstance(vertices, list) or not isinstance(faces, list):
-        raise WireError("mesh payload needs 'vertices' and 'faces' lists; got "
-                        "keys {}".format(sorted(data)))
+        raise WireError("mesh payload needs 'vertices' and 'faces' lists; got keys {}".format(sorted(data)))
     if not vertices:
-        raise WireError('mesh payload has no vertices')
+        raise WireError("mesh payload has no vertices")
 
     count = len(vertices)
     for i, face in enumerate(faces):
         if not isinstance(face, list) or len(face) < 3:
-            raise WireError('face {} is not a list of at least 3 indices'.format(i))
+            raise WireError("face {} is not a list of at least 3 indices".format(i))
         for key in face:
             if not isinstance(key, int) or key < 0 or key >= count:
-                raise WireError('face {} refers to vertex {}, but the payload '
-                                'has {} vertices'.format(i, key, count))
+                raise WireError("face {} refers to vertex {}, but the payload has {} vertices".format(i, key, count))
 
-    poles = data.get('poles') or []
+    poles = data.get("poles") or []
 
     # Imported here, not at module scope: the bridge is imported by the Rhino
     # side too, and keeping it free of package-level imports is what lets it be
@@ -141,7 +139,7 @@ def mesh_from_wire(data: dict[str, Any], cls: type | None = None) -> Mesh:
         else:
             from compas_singular.datastructures import QuadMesh as cls
 
-    builder = getattr(cls, 'from_vertices_and_faces_with_poles', None)
+    builder = getattr(cls, "from_vertices_and_faces_with_poles", None)
     if poles and builder is not None:
         return builder(vertices, faces, poles)
     return cls.from_vertices_and_faces(vertices, faces)

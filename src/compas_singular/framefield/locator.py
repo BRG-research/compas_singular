@@ -2,6 +2,7 @@
 
 ``PointLocator.locate_many`` returns exactly what ``PointLocator.locate`` would.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
     from compas_singular.framefield.background import BackgroundMesh
 
 
-__all__ = ['PointLocator', 'AMBIGUOUS']
+__all__ = ["PointLocator", "AMBIGUOUS"]
 
 
 #: Barycentric tolerance: a point this far outside a triangle still counts as
@@ -103,20 +104,17 @@ class PointLocator(object):
         self._flat = np.array(flat, dtype=int)
         self._ordinary = np.array(ordinary, dtype=bool)
         self._start = np.array(start, dtype=int)
-        self._xy = np.array([[c for corner in self.corners[f] for c in corner]
-                             for f in self.fkeys], dtype=float).reshape(-1, 6)
+        self._xy = np.array([[c for corner in self.corners[f] for c in corner] for f in self.fkeys], dtype=float).reshape(-1, 6)
 
     def _cells(self, corners: tuple, grow: float) -> tuple[int, int, int, int]:
         ox, oy = self.origin
         xs = [p[0] for p in corners]
         ys = [p[1] for p in corners]
-        return (int((min(xs) - grow - ox) // self.cell), int((max(xs) + grow - ox) // self.cell),
-                int((min(ys) - grow - oy) // self.cell), int((max(ys) + grow - oy) // self.cell))
+        return (int((min(xs) - grow - ox) // self.cell), int((max(xs) + grow - ox) // self.cell), int((min(ys) - grow - oy) // self.cell), int((max(ys) + grow - oy) // self.cell))
 
     def cell_of(self, point: list[float]) -> tuple[int, int]:
         """Grid cell of a point."""
-        return (int((point[0] - self.origin[0]) // self.cell),
-                int((point[1] - self.origin[1]) // self.cell))
+        return (int((point[0] - self.origin[0]) // self.cell), int((point[1] - self.origin[1]) // self.cell))
 
     def neighbours(self, fkey: int) -> list[int]:
         """Edge-adjacent faces, in the order ``mesh.face_neighbors`` gives them."""
@@ -166,7 +164,7 @@ class PointLocator(object):
             mesh = self.background.mesh
             self._centroids = {f: mesh.face_centroid(f) for f in self.fkeys}
         i, j = self.cell_of(point)
-        best, best_d = None, float('inf')
+        best, best_d = None, float("inf")
         for di in (-1, 0, 1):
             for dj in (-1, 0, 1):
                 for fkey in self.grid.get((i + di, j + dj), ()):

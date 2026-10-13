@@ -11,11 +11,10 @@ from compas.geometry import Point
 from compas.geometry import angle_points
 from compas.geometry import centroid_points
 
-__all__ = ['Mesh']
+__all__ = ["Mesh"]
 
 
 class Mesh(Mesh):
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super(Mesh, self).__init__(*args, **kwargs)
 
@@ -116,13 +115,11 @@ class Mesh(Mesh):
     def __from_data__(cls, data: dict) -> Any:
         """Decode a mesh, repairing digit-string strip and polyedge keys back into ints."""
         mesh = super(Mesh, cls).__from_data__(data)
-        for key in ('strips', 'strips_density', 'polyedges', 'edges_to_curves', 'dense_pattern', 'decomposition_type'):
+        for key in ("strips", "strips_density", "polyedges", "edges_to_curves", "dense_pattern", "decomposition_type"):
             table = mesh.attributes.get(key)
             if not isinstance(table, dict):
                 continue
-            mesh.attributes[key] = {
-                int(k) if isinstance(k, str) and k.lstrip('-').isdigit() else k: v
-                for k, v in table.items()}
+            mesh.attributes[key] = {int(k) if isinstance(k, str) and k.lstrip("-").isdigit() else k: v for k, v in table.items()}
         return mesh
 
     def to_vertices_and_faces(self, keep_keys: bool = True) -> tuple[dict[int, list[float]] | list[list[float]], dict[int, list[int]] | list[list[int]]]:
@@ -247,9 +244,10 @@ class Mesh(Mesh):
 
         return vertices
 
+
 # ==============================================================================
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

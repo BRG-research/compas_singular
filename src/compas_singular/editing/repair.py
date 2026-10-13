@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import QuadMesh
 
 
-__all__ = ['densifiable', 'solve_non_quad_faces', 'topological_quad_split']
+__all__ = ["densifiable", "solve_non_quad_faces", "topological_quad_split"]
 
 
 def _arc_midpoint(loops: list[list[list[float]]] | None, a: list[float], b: list[float], tol: float = 1e-6) -> list[float] | None:
@@ -28,7 +28,7 @@ def _arc_midpoint(loops: list[list[list[float]]] | None, a: list[float], b: list
         ring = list(loop) + list(loop[:1])
         best = [None, None]
         for k, p in enumerate((a, b)):
-            bd, bs = float('inf'), None
+            bd, bs = float("inf"), None
             acc = 0.0
             for u, v in pairwise(ring):
                 abx, aby = v[0] - u[0], v[1] - u[1]
@@ -66,8 +66,7 @@ def _arc_midpoint(loops: list[list[list[float]]] | None, a: list[float], b: list
         if span > max(chord * 1.5, 1e-9):
             continue
 
-        s = (sa + forward * 0.5) % total if forward <= total - forward \
-            else (sb + (total - forward) * 0.5) % total
+        s = (sa + forward * 0.5) % total if forward <= total - forward else (sb + (total - forward) * 0.5) % total
 
         acc = 0.0
         for u, v in pairwise(ring):
@@ -221,7 +220,7 @@ def solve_non_quad_faces(
     cls = cls or type(mesh)
     sides = [len(mesh.face_vertices(f)) for f in mesh.faces()]
     if not sides:
-        return mesh, 'empty mesh'
+        return mesh, "empty mesh"
 
     # ``from_polylines`` recovers faces from a planar embedding and does not
     # guarantee they all wind the same way. A backwards face breaks strip
@@ -234,7 +233,7 @@ def solve_non_quad_faces(
 
     sides = [len(mesh.face_vertices(f)) for f in mesh.faces()]
     if set(sides) == {4}:
-        return mesh, ('unified {} backwards face(s)'.format(flipped) if flipped else '')
+        return mesh, ("unified {} backwards face(s)".format(flipped) if flipped else "")
 
     before = {}
     for n in sides:
@@ -249,9 +248,8 @@ def solve_non_quad_faces(
         if len(on_wall) != 2:
             continue
         a, b = on_wall
-        if distance_point_point(mesh.vertex_coordinates(a),
-                                mesh.vertex_coordinates(b)) > 1e-6:
-            continue                    # genuinely distinct corners, not a doubling
+        if distance_point_point(mesh.vertex_coordinates(a), mesh.vertex_coordinates(b)) > 1e-6:
+            continue  # genuinely distinct corners, not a doubling
         mesh.delete_face(fkey)
         for other in list(mesh.faces()):
             fv = mesh.face_vertices(other)
@@ -263,7 +261,7 @@ def solve_non_quad_faces(
 
     sides = [len(mesh.face_vertices(f)) for f in mesh.faces()]
     if set(sides) == {4}:
-        return mesh, 'merged {} doubled boundary vertex/ices'.format(merged)
+        return mesh, "merged {} doubled boundary vertex/ices".format(merged)
 
     stray = {n: c for n, c in before.items() if n != 4}
 
@@ -274,11 +272,10 @@ def solve_non_quad_faces(
         if ok:
             note = []
             if fanned:
-                note.append('fanned {} n-gon(s) along their own diagonals'.format(fanned))
+                note.append("fanned {} n-gon(s) along their own diagonals".format(fanned))
             if poled:
-                note.append('{} triangle(s) kept as pseudo-quad pole(s)'.format(poled))
-            return local, 'resolved {} non-quad patch(es) {}: {}'.format(
-                sum(stray.values()), stray, '; '.join(note))
+                note.append("{} triangle(s) kept as pseudo-quad pole(s)".format(poled))
+            return local, "resolved {} non-quad patch(es) {}: {}".format(sum(stray.values()), stray, "; ".join(note))
 
     # -- stage 4: the guaranteed step ---------------------------------------
     index = {vkey: i for i, vkey in enumerate(mesh.vertices())}
@@ -287,10 +284,9 @@ def solve_non_quad_faces(
     vertices, faces = topological_quad_split(vertices, faces, loops)
     out = cls.from_vertices_and_faces(vertices, faces)
 
-    note = ('quad-split {} non-quad patch(es) {} -- the local repair did not '
-            'leave a densifiable layout, so every n-gon centre is now a '
-            'valence-n vertex, worst {}'.format(
-                sum(stray.values()), stray, max(before)))
+    note = "quad-split {} non-quad patch(es) {} -- the local repair did not leave a densifiable layout, so every n-gon centre is now a valence-n vertex, worst {}".format(
+        sum(stray.values()), stray, max(before)
+    )
     return out, note
 
 
@@ -315,7 +311,7 @@ def _local_repair(mesh: "QuadMesh", cls: type, poles: Sequence[list[float]] = ()
             continue
         pieces = _best_fan(fv, coords)
         if pieces is None:
-            return None, 0, 0             # a face no diagonal partitions
+            return None, 0, 0  # a face no diagonal partitions
         faces.extend(pieces)
         fanned += 1
 
@@ -338,7 +334,7 @@ def _local_repair(mesh: "QuadMesh", cls: type, poles: Sequence[list[float]] = ()
         if chosen is None:
             chosen = _choose_pole(fv, {v: out.vertex_coordinates(v) for v in fv})
         face_poles[fkey] = chosen
-    out.attributes['face_pole'] = face_poles
+    out.attributes["face_pole"] = face_poles
     return out, fanned, len(face_poles)
 
 
@@ -352,23 +348,23 @@ def densifiable(mesh: "QuadMesh") -> tuple[bool, str]:
     """
     faces = list(mesh.faces())
     if not faces:
-        return False, 'no faces'
+        return False, "no faces"
 
     if not mesh.is_manifold():
-        return False, 'coarse mesh is not manifold'
+        return False, "coarse mesh is not manifold"
 
-    face_pole = mesh.attributes.get('face_pole') or {}
+    face_pole = mesh.attributes.get("face_pole") or {}
     for fkey in faces:
         fv = mesh.face_vertices(fkey)
         if len(fv) == 3 and fkey in face_pole:
             if face_pole[fkey] not in fv:
-                return False, 'face {} has a pole that is not one of its corners'.format(fkey)
+                return False, "face {} has a pole that is not one of its corners".format(fkey)
         elif len(fv) != 4:
-            return False, 'face {} has {} sides'.format(fkey, len(fv))
+            return False, "face {} has {} sides".format(fkey, len(fv))
         pts = [mesh.vertex_coordinates(v) for v in fv]
         area2 = sum(p[0] * q[1] - q[0] * p[1] for p, q in zip(pts, pts[1:] + pts[:1]))
         if area2 <= 0.0:
-            return False, 'face {} is inverted or degenerate'.format(fkey)
+            return False, "face {} is inverted or degenerate".format(fkey)
 
     try:
         mesh.collect_strips()
@@ -383,16 +379,15 @@ def densifiable(mesh: "QuadMesh") -> tuple[bool, str]:
                 pole = face_pole[fkey]
                 rails = [e for e in he if pole in e]
                 if edge_strip[rails[0]] != edge_strip[rails[1]]:
-                    return False, 'pseudo-quad {} has its two rails in different ' \
-                                  'strips'.format(fkey)
+                    return False, "pseudo-quad {} has its two rails in different strips".format(fkey)
                 continue
             s = [edge_strip[e] for e in he]
             if s[0] != s[2] or s[1] != s[3]:
-                return False, 'face {} has opposite edges in different strips'.format(fkey)
+                return False, "face {} has opposite edges in different strips".format(fkey)
     except Exception as exc:
-        return False, 'strip collection failed: {}'.format(type(exc).__name__)
+        return False, "strip collection failed: {}".format(type(exc).__name__)
 
-    return True, ''
+    return True, ""
 
 
 def _unify(mesh: "QuadMesh", cls: type) -> tuple["QuadMesh", int]:

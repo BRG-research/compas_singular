@@ -1,4 +1,5 @@
 """DenseMeshEditor: strip deletion on one gated path, and every edit the command offers."""
+
 import math
 
 import pytest
@@ -11,9 +12,7 @@ from compas_singular.editing import DenseMeshEditor
 
 def _grid(n):
     vertices = [[float(x), float(y), 0.0] for y in range(n + 1) for x in range(n + 1)]
-    faces = [[y * (n + 1) + x, y * (n + 1) + x + 1,
-              (y + 1) * (n + 1) + x + 1, (y + 1) * (n + 1) + x]
-             for y in range(n) for x in range(n)]
+    faces = [[y * (n + 1) + x, y * (n + 1) + x + 1, (y + 1) * (n + 1) + x + 1, (y + 1) * (n + 1) + x] for y in range(n) for x in range(n)]
     return QuadMesh.from_vertices_and_faces(vertices, faces)
 
 
@@ -25,13 +24,13 @@ def editor():
 def test_a_refused_plan_has_the_same_keys_as_an_accepted_one(editor):
     ok_plan = editor.plan_strip_deletion((0, 1))
     bad_plan = editor.plan_strip_deletion((0, 99))
-    assert ok_plan['ok'] and not bad_plan['ok']
+    assert ok_plan["ok"] and not bad_plan["ok"]
     assert set(ok_plan) == set(bad_plan)
 
 
 def test_a_non_edge_is_reported_as_a_non_edge(editor):
     plan = editor.plan_strip_deletion((0, 99))
-    assert 'not an edge' in plan['reason']
+    assert "not an edge" in plan["reason"]
 
 
 def test_remove_strip_runs_the_same_checks_as_remove_line(editor):
@@ -42,7 +41,7 @@ def test_remove_strip_runs_the_same_checks_as_remove_line(editor):
     ok_line, notes_line = editor.remove_line((0, 4))
     ok_strip, notes_strip = editor.remove_strip((0, 4))
     assert not ok_line and not ok_strip
-    assert notes_strip['error'] == notes_line['error']
+    assert notes_strip["error"] == notes_line["error"]
 
 
 def test_a_strip_can_be_planned_and_removed_by_key(editor):
@@ -50,16 +49,16 @@ def test_a_strip_can_be_planned_and_removed_by_key(editor):
     work.collect_strips()
     skey = work.edge_strip((0, 1))
     plan = editor.plan_strip_deletion(skey=skey)
-    assert plan['ok'], plan['reason']
+    assert plan["ok"], plan["reason"]
     ok, notes = editor.remove_strip(skey=skey)
     assert ok, notes
-    assert notes['faces_after'] == plan['faces_after']
+    assert notes["faces_after"] == plan["faces_after"]
 
 
 def test_pre_split_is_always_a_dict(editor):
     ok, notes = editor.remove_line((0, 1))
     assert ok, notes
-    assert notes['pre_split'] == {}
+    assert notes["pre_split"] == {}
 
 
 # ==============================================================================
@@ -98,14 +97,12 @@ def _rect(nx=4, ny=3, size=1.0, cls=QuadMesh):
     def index(i, j):
         return j * (nx + 1) + i
 
-    faces = [[index(i, j), index(i + 1, j), index(i + 1, j + 1), index(i, j + 1)]
-             for j in range(ny) for i in range(nx)]
+    faces = [[index(i, j), index(i + 1, j), index(i + 1, j + 1), index(i, j + 1)] for j in range(ny) for i in range(nx)]
     return cls.from_vertices_and_faces(vertices, faces)
 
 
 def _vkey_at(mesh, x, y):
-    return min(mesh.vertices(), key=lambda v: (mesh.vertex_coordinates(v)[0] - x) ** 2
-               + (mesh.vertex_coordinates(v)[1] - y) ** 2)
+    return min(mesh.vertices(), key=lambda v: (mesh.vertex_coordinates(v)[0] - x) ** 2 + (mesh.vertex_coordinates(v)[1] - y) ** 2)
 
 
 def _edge_at(mesh, a, b):
@@ -124,8 +121,7 @@ def _annulus(segments=12, rings=3, r0=1.0, dr=1.0):
     def index(k, s):
         return k * segments + s % segments
 
-    faces = [[index(k, s), index(k, s + 1), index(k + 1, s + 1), index(k + 1, s)]
-             for k in range(rings) for s in range(segments)]
+    faces = [[index(k, s), index(k, s + 1), index(k + 1, s + 1), index(k + 1, s)] for k in range(rings) for s in range(segments)]
     return QuadMesh.from_vertices_and_faces(vertices, faces)
 
 
@@ -139,14 +135,13 @@ def _interior_edge(mesh):
 
 
 def _single_quad():
-    return DenseMeshEditor(QuadMesh.from_vertices_and_faces(
-        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], [[0, 1, 2, 3]]))
+    return DenseMeshEditor(QuadMesh.from_vertices_and_faces([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], [[0, 1, 2, 3]]))
 
 
 def test_construction():
     mesh = _rect()
     editor = DenseMeshEditor(mesh, walls=_square_walls())
-    assert editor.mesh is mesh                 # in place
+    assert editor.mesh is mesh  # in place
     assert DenseMeshEditor(_rect()).walls == []
     assert len(editor.walls) == 1
     assert editor.last_reason == ""
@@ -166,7 +161,7 @@ def test_move_vertex():
     assert editor.mesh.vertex_coordinates(vkey) == [1.2, 1.1, 0.0]
     bvkey = _vkey_at(editor.mesh, 2, 0)
     ok, notes = editor.move_vertex(bvkey, [2.0, -0.5, 0.0])
-    assert ok and abs(editor.mesh.vertex_coordinates(bvkey)[1]) < 1e-6      # held on the wall
+    assert ok and abs(editor.mesh.vertex_coordinates(bvkey)[1]) < 1e-6  # held on the wall
     editor.move_vertex(bvkey, [2.0, -0.5, 0.0], project=False)
     assert abs(editor.mesh.vertex_coordinates(bvkey)[1] + 0.5) < 1e-9
     ok, notes = editor.move_vertex(9999, [0, 0, 0])
@@ -218,7 +213,7 @@ def test_remove_an_interior_edge_merges_two_quads_into_a_hexagon():
     for nbr in list(editor.mesh.vertex_neighbors(centre)):
         if centre in editor.mesh.vertex and nbr in editor.mesh.halfedge.get(centre, {}):
             editor.remove_edge((centre, nbr))
-    assert centre not in editor.mesh.vertex and _simple(editor.mesh)   # every edge round it gone
+    assert centre not in editor.mesh.vertex and _simple(editor.mesh)  # every edge round it gone
 
 
 def test_remove_a_boundary_edge_removes_its_one_face():
@@ -238,7 +233,7 @@ def test_draw_edges_straight_across_a_row():
     assert notes.get("split_faces") == 4 and notes.get("split_edges") == 5
     assert _degrees(editor.mesh) == {4: 16}
     assert abs(_area(editor.mesh) - a0) < 1e-9 and _simple(editor.mesh)
-    assert notes.get("trimmed") == 2               # the parts outside the mesh were left out
+    assert notes.get("trimmed") == 2  # the parts outside the mesh were left out
 
 
 def test_draw_edges_diagonally_through_vertices_makes_triangles():
@@ -251,7 +246,7 @@ def test_draw_edges_a_u_crossing_the_same_edges_twice():
     editor = DenseMeshEditor(_rect())
     ok, notes = editor.draw_edges([[0.5, -1.0, 0.0], [0.5, 1.5, 0.0], [1.5, 1.5, 0.0], [1.5, -1.0, 0.0]])
     assert ok and _simple(editor.mesh) and editor.mesh.is_manifold()
-    assert notes.get("new_vertices", 0) >= notes.get("split_edges", 0) + 2   # bends inside a face kept
+    assert notes.get("new_vertices", 0) >= notes.get("split_edges", 0) + 2  # bends inside a face kept
 
 
 def test_draw_edges_trims_ends_inside_faces_back_to_the_last_crossing():
@@ -266,8 +261,8 @@ def test_draw_edges_refusals():
     ok, notes = editor.draw_edges([[0.0, 1.0, 0.0], [4.0, 1.0, 0.0]])
     assert ok is False and "already there" in notes["error"]
     assert editor.mesh.number_of_faces() == before
-    assert editor.draw_edges([[10.0, 10.0, 0.0], [12.0, 12.0, 0.0]])[0] is False    # misses the mesh
-    assert editor.draw_edges([[0.5, 0.5, 0.0]])[0] is False                          # one point
+    assert editor.draw_edges([[10.0, 10.0, 0.0], [12.0, 12.0, 0.0]])[0] is False  # misses the mesh
+    assert editor.draw_edges([[0.5, 0.5, 0.0]])[0] is False  # one point
 
 
 def test_draw_edges_a_second_line_crossing_the_first():
@@ -280,18 +275,17 @@ def test_draw_edges_a_second_line_crossing_the_first():
 def test_draw_edges_on_a_mesh_with_height_puts_new_vertices_on_it():
     lifted = _rect()
     for v in lifted.vertices():
-        lifted.vertex_attribute(v, 'z', lifted.vertex_coordinates(v)[0])
+        lifted.vertex_attribute(v, "z", lifted.vertex_coordinates(v)[0])
     editor = DenseMeshEditor(lifted)
     ok, _ = editor.draw_edges([[0.25, -1.0, 0.0], [0.75, 4.0, 0.0]])
     assert ok
-    assert all(abs(editor.mesh.vertex_coordinates(v)[2] - editor.mesh.vertex_coordinates(v)[0]) < 1e-9
-               for v in editor.mesh.vertices())
+    assert all(abs(editor.mesh.vertex_coordinates(v)[2] - editor.mesh.vertex_coordinates(v)[0]) < 1e-9 for v in editor.mesh.vertices())
 
 
 @pytest.fixture
 def with_hexagon():
     editor = DenseMeshEditor(_rect(nx=4, ny=4))
-    editor.remove_edge(_edge_at(editor.mesh, (1, 1), (1, 2)))      # a hexagon at column 0-1, row 1
+    editor.remove_edge(_edge_at(editor.mesh, (1, 1), (1, 2)))  # a hexagon at column 0-1, row 1
     return editor
 
 
@@ -316,7 +310,7 @@ def test_only_the_strips_reaching_a_hexagon_are_refused(with_hexagon):
 
 def test_adding_a_line_that_touches_a_hexagon_is_refused(with_hexagon):
     editor = with_hexagon
-    ok, notes = editor.add_line(_edge_at(editor.mesh, (2, 0), (2, 1)))   # x = 2 runs past two hexagon corners
+    ok, notes = editor.add_line(_edge_at(editor.mesh, (2, 0), (2, 1)))  # x = 2 runs past two hexagon corners
     assert ok is False and "not quads" in notes["error"]
     ok, notes = editor.add_line(_edge_at(editor.mesh, (3, 0), (3, 1)))
     assert ok and _degrees(editor.mesh).get(6) == 1
@@ -324,14 +318,14 @@ def test_adding_a_line_that_touches_a_hexagon_is_refused(with_hexagon):
 
 def test_a_strip_through_a_pole_triangle_is_refused_but_one_beside_it_is_not():
     poled = PseudoQuadMesh.from_vertices_and_faces(
-        [[0, 0, 0], [1, 0, 0], [2, 0, 0], [0, 1, 0], [1, 1, 0], [2, 1, 0], [0, 2, 0], [1, 2, 0]],
-        [[0, 1, 4, 3], [1, 2, 5, 4], [3, 4, 7, 6], [4, 5, 7]])
-    poled.attributes['face_pole'] = {3: 5}
+        [[0, 0, 0], [1, 0, 0], [2, 0, 0], [0, 1, 0], [1, 1, 0], [2, 1, 0], [0, 2, 0], [1, 2, 0]], [[0, 1, 4, 3], [1, 2, 5, 4], [3, 4, 7, 6], [4, 5, 7]]
+    )
+    poled.attributes["face_pole"] = {3: 5}
     editor = DenseMeshEditor(poled)
-    assert editor.plan_strip_deletion((4, 7))["ok"] is False      # a side of the pole triangle
-    assert editor.plan_strip_deletion((0, 3))["ok"]               # runs only beside it
+    assert editor.plan_strip_deletion((4, 7))["ok"] is False  # a side of the pole triangle
+    assert editor.plan_strip_deletion((0, 3))["ok"]  # runs only beside it
     ok, _ = editor.remove_face(3)
-    assert ok and editor.mesh.attributes['face_pole'] == {}
+    assert ok and editor.mesh.attributes["face_pole"] == {}
 
 
 def test_add_line_opens_the_new_strip_without_asking():
@@ -342,8 +336,7 @@ def test_add_line_opens_the_new_strip_without_asking():
     assert editor.mesh.number_of_faces() > faces_before and editor.non_quad_faces() == []
     assert notes.get("strip") is not None and notes == editor.last_addition
     pair = notes["new_vertices"]
-    spread = max(abs(editor.mesh.vertex_coordinates(pair[0])[k] - editor.mesh.vertex_coordinates(pair[1])[k])
-                 for k in range(2))
+    spread = max(abs(editor.mesh.vertex_coordinates(pair[0])[k] - editor.mesh.vertex_coordinates(pair[1])[k]) for k in range(2))
     assert spread > 1e-6
 
 
@@ -354,11 +347,8 @@ def test_a_wall_to_wall_line_keeps_the_boundary_on_its_walls_and_moves_nothing_e
     positions = {v: editor.mesh.vertex_coordinates(v) for v in editor.mesh.vertices()}
     ok, notes = editor.add_line(_edge_at(editor.mesh, (2, 1), (2, 2)))
     assert ok
-    assert max(math.dist(editor.mesh.vertex_coordinates(v), editor.project_to_wall(editor.mesh.vertex_coordinates(v)))
-               for v in editor.boundary_vertices()) < 1e-9
-    moved = [v for v, xyz in positions.items()
-             if v in editor.mesh.vertex and math.dist(xyz, editor.mesh.vertex_coordinates(v)) > 1e-9
-             and v not in notes["new_vertices"]]
+    assert max(math.dist(editor.mesh.vertex_coordinates(v), editor.project_to_wall(editor.mesh.vertex_coordinates(v))) for v in editor.boundary_vertices()) < 1e-9
+    moved = [v for v, xyz in positions.items() if v in editor.mesh.vertex and math.dist(xyz, editor.mesh.vertex_coordinates(v)) > 1e-9 and v not in notes["new_vertices"]]
     assert not moved
     before = editor.mesh
     ok, _ = editor.add_line((9998, 9999))
@@ -388,7 +378,7 @@ def test_plan_then_remove_line():
     editor = DenseMeshEditor(_rect(), walls=_square_walls())
     edge = _interior_edge(editor.mesh)
     plan = editor.plan_strip_deletion(edge)
-    assert editor.mesh.number_of_faces() == 12            # the plan mutates nothing
+    assert editor.mesh.number_of_faces() == 12  # the plan mutates nothing
     assert plan["strip"] is not None and plan["faces"] > 0
     assert isinstance(plan["boundaries_lost"], int)
     ok, notes = editor.remove_line(edge)
@@ -419,7 +409,7 @@ def test_faces_touching_only_at_a_corner_block_strip_edits_but_not_drawing():
     assert ok
     assert notes["non_manifold"] == [_vkey_at(editor.mesh, 2, 2)]
     ok, notes = editor.remove_line(_edge_at(editor.mesh, (3, 0), (4, 0)))
-    assert ok is False and "corner" in notes["error"]              # refuses instead of raising
+    assert ok is False and "corner" in notes["error"]  # refuses instead of raising
     ok, notes = editor.add_line(_edge_at(editor.mesh, (4, 0), (4, 1)))
     assert ok is False and "corner" in notes["error"]
     assert editor.draw_edges([[-1.0, 0.5, 0.0], [5.0, 0.5, 0.0]])[0]
@@ -430,7 +420,7 @@ def test_remove_vertex_next_to_a_polygon_leaves_no_dangling_edge():
     # the far side of a deleted HEXAGON used to stay behind with no face on either
     # side -- and ``vertices_on_boundaries`` walked such an edge forever.
     editor = DenseMeshEditor(_rect(nx=4, ny=4))
-    editor.remove_edge(_edge_at(editor.mesh, (2, 3), (2, 4)))     # a hexagon in the top row
+    editor.remove_edge(_edge_at(editor.mesh, (2, 3), (2, 4)))  # a hexagon in the top row
     ok, notes = editor.remove_vertex(_vkey_at(editor.mesh, 2, 3))
     assert ok, notes
     halfedge = editor.mesh.halfedge

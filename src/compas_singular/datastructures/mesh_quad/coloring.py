@@ -15,12 +15,7 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import QuadMesh
 
 
-__all__ = [
-    'quad_mesh_strip_2_coloring',
-    'quad_mesh_strip_n_coloring',
-    'quad_mesh_polyedge_2_coloring',
-    'quad_mesh_polyedge_n_coloring'
-]
+__all__ = ["quad_mesh_strip_2_coloring", "quad_mesh_strip_n_coloring", "quad_mesh_polyedge_2_coloring", "quad_mesh_polyedge_n_coloring"]
 
 
 def quad_mesh_strip_2_coloring(quad_mesh: QuadMesh) -> dict[int, int] | None:
@@ -88,7 +83,7 @@ def quad_mesh_polyedge_2_coloring(quad_mesh: QuadMesh, edge_output: bool = False
     else:
         edge_coloring = {}
         for pkey, group in polyedge_coloring.items():
-            for u, v in pairwise(quad_mesh.attributes['polyedges'][pkey]):
+            for u, v in pairwise(quad_mesh.attributes["polyedges"][pkey]):
                 edge_coloring.update({(u, v): group, (v, u): group})
         return edge_coloring
 
@@ -117,7 +112,7 @@ def quad_mesh_polyedge_n_coloring(quad_mesh: QuadMesh, edge_output: bool = False
     else:
         edge_coloring = {}
         for pkey, group in polyedge_coloring.items():
-            for u, v in pairwise(quad_mesh.attributes['polyedges'][pkey]):
+            for u, v in pairwise(quad_mesh.attributes["polyedges"][pkey]):
                 edge_coloring.update({(u, v): group, (v, u): group})
         return edge_coloring
 
@@ -126,7 +121,7 @@ def quad_mesh_polyedge_n_coloring(quad_mesh: QuadMesh, edge_output: bool = False
 # Main
 # ==============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
 
     # import time

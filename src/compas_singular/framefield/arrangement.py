@@ -2,6 +2,7 @@
 
 Tiles walls, lands loose ends, splits at crossings and drops slivers, with shared node positions.
 """
+
 from __future__ import annotations
 
 from math import atan2
@@ -22,9 +23,7 @@ if TYPE_CHECKING:
     from compas_singular.datastructures import Mesh
 
 
-__all__ = ['planar_arrangement', 'faces_with_repeated_vertices',
-           'count_interior_crossings', 'count_dangling_ends',
-           'faces_from_arrangement']
+__all__ = ["planar_arrangement", "faces_with_repeated_vertices", "count_interior_crossings", "count_dangling_ends", "faces_from_arrangement"]
 
 
 #: ``TOL.geometric_key`` rounds to three decimals, and that is how
@@ -235,7 +234,7 @@ def planar_arrangement(
         Wall arcs, in loop order, and the separatrix pieces.
     """
     if not loops:
-        raise ValueError('planar_arrangement needs the boundary loops to rebuild the walls from')
+        raise ValueError("planar_arrangement needs the boundary loops to rebuild the walls from")
     report = report if report is not None else {}
 
     # -- 0. the walls, tiled exactly once ---------------------------------------
@@ -252,8 +251,7 @@ def planar_arrangement(
     if rebuilt:
         boundary = rebuilt
 
-    chains = ([('b', [list(p) for p in pl]) for pl in boundary]
-              + [('o', [list(p) for p in pl]) for pl in others])
+    chains = [("b", [list(p) for p in pl]) for pl in boundary] + [("o", [list(p) for p in pl]) for pl in others]
     if not chains:
         return list(boundary), list(others)
 
@@ -278,9 +276,7 @@ def planar_arrangement(
     for _ in range(4):
         moves = []
         for node_p in list(nodes.points):
-            owners = [(i, end) for i, (_, pts) in enumerate(chains)
-                      for end in (0, -1)
-                      if distance_point_point(pts[end], node_p) < 1e-9]
+            owners = [(i, end) for i, (_, pts) in enumerate(chains) for end in (0, -1) if distance_point_point(pts[end], node_p) < 1e-9]
             if not owners:
                 continue
             reach = far_tol if len(owners) < 2 else near_tol
@@ -293,8 +289,7 @@ def planar_arrangement(
                 if d >= reach or d < 1e-9:
                     continue
                 # meeting another chain end-on needs no split
-                if min(distance_point_point(q, pts_j[0]),
-                       distance_point_point(q, pts_j[-1])) < near_tol:
+                if min(distance_point_point(q, pts_j[0]), distance_point_point(q, pts_j[-1])) < near_tol:
                     continue
                 if best is None or d < best[0]:
                     best = (d, q)
@@ -315,8 +310,8 @@ def planar_arrangement(
         kind_i, pts_i = chains[i]
         for j in range(i + 1, len(chains)):
             kind_j, pts_j = chains[j]
-            if kind_i == 'b' and kind_j == 'b':
-                continue            # wall arcs meet at their ends and nowhere else
+            if kind_i == "b" and kind_j == "b":
+                continue  # wall arcs meet at their ends and nowhere else
             for si, (a1, a2) in enumerate(pairwise(pts_i)):
                 for sj, (b1, b2) in enumerate(pairwise(pts_j)):
                     hit = _seg_seg(a1, a2, b1, b2)
@@ -326,10 +321,8 @@ def planar_arrangement(
                     p = [a1[0] + (a2[0] - a1[0]) * t, a1[1] + (a2[1] - a1[1]) * t, 0.0]
                     # a crossing at a polyline's END is already a node there:
                     # cut only the polyline it is interior to
-                    near_i = min(distance_point_point(p, pts_i[0]),
-                                 distance_point_point(p, pts_i[-1])) < near_tol
-                    near_j = min(distance_point_point(p, pts_j[0]),
-                                 distance_point_point(p, pts_j[-1])) < near_tol
+                    near_i = min(distance_point_point(p, pts_i[0]), distance_point_point(p, pts_i[-1])) < near_tol
+                    near_j = min(distance_point_point(p, pts_j[0]), distance_point_point(p, pts_j[-1])) < near_tol
                     if near_i and near_j:
                         continue
                     shared = nodes.add(p, near_tol)
@@ -356,9 +349,7 @@ def planar_arrangement(
     kept = []
     collapsed = 0
     for kind, piece in pieces:
-        if (polyline_length(piece) <= GKEY_RESOLUTION
-                or distance_point_point(piece[0], piece[-1]) <= GKEY_RESOLUTION
-                and polyline_length(piece) < tol * 0.05):
+        if polyline_length(piece) <= GKEY_RESOLUTION or distance_point_point(piece[0], piece[-1]) <= GKEY_RESOLUTION and polyline_length(piece) < tol * 0.05:
             collapsed += 1
             continue
         kept.append((kind, piece))
@@ -393,8 +384,8 @@ def planar_arrangement(
                 degree[k] = degree.get(k, 0) + 1
         drop = set()
         for idx, (kind, piece) in enumerate(pieces):
-            if kind == 'b':
-                continue            # the wall is a closed loop; never cut it
+            if kind == "b":
+                continue  # the wall is a closed loop; never cut it
             for p in (piece[0], piece[-1]):
                 if degree[tuple(round(c, 9) for c in p[:2])] < 2:
                     drop.add(idx)
@@ -403,23 +394,26 @@ def planar_arrangement(
         pieces = [pc for idx, pc in enumerate(pieces) if idx not in drop]
         pruned += len(drop)
 
-    report.update({
-        'wall_arcs_partitioned': len(rebuilt),
-        'crossings_split': crossings,
-        'ends_landed': landed,
-        'arcs_collapsed': collapsed,
-        'doubled_dropped': doubled,
-        'dangling_pruned': pruned,
-    })
+    report.update(
+        {
+            "wall_arcs_partitioned": len(rebuilt),
+            "crossings_split": crossings,
+            "ends_landed": landed,
+            "arcs_collapsed": collapsed,
+            "doubled_dropped": doubled,
+            "dangling_pruned": pruned,
+        }
+    )
 
-    out_boundary = [p for kind, p in pieces if kind == 'b']
-    out_others = [p for kind, p in pieces if kind == 'o']
+    out_boundary = [p for kind, p in pieces if kind == "b"]
+    out_others = [p for kind, p in pieces if kind == "o"]
     return out_boundary, out_others
 
 
 # ----------------------------------------------------------------------------
 # checks
 # ----------------------------------------------------------------------------
+
 
 def faces_with_repeated_vertices(mesh: Mesh) -> list[int]:
     """Faces that visit the same vertex -- or the same POSITION -- twice: the
@@ -487,6 +481,7 @@ def count_dangling_ends(
 # face recovery
 # ----------------------------------------------------------------------------
 
+
 def _point_in_ring(p: list[float], ring: list[list[float]]) -> bool:
     """Ray casting. ``ring`` is a closed loop of [x, y, z]."""
     x, y = p[0], p[1]
@@ -539,6 +534,7 @@ def faces_from_arrangement(
     list[list[[x, y, z]]]
         One entry per face, its corner points in order.
     """
+
     def node(p: list[float]) -> tuple[float, float]:
         return (round(p[0] / GKEY_RESOLUTION), round(p[1] / GKEY_RESOLUTION))
 
@@ -592,15 +588,15 @@ def faces_from_arrangement(
             if len(points) < 3:
                 continue
             if signed_area(points) <= 0.0:
-                continue                   # unbounded face, or wound backwards
+                continue  # unbounded face, or wound backwards
 
             sample = _interior_sample(points)
             if sample is None:
                 continue
             if not _point_in_ring(sample, loops[0]):
-                continue                   # outside the domain
+                continue  # outside the domain
             if any(_point_in_ring(sample, hole) for hole in loops[1:]):
-                continue                   # inside a hole
+                continue  # inside a hole
 
             faces.append([list(ends(e)[2][0]) for e in cycle])
     return faces
